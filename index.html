@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=IM+Fell+English:ital@0;1&family=Pirata+One&family=Bebas+Neue&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Caveat:wght@500;700&family=Cinzel:wght@400;600;800&family=Cormorant+Garamond:wght@500;600;700&family=Courier+Prime:wght@400;700&family=DM+Serif+Display&family=Inter+Tight:wght@400;500;600;800&family=Libre+Baskerville:wght@400;700&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Oswald:wght@400;500;700&family=Playfair+Display:wght@400;600;800&family=Space+Grotesk:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=44">
+<link rel="stylesheet" href="style.css?v=45">
 </head>
 <body>
 <div id="backdrop" aria-hidden="true"></div>
@@ -24,6 +24,9 @@
       <p class="subtitle" id="stats"></p>
     </div>
     <div class="headerActions">
+      <button class="iconBtn" id="soundBtn" aria-label="Room sound" hidden>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="wave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="mute" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+      </button>
       <button class="iconBtn" id="musicBtn" aria-label="Music">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2.5a9.5 9.5 0 0 1 7 3.1M5 18.4A9.5 9.5 0 0 0 12 21.5"/></svg>
       </button>
@@ -61,10 +64,11 @@
 <section class="sheet" id="customizeSheet" hidden aria-modal="true" role="dialog" aria-label="Customize"></section>
 <div class="toast" id="toast" hidden></div>
 
-<script src="decor.js?v=44"></script>
-<script src="scenes.js?v=44"></script>
-<script src="app.js?v=44"></script>
-<script src="music.js?v=44"></script>
-<script src="reader.js?v=44"></script>
+<script src="decor.js?v=45"></script>
+<script src="scenes.js?v=45"></script>
+<script src="app.js?v=45"></script>
+<script src="music.js?v=45"></script>
+<script src="reader.js?v=45"></script>
+<script src="ambience.js?v=45"></script>
 </body>
 </html>

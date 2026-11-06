@@ -748,6 +748,7 @@
   const main = document.getElementById("main");
   function render() {
     applyAppearance();
+    if (window.ShelfAmbience) window.ShelfAmbience.update();
     const books = [...state.books];
     const year = String(new Date().getFullYear());
     const readThisYear = books.filter((b) => b.status === "read" && (b.finishedOn || "").startsWith(year)).length;
@@ -1284,6 +1285,7 @@
         bmg.lastElementChild.append(btn);
       }
       body.append(bmg);
+      if (window.ShelfAmbience) body.append(window.ShelfAmbience.controls());
 
 
       const shelfG = h(`<div class="group"><h3 class="label">Shelves</h3><p class="hint">Add your own shelves, rename them or remove them.</p><button class="btn small" style="align-self:flex-start">Edit shelves</button></div>`);

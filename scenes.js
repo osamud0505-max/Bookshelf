@@ -487,6 +487,8 @@
         sparks.push({ x: s.x, y: s.y, px: s.x, py: s.y, vx: Math.cos(a) * sp * (inner ? 0.45 : 1), vy: Math.sin(a) * sp * (inner ? 0.45 : 1), age: 0, life: life * (0.8 + Math.random() * 0.35), col: inner ? s.col[1] : s.col[0], drag: s.kind === "willow" ? 2.4 : 1.7, g: s.kind === "willow" ? 55 : 34, glit: s.kind === "glitter" || s.kind === "willow", w: inner ? 1.5 : 2.1 });
       }
       sparks.push({ flash: true, x: s.x, y: s.y, r: r * 1.6, age: 0, life: 0.35, col: s.col[1] });
+      // let the room sound hear it (a distant boom, a moment later)
+      try { dispatchEvent(new CustomEvent("shelf:firework", { detail: { kind: s.kind, x: s.x / W } })); } catch (e) { /* old browser */ }
     };
     const frame = (now) => {
       if (!cv.isConnected) { cv._running = false; removeEventListener("resize", size); return; }
