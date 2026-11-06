@@ -458,6 +458,9 @@
     const count = books.length + (opts.onAdd ? 1 : 0);
     let H = 246, STEP = 103, viewW = 0, PAD = 16, front = -1, raf = 0;
     const slots = [], bookNodes = [];
+    // an ornament (a candlestick…) stands in the row and gets pushed along when a book turns
+    const ornCfg = { kind: "none", on: true, pos: "end", ...(state.settings.ornament || {}) };
+    let orn = null, ornW = 0, ornIdx = -1, ornX = null, ornT = 0;
 
     books.forEach((b, i) => {
       const slot = h(`<button type="button" class="slot" tabindex="-1"></button>`);
@@ -486,6 +489,18 @@
         slots[i].setAttribute("aria-label", b.title);
       });
       if (opts.onAdd) slots[books.length].style.height = Math.round(H * 0.86) + "px";
+      if (orn) orn.remove();
+      orn = books.length ? D.ornamentEl(ornCfg.kind, H, ornCfg.on) : null;
+      ornW = 0;
+      if (orn) {
+        ornW = parseFloat(orn.style.width) + 10;
+        ornIdx = ornCfg.pos === "start" ? 0 : ornCfg.pos === "middle" ? Math.ceil(books.length / 2) : books.length;
+        orn.onclick = () => {
+          const o = { ...ornCfg, on: !ornCfg.on }; state.settings.ornament = o; save();
+          document.querySelectorAll(".ornament").forEach((x) => x.classList.toggle("lit", o.on)); ornCfg.on = o.on;
+        };
+        stage.append(orn);
+      }
     }
 
     function layout() {
@@ -506,10 +521,23 @@
       const fl = Math.floor(f);
       let openAt = 0; for (let i = 0; i < fl; i++) openAt += widths[i];
       openAt += (f - fl) * (widths[fl] || 0);
-      const total = widths.reduce((s, v) => s + v, 0);
+      if (orn && ornIdx <= fl) openAt += ornW;
+      const total = widths.reduce((s, v) => s + v, 0) + ornW;
       const offset = Math.max(0, Math.min(Math.max(0, total - (viewW - PAD * 2)), openAt - viewW * 0.3));
       let x = 0;
+      const placeOrn = () => {
+        const left = PAD + x - offset + 5; x += ornW;
+        orn.style.transform = `translate3d(${left}px,0,0)`;
+        // the flame leans away from the way it is being pushed, then settles
+        if (ornX !== null && Math.abs(left - ornX) > 0.3) {
+          const lean = Math.max(-30, Math.min(30, -(left - ornX) * 6));
+          orn.style.setProperty("--lean", lean.toFixed(1) + "deg");
+          clearTimeout(ornT); ornT = setTimeout(() => orn && orn.style.setProperty("--lean", "0deg"), 140);
+        }
+        ornX = left;
+      };
       for (let i = 0; i < count; i++) {
+        if (orn && i === ornIdx) placeOrn();
         const left = PAD + x - offset; x += widths[i];
         const slot = slots[i];
         const vis = left + widths[i] > -80 && left < viewW + 80;
@@ -519,6 +547,7 @@
         slot.style.transform = `translate3d(${left}px,0,0)`;
         if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", turns[i]);
       }
+      if (orn && ornIdx >= count) placeOrn();
       const n = Math.min(Math.round(f), books.length - 1);
       if (n !== front) { front = n; scrollMemory.set(key, n); slots.forEach((s, i) => s.classList.toggle("front", i === n)); drawCaption(); }
     }
@@ -1090,6 +1119,18 @@
       lg.querySelector("#l-on").onchange = (e) => set({ lights: { ...lights, on: e.target.checked } });
       if (lights.style === "none") { lg.querySelector("#l-col").hidden = true; lg.querySelector(".check").hidden = true; }
       body.append(lg);
+
+      // something standing on the shelf
+      const ornCfg = { kind: "none", on: true, pos: "end", ...(s.ornament || {}) };
+      const og = h(`<div class="group"><h3 class="label">On the shelf</h3><p class="hint">One piece stands among your books and gets nudged along as they turn. Tap it on the shelf to light it or blow it out.</p>
+        <div class="seg wrapSeg" id="o-kind">${Object.entries(D.ORNAMENTS).map(([k, o]) => `<button data-v="${k}" aria-pressed="${ornCfg.kind === k}">${o.label}</button>`).join("")}</div>
+        <div class="seg" id="o-pos">${[["start", "At the start"], ["middle", "In the middle"], ["end", "At the end"]].map(([k, l]) => `<button data-v="${k}" aria-pressed="${ornCfg.pos === k}">${l}</button>`).join("")}</div>
+        <label class="check"><input type="checkbox" id="o-on" ${ornCfg.on ? "checked" : ""}> Lit</label></div>`);
+      og.querySelectorAll("#o-kind button").forEach((b) => (b.onclick = () => set({ ornament: { ...ornCfg, kind: b.dataset.v, on: true } })));
+      og.querySelectorAll("#o-pos button").forEach((b) => (b.onclick = () => set({ ornament: { ...ornCfg, pos: b.dataset.v } })));
+      og.querySelector("#o-on").onchange = (e) => set({ ornament: { ...ornCfg, on: e.target.checked } });
+      if (ornCfg.kind === "none") { og.querySelector("#o-pos").hidden = true; og.querySelector(".check").hidden = true; }
+      body.append(og);
 
       // lettering for titles
       const fg = h(`<div class="group"><h3 class="label">Lettering</h3><p class="hint">For the page title, shelf names and book titles.</p><div class="fonts"></div></div>`);

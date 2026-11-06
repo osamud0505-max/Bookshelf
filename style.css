@@ -584,3 +584,17 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 @keyframes drift { from { transform: translate(0, 0); } to { transform: translate(var(--dx), var(--dy)); } }
 @keyframes blink { 0%, 100% { opacity: .15; } 30%, 60% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .lights.candles.on .flame, .lights.candles.on .halo, .lights.fireflies.on i { animation: none; opacity: .8; } }
+
+/* ornament standing on the shelf */
+.ornament { position: absolute; left: 0; bottom: 0; z-index: 3; cursor: pointer; will-change: transform; transition: none; -webkit-tap-highlight-color: transparent; }
+.ornament svg { position: relative; display: block; overflow: visible; filter: drop-shadow(0 3px 3px rgba(0,0,0,.45)); }
+.ornament .ornFlame { transform-box: fill-box; transform-origin: 50% 100%; transform: rotate(var(--lean, 0deg)); transition: transform .5s cubic-bezier(.2,1.5,.4,1), opacity .3s; opacity: 0; }
+.ornament.lit .ornFlame { opacity: 1; }
+.ornament .ornFlicker { transform-box: fill-box; transform-origin: 50% 100%; }
+.ornament.lit .ornFlicker { animation: flicker 1.7s ease-in-out infinite alternate; }
+.ornGlow { position: absolute; left: 50%; top: 45%; width: 480px; height: 250px; transform: translate(-50%, -50%); pointer-events: none; opacity: 0; transition: opacity .5s;
+  background: radial-gradient(closest-side, rgba(255,186,100,.42), rgba(255,160,80,.16) 45%, transparent); mix-blend-mode: screen; }
+.ornament.lit .ornGlow { opacity: 1; animation: candleGlow 2.4s ease-in-out infinite alternate; }
+.ornament::after { content: ""; position: absolute; left: 0; right: 0; bottom: -5px; height: 10px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0,0,0,.45), transparent 70%); z-index: -1; }
+.wrapSeg { flex-wrap: wrap; }
+@media (prefers-reduced-motion: reduce) { .ornament.lit .ornFlicker, .ornament.lit .ornGlow { animation: none; } }

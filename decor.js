@@ -205,6 +205,69 @@
     return el;
   }
 
+  // ------------------------------------------------------------------ an ornament that stands on the shelf among the books
+  // Drawn in a box `vw` wide and 200 tall; `w` is its width as a share of the book height.
+  const metal = (id, stops) => `<linearGradient id="${id}" x1="0" x2="1" y1="0" y2="0">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join("")}</linearGradient>`;
+  const BRASS = [[0, "#5a421c"], [0.28, "#c9a65e"], [0.45, "#f3dc9a"], [0.62, "#a9843f"], [1, "#4a3616"]];
+  const SILVER = [[0, "#3d4046"], [0.3, "#a9adb5"], [0.46, "#f1f3f6"], [0.62, "#8b9097"], [1, "#30333a"]];
+  const taper = (x, top, bottom, wd, wax = "#efe6d2") => `<rect x="${x - wd / 2}" y="${top}" width="${wd}" height="${bottom - top}" rx="1.6" fill="${wax}"/>`
+    + `<rect x="${x - wd / 2}" y="${top}" width="${wd * 0.3}" height="${bottom - top}" fill="#fff" opacity=".28"/>`
+    + `<path d="M${x - wd / 2 + 0.6} ${top + 2} q-1 7 .4 12 M${x + wd / 2 - 1.2} ${top + 1} q1.4 5 .2 9 M${x} ${top + 1} q.8 4 0 6" stroke="${wax}" stroke-width="2.6" stroke-linecap="round" fill="none"/>`
+    + `<line x1="${x}" y1="${top}" x2="${x}" y2="${top - 4}" stroke="#2a2420" stroke-width="1.2"/>`;
+  const flame = (x, y, s = 1) => `<g class="ornFlame" data-x="${x}" data-y="${y}"><g class="ornFlicker"><ellipse cx="${x}" cy="${y - 9 * s}" rx="${5 * s}" ry="${11 * s}" fill="#ffb347" opacity=".55"/><path d="M${x} ${y - 20 * s} C${x + 6 * s} ${y - 12 * s} ${x + 5 * s} ${y - 2 * s} ${x} ${y} C${x - 5 * s} ${y - 2 * s} ${x - 6 * s} ${y - 12 * s} ${x} ${y - 20 * s}Z" fill="#ffc861"/><path d="M${x} ${y - 13 * s} C${x + 2.6 * s} ${y - 9 * s} ${x + 2.2 * s} ${y - 3 * s} ${x} ${y - 1.5 * s} C${x - 2.2 * s} ${y - 3 * s} ${x - 2.6 * s} ${y - 9 * s} ${x} ${y - 13 * s}Z" fill="#fffbe6"/><ellipse cx="${x}" cy="${y - 1}" rx="${1.6 * s}" ry="${2.4 * s}" fill="#5a7cff" opacity=".55"/></g></g>`;
+  const ORNAMENTS = {
+    none: { label: "None" },
+    candlestick: {
+      label: "Brass candlestick", w: 0.24, vw: 60,
+      draw: (g) => `<defs>${metal(g, BRASS)}</defs>`
+        + `<ellipse cx="30" cy="194" rx="26" ry="5" fill="url(#${g})"/><path d="M6 194 Q8 182 22 178 L38 178 Q52 182 54 194Z" fill="url(#${g})"/>`
+        + `<path d="M25 178 C20 170 22 160 27 156 C22 148 24 136 27 128 L26 96 C21 92 21 86 27 84 L33 84 C39 86 39 92 34 96 L33 128 C36 136 38 148 33 156 C38 160 40 170 35 178Z" fill="url(#${g})"/>`
+        + `<ellipse cx="30" cy="84" rx="15" ry="3.5" fill="url(#${g})"/><path d="M15 84 Q30 92 45 84" fill="url(#${g})"/>`
+        + taper(30, 30, 82, 11) + flame(30, 25, 1.05),
+    },
+    candelabra: {
+      label: "Silver candelabra", w: 0.5, vw: 140,
+      draw: (g) => `<defs>${metal(g, SILVER)}</defs>`
+        + `<ellipse cx="70" cy="194" rx="34" ry="5.5" fill="url(#${g})"/><path d="M38 194 Q42 180 60 176 L80 176 Q98 180 102 194Z" fill="url(#${g})"/>`
+        + `<path d="M66 176 C60 166 62 152 67 146 L66 112 C60 108 61 101 67 99 L73 99 C79 101 80 108 74 112 L73 146 C78 152 80 166 74 176Z" fill="url(#${g})"/>`
+        + `<path d="M70 112 C46 112 22 112 20 92 M70 112 C94 112 118 112 120 92" stroke="url(#${g})" stroke-width="5" fill="none" stroke-linecap="round"/>`
+        + `<path d="M70 112 C56 122 34 124 30 110 M70 112 C84 122 106 124 110 110" stroke="url(#${g})" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".8"/>`
+        + [[20, 92], [120, 92], [70, 76]].map(([x, y]) => `<path d="M${x - 10} ${y} Q${x} ${y + 8} ${x + 10} ${y}Z" fill="url(#${g})"/><ellipse cx="${x}" cy="${y}" rx="10" ry="2.6" fill="url(#${g})"/>`).join("")
+        + `<rect x="67" y="76" width="6" height="26" fill="url(#${g})"/><ellipse cx="70" cy="88" rx="5" ry="4" fill="url(#${g})"/>`
+        + taper(20, 46, 90, 9) + taper(120, 46, 90, 9) + taper(70, 22, 74, 10)
+        + flame(20, 41, 0.9) + flame(120, 41, 0.9) + flame(70, 17, 1),
+    },
+    oilLamp: {
+      label: "Oil lamp", w: 0.32, vw: 80,
+      draw: (g) => `<defs>${metal(g, BRASS)}<linearGradient id="${g}c" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".08"/><stop offset=".3" stop-color="#fff" stop-opacity=".45"/><stop offset=".5" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity=".2"/></linearGradient></defs>`
+        + `<ellipse cx="40" cy="194" rx="30" ry="5" fill="url(#${g})"/><path d="M14 194 Q18 184 32 182 L48 182 Q62 184 66 194Z" fill="url(#${g})"/>`
+        + `<path d="M35 182 L33 160 L47 160 L45 182Z" fill="url(#${g})"/>`
+        + `<path d="M40 160 C14 160 10 122 40 118 C70 122 66 160 40 160Z" fill="url(#${g})"/><path d="M40 156 C22 154 20 128 40 124 C60 128 58 154 40 156Z" fill="#000" opacity=".12"/>`
+        + `<rect x="30" y="110" width="20" height="9" rx="2" fill="url(#${g})"/>`
+        + `<path d="M31 110 C20 92 22 74 31 64 L31 34 L49 34 L49 64 C58 74 60 92 49 110Z" fill="url(#${g}c)" stroke="rgba(255,255,255,.35)" stroke-width="1"/>`
+        + `<line x1="40" y1="110" x2="40" y2="98" stroke="#2a2420" stroke-width="2"/>` + flame(40, 98, 0.95),
+    },
+    pillars: {
+      label: "Melted candles", w: 0.42, vw: 110,
+      draw: (g) => `<defs>${metal(g, BRASS)}</defs><ellipse cx="55" cy="193" rx="50" ry="6" fill="url(#${g})"/>`
+        + [[28, 120, 22], [60, 88, 26], [88, 140, 18]].map(([x, top, wd]) => `<rect x="${x - wd / 2}" y="${top}" width="${wd}" height="${190 - top}" rx="3" fill="#ece1cb"/><rect x="${x - wd / 2}" y="${top}" width="${wd * 0.3}" height="${190 - top}" fill="#fff" opacity=".3"/><path d="M${x - wd / 2} ${top + 2} Q${x - wd / 2 - 1} ${top + 18} ${x - wd / 2 + 2} ${top + 26} M${x + wd / 2 - 2} ${top + 2} Q${x + wd / 2 + 1} ${top + 12} ${x + wd / 2 - 1} ${top + 16}" stroke="#ece1cb" stroke-width="4" stroke-linecap="round" fill="none"/><ellipse cx="${x}" cy="${top + 1}" rx="${wd / 2}" ry="3" fill="#d9ccb2"/><line x1="${x}" y1="${top + 1}" x2="${x}" y2="${top - 4}" stroke="#2a2420" stroke-width="1.2"/>` + flame(x, top - 4, 0.95)).join(""),
+    },
+  };
+  let ornN = 0;
+  /** The ornament as an element sized for books `H` pixels tall. */
+  function ornamentEl(kind, H, lit) {
+    const o = ORNAMENTS[kind]; if (!o || !o.draw) return null;
+    const h = Math.round(H * 0.74), w = Math.round(h * o.vw / 200);
+    const el = document.createElement("div");
+    el.className = "ornament" + (lit ? " lit" : "");
+    el.style.width = w + "px"; el.style.height = h + "px";
+    el.innerHTML = `<div class="ornGlow"></div><svg viewBox="0 0 ${o.vw} 200" width="${w}" height="${h}" aria-hidden="true">${o.draw("orn" + ornN++)}</svg>`;
+    // where the glow sits: the highest flame
+    const ys = [...o.draw("x").matchAll(/data-y="([\d.]+)"/g)].map((m) => +m[1]);
+    el.style.setProperty("--fy", (Math.min(...ys) / 200 * 100).toFixed(1) + "%");
+    return el;
+  }
+
   // ------------------------------------------------------------------ heading fonts
   const HEAD_FONTS = {
     bricolage: ["Modern", "'Bricolage Grotesque', 'Inter Tight', system-ui, sans-serif"],
@@ -230,7 +293,7 @@
     rice: { label: "Rice paper", t: ["#f3ecdf", "#2a2219", "#ebe2d1", "#faf6ee", "#e3d8c4", "#7a6c58", "#d9ccb4", "#ddd1bb", "#cdbfa5", "light"] },
     latte: { label: "Latte", t: ["#efe4d4", "#2b2016", "#e6d8c4", "#f8f1e6", "#dfcfb8", "#7b6853", "#d6c4ab", "#dccab0", "#cbb79c", "light"] },
   };
-  const LOOK_KEYS = ["theme", "customBg", "accent", "shelf", "shelfMat", "backdrop", "lights", "headFont"];
+  const LOOK_KEYS = ["theme", "customBg", "accent", "shelf", "shelfMat", "backdrop", "lights", "headFont", "ornament"];
   const LOOKS = {
     minimal: { label: "Minimal", set: { theme: "graphite", accent: "#f2c76b", shelf: "#34343f", shelfMat: "paint", backdrop: "none", lights: { style: "none", colour: "warm", on: false }, headFont: "bricolage" } },
     cabin: { label: "Cozy cabin", set: { theme: "cabin", accent: "#f0a85a", shelfMat: "oak", backdrop: "walnutPanel", lights: { style: "fairy", colour: "warm", on: true }, headFont: "cormorant" } },
@@ -250,7 +313,9 @@
     academia: { label: "Dark academia", set: { theme: "cabin", accent: "#c9a25b", shelfMat: "walnut", backdrop: "leather", lights: { style: "globe", colour: "warm", on: true }, headFont: "fell" } },
     teahouse: { label: "Tea house", set: { theme: "rice", accent: "#b8402f", shelfMat: "pine", backdrop: "shoji", lights: { style: "lanterns", colour: "warm", on: true }, headFont: "cormorant" } },
   });
+  const ORN = { vampire: "candelabra", victorian: "candlestick", castle: "candelabra", bordello: "pillars", academia: "oilLamp" };
+  for (const [k, L] of Object.entries(LOOKS)) L.set.ornament = { kind: ORN[k] || "none", on: true, pos: "end" };
   MATERIALS.whitewashWood = { label: "Whitewashed", base: "#d9cfc0", tex: () => grainH(0.3, 0.2) };
 
-  window.Decor = { BACKDROPS, MATERIALS, LIGHT_STYLES, LIGHT_COLOURS, HEAD_FONTS, PALETTES, LOOKS, LOOK_KEYS, lightsEl };
+  window.Decor = { BACKDROPS, MATERIALS, LIGHT_STYLES, LIGHT_COLOURS, HEAD_FONTS, PALETTES, LOOKS, LOOK_KEYS, ORNAMENTS, lightsEl, ornamentEl };
 })();
