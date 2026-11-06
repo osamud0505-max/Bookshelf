@@ -314,7 +314,7 @@
     starry: [["crickets", "Crickets", (R) => S.crickets(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.6)]],
     cottage: [["birds", "Birds", (R) => S.birdsFar(R)]],
     candle: [["writing", "Pen on paper", (R) => S.writing(R)]],
-    vampire: [["drone", "Low drone", (R) => S.drone(R)], ["bats", "Bats", (R) => S.bats(R)]],
+    vampire: [["drone", "Low drone", (R) => S.drone(R)]],
     victorian: [["clock", "Grandfather clock", (R) => S.clock(R, true, 0.8)]],
     castle: [["wind", "Wind", (R) => S.wind(R.far(380, 0.35), 1)], ["drips", "Dripping water", (R) => S.drips(R)]],
     bordello: [["clock", "Clock", (R) => S.clock(R, false, 1)]],
