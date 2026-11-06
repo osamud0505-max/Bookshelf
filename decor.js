@@ -141,7 +141,7 @@
     const style = cfg.style || "none"; if (style === "none") return null;
     if (style === "candles") return candlesEl(w, cfg);
     if (style === "fireflies") return firefliesEl(w, cfg);
-    if (style === "wisteria") return wisteriaEl(w);
+    if (style === "wisteria") return wisteriaEl(w, cfg);
     if (style === "chinese") return chineseEl(w, cfg);
     const on = !!cfg.on, col = LIGHT_COLOURS[cfg.colour] || LIGHT_COLOURS.warm;
     const colour = (i) => col[1] || MULTI[i % MULTI.length];
@@ -221,25 +221,37 @@
     return el;
   }
 
-  /** Strands of wisteria hanging from the shelf edge (decoration, not a light). */
-  function wisteriaEl(w) {
-    const n = Math.max(6, Math.round(w / 34)), gap = w / n;
+  /** Long, full strands of wisteria hanging from the shelf edge, with tiny lights tucked in that slowly glow and fade. */
+  function wisteriaEl(w, cfg = {}) {
+    const n = Math.max(9, Math.round(w / 22)), gap = w / n;
     let vine = `M0 3`, leaves = "", strands = "", H = 0;
     for (let i = 0; i <= n; i++) vine += ` Q${(i - 0.5) * gap} ${i % 2 ? 9 : 1} ${i * gap} 3`;
-    const purple = ["#c8a6d8", "#b996cf", "#d6b8e2", "#a987c4"];
+    // deeper violet at the top of each cluster, paler lilac toward the tip
+    const shade = (f, k) => [["#8f6db8", "#9a78c2", "#a684c9"], ["#ad8fd0", "#b89bd6", "#c3a8dc"], ["#cdb5e3", "#d8c4ea", "#e4d6f0"]][Math.min(2, Math.floor(f * 3))][k % 3];
+    const glow = (cfg.colour === "white" ? "#fff6e6" : cfg.colour === "pink" ? "#ffd2ea" : "#ffe7b8");
     for (let i = 0; i < n; i++) {
-      const x0 = gap * (i + 0.5) + ((i * 17) % 9) - 4, len = 34 + ((i * 41) % 6) * 11, green = i % 3 === 1;
+      const x0 = gap * (i + 0.5) + ((i * 17) % 9) - 4, len = 58 + ((i * 41) % 7) * 9, green = i % 4 === 2;
       H = Math.max(H, len + 10);
       // each strand is its own little picture, so the swaying runs on the graphics card and stays smooth
-      const c = 10; // centre of the strand's box
+      const c = 12;
       let st = `<path d="M${c} 0 q2 ${len / 2} -1 ${len}" stroke="#5c6b4a" stroke-width=".8" fill="none"/>`;
-      if (green) { for (let y = 4; y < len; y += 5) st += `<ellipse cx="${c + (y % 10 ? 2.6 : -2.6)}" cy="${y}" rx="2.8" ry="1.3" fill="${["#55663f", "#6b7d4f", "#4a5a37"][y % 3]}" transform="rotate(${y % 10 ? 35 : -35} ${c + (y % 10 ? 2.6 : -2.6)} ${y})"/>`; }
-      else { for (let y = 2; y < len; y += 2.6) { const r = 3.4 * (1 - y / (len + 8)) + 0.9; st += `<circle cx="${(c + Math.sin(y * 1.7) * r * 0.7).toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="${purple[Math.round(y) % 4]}"/>`; } }
-      strands += `<svg class="strand" width="20" height="${len + 6}" viewBox="0 0 20 ${len + 6}" style="left:${(x0 - c).toFixed(1)}px;--d:-${((i * 0.53) % 2.4).toFixed(2)}s;--t:${(4.6 + (i % 4) * 0.7).toFixed(1)}s" aria-hidden="true">${st}</svg>`;
-      leaves += `<ellipse cx="${gap * i + 10}" cy="5" rx="3.2" ry="1.4" fill="#55663f" transform="rotate(${i % 2 ? 25 : -20} ${gap * i + 10} 5)"/>`;
+      if (green) { for (let y = 4; y < len * 0.8; y += 5) st += `<ellipse cx="${c + (y % 10 ? 2.8 : -2.8)}" cy="${y}" rx="3" ry="1.4" fill="${["#55663f", "#6b7d4f", "#4a5a37"][y % 3]}" transform="rotate(${y % 10 ? 35 : -35} ${c + (y % 10 ? 2.8 : -2.8)} ${y})"/>`; }
+      else {
+        for (let y = 2, k = 0; y < len; y += 2.2, k++) {
+          const f = y / len, r = 4.6 * (1 - f * 0.78) + 0.7;
+          st += `<circle cx="${(c + Math.sin(y * 1.7 + i) * r * 0.75).toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="${shade(f, k + i)}"/>`;
+        }
+        // three or four tiny lights nestled in the flowers, each breathing on its own slow rhythm
+        for (let k = 0, m = 3 + (i % 2); k < m; k++) {
+          const y = len * (0.18 + k * 0.22) + ((i * 7 + k * 5) % 6), x = c + (((i + k) % 3) - 1) * 2.4;
+          st += `<g class="glint" style="--gt:${(4.2 + ((i * 3 + k * 7) % 9) * 0.55).toFixed(2)}s;--gd:-${(((i * 1.37 + k * 2.1) % 6)).toFixed(2)}s"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.5" fill="${glow}" opacity=".4"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.4" fill="#fffaf0"/></g>`;
+        }
+      }
+      strands += `<svg class="strand" width="24" height="${len + 8}" viewBox="0 0 24 ${len + 8}" style="left:${(x0 - c).toFixed(1)}px;--d:-${((i * 0.53) % 2.4).toFixed(2)}s;--t:${(4.6 + (i % 4) * 0.7).toFixed(1)}s" aria-hidden="true">${st}</svg>`;
+      leaves += `<ellipse cx="${gap * i + 10}" cy="5" rx="3.4" ry="1.5" fill="#55663f" transform="rotate(${i % 2 ? 25 : -20} ${gap * i + 10} 5)"/>`;
     }
     const el = document.createElement("div");
-    el.className = "lights wisteria";
+    el.className = "lights wisteria" + (cfg.on ? " on" : "");
     el.innerHTML = `${strands}<svg class="vine" width="${w}" height="12" viewBox="0 0 ${w} 12" aria-hidden="true"><path d="${vine}" stroke="#4d5a3c" stroke-width="1.6" fill="none"/>${leaves}</svg>`;
     el.style.height = H + "px";
     return el;

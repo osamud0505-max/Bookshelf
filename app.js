@@ -754,7 +754,6 @@
     if (!el) return;
     const plank = root.querySelector(".plank");
     plank.append(el);
-    if (cfg.style === "wisteria") return;
     const cord = h(`<button class="pullCord" aria-label="Turn this shelf's lights ${cfg.on ? "off" : "on"}" aria-pressed="${!!cfg.on}"><i></i><b></b></button>`);
     cord.onclick = () => {
       if (cord.classList.contains("yank")) return;
