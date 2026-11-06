@@ -525,8 +525,9 @@
   PALETTES.moonwood = { label: "Moonwood", t: ["#0b1020", "#e4eef0", "#111829", "#141c2e", "#182134", "#8fa3b3", "#223047", "#1f2b40", "#2e3d57", "dark"] };
   ORNAMENTS.mushrooms = {
     label: "Glowing mushrooms", scale: 0.42, vw: 120, soft: true, glow: "rgba(120,255,225,.4)",
+    caps: [[34, 196, 20, 46, "#8ff7e4"], [70, 196, 26, 70, "#a8f0ff"], [98, 196, 14, 34, "#ffc7ef"], [52, 196, 10, 24, "#b9fff0"]],
     draw: (g) => {
-      const caps = [[34, 196, 20, 46, "#8ff7e4"], [70, 196, 26, 70, "#a8f0ff"], [98, 196, 14, 34, "#ffc7ef"], [52, 196, 10, 24, "#b9fff0"]];
+      const caps = ORNAMENTS.mushrooms.caps;
       return `<defs><filter id="${g}b" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="6"/></filter></defs><g data-y="120"></g>`
         + `<path d="M4 200 C10 188 30 186 60 188 C90 186 110 188 116 200Z" fill="#3c6a36"/><path d="M8 196 C30 190 90 190 112 196" stroke="#6fa452" stroke-width="2" fill="none"/>`
         + caps.map(([x, y, r, h, c]) => `<path d="M${x - r * 0.16} ${y} C${x - r * 0.2} ${y - h * 0.5} ${x - r * 0.12} ${y - h + 6} ${x} ${y - h + 4} C${x + r * 0.12} ${y - h + 6} ${x + r * 0.2} ${y - h * 0.5} ${x + r * 0.16} ${y}Z" fill="#e6f4ef"/>`

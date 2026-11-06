@@ -729,6 +729,78 @@
       }
     },
   };
+  // glowing mushrooms: going dark, each cap breathes out its light as fairy dust that drifts up and twinkles away;
+  // lighting up, the dust drifts down and each cap blooms with light where it lands
+  D.ORNAMENTS.mushrooms.toggle = (el, out) => {
+    const svg = el.querySelector("svg"), caps = D.ORNAMENTS.mushrooms.caps;
+    if (!svg) { el.classList.toggle("lit", !out); return; }
+    if (el._fairy) el._fairy();
+    const anims = [], dots = [], timers = [];
+    let done = false;
+    const finish = () => {
+      if (done) return; done = true;
+      timers.forEach(clearTimeout); dots.forEach((d) => d.remove());
+      el.classList.toggle("lit", !out);
+      anims.forEach((a) => { try { a.cancel(); } catch (e) { /* gone */ } });
+      el._fairy = null;
+    };
+    el._fairy = finish;
+    const lit = [...svg.querySelectorAll(".litOnly")]; // a glow and a cap colour for each mushroom, in order
+    const order = caps.map((_, i) => i).sort(() => Math.random() - 0.5);
+    const NS = "http://www.w3.org/2000/svg", gap = 230, life = 1100;
+    order.forEach((ci, n) => {
+      const [x, y, r, h, c] = caps[ci], delay = n * gap;
+      const parts = lit.slice(ci * 2, ci * 2 + 2);
+      parts.forEach((p) => {
+        const now = +getComputedStyle(p).opacity;
+        anims.push(p.animate(out
+          ? [{ opacity: now }, { opacity: Math.min(1, now + 0.4), offset: 0.22 }, { opacity: now * 0.5, offset: 0.45 }, { opacity: 0 }]
+          : [{ opacity: 0 }, { opacity: 0, offset: 0.35 }, { opacity: 1, offset: 0.62 }, { opacity: 0.55 }],
+        { duration: out ? life : life + 300, delay: out ? delay + 120 : delay, easing: "ease-in-out", fill: "both" }));
+      });
+      // the dust: a little swirl of tiny lights
+      const k = 9 + Math.round(r / 4);
+      for (let j = 0; j < k; j++) {
+        const d = document.createElementNS(NS, "circle"), core = Math.random() < 0.45;
+        d.setAttribute("cx", (x + (Math.random() - 0.5) * r * 1.4).toFixed(1)); d.setAttribute("cy", (y - h + (Math.random() - 0.3) * r * 0.5).toFixed(1));
+        d.setAttribute("r", (core ? 1.8 + Math.random() * 1 : 2.6 + Math.random() * 2.4).toFixed(1));
+        d.setAttribute("fill", core ? "#fff" : c);
+        d.style.filter = `drop-shadow(0 0 4px ${c}) drop-shadow(0 0 1px #fff)`; d.style.transformBox = "fill-box"; d.style.transformOrigin = "center";
+        svg.append(d); dots.push(d);
+        const rise = 70 + Math.random() * 70, sway = (Math.random() < 0.5 ? -1 : 1) * (8 + Math.random() * 16);
+        const path = [0, 0.25, 0.5, 0.75, 1].map((f) => `translate(${(Math.sin(f * Math.PI * (1.5 + Math.random())) * sway).toFixed(1)}px, ${(-rise * f).toFixed(1)}px) scale(${(1 - f * 0.6).toFixed(2)})`);
+        const tw = [0, 1, 0.35, 0.95, 0.25, 0.8, 0];
+        const kf = path.map((tr, i) => ({ transform: tr }));
+        const steps = out ? kf : [...kf].reverse();
+        const dur = 1300 + Math.random() * 900, dl = delay + Math.random() * (out ? 380 : 260);
+        anims.push(d.animate(steps, { duration: dur, delay: dl, easing: out ? "cubic-bezier(.3,.6,.4,1)" : "cubic-bezier(.5,0,.6,.5)", fill: "both" }));
+        anims.push(d.animate(tw.map((o) => ({ opacity: o })), { duration: dur, delay: dl, easing: "ease-in-out", fill: "both" }));
+      }
+    });
+    // the soft light around them follows
+    const glow = el.querySelector(".ornGlow");
+    if (glow) { const now = +getComputedStyle(glow).opacity; anims.push(glow.animate(out ? [{ opacity: now }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 0, offset: 0.3 }, { opacity: 1 }], { duration: caps.length * gap + life, easing: "ease-in-out", fill: "both" })); }
+    fairySound(out);
+    timers.push(setTimeout(finish, caps.length * gap + life + 1700));
+  };
+  let fctx = null;
+  /** A soft run of tiny bells: falling as the lights go out, rising as they come on. */
+  function fairySound(out) {
+    try {
+      fctx = fctx || new (window.AudioContext || window.webkitAudioContext)();
+      if (fctx.state === "suspended") fctx.resume();
+      const notes = [1568, 1760, 2093, 2349, 2637, 3136, 3520], t = fctx.currentTime;
+      const seq = out ? [...notes].reverse() : notes;
+      seq.forEach((f, i) => {
+        const at = t + i * 0.11 + Math.random() * 0.03;
+        [1, 2.76].forEach((m, j) => {
+          const o = fctx.createOscillator(), g = fctx.createGain(); o.type = "sine"; o.frequency.value = f * m;
+          g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(j ? 0.004 : 0.018, at + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, at + (j ? 0.4 : 1.1));
+          o.connect(g).connect(fctx.destination); o.start(at); o.stop(at + 1.2);
+        });
+      });
+    } catch (e) { /* no sound */ }
+  }
   let wctx = null;
   function witchSound(out) {
     try {

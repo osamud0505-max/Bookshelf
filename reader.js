@@ -791,8 +791,8 @@
     return A.fx;
   }
   /** Leaving the book: the page fades to black, the open book comes back into view, closes and fades away. */
-  async function closingAnim(b, hideReader) {
-    if (!b || matchMedia("(prefers-reduced-motion: reduce)").matches) { hideReader(); return; }
+  async function closingAnim(b, hideReader, after = () => {}) {
+    if (!b || matchMedia("(prefers-reduced-motion: reduce)").matches) { hideReader(); after(); return; }
     const A = bookFx(b);
     A.pose(OPEN_END);
     const black = A.fx.querySelector(".ofBlack");
@@ -809,6 +809,7 @@
     A.pose(OPEN_END); A.fx.classList.remove("pre");
     await A.play(OPEN_END, 0, 1.05);
     A.fx.remove(); holdBackdrop(false);
+    setTimeout(after, 30); // the heavy tidying up waits until the book has closed, so it can't stall the animation
   }
   // ------------------------------------------------------------------ handwriting for the pages: flowing pen strokes made of letter-like shapes that never spell anything
   const GLYPHS = [
@@ -976,13 +977,17 @@
     if (room.hidden || room.classList.contains("leaving")) return;
     const b = cur && byId(cur.id);
     dispatchEvent(new CustomEvent("shelf:reading", { detail: false }));
+    const old = cur;
     closingAnim(b, () => {
+      // just hide the reader here; anything slow happens after the animation
       if (turn) { turn.layers.forEach((l) => l.remove()); view.style.clipPath = ""; view.style.zIndex = ""; turn = null; }
-      if (cur) { try { cur.book.destroy(); } catch (e) { /* ignore */ } }
       setPen(false); ribbon.hidden = true; clearTimeout(primeTimer); dropPrime();
-      cur = null; view.replaceChildren(); room.hidden = true; document.body.style.overflow = "";
+      cur = null; room.hidden = true; document.body.style.overflow = "";
       room.querySelector(".rdLoading").textContent = "Opening…";
       room.querySelector(".rdScrub").disabled = true;
+    }, () => {
+      if (old) { try { old.book.destroy(); } catch (e) { /* ignore */ } }
+      if (!cur) view.replaceChildren();
       render();
     });
   }

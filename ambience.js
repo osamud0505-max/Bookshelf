@@ -267,17 +267,29 @@
     },
     /** A witch's pot: a thick simmer, small bubbles and the occasional deep glug. */
     cauldron(R) {
-      const sim = R.loop("brown", [R.filter("lowpass", 420)], 0.1);
-      R.lfo(sim.gain, 2.7, 0.04);
-      R.every(70, 240, (t) => { const f = rnd(180, 420); R.tone(t, f, f * rnd(1.5, 2.1), rnd(0.03, 0.06), rnd(0.02, 0.05), "sine", R.out, 0.006); });
-      R.every(500, 1600, (t) => {
-        for (let k = 0; k < 1 + Math.floor(Math.random() * 3); k++) {
-          const at = t + k * rnd(0.12, 0.25), f = rnd(80, 120);
-          R.tone(at, f, f * rnd(2, 2.6), rnd(0.1, 0.16), rnd(0.07, 0.12), "sine", R.out, 0.012);
-          R.burst(at + 0.05, 0.07, "lowpass", 700, 0.8, rnd(0.04, 0.08));
-        }
+      // a heavy pot over the heat: the low simmer of the pot itself, thick liquid glugging and popping,
+      // and now and then the iron settling with a soft knock
+      const body = R.filter("lowpass", 900, 0.7); body.connect(R.out);
+      const sim = R.loop("brown", [R.filter("lowpass", 240)], 0.12);
+      R.lfo(sim.gain, 0.4, 0.04);
+      R.loop("pink", [R.filter("bandpass", 380, 2.5)], 0.008); // the hollow ring of the pot
+      const bubble = (at, f, len, peak) => {
+        const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine";
+        o.frequency.setValueAtTime(f, at); o.frequency.exponentialRampToValueAtTime(f * rnd(1.6, 2.4), at + len); // pitch rises as it pops
+        g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, at + len);
+        o.connect(g).connect(body); o.start(at); o.stop(at + len + 0.02);
+      };
+      // small bubbles all the time
+      R.every(60, 260, (t) => bubble(t, rnd(260, 520), rnd(0.03, 0.06), rnd(0.012, 0.03)));
+      // the thick glug-glug: a few big bubbles breaking one after another
+      R.every(900, 2600, (t) => {
+        const n = 2 + Math.floor(Math.random() * 4);
+        for (let k = 0; k < n; k++) { const at = t + k * rnd(0.09, 0.2); bubble(at, rnd(95, 170), rnd(0.12, 0.2), rnd(0.07, 0.12)); R.burst(at + 0.03, 0.05, "lowpass", 600, 0.7, rnd(0.02, 0.04), body); }
       });
+      // the iron pot shifting on its hook
+      R.every(9000, 22000, (t) => { const f = rnd(170, 210); R.tone(t, f, f * 0.99, 1.4, 0.018, "sine", R.out, 0.004); R.tone(t, f * 2.71, f * 2.7, 0.7, 0.008, "sine", R.out, 0.004); R.burst(t, 0.02, "bandpass", 900, 1.5, 0.03); });
     },
+
     bubbles(R) {
       R.loop("brown", [R.filter("lowpass", 300)], 0.08);
       R.every(60, 260, (t) => { const f = rnd(160, 320); R.tone(t, f, f * rnd(1.6, 2.4), rnd(0.03, 0.07), rnd(0.03, 0.08), "sine", R.out, 0.006); });
@@ -299,7 +311,7 @@
     bordello: (R) => S.clock(R, false, 1),
     forest: (R) => { S.crickets(R, 0.8); S.owl(R); S.wind(R, 0, 0.55); S.sparkle(R); },
     teahouse: (R) => { S.water(R); S.chimes(R); S.crickets(R, 0.4); S.fireworks(R); },
-    witch: (R) => { S.cauldron(R); S.wind(R.far(420, 0.3), 1, 0.6); },
+    witch: (R) => S.cauldron(R),
   };
 
   // evens out how loud the rooms are against each other

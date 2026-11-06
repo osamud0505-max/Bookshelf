@@ -536,6 +536,14 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 .recentColors .hint { margin-right: 2px; font-size: .75rem; }
 .recentDot { width: 26px; height: 26px; padding: 0; border-radius: 999px; border: 0; box-shadow: inset 0 0 0 1px rgba(127,127,127,.4); cursor: pointer; }
 .recentDot[aria-pressed="true"] { outline: 2px solid var(--foreground); outline-offset: 2px; }
+.dropBtn { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--foreground); font: inherit; font-size: .75rem; cursor: pointer; }
+.dropper { position: fixed; inset: 0; z-index: 1000; cursor: crosshair; touch-action: none; }
+.dropper .dropTip { position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 12px); transform: translateX(-50%); width: min(92vw, 420px); display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: rgba(20,20,24,.92); color: #fff; font-size: .8rem; line-height: 1.3; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.dropper .dropTip .btn { flex: none; }
+.dropper .loupe { position: absolute; left: 0; top: 0; pointer-events: none; }
+.dropper .loupe i { position: absolute; left: -36px; top: -110px; width: 72px; height: 72px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.45); }
+.dropper .loupe b { position: absolute; left: -40px; top: -32px; width: 80px; text-align: center; font: 600 .7rem/1.6 ui-monospace, monospace; color: #fff; background: rgba(0,0,0,.6); border-radius: 6px; }
+.dropper .loupe::after { content: ""; position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.5); }
 
 /* ---------- decor: backdrop, materials, hanging lights ---------- */
 /* sized to the tallest viewport so the phone's toolbar showing/hiding never stretches it; its own layer so scrolling never repaints it */
@@ -698,6 +706,7 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 @media (prefers-reduced-motion: reduce) { #backdrop .meteor { display: none; } #backdrop .twinkle, #backdrop .mote { animation: none; opacity: .6; } }
 /* glowing things on the shelf (mushrooms) glow softly instead of flickering */
 .ornament.soft .ornGlow { top: 30%; width: 260px; height: 160px; }
+.ornament.soft svg { overflow: visible; } /* the fairy dust drifts above the mushrooms */
 .ornament.soft .litOnly { transition: opacity .9s ease; }
 .ornament.soft.lit .litOnly { animation: shroomPulse 3.2s ease-in-out infinite alternate; }
 .ornament.soft.lit path.litOnly { opacity: .55; }
@@ -844,7 +853,7 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .openFx .ofBlack { position: absolute; inset: 0; background: #000; opacity: 0; }
 /* everything that fades during the animation gets its own layer, so the handwritten pages are never repainted */
 .openFx .ofDim, .openFx .ofBlack, .openFx .ofShade, .openFx .ofGutter, .openFx .ofEdge, .openFx .ofLeaf i::after { will-change: opacity; }
-.openFx.pre .ofBook, .openFx.pre .ofDim { opacity: .001; }
+.openFx.pre .ofBook, .openFx.pre .ofDim { visibility: hidden; }
 .openFx.gone { opacity: 0; transition: opacity .18s ease; }
 .openFx.reveal { transition: opacity .6s ease; opacity: 0; }
 /* closing a sheet: it glides down (or out to the side) and the dimming fades */

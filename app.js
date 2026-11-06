@@ -212,10 +212,98 @@
     state.settings.recentColors = [c, ...list].slice(0, 10);
     save(true);
   }
-  /** A row of the colours picked most recently; tapping one uses it again. */
+  // ---------------------------------------------------------------- picking a colour off the screen
+  const hex = (r, g, b) => "#" + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
+  function cssHex(c) {
+    const k = /color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)/.exec(c || "");
+    if (k) return k[4] != null && +k[4] < 0.5 ? null : hex(k[1] * 255, k[2] * 255, k[3] * 255);
+    const m = /rgba?\(([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+%?))?/.exec(c || "");
+    if (!m) return null;
+    const a = m[4] == null ? 1 : m[4].endsWith("%") ? parseFloat(m[4]) / 100 : +m[4];
+    return a < 0.5 ? null : hex(+m[1], +m[2], +m[3]);
+  }
+  const imgCache = new Map();
+  /** A readable copy of a picture (null when the picture's site doesn't allow reading it). */
+  function readable(src) {
+    if (imgCache.has(src)) return imgCache.get(src);
+    const p = new Promise((res) => {
+      const im = new Image(); im.crossOrigin = "anonymous"; im.referrerPolicy = "no-referrer";
+      im.onload = () => {
+        try {
+          const c = document.createElement("canvas"); c.width = Math.min(600, im.naturalWidth); c.height = Math.round(c.width * im.naturalHeight / im.naturalWidth);
+          const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(im, 0, 0, c.width, c.height); x.getImageData(0, 0, 1, 1);
+          res(x);
+        } catch (e) { res(null); }
+      };
+      im.onerror = () => res(null); im.src = src;
+    });
+    imgCache.set(src, p); return p;
+  }
+  /** The colour of a picture shown in `el` at screen point (x, y), or null if the picture can't be read. */
+  async function pictureAt(el, src, fit, x, y) {
+    const ctx = await readable(src); if (!ctx) return null;
+    const r = el.getBoundingClientRect(), W = ctx.canvas.width, H = ctx.canvas.height;
+    let u = (x - r.left) / r.width, v = (y - r.top) / r.height;
+    if (fit === "cover") { // the picture is cropped to fill its box
+      const s = Math.max(r.width / W, r.height / H), dw = W * s, dh = H * s;
+      u = (x - r.left + (dw - r.width) / 2) / dw; v = (y - r.top + (dh - r.height) / 2) / dh;
+    }
+    const px = Math.min(W - 2, Math.max(1, u * W)), py = Math.min(H - 2, Math.max(1, v * H));
+    const d = ctx.getImageData(px - 1, py - 1, 3, 3).data; let R = 0, G = 0, B = 0;
+    for (let i = 0; i < 36; i += 4) { R += d[i]; G += d[i + 1]; B += d[i + 2]; }
+    return hex(R / 9, G / 9, B / 9);
+  }
+  /** The colour of whatever is on screen at (x, y): picture pixels where it can, otherwise the colour of the shape or surface. */
+  async function colourAt(x, y) {
+    for (const el of document.elementsFromPoint(x, y)) {
+      if (el.closest(".dropper")) continue;
+      const cs = getComputedStyle(el);
+      // pictures that ignore touches (like covers) don't show up in the hit list, so look inside what was hit
+      const inner = [...el.querySelectorAll("img")].reverse().find((im) => { const r = im.getBoundingClientRect(); return im.complete && im.naturalWidth && getComputedStyle(im).visibility !== "hidden" && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; });
+      if (inner) return (await pictureAt(inner, inner.currentSrc || inner.src, getComputedStyle(inner).objectFit, x, y)) || "blocked";
+      const bgUrl = /url\("?([^")]+)"?\)/.exec(cs.backgroundImage || "");
+      const picSrc = el.tagName === "IMG" && el.complete && el.naturalWidth ? el.currentSrc || el.src : bgUrl ? bgUrl[1] : null;
+      if (picSrc) { const c = await pictureAt(el, picSrc, el.tagName === "IMG" ? cs.objectFit : cs.backgroundSize, x, y); if (c) return c; if (el.tagName === "IMG") return "blocked"; }
+      if (el instanceof SVGElement && !(el instanceof SVGSVGElement) && el.tagName !== "g") { const f = cssHex(cs.fill); if (f && +cs.opacity > 0.3 && +cs.fillOpacity > 0.3) return f; }
+      const bg = cssHex(cs.backgroundColor); if (bg) return bg;
+      if (el.matches("p, span, h1, h2, h3, a, label, b, i, em, strong") && el.textContent.trim()) { const c = cssHex(cs.color); if (c) return c; }
+    }
+    return cssHex(getComputedStyle(document.body).backgroundColor);
+  }
+  /** Lets you pick a colour from anything you can see. Uses the browser's own eyedropper where there is one. */
+  async function pickFromScreen(onPick) {
+    if (window.EyeDropper) {
+      try { const r = await new EyeDropper().open(); if (r && r.sRGBHex) { const c = cssHex(r.sRGBHex) || r.sRGBHex; rememberColor(c); onPick(c); } } catch (e) { /* cancelled */ }
+      return;
+    }
+    const ov = h(`<div class="dropper"><div class="dropTip">Touch anything to take its colour, slide to fine-tune, let go to use it. <button type="button" class="btn small">Cancel</button></div><div class="loupe" hidden><i></i><b></b></div></div>`);
+    document.body.append(ov);
+    const loupe = ov.querySelector(".loupe"), sw = loupe.querySelector("i"), label = loupe.querySelector("b");
+    let cur = null, seq = 0, down = false;
+    const close = () => ov.remove();
+    ov.querySelector(".dropTip button").onclick = (e) => { e.stopPropagation(); close(); };
+    const at = async (e) => {
+      const n = ++seq, x = e.clientX, y = e.clientY;
+      loupe.hidden = false; loupe.style.transform = `translate(${x}px, ${y}px)`;
+      ov.style.pointerEvents = "none"; const c = await colourAt(x, y); ov.style.pointerEvents = "";
+      if (n !== seq || !c) return;
+      // some sites don't let pages read their pictures' colours
+      if (c === "blocked") { cur = null; sw.style.background = "repeating-linear-gradient(45deg,#444 0 6px,#666 6px 12px)"; label.textContent = "can't read"; return; }
+      cur = c; sw.style.background = c; label.textContent = c;
+    };
+    ov.addEventListener("pointerdown", (e) => { if (e.target.closest(".dropTip")) return; down = true; ov.setPointerCapture(e.pointerId); at(e); });
+    ov.addEventListener("pointermove", (e) => { if (down) at(e); });
+    ov.addEventListener("pointerup", async (e) => {
+      if (!down) return; down = false; await at(e);
+      if (cur) { rememberColor(cur); onPick(cur); }
+      close();
+    });
+  }
+  /** A row of the colours picked most recently; tapping one uses it again. The dropper picks one from the screen. */
   function recentRow(onPick, current) {
     const list = state.settings.recentColors || [];
-    const row = h(`<div class="recentColors"${list.length ? "" : " hidden"}><span class="hint">Recent</span></div>`);
+    const row = h(`<div class="recentColors"><button type="button" class="dropBtn" aria-label="Pick a colour from the screen" title="Pick a colour from the screen"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5l5 5M17 2l5 5-3 3-5-5zM14 7l-9.3 9.3a2 2 0 0 0-.5.9L3 21l3.8-1.2a2 2 0 0 0 .9-.5L17 10"/></svg><span>Pick</span></button>${list.length ? `<span class="hint">Recent</span>` : ""}</div>`);
+    row.querySelector(".dropBtn").onclick = () => pickFromScreen(onPick);
     list.forEach((c) => {
       const b = h(`<button type="button" class="recentDot" aria-label="Use ${c}" aria-pressed="${(current || "").toLowerCase() === c}" style="background:${c}"></button>`);
       b.onclick = () => { rememberColor(c); onPick(c); };
@@ -444,6 +532,9 @@
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     const src = actx.createBufferSource(); src.buffer = buf; return src;
   }
+  // candle sounds are small, close-up sounds: kept well under the room sound
+  let candleBus = null;
+  const candleOut = () => { if (!candleBus || candleBus.context !== actx) { candleBus = actx.createGain(); candleBus.gain.value = 0.2; candleBus.connect(actx.destination); } return candleBus; };
   function env(g, t0, peak, attack, decay) { g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(peak, t0 + attack); g.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + decay); }
   /** Someone blowing a candle out: a long soft "fffooh" of breath, the flame fluttering in it, then quiet. */
   function soundBlow() {
@@ -453,14 +544,14 @@
       const lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 0.4;
       lp.frequency.setValueAtTime(3400, t); lp.frequency.exponentialRampToValueAtTime(650, t + 0.7);
       const g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.5, t + 0.07); g.gain.linearRampToValueAtTime(0.38, t + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
-      src.connect(hp).connect(lp).connect(g).connect(actx.destination); src.start(t); src.stop(t + 0.95);
+      src.connect(hp).connect(lp).connect(g).connect(candleOut()); src.start(t); src.stop(t + 0.95);
       // the flame flapping in the breath before it goes
       const f = noiseBurst(0.4), bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 150; bp.Q.value = 0.8;
       const fg = actx.createGain(); fg.gain.value = 0;
       const lfo = actx.createOscillator(), lg = actx.createGain(); lfo.frequency.value = 17; lg.gain.value = 0.35;
       lfo.connect(lg).connect(fg.gain);
       const fe = actx.createGain(); fe.gain.setValueAtTime(0.0001, t); fe.gain.linearRampToValueAtTime(1, t + 0.05); fe.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
-      f.connect(bp).connect(fg).connect(fe).connect(actx.destination); f.start(t); f.stop(t + 0.4); lfo.start(t); lfo.stop(t + 0.4);
+      f.connect(bp).connect(fg).connect(fe).connect(candleOut()); f.start(t); f.stop(t + 0.4); lfo.start(t); lfo.stop(t + 0.4);
     } catch (e) { /* no sound available */ }
   }
   /** A pull-chain light switch: the beads rattle, the switch clicks at the bottom, then a softer click as it lets go. */
@@ -503,7 +594,7 @@
       const burst = (at, len, type, freq, q, peak) => {
         const sN = noiseBurst(len + 0.03), f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
         const g = actx.createGain(); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + Math.min(0.006, len / 3)); g.gain.exponentialRampToValueAtTime(0.0001, at + len);
-        sN.connect(f).connect(g).connect(actx.destination); sN.start(at); sN.stop(at + len + 0.03);
+        sN.connect(f).connect(g).connect(candleOut()); sN.start(at); sN.stop(at + len + 0.03);
       };
       // the scratch: a quick run of rough grains
       for (let k = 0; k < 7; k++) burst(t + k * 0.021 + Math.random() * 0.006, 0.018 + Math.random() * 0.012, "bandpass", 1800 + Math.random() * 1800, 1.1, 0.12 + k * 0.045);
@@ -511,11 +602,11 @@
       const at = t + 0.17, n = noiseBurst(0.9), bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.6;
       bp.frequency.setValueAtTime(700, at); bp.frequency.exponentialRampToValueAtTime(2600, at + 0.05); bp.frequency.exponentialRampToValueAtTime(800, at + 0.6);
       const g = actx.createGain(); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.55, at + 0.035); g.gain.exponentialRampToValueAtTime(0.12, at + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.85);
-      n.connect(bp).connect(g).connect(actx.destination); n.start(at); n.stop(at + 0.9);
+      n.connect(bp).connect(g).connect(candleOut()); n.start(at); n.stop(at + 0.9);
       const o = actx.createOscillator(), og = actx.createGain(); o.type = "sine";
       o.frequency.setValueAtTime(120, at); o.frequency.exponentialRampToValueAtTime(55, at + 0.12);
       og.gain.setValueAtTime(0.0001, at); og.gain.exponentialRampToValueAtTime(0.22, at + 0.01); og.gain.exponentialRampToValueAtTime(0.0001, at + 0.14);
-      o.connect(og).connect(actx.destination); o.start(at); o.stop(at + 0.16);
+      o.connect(og).connect(candleOut()); o.start(at); o.stop(at + 0.16);
       for (let k = 0; k < 4; k++) burst(at + 0.18 + Math.random() * 0.45, 0.006, "highpass", 3500, 0.7, 0.08 + Math.random() * 0.06);
     } catch (e) { /* no sound available */ }
   }
@@ -963,7 +1054,7 @@
 
       // review
       const rev = h(`<div class="group"><h3 class="label">Review</h3><textarea class="input review" rows="6" placeholder="What stayed with you?"></textarea></div>`);
-      const ta = rev.querySelector("textarea"); ta.value = b.review;
+      const ta = rev.querySelector("textarea"); ta.value = b.review || "";
       ta.oninput = () => stage({ review: ta.value }, false);
       body.append(rev);
 
