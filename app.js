@@ -1403,7 +1403,7 @@
       body.append(shelfG);
 
       const backup = h(`<div class="group"><h3 class="label">Backup</h3>
-        <p class="hint">Your books live only in this browser. Save a backup now and then, and before clearing browser data or switching phones.</p>
+        <p class="hint">Your books live only in this browser. Save a backup now and then, and before clearing browser data or switching phones.</p><p class="hint versionTag">Version ${esc((document.querySelector('script[src*="app.js"]')?.getAttribute("src").match(/v=(\d+)/) || [, "?"])[1])}</p>
         <div class="row"><button class="btn small" id="exp">Save a backup file</button><label class="btn small" for="imp">Restore from a backup<input type="file" id="imp" accept="application/json,.json" hidden></label></div></div>`);
       backup.querySelector("#exp").onclick = () => {
         const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), books: state.books, settings: state.settings }, null, 2)], { type: "application/json" });
