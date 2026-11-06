@@ -121,7 +121,7 @@
       img: { "max-width": "100% !important" },
     });
     r.themes.fontSize(pref.size + "%");
-    setTimeout(paintAll, 350);
+    setTimeout(() => { paintAll(); schedulePrime(); }, 350);
   }
 
   // ------------------------------------------------------------------ music remote
@@ -321,9 +321,29 @@
     t.shUnderBand.style.opacity = Math.min(1, flapW / 40);
     t.shFlat.style.clipPath = polyCss(flat);
     band(t.shFlatBand, M, Math.min(60, flapW + 10), angU + 180);
-    const lift = Math.min(1, flapW / 80);
-    t.back.style.filter = `drop-shadow(${(-ux * 10 * lift).toFixed(1)}px ${(-uy * 10 * lift).toFixed(1)}px ${(12 * lift).toFixed(1)}px rgba(0,0,0,${(0.28 * lift).toFixed(2)}))`;
   }
+
+  // The copies of the page a turn needs take a moment to build, so they are made ahead of time, right
+  // after each page settles. A turn then starts the instant your finger moves.
+  let primed = null, primeTimer = 0, primeGen = 0;
+  function dropPrime() { primeGen++; if (primed) { primed.front.remove(); primed.back.remove(); primed = null; } }
+  function schedulePrime() { clearTimeout(primeTimer); dropPrime(); primeTimer = setTimeout(prime, 260); }
+  async function prime() {
+    if (!cur || turn || room.hidden) return;
+    const gen = ++primeGen;
+    const vr = viewRect();
+    const paper = getComputedStyle(room).getPropertyValue("--rd-bg").trim() || "#f6f1e7";
+    const back = h(`<div class="rdLayer rdBack"></div>`);
+    Object.assign(back.style, { left: vr.left + "px", top: vr.top + "px", width: vr.width + "px", height: vr.height + "px", zIndex: 6, display: "none" });
+    const backInner = h(`<div class="rdBackInner"></div>`); backInner.style.background = paper; back.append(backInner);
+    room.append(back);
+    const p = { back, backInner, front: null, ready: false };
+    const [front, copy] = await Promise.all([snapshot(room, { left: vr.left, top: vr.top, z: 4 }), snapshot(backInner)]);
+    front.style.visibility = "hidden"; copy.style.opacity = "0.16"; p.front = front;
+    if (gen !== primeGen || turn || !cur || primed) { front.remove(); back.remove(); return; }
+    p.ready = true; primed = p;
+  }
+  addEventListener("resize", () => { if (!room.hidden) schedulePrime(); });
 
   async function beginTurn(dir, y0) {
     if (turn || !cur) return null;
@@ -331,6 +351,8 @@
     if (loc && ((dir === "next" && loc.atEnd) || (dir === "prev" && loc.atStart))) return null;
     const vr = viewRect();
     const t = turn = { dir, W: vr.width, H: vr.height, y0, ready: false, f: dir === "next" ? vr.width : -vr.width, fy: y0, layers: [] };
+    clearTimeout(primeTimer); primeGen++;
+    const p = primed && primed.ready ? primed : null; primed = null;
     const paper = getComputedStyle(room).getPropertyValue("--rd-bg").trim() || "#f6f1e7";
     const at = (z) => ({ left: vr.left, top: vr.top, z });
     const layer = (cls, z) => { const el = h(`<div class="${cls}"></div>`); Object.assign(el.style, { left: vr.left + "px", top: vr.top + "px", width: vr.width + "px", height: vr.height + "px", zIndex: z }); room.append(el); t.layers.push(el); return el; };
@@ -338,22 +360,31 @@
     // the folded-back part and the shadows, hidden until the first frame is drawn
     t.shUnder = layer("rdLayer rdShade", 5); t.shUnderBand = mk("rdBand rdBandUnder"); t.shUnder.append(t.shUnderBand);
     t.shFlat = layer("rdLayer rdShade", 5); t.shFlatBand = mk("rdBand rdBandFlat"); t.shFlat.append(t.shFlatBand);
-    t.back = layer("rdLayer rdBack", 6);
-    t.backInner = mk("rdBackInner"); t.backInner.style.background = paper; t.back.append(t.backInner);
+    if (p && dir === "next") { t.back = p.back; t.backInner = p.backInner; t.layers.push(p.back); }
+    else {
+      if (p) p.back.remove();
+      t.back = layer("rdLayer rdBack", 6);
+      t.backInner = mk("rdBackInner"); t.backInner.style.background = paper; t.back.append(t.backInner);
+    }
     t.backShade = mk("rdBand rdBandBack");
     [t.shUnder, t.shFlat, t.back].forEach((el) => (el.style.display = "none"));
+    const addShade = () => t.backInner.append(t.backShade); // keep the fold shading above the mirrored text
     if (dir === "next") {
-      t.front = await snapshot(room, at(4)); t.layers.push(t.front);
-      const backCopy = await snapshot(t.backInner); backCopy.style.opacity = "0.16";
-      await cur.rendition.next();
+      if (p) { t.front = p.front; p.front.style.visibility = ""; }
+      else { t.front = await snapshot(room, at(4)); const bc = await snapshot(t.backInner); bc.style.opacity = "0.16"; }
+      t.layers.push(t.front);
+      // the real page moves on underneath while the paper starts to lift
+      t.moving = cur.rendition.next();
+      if (!p) await t.moving;
     } else {
-      const under = await snapshot(room, at(1)); t.layers.push(under);
+      const under = p ? p.front : await snapshot(room, at(1));
+      under.style.zIndex = 1; under.style.visibility = ""; t.layers.push(under);
       view.style.zIndex = 2; t.front = view; view.style.clipPath = polyCss([]);
-      await cur.rendition.prev();
-      await new Promise((r) => setTimeout(r, 40));
-      const backCopy = await snapshot(t.backInner); backCopy.style.opacity = "0.16";
+      t.moving = cur.rendition.prev();
+      await t.moving;
+      snapshot(t.backInner).then((bc) => { bc.style.opacity = "0.16"; addShade(); });
     }
-    t.backInner.append(t.backShade);
+    addShade();
     t.ready = true;
     drawTurn(t.f, t.fy);
     return t;
@@ -378,10 +409,11 @@
     const target = complete ? (t.dir === "next" ? -W : W) : (t.dir === "next" ? W : -W);
     const dist = Math.abs(target - t.f) / (2 * W);
     await animateTurn(target, t.y0, 160 + 340 * dist, 0);
+    if (t.moving) await t.moving;
     if (!complete && cur) { if (t.dir === "next") await cur.rendition.prev(); else await cur.rendition.next(); }
     t.layers.forEach((l) => l.remove());
     view.style.clipPath = ""; view.style.zIndex = "";
-    turn = null;
+    turn = null; schedulePrime();
   }
 
   /** A whole turn without a finger: for taps on the page edges and the arrow keys. */
@@ -392,9 +424,10 @@
     const t = await beginTurn(dir, H * 0.88); if (!t) return;
     const W = t.W;
     await animateTurn(dir === "next" ? -W : W, H * 0.88, 520, H * 0.06);
+    if (t.moving) await t.moving;
     t.layers.forEach((l) => l.remove());
     view.style.clipPath = ""; view.style.zIndex = "";
-    turn = null;
+    turn = null; schedulePrime();
   }
 
   // ------------------------------------------------------------------ highlighter pens and bookmarks
@@ -490,12 +523,12 @@
 
   // the pen tray: real highlighters lying side by side
   function drawPens() {
-    pensEl.replaceChildren(h(`<div class="rdPenRow">
+    pensEl.replaceChildren(h(`<div class="rdPenTray"><div class="rdPenTop"><span class="rdPenUndo"></span><span class="rdPenName">${pen.erase ? "Eraser: tap a highlight" : pen.colour[0].toUpperCase() + pen.colour.slice(1) + " highlighter"}</span><button class="rdPenDone">Done</button></div><div class="rdPenRow">
       ${PENS.map(([k, c]) => `<button class="rdPen" data-pen="${k}" aria-label="${k} highlighter" aria-pressed="${!pen.erase && pen.colour === k}" style="--ink:${c}">
         <svg viewBox="0 0 30 96" width="30" height="96"><path class="tip" d="M9 14 L15 2 L21 9 L21 18 L9 18Z"/><rect class="collar" x="7" y="17" width="16" height="9" rx="2"/><rect class="body" x="5" y="25" width="20" height="70" rx="5"/><rect class="shine" x="8" y="30" width="3.5" height="58" rx="1.75"/><rect class="clip" x="12" y="40" width="6" height="34" rx="3"/></svg></button>`).join("")}
       <button class="rdPen rdEraser" data-pen="erase" aria-label="Eraser" aria-pressed="${pen.erase}">
         <svg viewBox="0 0 30 96" width="30" height="96"><rect x="5" y="8" width="20" height="26" rx="4" fill="#f2b8b0"/><rect x="5" y="30" width="20" height="65" rx="4" fill="#3d6fd1"/><rect x="8" y="36" width="3.5" height="52" rx="1.75" fill="#fff" opacity=".35"/></svg></button>
-      <span class="rdPenUndo"></span><button class="rdPenDone">Done</button></div>`));
+      </div></div>`));
     pensEl.querySelector(".rdPenUndo").replaceWith(window.Shelf.undoPair("penUndo"));
     pensEl.querySelectorAll("[data-pen]").forEach((b) => (b.onclick = () => {
       if (b.dataset.pen === "erase") pen.erase = !pen.erase;
@@ -519,8 +552,15 @@
     pen.stroke = { doc, fr, a: caretAt(doc, x, y), els: [] };
     try { gesture.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
   }
+  let penRaf = 0;
   function penMove(e) {
     const st = pen.stroke; if (!st) return;
+    st.x = e.clientX; st.y = e.clientY;
+    if (!penRaf) penRaf = requestAnimationFrame(() => { penRaf = 0; penDraw(); });
+  }
+  function penDraw() {
+    const st = pen.stroke; if (!st || st.x == null) return;
+    const e = { clientX: st.x, clientY: st.y };
     const r = strokeRange(st.doc, st.a, caretAt(st.doc, e.clientX - st.fr.left, e.clientY - st.fr.top));
     st.els.forEach((el) => el.remove()); st.els = []; st.range = r;
     if (!r) return;
@@ -528,6 +568,7 @@
     st.els = strokeEls(st.doc, r, penColour(pen.colour), "live", true); st.els.forEach((el) => o.append(el));
   }
   function penUp() {
+    if (penRaf) { cancelAnimationFrame(penRaf); penRaf = 0; penDraw(); }
     const st = pen.stroke; pen.stroke = null; if (!st) return;
     st.els.forEach((el) => el.remove());
     const b = book_(), c = contentsFor(st.doc);
@@ -536,7 +577,7 @@
     if (!cfi) return;
     b.highlights = b.highlights || [];
     b.highlights.push({ cfi, colour: pen.colour, text: st.range.toString().replace(/\s+/g, " ").trim().slice(0, 400), at: Date.now() });
-    save(); paintMarks(c);
+    save(); paintMarks(c); schedulePrime();
   }
   function eraseAt(doc, x, y) {
     const b = book_(); if (!b || !b.highlights) return;
@@ -547,11 +588,11 @@
     });
     if (!hit) return toast("Tap right on a highlight to rub it out");
     b.highlights = b.highlights.filter((hl) => hl.cfi !== hit.dataset.hl);
-    save(); paintMarks(contentsFor(doc));
+    save(); paintMarks(contentsFor(doc)); schedulePrime();
   }
 
   // undo / redo from anywhere: redraw the ink and the ribbon
-  window.addEventListener("shelf:restored", () => { if (cur) { paintAll(); syncBookmark(); } });
+  window.addEventListener("shelf:restored", () => { if (cur) { paintAll(); syncBookmark(); schedulePrime(); } });
 
   // bookmarks: the ribbon button marks the page you are on
   function pageMarks() {
@@ -601,7 +642,9 @@
     }
     if (g.mode === "turn") follow();
   });
-  function follow() {
+  let followRaf = 0;
+  function follow() { if (!followRaf) followRaf = requestAnimationFrame(() => { followRaf = 0; followNow(); }); }
+  function followNow() {
     if (!turn || !turn.ready || !g) return;
     const W = turn.W;
     turn.f = turn.dir === "next" ? Math.min(W, W + (g.x - g.x0)) : Math.max(-W, Math.min(W, -W + (g.x - g.x0)));
@@ -670,7 +713,7 @@
       });
       rendition.on("relocated", (loc) => {
         const bk = byId(id); if (!bk || !loc || !loc.start) return;
-        cur.loc = loc; syncBookmark(); paintAll();
+        cur.loc = loc; syncBookmark(); paintAll(); if (!turn) schedulePrime();
         bk.readCfi = loc.start.cfi;
         if (book.locations && book.locations.length()) bk.readPct = book.locations.percentageFromCfi(loc.start.cfi) || 0;
         bk.readAt = Date.now();
@@ -707,7 +750,7 @@
   function close() {
     if (turn) { turn.layers.forEach((l) => l.remove()); view.style.clipPath = ""; view.style.zIndex = ""; turn = null; }
     if (cur) { try { cur.book.destroy(); } catch (e) { /* ignore */ } }
-    setPen(false); ribbon.hidden = true;
+    setPen(false); ribbon.hidden = true; clearTimeout(primeTimer); dropPrime();
     cur = null; view.replaceChildren(); room.hidden = true; document.body.style.overflow = "";
     room.querySelector(".rdLoading").textContent = "Opening…";
     room.querySelector(".rdScrub").disabled = true;
