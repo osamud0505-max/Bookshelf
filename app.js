@@ -11,6 +11,8 @@
     paper: { label: "Paper", t: ["#f4f0e8", "#22201c", "#ebe5d9", "#faf7f1", "#e6dfd1", "#77705f", "#ddd4c3", "#e1d8c7", "#d3c9b5", "light"] },
     blush: { label: "Blush", t: ["#f7eeee", "#2a1e20", "#efe2e3", "#fcf6f6", "#ead9db", "#85696d", "#e2cfd1", "#e7d4d6", "#d9c2c5", "light"] },
   };
+  const D = window.Decor;
+  Object.assign(THEMES, D.PALETTES);
   const ACCENTS = ["#f2c76b", "#ef7b6c", "#e889b5", "#a98bf0", "#6fb6f2", "#6fd3b0", "#c7e05d", "#f4f1ea"];
   const SHELVES = [
     ["Slate", "#34343f"], ["Oak", "#b48452"], ["Walnut", "#5b3a24"], ["Birch", "#e4d6bd"],
@@ -54,22 +56,43 @@
   // Pick whichever ink reads better on this spine (WCAG contrast), not a fixed brightness cut-off.
   const spineInk = (hex) => { const L = lum(hex), dark = (L + 0.05) / (lum("#2a1d14") + 0.05), light = (lum("#f5ead8") + 0.05) / (L + 0.05); return dark >= light ? "#2a1d14" : "#f5ead8"; };
 
+  /** A whole colour scheme worked out from one background colour (for "Your colour"). */
+  function derivePalette(bg) {
+    const dark = lum(bg) < 0.3, fg = dark ? "#f3ede4" : "#221c16";
+    const lift = (a) => mix(bg, dark ? "#ffffff" : "#000000", a);
+    return [bg, fg, lift(0.05), dark ? lift(0.07) : mix(bg, "#ffffff", 0.55), lift(0.09), mix(fg, bg, 0.45), lift(0.15), lift(0.13), lift(0.24), dark ? "dark" : "light"];
+  }
+  const paletteOf = (s) => (s.theme === "custom" && s.customBg ? derivePalette(s.customBg) : (THEMES[s.theme] || THEMES.graphite).t);
+
   function applyAppearance() {
     const s = state.settings;
-    const [bg, fg, surface, popup, muted, mutedFg, border, hover, starEmpty, scheme] = (THEMES[s.theme] || THEMES.graphite).t;
+    const [bg, fg, surface, popup, muted, mutedFg, border, hover, starEmpty, scheme] = paletteOf(s);
     const r = document.documentElement.style;
     const set = (k, v) => r.setProperty(k, v);
     set("--background", bg); set("--foreground", fg); set("--surface", surface); set("--popup", popup);
     set("--muted", muted); set("--muted-fg", mutedFg); set("--border", border); set("--hover", hover); set("--star-empty", starEmpty);
     set("--primary", s.accent); set("--primary-fg", inkOn(s.accent));
     set("--shelf-color", s.shelf); set("--shelf-top", mix(s.shelf, "#ffffff", 0.14)); set("--shelf-edge", mix(s.shelf, "#000000", 0.3));
+    // shelf material: a lit top edge, a darker underside, then the grain over the base colour
+    const mat = D.MATERIALS[s.shelfMat] || D.MATERIALS.paint;
+    set("--plank-bg", mat.base
+      ? ["linear-gradient(180deg, rgba(255,255,255,.28) 0 1.5px, rgba(255,255,255,.1) 1.5px 4px, rgba(255,255,255,0) 4px 55%, rgba(0,0,0,.38) 100%)", ...mat.tex(), mat.base].join(",")
+      : "linear-gradient(180deg, var(--shelf-top) 0, var(--shelf-top) 3px, var(--shelf-color) 3px, var(--shelf-color) 11px, var(--shelf-edge) 100%)");
+    document.documentElement.dataset.mat = s.shelfMat || "paint";
+    // backdrop: if it fights the colour scheme (a dark wall behind light text…), veil it so words stay readable
+    const bd = D.BACKDROPS[s.backdrop] || D.BACKDROPS.none;
+    const veil = bd.tone && bd.tone !== scheme ? [`linear-gradient(${bg}cc, ${bg}cc)`] : [];
+    const vignette = bd.tone ? ["radial-gradient(ellipse 120% 90% at 50% 40%, rgba(0,0,0,0) 55%, rgba(0,0,0,.28))"] : [];
+    set("--backdrop", [...veil, ...vignette, bd.css()].join(","));
+    document.documentElement.dataset.bd = bd.tone ? "1" : "";
+    set("--font-display", (D.HEAD_FONTS[s.headFont] || D.HEAD_FONTS.bricolage)[1]);
     r.setProperty("color-scheme", scheme);
     document.querySelector('meta[name="theme-color"]').setAttribute("content", bg);
   }
 
   // ---------------------------------------------------------------- storage
   const KEY = "shelf.v1";
-  const DEFAULT_SETTINGS = { theme: "graphite", accent: "#f2c76b", shelf: "#34343f", finish: "matte", spineFont: "classic" };
+  const DEFAULT_SETTINGS = { theme: "graphite", accent: "#f2c76b", shelf: "#34343f", finish: "matte", spineFont: "classic", shelfMat: "paint", backdrop: "none", lights: { style: "none", colour: "warm", on: false }, headFont: "bricolage", looks: [] };
   const SEED = [
     { title: "Dracula", author: "Bram Stoker", coverUrl: "https://covers.openlibrary.org/b/id/12216503-L.jpg", olKey: "/works/OL85892W", pageCount: 384, status: "to_read", coverAspect: 0.636 },
     { title: "L'Amant", author: "Marguerite Duras", coverUrl: "https://covers.openlibrary.org/b/id/5401955-L.jpg", olKey: null, pageCount: 128, status: "to_read", coverAspect: 0.637 },
@@ -401,6 +424,28 @@
     return wrap;
   }
 
+  // ---------------------------------------------------------------- lights under each shelf
+  const plankWidth = () => Math.min(innerWidth, 1200);
+  function addLights(root) {
+    const cfg = state.settings.lights || {};
+    root.querySelectorAll(".lights, .pullCord").forEach((e) => e.remove());
+    const el = D.lightsEl(plankWidth(), cfg);
+    root.classList.toggle("hasLights", !!el);
+    root.dataset.lights = el ? cfg.style : "";
+    if (!el) return;
+    const plank = root.querySelector(".plank");
+    plank.append(el);
+    const cord = h(`<button class="pullCord" aria-label="Turn the lights ${cfg.on ? "off" : "on"}" aria-pressed="${!!cfg.on}"><i></i><b></b></button>`);
+    cord.onclick = () => {
+      cord.classList.add("pulled"); setTimeout(() => cord.classList.remove("pulled"), 260);
+      state.settings.lights = { ...cfg, on: !cfg.on }; save();
+      setTimeout(() => document.querySelectorAll(".shelf").forEach(addLights), 120);
+    };
+    plank.append(cord);
+  }
+  let lightsT = 0, lastW = innerWidth;
+  addEventListener("resize", () => { if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(lightsT); lightsT = setTimeout(() => document.querySelectorAll(".shelf").forEach(addLights), 200); });
+
   // ---------------------------------------------------------------- the turning shelf
   const scrollMemory = new Map(); // section key -> front index
   function shelfEl(key, books, opts = {}) {
@@ -409,6 +454,7 @@
       <div class="plank"></div>
       <div class="caption"></div></div>`);
     const scroller = root.querySelector(".scroller"), track = root.querySelector(".track"), stage = root.querySelector(".stage"), caption = root.querySelector(".caption");
+    addLights(root);
     const count = books.length + (opts.onAdd ? 1 : 0);
     let H = 246, STEP = 103, viewW = 0, PAD = 16, front = -1, raf = 0;
     const slots = [], bookNodes = [];
@@ -946,12 +992,55 @@
       const body = h(`<div class="sheetBody padded"><div><h2 class="sheetTitle">Customize</h2><p class="hint">Changes show on your shelf straight away.</p></div></div>`);
       const set = (patch) => { Object.assign(state.settings, patch); save(); render(); draw(); };
 
-      const themes = h(`<div class="group"><h3 class="label">Theme</h3><div class="themes"></div></div>`);
+      const lookOf = () => Object.fromEntries(D.LOOK_KEYS.filter((k) => s[k] !== undefined).map((k) => [k, JSON.parse(JSON.stringify(s[k]))]));
+      const lights = { style: "none", colour: "warm", on: false, ...(s.lights || {}) };
+      const tile = (bg, label, on, extra = "") => h(`<button class="themeBtn" aria-pressed="${on}"><span class="swatch" style="background:${bg};${extra}"></span>${esc(label)}</button>`);
+      const paletteSwatch = (t) => `<span class="swatch" style="background:${t[0]};border-color:${t[6]}"><i style="left:10%;right:10%;bottom:0;height:45%;background:${t[2]};border-radius:3px 3px 0 0"></i><i style="left:10%;top:22%;width:40%;height:4px;border-radius:2px;background:${t[1]}"></i></span>`;
+      const lookTile = (label, set_) => {
+        const t = THEMES[set_.theme] ? THEMES[set_.theme].t : set_.customBg ? derivePalette(set_.customBg) : THEMES.graphite.t;
+        const bd = D.BACKDROPS[set_.backdrop] || D.BACKDROPS.none, mat = D.MATERIALS[set_.shelfMat] || D.MATERIALS.paint;
+        const plank = mat.base ? [...mat.tex(), mat.base].join(",") : (set_.shelf || "#34343f");
+        const lit = set_.lights && set_.lights.style !== "none" && set_.lights.on;
+        return h(`<span class="lookArt" style="background:${bd.tone ? bd.css() : t[0]}"><i class="lookPlank" style="background:${plank}"></i>${lit ? `<i class="lookLights" style="--c:${(D.LIGHT_COLOURS[set_.lights.colour] || D.LIGHT_COLOURS.warm)[1] || "#ffd166"}"></i>` : ""}<b style="color:${bd.tone === "dark" || (!bd.tone && t[9] === "dark") ? "#f3ede4" : "#221c16"};font-family:${(D.HEAD_FONTS[set_.headFont] || D.HEAD_FONTS.bricolage)[1]};background:${set_.accent || "#f2c76b"}33">${esc(label)}</b></span>`);
+      };
+
+      // ready-made looks and your own
+      const looks = h(`<div class="group"><h3 class="label">Looks</h3><p class="hint">A whole style in one tap: colours, wall, shelf, lights and lettering. Change anything after.</p><div class="looks"></div></div>`);
+      const lookWrap = looks.querySelector(".looks");
+      for (const [k, L] of Object.entries(D.LOOKS)) {
+        const btn = h(`<button class="lookBtn"></button>`); btn.append(lookTile(L.label, { ...DEFAULT_SETTINGS, ...L.set }));
+        btn.onclick = () => set(JSON.parse(JSON.stringify(L.set)));
+        lookWrap.append(btn);
+      }
+      (s.looks || []).forEach((L) => {
+        const btn = h(`<div class="lookBtn mine"><button class="lookApply"></button><button class="lookDel" aria-label="Delete ${esc(L.name)}">✕</button></div>`);
+        btn.firstElementChild.append(lookTile(L.name, { ...DEFAULT_SETTINGS, ...L.set }));
+        btn.firstElementChild.onclick = () => set(JSON.parse(JSON.stringify(L.set)));
+        btn.lastElementChild.onclick = () => set({ looks: s.looks.filter((x) => x !== L) });
+        lookWrap.append(btn);
+      });
+      const saveLook = h(`<div class="row" style="flex-wrap:nowrap"><input class="input" id="lookName" placeholder="Name this look, e.g. Rainy Sunday" maxlength="30"><button class="btn small primary">Save my look</button></div>`);
+      const doSave = () => {
+        const name = saveLook.querySelector("input").value.trim() || "My look " + ((s.looks || []).length + 1);
+        set({ looks: [...(s.looks || []), { id: Date.now(), name, set: lookOf() }] }); toast(`Saved “${name}”`);
+      };
+      saveLook.querySelector("button").onclick = doSave;
+      saveLook.querySelector("input").onkeydown = (e) => { if (e.key === "Enter") doSave(); };
+      looks.append(saveLook);
+      body.append(looks);
+
+      // colours
+      const themes = h(`<div class="group"><h3 class="label">Colours</h3><div class="themes"></div></div>`);
       for (const [k, { label, t }] of Object.entries(THEMES)) {
-        const btn = h(`<button class="themeBtn" aria-pressed="${s.theme === k}"><span class="swatch" style="background:${t[0]};border-color:${t[6]}"><i style="left:10%;right:10%;bottom:0;height:45%;background:${t[2]};border-radius:3px 3px 0 0"></i><i style="left:10%;top:22%;width:40%;height:4px;border-radius:2px;background:${t[1]}"></i></span>${label}</button>`);
+        const btn = h(`<button class="themeBtn" aria-pressed="${s.theme === k}">${paletteSwatch(t)}${label}</button>`);
         btn.onclick = () => set({ theme: k });
         themes.lastElementChild.append(btn);
       }
+      const cbg = s.customBg || "#2a2320";
+      const custom = h(`<label class="themeBtn" aria-pressed="${s.theme === "custom"}" for="c-bg">${paletteSwatch(derivePalette(cbg))}Your colour<input type="color" id="c-bg" value="${cbg}" class="hiddenColor"></label>`);
+      custom.querySelector("input").onchange = (e) => { rememberColor(e.target.value); set({ theme: "custom", customBg: e.target.value }); };
+      themes.lastElementChild.append(custom);
+      themes.append(recentRow((c) => set({ theme: "custom", customBg: c }), s.theme === "custom" ? cbg : ""));
       body.append(themes);
 
       const colorRow = (title, hint, value, options, onPick, id, labels) => {
@@ -970,7 +1059,46 @@
         return g;
       };
       body.append(colorRow("Accent colour", "Stars, buttons and highlights.", s.accent, ACCENTS.map((c) => [c, c]), (accent) => set({ accent }), "c-accent", false));
-      body.append(colorRow("Shelf colour", "", s.shelf, SHELVES, (shelf) => set({ shelf }), "c-shelf", true));
+
+      // wall behind the shelves
+      const bdG = h(`<div class="group"><h3 class="label">Backdrop</h3><div class="themes tiles"></div></div>`);
+      for (const [k, b] of Object.entries(D.BACKDROPS)) {
+        const btn = tile(b.tone ? b.css() : "var(--background)", b.label, (s.backdrop || "none") === k);
+        btn.onclick = () => set({ backdrop: k });
+        bdG.lastElementChild.append(btn);
+      }
+      body.append(bdG);
+
+      // shelf material
+      const matG = h(`<div class="group"><h3 class="label">Shelf</h3><div class="themes tiles"></div></div>`);
+      for (const [k, m] of Object.entries(D.MATERIALS)) {
+        const bg = m.base ? ["linear-gradient(180deg, rgba(255,255,255,.25) 0 2px, transparent 2px 60%, rgba(0,0,0,.3))", ...m.tex(), m.base].join(",") : s.shelf;
+        const btn = tile(bg, m.label, (s.shelfMat || "paint") === k, "height:22px;margin-top:6px");
+        btn.onclick = () => set({ shelfMat: k });
+        matG.lastElementChild.append(btn);
+      }
+      body.append(matG);
+      if ((s.shelfMat || "paint") === "paint") body.append(colorRow("Paint colour", "", s.shelf, SHELVES, (shelf) => set({ shelf }), "c-shelf", true));
+
+      // hanging lights
+      const lg = h(`<div class="group"><h3 class="label">Lights</h3><p class="hint">Strings of lights hang under each shelf. Tap the little pull cord at the end of a shelf to switch them on and off.</p>
+        <div class="seg" id="l-style">${Object.entries(D.LIGHT_STYLES).map(([k, l]) => `<button data-v="${k}" aria-pressed="${lights.style === k}">${l}</button>`).join("")}</div>
+        <div class="colors" id="l-col">${Object.entries(D.LIGHT_COLOURS).map(([k, [l, c]]) => `<button class="colorItem" data-v="${k}" aria-pressed="${lights.colour === k}"><span class="dot ${lights.colour === k ? "on" : ""}" style="background:${c || "conic-gradient(#ff6b6b,#ffd166,#5be3a5,#5cc8f5,#c792ff,#ff6b6b)"};box-shadow:0 0 12px ${c || "#ffd166"}88"></span>${l}</button>`).join("")}</div>
+        <label class="check"><input type="checkbox" id="l-on" ${lights.on ? "checked" : ""}> Lights on</label></div>`);
+      lg.querySelectorAll("#l-style button").forEach((b) => (b.onclick = () => set({ lights: { ...lights, style: b.dataset.v, on: b.dataset.v === "none" ? lights.on : true } })));
+      lg.querySelectorAll("#l-col button").forEach((b) => (b.onclick = () => set({ lights: { ...lights, colour: b.dataset.v, on: true } })));
+      lg.querySelector("#l-on").onchange = (e) => set({ lights: { ...lights, on: e.target.checked } });
+      if (lights.style === "none") { lg.querySelector("#l-col").hidden = true; lg.querySelector(".check").hidden = true; }
+      body.append(lg);
+
+      // lettering for titles
+      const fg = h(`<div class="group"><h3 class="label">Lettering</h3><p class="hint">For the page title, shelf names and book titles.</p><div class="fonts"></div></div>`);
+      for (const [k, [l, fam]] of Object.entries(D.HEAD_FONTS)) {
+        const btn = h(`<button class="fontBtn" aria-pressed="${(s.headFont || "bricolage") === k}"><span class="sample" style="font-family:${fam}">My shelf</span><span class="name">${l}</span></button>`);
+        btn.onclick = () => set({ headFont: k });
+        fg.lastElementChild.append(btn);
+      }
+      body.append(fg);
 
       const shelfG = h(`<div class="group"><h3 class="label">Shelves</h3><p class="hint">Add your own shelves, rename them or remove them.</p><button class="btn small" style="align-self:flex-start">Edit shelves</button></div>`);
       shelfG.querySelector("button").onclick = () => openShelves();
