@@ -226,7 +226,7 @@
           <span class="grain"></span><span class="hinge"></span><span class="sheen"></span><span class="fShade"></span>
         </div>
         <div class="face spine">
-          ${b.coverUrl ? `<span class="sArt" style="background-image:url('${esc(b.coverUrl)}');--edge:${(b.edgeInset ?? 0.02) + 0.01}"></span>` : ""}<span class="sForm"></span>
+          <span class="sForm"></span>
           <span class="spineTitle">${esc(words)}</span>
           ${surname && d >= 22 && !custom ? `<span class="spineAuthor">${esc(surname)}</span>` : ""}
           <span class="grain"></span><span class="sShade"></span>
