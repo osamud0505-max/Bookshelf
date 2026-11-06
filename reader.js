@@ -104,7 +104,10 @@
   const panels = room.querySelectorAll(".rdPanel");
   const showPanel = (name) => panels.forEach((p) => (p.hidden = p.dataset.p !== name || !p.hidden));
   const hidePanels = () => panels.forEach((p) => (p.hidden = true));
+  // reading is full screen; a tap in the middle shrinks the page into a card and brings the bars in
   const toggleChrome = () => room.classList.toggle("bare");
+  /** Straight back to the full-screen page, without the shrink animation (for a page turn that starts from the card). */
+  const snapFull = () => { room.classList.add("rdSnap", "bare"); void view.offsetWidth; requestAnimationFrame(() => room.classList.remove("rdSnap")); };
 
   // each look has its own page colours; they're used unless you picked others while on that look
   const currentLook = () => (window.Shelf.lookKey ? window.Shelf.lookKey() : "") || "minimal";
@@ -245,7 +248,7 @@
   let turn = null;
 
   const viewRect = () => view.getBoundingClientRect();
-  function layoutGesture() { const r = viewRect(); Object.assign(gesture.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px" }); }
+  function layoutGesture() { Object.assign(gesture.style, { left: view.offsetLeft + "px", top: view.offsetTop + "px", width: view.offsetWidth + "px", height: view.offsetHeight + "px" }); }
   addEventListener("resize", () => { if (!room.hidden) layoutGesture(); });
 
   function pageFrame() {
@@ -298,59 +301,72 @@
   }
   const polyCss = (pts) => (pts.length < 3 ? "polygon(0 0, 0 0, 0 0)" : `polygon(${pts.map((p) => `${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`).join(",")})`);
 
-  /** Draw the curl with the page's free edge at x = f and the finger at height fy (page coordinates). */
+  // ------------------------------------------------------------------ the page turn
+  // The turning page rolls like paper around a soft cylinder: the flat part stays put, the part over the roll
+  // is drawn as a few bands, each squeezed the way a curve squeezes it, and the rest is rolled out of sight.
+  // Its shadow (or, on a dark page, its sheen) falls on the page underneath, just past the roll.
+  const ARCS = 4;
+  function prepArc(el) {
+    el.style.transformOrigin = "0 0"; el.style.willChange = "transform";
+    const sh = h(`<div class="rdBand rdArcShade"></div>`); el.append(sh); el._shade = sh;
+    return el;
+  }
+  const smooth = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
+  /** Draw the turn with the page's free edge at f (W = flat, -W = gone) and the finger at height fy. */
   function drawTurn(f, fy) {
-    const t = turn, W = t.W, H = t.H;
-    const C = { x: W, y: t.y0 }, F = { x: f, y: fy };
-    let ux = C.x - F.x, uy = C.y - F.y; const len = Math.hypot(ux, uy);
+    const t = turn, W = t.W, H = t.H, dark = room.dataset.dark === "1";
+    const p = Math.max(0, Math.min(1, (W - f) / (2 * W)));
+    const Rmax = Math.min(W * 0.2, 120), travel = W + Rmax * 0.8;
+    const e = W - p * travel; // where the roll's outer edge is
+    const R = Math.max(0.5, Math.min(Rmax, (W - e) * 0.6)); // the roll grows as the page lifts
+    // the corner under your finger leads a little, so the roll leans
+    const lean = Math.max(-1, Math.min(1, (fy - H / 2) / (H / 2)));
+    const al = Math.atan(lean * 0.09 * Math.sin(Math.PI * Math.min(1, p * 1.3)));
+    const n = { x: Math.cos(al), y: Math.sin(al) }, P = { x: e, y: fy }, nP = n.x * P.x + n.y * P.y;
+    const rx = (q) => q.x * n.x + q.y * n.y - nP;
     const rect = [{ x: 0, y: 0 }, { x: W, y: 0 }, { x: W, y: H }, { x: 0, y: H }];
-    if (len < 1) {
-      t.front.style.clipPath = "none"; t.back.style.display = "none"; t.shUnder.style.display = t.shFlat.style.display = "none"; return;
-    }
-    ux /= len; uy /= len;
-    const M = { x: (C.x + F.x) / 2, y: (C.y + F.y) / 2 };
-    const side = (p) => (p.x - M.x) * ux + (p.y - M.y) * uy;
-    const flat = clipPoly(rect, (p) => -side(p)), flap = clipPoly(rect, side);
-    const angU = Math.atan2(uy, ux) * 180 / Math.PI, angV = angU + 90;
-    t.front.style.clipPath = polyCss(flat);
-    t.back.style.display = t.shUnder.style.display = t.shFlat.style.display = "";
-    // the folded-back part: the page's flap mirrored across the fold line
-    t.backInner.style.transformOrigin = `${M.x}px ${M.y}px`;
-    t.backInner.style.transform = `rotate(${angV}deg) scaleY(-1) rotate(${-angV}deg)`;
-    t.backInner.style.clipPath = polyCss(flap);
-    const flapW = len / 2, big = 3 * Math.max(W, H);
-    const band = (el, from, width, ang) => Object.assign(el.style, { left: from.x + "px", top: from.y - big / 2 + "px", width: Math.max(1, width) + "px", height: big + "px", transform: `rotate(${ang}deg)` });
-    band(t.backShade, M, flapW + 2, angU);
-    // shadow the lifted paper throws on the page underneath, and the darkening where the page bends
-    t.shUnder.style.clipPath = polyCss(flap);
-    band(t.shUnderBand, M, Math.min(flapW, 140) + 2, angU);
-    t.shUnderBand.style.opacity = Math.min(1, flapW / 40);
-    t.shFlat.style.clipPath = polyCss(flat);
-    band(t.shFlatBand, M, Math.min(60, flapW + 10), angU + 180);
-    // as the page lands flat (or falls back), its shadows melt away instead of vanishing on the last frame
-    const k = Math.max(0, Math.min(1, Math.min(M.x, W - M.x) / (W * 0.16))), fade = (k * k * (3 - 2 * k)).toFixed(3);
-    t.shUnder.style.opacity = fade; t.shFlat.style.opacity = fade; t.backShade.style.opacity = fade;
+    const band = (lo, hi) => clipPoly(clipPoly(rect, (q) => rx(q) - lo), (q) => hi - rx(q));
+    const ang = (Math.atan2(n.y, n.x) * 180) / Math.PI, big = 1e5;
+    const place = (el, lo, width) => {
+      const o = { x: P.x + n.x * lo, y: P.y + n.y * lo }, tall = 3 * Math.max(W, H);
+      Object.assign(el.style, { left: o.x + "px", top: o.y - tall / 2 + "px", width: Math.max(1, width) + "px", height: tall + "px", transform: `rotate(${ang}deg)` });
+    };
+    const arcs = t.arcs || [];
+    t.front.style.clipPath = polyCss(band(-big, arcs.length ? -R + 0.5 : 0));
+    // light on the roll: a soft sheen where it starts to lift, darker as it turns away
+    const tone = (th) => {
+      const x = th / (Math.PI / 2), lum = (dark ? 0.16 : 0.12) * Math.sin(Math.PI * Math.min(1, x * 1.6)) - (dark ? 0.25 : 0.42) * Math.pow(x, 2.2);
+      return lum >= 0 ? `rgba(255,255,255,${lum.toFixed(3)})` : `rgba(0,0,0,${(-lum).toFixed(3)})`;
+    };
+    arcs.forEach((el, k) => {
+      const th0 = (Math.PI / 2) * (k / arcs.length), th1 = (Math.PI / 2) * ((k + 1) / arcs.length), s0 = th0 * R, s1 = th1 * R;
+      const c = (Math.sin(th1) - Math.sin(th0)) / (th1 - th0), q = -R + R * Math.sin(th0) + c * (R - s0), cm = c - 1;
+      const tx = q - cm * nP;
+      el.style.transform = `matrix(${1 + cm * n.x * n.x},${cm * n.x * n.y},${cm * n.x * n.y},${1 + cm * n.y * n.y},${(n.x * tx).toFixed(2)},${(n.y * tx).toFixed(2)})`;
+      el.style.clipPath = polyCss(band(s0 - R - 0.7, s1 - R + 0.7));
+      place(el._shade, s0 - R - 0.7, s1 - s0 + 1.4);
+      el._shade.style.background = `linear-gradient(90deg, ${tone(th0)}, ${tone(th1)})`;
+    });
+    // on the page beneath: a shadow just past the roll (a faint sheen on dark pages)
+    t.shade.style.display = "";
+    t.shade.style.clipPath = polyCss(band(0, big));
+    place(t.shadeBand, 0, 10 + R * 0.75);
+    t.shade.style.opacity = (smooth(p / 0.05) * smooth((1 - p) / 0.12)).toFixed(3);
   }
 
   // The copies of the page a turn needs take a moment to build, so they are made ahead of time, right
   // after each page settles. A turn then starts the instant your finger moves.
   let primed = null, primeTimer = 0, primeGen = 0;
-  function dropPrime() { primeGen++; if (primed) { primed.front.remove(); primed.back.remove(); primed = null; } }
+  function dropPrime() { primeGen++; if (primed) { primed.front.remove(); primed.arcs.forEach((a) => a.remove()); primed = null; } }
   function schedulePrime() { clearTimeout(primeTimer); dropPrime(); primeTimer = setTimeout(prime, 260); }
   async function prime() {
     if (!cur || turn || room.hidden) return;
     const gen = ++primeGen;
-    const vr = viewRect();
-    const paper = getComputedStyle(room).getPropertyValue("--rd-bg").trim() || "#f6f1e7";
-    const back = h(`<div class="rdLayer rdBack"></div>`);
-    Object.assign(back.style, { left: vr.left + "px", top: vr.top + "px", width: vr.width + "px", height: vr.height + "px", zIndex: 6, display: "none" });
-    const backInner = h(`<div class="rdBackInner"></div>`); backInner.style.background = paper; back.append(backInner);
-    room.append(back);
-    const p = { back, backInner, front: null, ready: false };
-    const [front, copy] = await Promise.all([snapshot(room, { left: vr.left, top: vr.top, z: 4, hidden: true }), snapshot(backInner)]);
-    front.style.visibility = "hidden"; copy.style.opacity = "0.16"; p.front = front;
-    if (gen !== primeGen || turn || !cur || primed) { front.remove(); back.remove(); return; }
-    p.ready = true; primed = p;
+    const vr = viewRect(), at = (z) => ({ left: vr.left, top: vr.top, z, hidden: true });
+    const [front, ...arcs] = await Promise.all([snapshot(room, at(4)), ...Array.from({ length: ARCS }, () => snapshot(room, at(5)))]);
+    arcs.forEach(prepArc);
+    if (gen !== primeGen || turn || !cur || primed) { front.remove(); arcs.forEach((a) => a.remove()); return; }
+    primed = { front, arcs, ready: true };
   }
   addEventListener("resize", () => { if (!room.hidden) schedulePrime(); });
 
@@ -359,43 +375,39 @@
     const loc = cur.rendition.currentLocation && cur.rendition.currentLocation();
     if (loc && ((dir === "next" && loc.atEnd) || (dir === "prev" && loc.atStart))) return null;
     const vr = viewRect();
-    const t = turn = { dir, W: vr.width, H: vr.height, y0, ready: false, f: dir === "next" ? vr.width : -vr.width, fy: y0, layers: [] };
+    const t = turn = { dir, W: vr.width, H: vr.height, y0, ready: false, f: dir === "next" ? vr.width : -vr.width, fy: y0, layers: [], arcs: [] };
     clearTimeout(primeTimer); primeGen++;
     const p = primed && primed.ready ? primed : null; primed = null;
-    const paper = getComputedStyle(room).getPropertyValue("--rd-bg").trim() || "#f6f1e7";
-    const at = (z) => ({ left: vr.left, top: vr.top, z });
-    const layer = (cls, z) => { const el = h(`<div class="${cls}"></div>`); Object.assign(el.style, { left: vr.left + "px", top: vr.top + "px", width: vr.width + "px", height: vr.height + "px", zIndex: z }); room.append(el); t.layers.push(el); return el; };
-    const mk = (cls) => h(`<div class="${cls}"></div>`);
-    // the folded-back part and the shadows, hidden until the first frame is drawn
-    t.shUnder = layer("rdLayer rdShade", 5); t.shUnderBand = mk("rdBand rdBandUnder"); t.shUnder.append(t.shUnderBand);
-    t.shFlat = layer("rdLayer rdShade", 5); t.shFlatBand = mk("rdBand rdBandFlat"); t.shFlat.append(t.shFlatBand);
-    if (p && dir === "next") { t.back = p.back; t.backInner = p.backInner; t.layers.push(p.back); }
-    else {
-      if (p) p.back.remove();
-      t.back = layer("rdLayer rdBack", 6);
-      t.backInner = mk("rdBackInner"); t.backInner.style.background = paper; t.back.append(t.backInner);
-    }
-    t.backShade = mk("rdBand rdBandBack");
-    [t.shUnder, t.shFlat, t.back].forEach((el) => (el.style.display = "none"));
-    const addShade = () => t.backInner.append(t.backShade); // keep the fold shading above the mirrored text
+    const at = (z, hidden) => ({ left: vr.left, top: vr.top, z, hidden });
+    t.shade = h(`<div class="rdLayer rdShade"></div>`);
+    Object.assign(t.shade.style, { left: vr.left + "px", top: vr.top + "px", width: vr.width + "px", height: vr.height + "px", zIndex: 3, display: "none" });
+    t.shadeBand = h(`<div class="rdBand rdCurlShadow"></div>`); t.shade.append(t.shadeBand);
+    room.append(t.shade); t.layers.push(t.shade);
     if (dir === "next") {
-      if (p) { t.front = p.front; p.front.style.visibility = ""; }
-      else { t.front = await snapshot(room, at(4)); const bc = await snapshot(t.backInner); bc.style.opacity = "0.16"; }
-      t.layers.push(t.front);
-      // the real page moves on underneath while the paper starts to lift
+      // the page you're on lifts away; the real page underneath has already moved on
+      if (p) { t.front = p.front; t.arcs = p.arcs; }
+      else { const [front, ...arcs] = await Promise.all([snapshot(room, at(4, true)), ...Array.from({ length: ARCS }, () => snapshot(room, at(5, true)))]); t.front = front; t.arcs = arcs.map(prepArc); }
+      t.layers.push(t.front, ...t.arcs);
       t.moving = cur.rendition.next();
       if (!p) await t.moving;
+      t.ready = true; drawTurn(t.f, t.fy);
+      [t.front, ...t.arcs].forEach((el) => (el.style.visibility = ""));
     } else {
+      // the page before rolls back in over the one you're on
+      if (p) p.arcs.forEach((a) => a.remove());
       const under = p ? p.front : await snapshot(room, at(1));
       under.style.zIndex = 1; under.style.visibility = ""; t.layers.push(under);
-      view.style.zIndex = 2; t.front = view; view.style.clipPath = polyCss([]);
+      view.style.zIndex = 4; t.front = view; view.style.clipPath = polyCss([]);
       t.moving = cur.rendition.prev();
       await t.moving;
-      snapshot(t.backInner).then((bc) => { bc.style.opacity = "0.16"; addShade(); });
+      t.ready = true; drawTurn(t.f, t.fy);
+      // copies of the page for its rolled edge, a moment later
+      Promise.all(Array.from({ length: ARCS }, () => snapshot(room, at(5, true)))).then((arcs) => {
+        if (turn !== t) { arcs.forEach((a) => a.remove()); return; }
+        t.arcs = arcs.map(prepArc); t.layers.push(...arcs); drawTurn(t.f, t.fy);
+        arcs.forEach((a) => (a.style.visibility = ""));
+      });
     }
-    addShade();
-    t.ready = true;
-    drawTurn(t.f, t.fy);
     return t;
   }
 
@@ -549,7 +561,7 @@
   function setPen(on) {
     pen.on = on; hidePanels();
     room.classList.toggle("penOn", on);
-    pensEl.hidden = !on; if (on) { room.classList.remove("bare"); drawPens(); }
+    pensEl.hidden = !on; if (on) { snapFull(); drawPens(); }
     room.querySelector(".rdPenBtn").setAttribute("aria-pressed", on);
   }
 
@@ -653,7 +665,7 @@
       const dx = x - g.x0, dy = y - g.y0;
       if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy)) return;
       g.mode = "turn"; g.dir = dx < 0 ? "next" : "prev";
-      hidePanels();
+      hidePanels(); if (!room.classList.contains("bare")) snapFull();
       beginTurn(g.dir, g.y0).then((t) => { if (!t) g && (g.mode = "none"); else if (g && g.x !== undefined) follow(); });
       return;
     }
@@ -682,7 +694,8 @@
       return endTurn(complete && !(turn.dir === "next" && gg.v > 0.35) && !(turn.dir === "prev" && gg.v < -0.35));
     }
     if (gg.mode || e.type === "pointercancel") return;
-    // a tap: edges turn the page, links work, the middle shows or hides the bars
+    // a tap: on the small card it goes back to the full page; otherwise edges turn the page, links work, the middle shows the bars
+    if (!room.classList.contains("bare")) { hidePanels(); room.classList.add("bare"); return; }
     const W = gesture.clientWidth;
     if (gg.x0 < W * 0.22) return autoTurn("prev");
     if (gg.x0 > W * 0.78) return autoTurn("next");
@@ -914,7 +927,7 @@
     dispatchEvent(new CustomEvent("shelf:reading", { detail: true })); // the room goes quiet while you read
     const fx = await openingAnim(b);
     if (fx) setTimeout(() => endOpening(fx), 3500); // never leave the screen black
-    room.hidden = false; room.classList.remove("bare"); hidePanels();
+    room.hidden = false; room.classList.add("bare"); hidePanels();
     room.querySelector(".rdTitle").textContent = b.title;
     room.querySelector(".rdLoading").hidden = false;
     room.querySelector(".rdPct").textContent = b.readPct ? Math.round(b.readPct * 100) + "%" : "…";

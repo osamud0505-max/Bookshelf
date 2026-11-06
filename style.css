@@ -423,18 +423,24 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 .readPill { flex: none; height: 32px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--primary); color: var(--primary-fg); font-weight: 600; font-size: .85rem; cursor: pointer; }
 .reader { position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column; --rd-frame: color-mix(in srgb, var(--rd-bg) 82%, #000); background: var(--rd-frame); color: var(--rd-fg); }
 .reader[hidden] { display: none; }
-.rdTop { display: flex; align-items: center; gap: 6px; padding: calc(6px + env(safe-area-inset-top)) 8px 6px; transition: opacity .25s; }
+.rdTop { position: absolute; z-index: 10; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 6px; padding: calc(6px + env(safe-area-inset-top)) 8px 6px; background: var(--rd-frame); transition: opacity .3s, transform .38s cubic-bezier(.2,.8,.2,1); }
 .rdTitle { flex: 1; min-width: 0; text-align: center; font: 600 .9rem/1.2 "Inter Tight", sans-serif; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rdBtn { flex: none; width: 40px; height: 40px; border: 0; border-radius: 999px; background: transparent; color: inherit; font: 600 1rem "Inter Tight", sans-serif; cursor: pointer; }
 .rdBtn:hover { background: color-mix(in srgb, var(--rd-fg) 8%, transparent); }
-.rdView { flex: 1; min-height: 0; margin: 0 max(16px, calc((100vw - 720px) / 2)); }
+/* the page fills the screen; with the bars showing it shrinks into a card between them */
+.rdView { position: absolute; top: 0; bottom: 0; left: max(0px, calc((100vw - 760px) / 2)); right: max(0px, calc((100vw - 760px) / 2)); padding: calc(26px + env(safe-area-inset-top)) 0 calc(26px + env(safe-area-inset-bottom)); box-sizing: border-box; transform-origin: 50% 50%; transition: transform .38s cubic-bezier(.2,.8,.2,1), box-shadow .38s; }
+.reader:not(.bare) .rdView { transform: scale(.8); }
+.reader.bare .rdView { box-shadow: none; }
+.reader.rdSnap .rdView, .reader.rdSnap .rdTop, .reader.rdSnap .rdBottom { transition: none !important; }
 .rdZone { position: absolute; top: 56px; bottom: 64px; width: 14%; border: 0; background: transparent; cursor: pointer; z-index: 1; }
 .rdPrev { left: 0; } .rdNext { right: 0; }
-.rdBottom { padding: 4px 20px calc(10px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 4px; transition: opacity .25s; }
+.rdBottom { position: absolute; z-index: 10; bottom: 0; left: 0; right: 0; padding: 8px 20px calc(10px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 4px; background: var(--rd-frame); transition: opacity .3s, transform .38s cubic-bezier(.2,.8,.2,1); }
 .rdInfo { display: flex; justify-content: space-between; gap: 12px; font: 500 .75rem "Inter Tight", sans-serif; opacity: .6; }
 .rdChapter { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rdScrub { width: 100%; accent-color: var(--rd-fg); opacity: .5; }
 .reader.bare .rdTop, .reader.bare .rdBottom { opacity: 0; pointer-events: none; }
+.reader.bare .rdTop { transform: translateY(-100%); }
+.reader.bare .rdBottom { transform: translateY(100%); }
 .rdLoading { position: absolute; inset: 0; display: grid; place-items: center; padding: 32px; text-align: center; font: 500 .95rem "Inter Tight", sans-serif; background: var(--rd-bg); }
 .rdLoading[hidden] { display: none; }
 .rdPanel { position: absolute; left: 50%; bottom: calc(70px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 3; width: min(420px, calc(100vw - 24px)); max-height: 70vh; overflow: auto; padding: 16px; border-radius: 18px; background: color-mix(in srgb, var(--rd-bg) 88%, var(--rd-fg)); box-shadow: 0 18px 50px rgba(0,0,0,.35); font-family: "Inter Tight", sans-serif; }
@@ -454,10 +460,11 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 .rdHint { opacity: .6; font-size: .88rem; }
 
 /* page curl */
-.rdView { position: relative; z-index: 1; background: var(--rd-bg); box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 3px 16px rgba(0,0,0,.22); }
+.rdView { z-index: 1; background: var(--rd-bg); box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 3px 16px rgba(0,0,0,.22); }
 /* a dark page sits on an almost black frame, with a faint light edge, so the page and its turning shadow stay readable */
 .reader[data-dark="1"] { --rd-frame: color-mix(in srgb, var(--rd-bg) 45%, #000); }
 .reader[data-dark="1"] .rdView { box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 3px 18px rgba(0,0,0,.6); }
+.reader.bare .rdView, .reader.bare[data-dark="1"] .rdView { box-shadow: none; }
 .rdGesture { position: absolute; z-index: 8; touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none; }
 .reader .rdPanel { z-index: 12; }
 .rdLayer { position: absolute; overflow: hidden; pointer-events: none; background: var(--rd-bg); }
@@ -465,6 +472,8 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 .rdBackInner { position: absolute; inset: 0; overflow: hidden; }
 .rdBackInner .rdLayer { background: transparent; }
 .rdBand { position: absolute; transform-origin: 0 50%; pointer-events: none; }
+.rdCurlShadow { background: linear-gradient(90deg, rgba(0,0,0,.42) 0, rgba(0,0,0,.16) 30%, rgba(0,0,0,0) 100%); }
+.reader[data-dark="1"] .rdCurlShadow { background: linear-gradient(90deg, rgba(255,255,255,.16) 0, rgba(255,255,255,.05) 30%, rgba(255,255,255,0) 100%); }
 .rdBandUnder { background: linear-gradient(90deg, rgba(0,0,0,.42) 0, rgba(0,0,0,.16) 22%, rgba(0,0,0,0) 100%); }
 .rdBandFlat { background: linear-gradient(90deg, rgba(0,0,0,.12) 0, rgba(0,0,0,0) 100%); }
 .rdBandBack { background: linear-gradient(90deg, rgba(0,0,0,.22) 0, rgba(0,0,0,.06) 14%, rgba(255,255,255,.16) 42%, rgba(255,255,255,.04) 70%, rgba(0,0,0,.1) 100%); mix-blend-mode: multiply; }
