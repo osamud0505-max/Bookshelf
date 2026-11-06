@@ -304,29 +304,23 @@
     },
   };
   // each room is a list of layers: [id, name shown in the sound panel, how to make it]
-  /** The room's music (tunes.js), played under the room's own gain so its slider works like the other layers. */
-  function tune(R, name) {
-    if (!window.ShelfTunes) return;
-    const t = window.ShelfTunes.play(ctx, R.out, name, { level: 1 / (ROOM_GAIN[name] || 1) });
-    R.onStop(() => t.stop());
-  }
   const ROOMS = {
     // wind is only outdoors (forest, starry night); in the castle and the witch's tower it is faint and far off
-    cabin: [["music", "Chill guitar", (R) => tune(R, "cabin")], ["fire", "Fireplace", (R) => S.fire(R)]],
-    loft: [["music", "R&B keys", (R) => tune(R, "loft")], ["city", "City traffic", (R) => S.city(R.far(520, 0.45))], ["sirens", "Distant sirens", (R) => S.sirens(R.far(1100, 0.7))]],
-    academia: [["music", "Nocturne piano", (R) => tune(R, "academia")], ["rain", "Rain", (R) => S.rain(R.far(1000, 0.5), 0.8)], ["clock", "Clock", (R) => S.clock(R, false, 0.5)]],
-    nook: [["music", "Music box", (R) => tune(R, "nook")], ["birds", "Birds", (R) => S.birdsFar(R)]],
-    library: [["music", "Classical piano", (R) => tune(R, "library")], ["clock", "Clock", (R) => S.clock(R, false, 0.8)], ["hum", "Room hum", (R) => S.hum(R)]],
-    starry: [["music", "Night guitar", (R) => tune(R, "starry")], ["crickets", "Crickets", (R) => S.crickets(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.6)]],
-    cottage: [["music", "Soft piano", (R) => tune(R, "cottage")], ["birds", "Birds", (R) => S.birdsFar(R)]],
-    candle: [["music", "Cello and strings", (R) => tune(R, "candle")], ["writing", "Pen on paper", (R) => S.writing(R)]],
-    vampire: [["music", "Church organ", (R) => tune(R, "vampire")], ["bats", "Bats", (R) => S.bats(R)]],
-    victorian: [["music", "Parlour waltz", (R) => tune(R, "victorian")], ["clock", "Grandfather clock", (R) => S.clock(R, true, 0.8)]],
-    castle: [["music", "Medieval lute", (R) => tune(R, "castle")], ["wind", "Wind", (R) => S.wind(R.far(380, 0.35), 1)], ["drips", "Dripping water", (R) => S.drips(R)]],
-    bordello: [["music", "Gothic harpsichord", (R) => tune(R, "bordello")], ["clock", "Clock", (R) => S.clock(R, false, 1)]],
-    forest: [["music", "Fairytale harp", (R) => tune(R, "forest")], ["crickets", "Crickets", (R) => S.crickets(R, 0.8)], ["owl", "Owl", (R) => S.owl(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.55)], ["sparkle", "Magic sparkles", (R) => S.sparkle(R)]],
-    teahouse: [["water", "Stream", (R) => S.water(R)], ["music", "Koto and flute", (R) => tune(R, "teahouse")], ["crickets", "Crickets", (R) => S.crickets(R, 0.4)], ["fireworks", "Fireworks", (R) => S.fireworks(R)]],
-    witch: [["music", "Witch\'s song", (R) => tune(R, "witch")], ["pot", "Bubbling pot", (R) => S.cauldron(R)]],
+    cabin: [["fire", "Fireplace", (R) => S.fire(R)]],
+    loft: [["city", "City traffic", (R) => S.city(R.far(520, 0.45))], ["sirens", "Distant sirens", (R) => S.sirens(R.far(1100, 0.7))]],
+    academia: [["rain", "Rain", (R) => S.rain(R.far(1000, 0.5), 0.8)], ["clock", "Clock", (R) => S.clock(R, false, 0.5)]],
+    nook: [["birds", "Birds", (R) => S.birdsFar(R)]],
+    library: [["clock", "Clock", (R) => S.clock(R, false, 0.8)], ["hum", "Room hum", (R) => S.hum(R)]],
+    starry: [["crickets", "Crickets", (R) => S.crickets(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.6)]],
+    cottage: [["birds", "Birds", (R) => S.birdsFar(R)]],
+    candle: [["writing", "Pen on paper", (R) => S.writing(R)]],
+    vampire: [["drone", "Low drone", (R) => S.drone(R)], ["bats", "Bats", (R) => S.bats(R)]],
+    victorian: [["clock", "Grandfather clock", (R) => S.clock(R, true, 0.8)]],
+    castle: [["wind", "Wind", (R) => S.wind(R.far(380, 0.35), 1)], ["drips", "Dripping water", (R) => S.drips(R)]],
+    bordello: [["clock", "Clock", (R) => S.clock(R, false, 1)]],
+    forest: [["crickets", "Crickets", (R) => S.crickets(R, 0.8)], ["owl", "Owl", (R) => S.owl(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.55)], ["sparkle", "Magic sparkles", (R) => S.sparkle(R)]],
+    teahouse: [["water", "Stream", (R) => S.water(R)], ["chimes", "Wind chimes", (R) => S.chimes(R)], ["crickets", "Crickets", (R) => S.crickets(R, 0.4)], ["fireworks", "Fireworks", (R) => S.fireworks(R)]],
+    witch: [["pot", "Bubbling pot", (R) => S.cauldron(R)]],
   };
   /** A layer's own level: 0 when muted, otherwise its slider (1 = as designed, up to 1.5). */
   const mixOf = (key, id) => ((pref.mix[key] || {})[id]) || { v: 1, m: false };
