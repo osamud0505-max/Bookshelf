@@ -133,6 +133,42 @@
         else R.tone(t, tock ? 1900 : 2300, tock ? 1800 : 2200, 0.035, 0.018 * level);
       });
     },
+    sirens(R) {
+      // far-off emergency vehicles and car horns, heard over the rooftops
+      const siren = (t) => {
+        const police = Math.random() < 0.5, len = rnd(9, 14), o = ctx.createOscillator();
+        const g = ctx.createGain(), lp = R.filter("lowpass", 1500), dest = R.pan(rnd(-0.8, 0.8)) || R.out;
+        o.type = "triangle";
+        const lo = police ? 700 : 600, hi = police ? 1500 : 1350, per = police ? rnd(0.28, 0.36) : rnd(3, 4.2);
+        const shift = rnd(0.93, 0.97); // pitch drops a little as it drives away
+        let x = t, up = true;
+        o.frequency.setValueAtTime(lo, t);
+        while (x < t + len) {
+          const k = 1 - (1 - shift) * ((x - t) / len);
+          if (police) { o.frequency.linearRampToValueAtTime(hi * k, x + per * 0.7); o.frequency.linearRampToValueAtTime(lo * k, x + per); x += per; }
+          else { o.frequency.linearRampToValueAtTime((up ? hi : lo) * k, x + per); x += per; up = !up; }
+        }
+        o.connect(g);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.03, t + len * 0.35);
+        g.gain.linearRampToValueAtTime(0.026, t + len * 0.55);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+        g.connect(lp).connect(dest); o.start(t); o.stop(t + len + 0.1);
+      };
+      const horn = (t) => {
+        const f = rnd(340, 470), n = Math.random() < 0.35 ? 2 : 1, lp = R.filter("lowpass", 1100), dest = R.pan(rnd(-0.8, 0.8)) || R.out;
+        lp.connect(dest);
+        for (let i = 0; i < n; i++) {
+          const at = t + i * rnd(0.22, 0.3), len = n > 1 ? rnd(0.14, 0.2) : rnd(0.3, 0.6);
+          R.tone(at, f, f * 0.995, len, 0.014, "square", lp, 0.02);
+          R.tone(at, f * 1.25, f * 1.245, len, 0.011, "square", lp, 0.02);
+        }
+      };
+      R.every(9000, 22000, horn);
+      R.every(40000, 95000, siren);
+      let first = true; // the first siren comes within half a minute, then they're rare
+      R.every(8000, 8000, (t) => { if (first) { first = false; siren(t + rnd(2, 20)); } });
+    },
     hum(R, level = 1) { R.loop("brown", [R.filter("lowpass", 140)], 0.12 * level); },
     city(R) {
       // the city behind the glass: a low rumble, cars passing now and then, a far-off horn
@@ -241,7 +277,7 @@
   const ROOMS = {
     // wind is only outdoors (forest, starry night); in the castle and the witch's tower it is faint and far off
     cabin: (R) => S.fire(R),
-    loft: (R) => S.city(R.far(520, 0.45)),
+    loft: (R) => { S.city(R.far(520, 0.45)); S.sirens(R.far(1600, 0.5)); },
     academia: (R) => { S.rain(R.far(1000, 0.5), 0.8); S.clock(R, false, 0.5); },
     nook: (R) => S.birdsFar(R),
     library: (R) => { S.clock(R, false, 0.8); S.hum(R); },
