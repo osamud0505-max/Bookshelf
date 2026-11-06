@@ -302,3 +302,11 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
   box-shadow: 0 10px 30px -10px rgba(0,0,0,.6); max-width: calc(100vw - 32px); text-align: center;
 }
 @media (prefers-reduced-motion: reduce) { .sheet, .scrim { animation: none; } }
+
+/* Save bar on a book's page */
+.saveBar { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 8px; margin: 0; padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--popup) 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border); }
+.saveBar[hidden] { display: none; }
+.saveBar .saveMsg { flex: 1; font-size: 13px; color: var(--muted-fg); }
+.saveBar.asking { animation: nudge .35s ease; }
+.saveBar.asking .saveMsg { color: var(--foreground); font-weight: 600; }
+@keyframes nudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }

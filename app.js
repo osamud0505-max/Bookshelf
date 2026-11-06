@@ -226,7 +226,7 @@
     const el = h(`<div class="book ${b.finish === "glossy" ? "glossy" : "matte"}">
       <div class="body">
         <div class="face front">
-          ${b.coverUrl ? `<img class="art" alt="" draggable="false" loading="lazy" src="${esc(b.coverUrl)}">` : ""}
+          ${b.coverUrl ? `<img class="art" alt="" draggable="false" loading="lazy" referrerpolicy="no-referrer" src="${esc(b.coverUrl)}">` : ""}
           <div class="plain" ${b.coverUrl ? "hidden" : ""}><span class="plainRule"></span><span class="plainTitle">${esc(b.title)}</span><span class="plainAuthor">${esc(b.author)}</span></div>
           <span class="grain"></span><span class="hinge"></span><span class="sheen"></span><span class="fShade"></span>
         </div>
@@ -446,12 +446,15 @@
   const scrim = document.getElementById("scrim");
   let openSheet = null;
   function showSheet(el) {
-    if (openSheet && openSheet !== el) openSheet.hidden = true;
+    if (openSheet && openSheet !== el) { openSheet.hidden = true; sheetGuard = null; }
     openSheet = el; el.hidden = false; scrim.hidden = false; el.scrollTop = 0;
     document.body.style.overflow = "hidden";
   }
-  function closeSheet() {
+  let sheetGuard = null; // the book page uses this to stop closing with unsaved changes
+  function closeSheet(force) {
     if (!openSheet) return;
+    if (force !== true && sheetGuard && !sheetGuard()) return;
+    sheetGuard = null;
     openSheet.hidden = true; openSheet.replaceChildren(); openSheet = null; scrim.hidden = true;
     document.body.style.overflow = "";
   }
@@ -459,14 +462,58 @@
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
   const closeBtn = () => { const b = h(`<button class="sheetClose" aria-label="Close">✕</button>`); b.onclick = closeSheet; return b; };
 
+  /** Turn what people paste into a direct image link: unwrap Google Images / redirect links. */
+  function cleanImageLink(v) {
+    try {
+      const u = new URL(v);
+      for (const k of ["imgurl", "mediaurl", "url", "u"]) { const inner = u.searchParams.get(k); if (inner && /^https?:\/\//.test(inner)) return inner; }
+    } catch (e) { /* not a URL */ }
+    return v;
+  }
+  /** Shrink a photo from the phone to a small JPEG so it fits in browser storage. */
+  function photoToDataUrl(file) {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, 520 / img.naturalWidth);
+        const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * scale); c.height = Math.round(img.naturalHeight * scale);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url); resolve(c.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+
   function openBook(id) {
     const sheet = document.getElementById("bookSheet");
+    let draft = {};
+    const dirty = () => Object.keys(draft).length > 0;
+    const view = () => { const b = byId(id); return b ? { ...b, ...draft } : null; };
+    let bar = null;
+    const showBar = (asking) => {
+      if (!bar) return;
+      bar.hidden = !dirty();
+      bar.classList.toggle("asking", !!asking);
+      bar.querySelector(".saveMsg").textContent = asking ? "Save your changes before closing?" : "You have unsaved changes";
+    };
+    /** Keep a change in the draft; redraw unless the person is typing. */
+    const stage = (patch, redraw = true) => { Object.assign(draft, patch); if (redraw) draw(); else showBar(); };
+    const saveDraft = () => {
+      if (!dirty()) return;
+      const p = draft; draft = {};
+      if (p.status === "reading" && !p.startedOn && !byId(id).startedOn) p.startedOn = today();
+      if (p.status === "read" && !p.finishedOn && !byId(id).finishedOn) p.finishedOn = today();
+      updateBook(id, p); toast("Saved"); draw();
+    };
+    sheetGuard = () => { if (!dirty()) return true; showBar(true); bar.scrollIntoView({ block: "nearest" }); return false; };
+
     const draw = () => {
-      const b = byId(id); if (!b) return closeSheet();
+      const b = view(); if (!b) return closeSheet(true);
       const scroll = sheet.scrollTop;
       sheet.replaceChildren(closeBtn());
       const body = h(`<div class="sheetBody"></div>`);
-      const hero = h(`<header class="hero" style="--spine:${b.spineColor}">${b.coverUrl ? `<img class="backdrop" alt="" src="${esc(b.coverUrl)}">` : ""}<div class="heroBook"></div><div class="heading">
+      const hero = h(`<header class="hero" style="--spine:${b.spineColor}">${b.coverUrl ? `<img class="backdrop" alt="" referrerpolicy="no-referrer" src="${esc(b.coverUrl)}">` : ""}<div class="heroBook"></div><div class="heading">
         <h2 class="bookTitle">${esc(b.title)}</h2><p class="bookAuthor">${esc(b.author)}</p>
         <p class="facts">${[b.year, b.pageCount ? b.pageCount + " pages" : ""].filter(Boolean).join(" · ")}</p><div class="rate"></div></div></header>`);
       const heroBook = bookEl(b, innerWidth < 560 ? 180 : 220, 0.16);
@@ -476,20 +523,15 @@
         const r = e.currentTarget.getBoundingClientRect();
         heroBook.style.setProperty("--turn", Math.max(0, Math.min(0.4, ((e.clientX - r.left) / r.width) * 0.4)));
       };
-      hero.querySelector(".rate").append(starsEl(b.rating, (rating) => { updateBook(id, { rating }); draw(); }, 28));
+      hero.querySelector(".rate").append(starsEl(b.rating, (rating) => stage({ rating }), 28));
       body.append(hero);
 
       // shelf + finish
       const quick = h(`<div class="grid2">
         <label class="field"><span class="label">Shelf</span><select class="input" id="f-status">${STATUS.map(([k, l]) => `<option value="${k}" ${b.status === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
         <div class="field"><span class="label">Cover</span><div class="seg"><button data-v="matte" aria-pressed="${b.finish !== "glossy"}">Matte</button><button data-v="glossy" aria-pressed="${b.finish === "glossy"}">Glossy</button></div></div></div>`);
-      quick.querySelector("#f-status").onchange = (e) => {
-        const s = e.target.value, patch = { status: s };
-        if (s === "reading" && !b.startedOn) patch.startedOn = today();
-        if (s === "read" && !b.finishedOn) patch.finishedOn = today();
-        updateBook(id, patch); draw();
-      };
-      quick.querySelectorAll(".seg button").forEach((btn) => (btn.onclick = () => { updateBook(id, { finish: btn.dataset.v }); draw(); }));
+      quick.querySelector("#f-status").onchange = (e) => stage({ status: e.target.value });
+      quick.querySelectorAll(".seg button").forEach((btn) => (btn.onclick = () => stage({ finish: btn.dataset.v })));
       body.append(quick);
 
       // summary
@@ -503,20 +545,20 @@
         btn.onclick = async () => {
           btn.disabled = true; btn.textContent = "Looking…";
           const s = await findSummary(b);
-          if (s) { updateBook(id, { summary: s }); draw(); } else { btn.disabled = false; btn.textContent = "Find one online"; toast("No summary found online. You can write your own below."); }
+          if (s) stage({ summary: s }); else { btn.disabled = false; btn.textContent = "Find one online"; toast("No summary found online. You can write your own below."); }
         };
         sum.append(row);
       }
       const ownSum = h(`<details><summary class="hint" style="cursor:pointer">Edit the summary</summary><textarea class="input" rows="5" style="margin-top:8px"></textarea></details>`);
       ownSum.querySelector("textarea").value = b.summary;
-      ownSum.querySelector("textarea").onchange = (e) => updateBook(id, { summary: e.target.value.trim() });
+      ownSum.querySelector("textarea").oninput = (e) => stage({ summary: e.target.value.trim() }, false);
       sum.append(ownSum);
       body.append(sum);
 
       // review
-      const rev = h(`<div class="group"><h3 class="label">Review</h3><textarea class="input review" rows="6" placeholder="What stayed with you?"></textarea><span class="hint" hidden>Saved</span></div>`);
+      const rev = h(`<div class="group"><h3 class="label">Review</h3><textarea class="input review" rows="6" placeholder="What stayed with you?"></textarea></div>`);
       const ta = rev.querySelector("textarea"); ta.value = b.review;
-      ta.oninput = () => { b.review = ta.value; save(); rev.querySelector(".hint").hidden = false; };
+      ta.oninput = () => stage({ review: ta.value }, false);
       body.append(rev);
 
       // look
@@ -529,21 +571,18 @@
           <div class="field"><span class="hint">Book size</span><div class="seg">${Object.entries(SIZES).map(([k, [l]]) => `<button data-v="${k}" aria-pressed="${(b.size || "regular") === k}">${l}</button>`).join("")}</div></div>
         </div></div></div>`);
       const preview = look.querySelector(".lookPreview");
-      const drawPreview = (p) => preview.replaceChildren(bookEl({ ...b, ...p }, 200, 1));
-      drawPreview({});
+      const drawPreview = () => preview.replaceChildren(bookEl(view(), 200, 1));
+      drawPreview();
       const spineText = look.querySelector("#f-spinetext"); spineText.value = b.spineText || "";
-      spineText.oninput = () => drawPreview({ spineText: spineText.value });
-      spineText.onchange = () => updateBook(id, { spineText: spineText.value });
-      look.querySelector("#f-font").onchange = (e) => { updateBook(id, { spineFont: e.target.value || null }); draw(); };
+      spineText.oninput = () => { stage({ spineText: spineText.value }, false); drawPreview(); };
+      look.querySelector("#f-font").onchange = (e) => stage({ spineFont: e.target.value || null });
       const range = look.querySelector("#f-size");
-      range.oninput = () => { look.querySelector("#sizeVal").textContent = range.value + "px"; drawPreview({ spineSize: +range.value, spineText: spineText.value }); };
-      range.onchange = () => updateBook(id, { spineSize: +range.value });
+      range.oninput = () => { look.querySelector("#sizeVal").textContent = range.value + "px"; stage({ spineSize: +range.value }, false); drawPreview(); };
+      look.querySelector("#f-auto").onclick = () => stage({ spineSize: null });
       const thick = look.querySelector("#f-thick");
-      thick.oninput = () => { look.querySelector("#thickVal").textContent = thick.value + "%"; drawPreview({ thickness: +thick.value, spineText: spineText.value }); };
-      thick.onchange = () => updateBook(id, { thickness: +thick.value });
-      look.querySelector("#f-thickAuto").onclick = () => { updateBook(id, { thickness: null }); draw(); };
-      look.querySelector("#f-auto").onclick = () => { updateBook(id, { spineSize: null }); draw(); };
-      look.querySelectorAll(".seg button").forEach((btn) => (btn.onclick = () => { updateBook(id, { size: btn.dataset.v }); draw(); }));
+      thick.oninput = () => { look.querySelector("#thickVal").textContent = thick.value + "%"; stage({ thickness: +thick.value }, false); drawPreview(); };
+      look.querySelector("#f-thickAuto").onclick = () => stage({ thickness: null });
+      look.querySelectorAll(".seg button").forEach((btn) => (btn.onclick = () => stage({ size: btn.dataset.v })));
       body.append(look);
 
       // details
@@ -553,28 +592,58 @@
         <label class="field"><span class="hint">Pages</span><input class="input" type="number" min="1" id="f-pages" value="${b.pageCount || ""}"></label>
         <label class="field"><span class="hint">Spine colour</span><input class="input" type="color" id="f-color" value="${b.spineColor}" style="padding:4px"></label>
       </div>
-      <label class="field"><span class="hint">Cover image link</span><input class="input" id="f-cover" placeholder="https://…" value="${esc(b.coverUrl || "")}"></label></div>`);
-      det.querySelector("#f-start").onchange = (e) => updateBook(id, { startedOn: e.target.value || null });
-      det.querySelector("#f-end").onchange = (e) => updateBook(id, { finishedOn: e.target.value || null });
-      det.querySelector("#f-pages").onchange = (e) => { updateBook(id, { pageCount: parseInt(e.target.value, 10) || null }); draw(); };
-      det.querySelector("#f-color").onchange = (e) => { updateBook(id, { spineColor: e.target.value, spineManual: true }); draw(); };
-      det.querySelector("#f-cover").onchange = async (e) => {
-        const v = e.target.value.trim() || null;
-        if (v && !/^https?:\/\//.test(v)) return toast("Paste a link that starts with https://");
-        const patch = { coverUrl: v };
-        if (v) { const m = await measureCover(v); if (m.aspect) patch.coverAspect = m.aspect; if (m.color) { patch.spineColor = m.color; patch.edgeInset = m.inset; patch.edgeV = 2; } }
-        updateBook(id, patch); draw();
+      <div class="field"><span class="hint">Cover image</span>
+        <div class="row" style="flex-wrap:nowrap"><input class="input" id="f-cover" inputmode="url" autocomplete="off" placeholder="Paste an image link" value="${esc(b.coverUrl && !b.coverUrl.startsWith("data:") ? b.coverUrl : "")}"><button class="btn small" id="f-coverUse">Use link</button></div>
+        <div class="row"><label class="btn small" style="cursor:pointer">Choose a photo<input type="file" accept="image/*" id="f-photo" hidden></label><span class="hint" id="coverMsg">${b.coverUrl && b.coverUrl.startsWith("data:") ? "Using your own photo." : "Tip: long-press an image online → Copy image address."}</span></div>
+      </div></div>`);
+      det.querySelector("#f-start").onchange = (e) => stage({ startedOn: e.target.value || null }, false);
+      det.querySelector("#f-end").onchange = (e) => stage({ finishedOn: e.target.value || null }, false);
+      det.querySelector("#f-pages").oninput = (e) => stage({ pageCount: parseInt(e.target.value, 10) || null }, false);
+      det.querySelector("#f-color").oninput = (e) => stage({ spineColor: e.target.value, spineManual: true }, false);
+      det.querySelector("#f-color").onchange = () => draw();
+      const coverMsg = det.querySelector("#coverMsg");
+      const useCover = async (src, fromPhoto) => {
+        coverMsg.textContent = "Loading the cover…";
+        const m = await measureCover(src);
+        if (!m.aspect) {
+          coverMsg.textContent = fromPhoto ? "That photo couldn't be read." : "That link isn't a picture, or the site blocks it. Copy the image's own address (it usually ends in .jpg or .png).";
+          return;
+        }
+        const patch = { coverUrl: src, coverAspect: m.aspect };
+        if (m.color && !byId(id).spineManual) Object.assign(patch, { spineColor: m.color, edgeInset: m.inset, edgeV: 2 });
+        stage(patch);
+      };
+      const coverIn = det.querySelector("#f-cover");
+      const fromLink = () => {
+        const v = cleanImageLink(coverIn.value.trim());
+        if (!v) return;
+        if (!/^https?:\/\//.test(v)) { coverMsg.textContent = "Paste a link that starts with https://"; return; }
+        useCover(v, false);
+      };
+      det.querySelector("#f-coverUse").onclick = fromLink;
+      coverIn.onkeydown = (e) => { if (e.key === "Enter") fromLink(); };
+      coverIn.onpaste = () => setTimeout(fromLink, 0);
+      det.querySelector("#f-photo").onchange = async (e) => {
+        const f = e.target.files && e.target.files[0]; if (!f) return;
+        coverMsg.textContent = "Loading the photo…";
+        const data = await photoToDataUrl(f);
+        if (data) useCover(data, true); else coverMsg.textContent = "That photo couldn't be read.";
       };
       body.append(det);
 
       const del = h(`<div class="group"><button class="btn small danger" style="align-self:flex-start">Remove from my shelf</button></div>`);
       const delBtn = del.querySelector("button");
       delBtn.onclick = () => {
-        if (delBtn.dataset.armed) { state.books = state.books.filter((x) => x.id !== id); save(); closeSheet(); render(); toast(`Removed “${b.title}”`); return; }
+        if (delBtn.dataset.armed) { state.books = state.books.filter((x) => x.id !== id); save(); closeSheet(true); render(); toast(`Removed “${b.title}”`); return; }
         delBtn.dataset.armed = "1"; delBtn.textContent = "Tap again to remove";
       };
       body.append(del);
-      sheet.append(body);
+
+      bar = h(`<div class="saveBar" hidden><span class="saveMsg"></span><button class="btn small" id="discard">Discard</button><button class="btn small primary" id="saveBtn">Save</button></div>`);
+      bar.querySelector("#saveBtn").onclick = () => { const wasAsking = bar.classList.contains("asking"); saveDraft(); if (wasAsking) closeSheet(true); };
+      bar.querySelector("#discard").onclick = () => { const wasAsking = bar.classList.contains("asking"); draft = {}; if (wasAsking) closeSheet(true); else draw(); };
+      sheet.append(body, bar);
+      showBar();
       sheet.scrollTop = scroll;
     };
     draw();
