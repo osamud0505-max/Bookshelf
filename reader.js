@@ -89,7 +89,6 @@
     <header class="rdTop"><button class="rdBtn" data-a="close" aria-label="Close the book">✕</button><div class="rdTitle"></div>
       <button class="rdBtn" data-a="toc" aria-label="Chapters">☰</button><button class="rdBtn" data-a="aa" aria-label="Text settings">Aa</button></header>
     <div class="rdView"></div>
-    <button class="rdZone rdPrev" data-a="prev" aria-label="Previous page"></button><button class="rdZone rdNext" data-a="next" aria-label="Next page"></button>
     <footer class="rdBottom"><input type="range" class="rdScrub" min="0" max="100" step="0.1" value="0" aria-label="Jump to a place in the book" disabled><div class="rdInfo"><span class="rdChapter"></span><span class="rdPct">…</span></div></footer>
     <div class="rdPanel" data-p="aa" hidden></div>
     <div class="rdPanel rdTocPanel" data-p="toc" hidden></div>
@@ -159,6 +158,233 @@
     return hit ? hit.label.trim() : "";
   };
 
+  // ------------------------------------------------------------------ page turning with a real paper curl
+  // The page you are turning is a frozen copy of the current page. While you drag, the real reader has
+  // already moved underneath, so the next page is revealed as the paper folds over along a line that
+  // follows your finger. The back of the folded part shows the text faintly mirrored, like thin paper.
+  const gesture = h(`<div class="rdGesture" aria-hidden="true"></div>`);
+  room.append(gesture);
+  let turn = null;
+
+  const viewRect = () => view.getBoundingClientRect();
+  function layoutGesture() { const r = viewRect(); Object.assign(gesture.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px" }); }
+  addEventListener("resize", () => { if (!room.hidden) layoutGesture(); });
+
+  function pageFrame() {
+    const cont = view.querySelector(".epub-container") || view;
+    const cr = cont.getBoundingClientRect();
+    let best = null, bestArea = 0;
+    cont.querySelectorAll("iframe").forEach((f) => {
+      const r = f.getBoundingClientRect();
+      const area = Math.max(0, Math.min(r.right, cr.right) - Math.max(r.left, cr.left)) * Math.max(0, Math.min(r.bottom, cr.bottom) - Math.max(r.top, cr.top));
+      if (area > bestArea) { best = f; bestArea = area; }
+    });
+    return best;
+  }
+  /** A frozen copy of what is on screen right now, loaded straight into `parent`
+   *  (an iframe reloads if it is moved, so it is never moved after this). */
+  function snapshot(parent, at) {
+    return new Promise((resolve) => {
+      const vr = viewRect(), frame = pageFrame();
+      const wrap = h(`<div class="rdLayer"></div>`);
+      Object.assign(wrap.style, { left: (at ? at.left : 0) + "px", top: (at ? at.top : 0) + "px", width: vr.width + "px", height: vr.height + "px" }, at && at.z ? { zIndex: at.z } : {});
+      parent.append(wrap);
+      if (!frame || !frame.contentDocument) return resolve(wrap);
+      const fr = frame.getBoundingClientRect();
+      const copy = document.createElement("iframe");
+      copy.setAttribute("sandbox", "allow-same-origin");
+      copy.setAttribute("tabindex", "-1");
+      Object.assign(copy.style, { position: "absolute", border: "0", left: fr.left - vr.left + "px", top: fr.top - vr.top + "px", width: fr.width + "px", height: fr.height + "px", pointerEvents: "none" });
+      let done = false; const finish = () => { if (!done) { done = true; resolve(wrap); } };
+      copy.onload = () => setTimeout(finish, 30);
+      setTimeout(finish, 700);
+      // styles the reader adds at run time (page colour, spacing) live only in the CSSOM, so carry them over by hand
+      const doc = frame.contentDocument;
+      let extra = "";
+      for (const sh of doc.styleSheets) { try { extra += [...sh.cssRules].map((r) => r.cssText).join("\n") + "\n"; } catch (e) { /* cross-origin sheet */ } }
+      const html = doc.documentElement.outerHTML.replace(/<\/head>/i, `<style>${extra.replace(/<\/style/gi, "<\\/style")}</style></head>`);
+      copy.srcdoc = "<!DOCTYPE html>" + html;
+      wrap.append(copy);
+    });
+  }
+
+  // clip a convex polygon to the half-plane where keep(p) >= 0
+  function clipPoly(poly, val) {
+    const out = [];
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i], b = poly[(i + 1) % poly.length], va = val(a), vb = val(b);
+      if (va >= 0) out.push(a);
+      if ((va >= 0) !== (vb >= 0)) { const t = va / (va - vb); out.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }); }
+    }
+    return out;
+  }
+  const polyCss = (pts) => (pts.length < 3 ? "polygon(0 0, 0 0, 0 0)" : `polygon(${pts.map((p) => `${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`).join(",")})`);
+
+  /** Draw the curl with the page's free edge at x = f and the finger at height fy (page coordinates). */
+  function drawTurn(f, fy) {
+    const t = turn, W = t.W, H = t.H;
+    const C = { x: W, y: t.y0 }, F = { x: f, y: fy };
+    let ux = C.x - F.x, uy = C.y - F.y; const len = Math.hypot(ux, uy);
+    const rect = [{ x: 0, y: 0 }, { x: W, y: 0 }, { x: W, y: H }, { x: 0, y: H }];
+    if (len < 1) {
+      t.front.style.clipPath = "none"; t.back.style.display = "none"; t.shUnder.style.display = t.shFlat.style.display = "none"; return;
+    }
+    ux /= len; uy /= len;
+    const M = { x: (C.x + F.x) / 2, y: (C.y + F.y) / 2 };
+    const side = (p) => (p.x - M.x) * ux + (p.y - M.y) * uy;
+    const flat = clipPoly(rect, (p) => -side(p)), flap = clipPoly(rect, side);
+    const angU = Math.atan2(uy, ux) * 180 / Math.PI, angV = angU + 90;
+    t.front.style.clipPath = polyCss(flat);
+    t.back.style.display = t.shUnder.style.display = t.shFlat.style.display = "";
+    // the folded-back part: the page's flap mirrored across the fold line
+    t.backInner.style.transformOrigin = `${M.x}px ${M.y}px`;
+    t.backInner.style.transform = `rotate(${angV}deg) scaleY(-1) rotate(${-angV}deg)`;
+    t.backInner.style.clipPath = polyCss(flap);
+    const flapW = len / 2, big = 3 * Math.max(W, H);
+    const band = (el, from, width, ang) => Object.assign(el.style, { left: from.x + "px", top: from.y - big / 2 + "px", width: Math.max(1, width) + "px", height: big + "px", transform: `rotate(${ang}deg)` });
+    band(t.backShade, M, flapW + 2, angU);
+    // shadow the lifted paper throws on the page underneath, and the darkening where the page bends
+    t.shUnder.style.clipPath = polyCss(flap);
+    band(t.shUnderBand, M, Math.min(flapW, 140) + 2, angU);
+    t.shUnderBand.style.opacity = Math.min(1, flapW / 40);
+    t.shFlat.style.clipPath = polyCss(flat);
+    band(t.shFlatBand, M, Math.min(60, flapW + 10), angU + 180);
+    const lift = Math.min(1, flapW / 80);
+    t.back.style.filter = `drop-shadow(${(-ux * 10 * lift).toFixed(1)}px ${(-uy * 10 * lift).toFixed(1)}px ${(12 * lift).toFixed(1)}px rgba(0,0,0,${(0.28 * lift).toFixed(2)}))`;
+  }
+
+  async function beginTurn(dir, y0) {
+    if (turn || !cur) return null;
+    const loc = cur.rendition.currentLocation && cur.rendition.currentLocation();
+    if (loc && ((dir === "next" && loc.atEnd) || (dir === "prev" && loc.atStart))) return null;
+    const vr = viewRect();
+    const t = turn = { dir, W: vr.width, H: vr.height, y0, ready: false, f: dir === "next" ? vr.width : -vr.width, fy: y0, layers: [] };
+    const paper = getComputedStyle(room).getPropertyValue("--rd-bg").trim() || "#f6f1e7";
+    const at = (z) => ({ left: vr.left, top: vr.top, z });
+    const layer = (cls, z) => { const el = h(`<div class="${cls}"></div>`); Object.assign(el.style, { left: vr.left + "px", top: vr.top + "px", width: vr.width + "px", height: vr.height + "px", zIndex: z }); room.append(el); t.layers.push(el); return el; };
+    const mk = (cls) => h(`<div class="${cls}"></div>`);
+    // the folded-back part and the shadows, hidden until the first frame is drawn
+    t.shUnder = layer("rdLayer rdShade", 5); t.shUnderBand = mk("rdBand rdBandUnder"); t.shUnder.append(t.shUnderBand);
+    t.shFlat = layer("rdLayer rdShade", 5); t.shFlatBand = mk("rdBand rdBandFlat"); t.shFlat.append(t.shFlatBand);
+    t.back = layer("rdLayer rdBack", 6);
+    t.backInner = mk("rdBackInner"); t.backInner.style.background = paper; t.back.append(t.backInner);
+    t.backShade = mk("rdBand rdBandBack");
+    [t.shUnder, t.shFlat, t.back].forEach((el) => (el.style.display = "none"));
+    if (dir === "next") {
+      t.front = await snapshot(room, at(4)); t.layers.push(t.front);
+      const backCopy = await snapshot(t.backInner); backCopy.style.opacity = "0.16";
+      await cur.rendition.next();
+    } else {
+      const under = await snapshot(room, at(1)); t.layers.push(under);
+      view.style.zIndex = 2; t.front = view; view.style.clipPath = polyCss([]);
+      await cur.rendition.prev();
+      await new Promise((r) => setTimeout(r, 40));
+      const backCopy = await snapshot(t.backInner); backCopy.style.opacity = "0.16";
+    }
+    t.backInner.append(t.backShade);
+    t.ready = true;
+    drawTurn(t.f, t.fy);
+    return t;
+  }
+
+  function animateTurn(to, fyTo, ms, curve) {
+    const t = turn, f0 = t.f, y0 = t.fy, start = performance.now();
+    return new Promise((resolve) => {
+      const step = (now) => {
+        const k = Math.min(1, (now - start) / ms), e = 1 - Math.pow(1 - k, 3);
+        t.f = f0 + (to - f0) * e; t.fy = y0 + (fyTo - y0) * e - (curve ? Math.sin(k * Math.PI) * curve : 0);
+        drawTurn(t.f, t.fy);
+        if (k < 1) requestAnimationFrame(step); else resolve();
+      };
+      requestAnimationFrame(step);
+    });
+  }
+
+  async function endTurn(complete) {
+    const t = turn; if (!t) return;
+    const W = t.W;
+    const target = complete ? (t.dir === "next" ? -W : W) : (t.dir === "next" ? W : -W);
+    const dist = Math.abs(target - t.f) / (2 * W);
+    await animateTurn(target, t.y0, 160 + 340 * dist, 0);
+    if (!complete && cur) { if (t.dir === "next") await cur.rendition.prev(); else await cur.rendition.next(); }
+    t.layers.forEach((l) => l.remove());
+    view.style.clipPath = ""; view.style.zIndex = "";
+    turn = null;
+  }
+
+  /** A whole turn without a finger: for taps on the page edges and the arrow keys. */
+  async function autoTurn(dir) {
+    if (turn || !cur) return;
+    hidePanels();
+    const H = viewRect().height;
+    const t = await beginTurn(dir, H * 0.88); if (!t) return;
+    const W = t.W;
+    await animateTurn(dir === "next" ? -W : W, H * 0.88, 520, H * 0.06);
+    t.layers.forEach((l) => l.remove());
+    view.style.clipPath = ""; view.style.zIndex = "";
+    turn = null;
+  }
+
+  // finger / mouse on the page
+  let g = null;
+  gesture.addEventListener("pointerdown", (e) => {
+    if (turn || !cur) return;
+    const r = gesture.getBoundingClientRect();
+    g = { id: e.pointerId, x0: e.clientX - r.left, y0: e.clientY - r.top, cx: e.clientX, cy: e.clientY, t: performance.now(), v: 0, lastX: e.clientX, lastT: performance.now(), mode: null };
+    try { gesture.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  });
+  gesture.addEventListener("pointermove", (e) => {
+    if (!g || e.pointerId !== g.id) return;
+    const r = gesture.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    const now = performance.now(); g.v = (e.clientX - g.lastX) / Math.max(1, now - g.lastT); g.lastX = e.clientX; g.lastT = now;
+    g.x = x; g.y = y;
+    if (!g.mode) {
+      const dx = x - g.x0, dy = y - g.y0;
+      if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy)) return;
+      g.mode = "turn"; g.dir = dx < 0 ? "next" : "prev";
+      hidePanels();
+      beginTurn(g.dir, g.y0).then((t) => { if (!t) g && (g.mode = "none"); else if (g && g.x !== undefined) follow(); });
+      return;
+    }
+    if (g.mode === "turn") follow();
+  });
+  function follow() {
+    if (!turn || !turn.ready || !g) return;
+    const W = turn.W;
+    turn.f = turn.dir === "next" ? Math.min(W, W + (g.x - g.x0)) : Math.max(-W, Math.min(W, -W + (g.x - g.x0)));
+    turn.fy = g.y;
+    drawTurn(turn.f, turn.fy);
+  }
+  const release = async (e) => {
+    if (!g || e.pointerId !== g.id) return;
+    const gg = g; g = null;
+    if (performance.now() - gg.lastT > 90) gg.v = 0; // a finger that stopped before letting go isn't a flick
+    if (gg.mode === "turn") {
+      // wait until the turn is set up, then let go
+      while (turn && !turn.ready) await new Promise((r) => setTimeout(r, 16));
+      if (!turn) return;
+      const W = turn.W;
+      const complete = turn.dir === "next" ? (turn.f < W * 0.6 || gg.v < -0.35) : (turn.f > -W * 0.6 || gg.v > 0.35);
+      return endTurn(complete && !(turn.dir === "next" && gg.v > 0.35) && !(turn.dir === "prev" && gg.v < -0.35));
+    }
+    if (gg.mode || e.type === "pointercancel") return;
+    // a tap: edges turn the page, links work, the middle shows or hides the bars
+    const W = gesture.clientWidth;
+    if (gg.x0 < W * 0.22) return autoTurn("prev");
+    if (gg.x0 > W * 0.78) return autoTurn("next");
+    const frame = pageFrame();
+    if (frame && frame.contentDocument) {
+      const fr = frame.getBoundingClientRect();
+      const el = frame.contentDocument.elementFromPoint(gg.cx - fr.left, gg.cy - fr.top);
+      const a = el && el.closest && el.closest("a[href]");
+      if (a) { a.click(); return; }
+    }
+    if (![...panels].every((p) => p.hidden)) return hidePanels();
+    toggleChrome();
+  };
+  gesture.addEventListener("pointerup", release);
+  gesture.addEventListener("pointercancel", release);
+
   async function open(id) {
     const b = byId(id); if (!b) return;
     const file = await getFile(id).catch(() => null);
@@ -168,6 +394,7 @@
     room.querySelector(".rdLoading").hidden = false;
     room.querySelector(".rdPct").textContent = b.readPct ? Math.round(b.readPct * 100) + "%" : "…";
     document.body.style.overflow = "hidden";
+    layoutGesture();
     applyLook();
     try {
       await loadLibs();
@@ -175,20 +402,8 @@
       const rendition = book.renderTo(view, { width: "100%", height: "100%", spread: "none", flow: "paginated", allowScriptedContent: false });
       cur = { id, book, rendition };
       applyLook();
-      // swipes and taps inside the page
       rendition.hooks.content.register((contents) => {
-        const doc = contents.document; let sx = 0, sy = 0, st = 0;
-        doc.addEventListener("touchstart", (e) => { const t = e.changedTouches[0]; sx = t.clientX; sy = t.clientY; st = Date.now(); }, { passive: true });
-        doc.addEventListener("touchend", (e) => {
-          const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
-          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) && Date.now() - st < 700) { dx < 0 ? rendition.next() : rendition.prev(); }
-        }, { passive: true });
-        doc.addEventListener("click", (e) => {
-          if (e.target.closest && e.target.closest("a")) return;
-          const sel = doc.getSelection && doc.getSelection(); if (sel && String(sel).trim()) return;
-          if (!panels[0].hidden || !panels[1].hidden) return hidePanels();
-          toggleChrome();
-        });
+        const doc = contents.document;
         doc.addEventListener("keydown", keys);
       });
       rendition.on("relocated", (loc) => {
@@ -204,6 +419,7 @@
       await book.ready;
       await rendition.display(b.readCfi || undefined);
       room.querySelector(".rdLoading").hidden = true;
+      layoutGesture();
       // page positions for the percentage: cached per book because working them out takes a few seconds
       const cached = await idb("locs", "readonly", (s) => s.get(id)).catch(() => null);
       if (cached) book.locations.load(cached);
@@ -219,6 +435,7 @@
   }
 
   function close() {
+    if (turn) { turn.layers.forEach((l) => l.remove()); view.style.clipPath = ""; view.style.zIndex = ""; turn = null; }
     if (cur) { try { cur.book.destroy(); } catch (e) { /* ignore */ } }
     cur = null; view.replaceChildren(); room.hidden = true; document.body.style.overflow = "";
     room.querySelector(".rdLoading").textContent = "Opening…";
@@ -227,16 +444,14 @@
   }
   function keys(e) {
     if (room.hidden || !cur) return;
-    if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); cur.rendition.next(); }
-    else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); cur.rendition.prev(); }
+    if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); autoTurn("next"); }
+    else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); autoTurn("prev"); }
     else if (e.key === "Escape") { if (![...panels].every((p) => p.hidden)) hidePanels(); else close(); }
   }
   document.addEventListener("keydown", keys, true);
   room.addEventListener("click", (e) => {
     const a = e.target.closest("[data-a]") && e.target.closest("[data-a]").dataset.a; if (!a) return;
     if (a === "close") close();
-    else if (a === "next" && cur) { hidePanels(); cur.rendition.next(); }
-    else if (a === "prev" && cur) { hidePanels(); cur.rendition.prev(); }
     else if (a === "aa") { drawAa(); showPanel("aa"); }
     else if (a === "toc") { drawToc(); showPanel("toc"); }
   });

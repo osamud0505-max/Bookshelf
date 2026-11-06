@@ -870,23 +870,6 @@
       body.append(colorRow("Accent colour", "Stars, buttons and highlights.", s.accent, ACCENTS.map((c) => [c, c]), (accent) => set({ accent }), "c-accent", false));
       body.append(colorRow("Shelf colour", "", s.shelf, SHELVES, (shelf) => set({ shelf }), "c-shelf", true));
 
-      const fin = h(`<div class="group"><h3 class="label">Cover finish</h3><p class="hint">New books get this finish. You can still change any single book from its page.</p>
-        <div class="row"><div class="seg"><button data-v="matte" aria-pressed="${s.finish === "matte"}">Matte</button><button data-v="glossy" aria-pressed="${s.finish === "glossy"}">Glossy</button></div>
-        <button class="btn small" id="allFinish">Make every book ${s.finish}</button></div></div>`);
-      fin.querySelectorAll(".seg button").forEach((b) => (b.onclick = () => set({ finish: b.dataset.v })));
-      fin.querySelector("#allFinish").onclick = () => { state.books.forEach((b) => (b.finish = s.finish)); save(); render(); toast(`Every book is now ${s.finish}`); };
-      body.append(fin);
-
-      const fonts = h(`<div class="group"><h3 class="label">Spine font</h3><p class="hint">Used on every spine unless a book has its own font.</p><div class="fonts"></div>
-        <button class="btn small" id="allFonts" style="align-self:flex-start">Use it on every book</button></div>`);
-      for (const [k, f] of Object.entries(FONTS)) {
-        const b = h(`<button class="fontBtn" aria-pressed="${s.spineFont === k}"><span class="sample" style="font-family:${f.family};font-weight:${f.weight};${f.upper ? "text-transform:uppercase" : ""}">The Bell Jar</span><span class="name">${f.label}</span></button>`);
-        b.onclick = () => set({ spineFont: k });
-        fonts.querySelector(".fonts").append(b);
-      }
-      fonts.querySelector("#allFonts").onclick = () => { state.books.forEach((b) => { b.spineFont = null; if (b.spineDesign) b.spineDesign.title.font = s.spineFont; }); save(); render(); toast("Every spine title now uses this font"); };
-      body.append(fonts);
-
       const backup = h(`<div class="group"><h3 class="label">Backup</h3>
         <p class="hint">Your books live only in this browser. Save a backup now and then, and before clearing browser data or switching phones.</p>
         <div class="row"><button class="btn small" id="exp">Save a backup file</button><label class="btn small" for="imp">Restore from a backup<input type="file" id="imp" accept="application/json,.json" hidden></label></div></div>`);

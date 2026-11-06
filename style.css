@@ -446,3 +446,17 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 .rdTocItem { display: block; width: 100%; text-align: left; padding: 10px 12px; border: 0; border-radius: 10px; background: transparent; color: inherit; font: 500 .95rem "Inter Tight", sans-serif; cursor: pointer; }
 .rdTocItem:hover { background: color-mix(in srgb, var(--rd-fg) 8%, transparent); }
 .rdHint { opacity: .6; font-size: .88rem; }
+
+/* page curl */
+.rdView { position: relative; z-index: 1; }
+.rdGesture { position: absolute; z-index: 8; touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none; }
+.reader .rdPanel { z-index: 12; }
+.rdLayer { position: absolute; overflow: hidden; pointer-events: none; background: var(--rd-bg); }
+.rdLayer.rdShade, .rdLayer.rdBack { background: transparent; overflow: visible; }
+.rdBackInner { position: absolute; inset: 0; overflow: hidden; }
+.rdBackInner .rdLayer { background: transparent; }
+.rdBand { position: absolute; transform-origin: 0 50%; pointer-events: none; }
+.rdBandUnder { background: linear-gradient(90deg, rgba(0,0,0,.42) 0, rgba(0,0,0,.16) 22%, rgba(0,0,0,0) 100%); }
+.rdBandFlat { background: linear-gradient(90deg, rgba(0,0,0,.12) 0, rgba(0,0,0,0) 100%); }
+.rdBandBack { background: linear-gradient(90deg, rgba(0,0,0,.22) 0, rgba(0,0,0,.06) 14%, rgba(255,255,255,.16) 42%, rgba(255,255,255,.04) 70%, rgba(0,0,0,.1) 100%); mix-blend-mode: multiply; }
+.reader[data-dark="1"] .rdBandBack { mix-blend-mode: normal; background: linear-gradient(90deg, rgba(0,0,0,.4) 0, rgba(0,0,0,.1) 18%, rgba(255,255,255,.07) 45%, rgba(0,0,0,.15) 100%); }
