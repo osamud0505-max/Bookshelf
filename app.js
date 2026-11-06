@@ -874,4 +874,7 @@
       save();
     }
   })();
+
+  // Shared helpers for music.js
+  window.Shelf = { h, esc, toast, showSheet, closeSheet, closeBtn, spineInk };
 })();
