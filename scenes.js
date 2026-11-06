@@ -114,10 +114,11 @@
     ceil += `<rect x="0" y="40" width="400" height="16" fill="#140c07"/><rect x="0" y="70" width="400" height="20" fill="#140c07"/><rect x="0" y="62" width="400" height="4" fill="#3a3a3e"/>`;
     // tall steel window with the city at dusk
     let city = "";
-    for (let i = 0; i < 14; i++) { const x = -10 + i * 14 + R() * 6, w = 10 + R() * 16, h = 60 + R() * 170; city += `<rect x="${f1(x)}" y="${f1(560 - h)}" width="${f1(w)}" height="${f1(h)}" fill="#141626"/>`; for (let k = 0; k < h / 9; k++) if (R() < 0.35) city += `<rect x="${f1(x + 2 + R() * (w - 4))}" y="${f1(560 - h + 4 + k * 9)}" width="1.6" height="2.2" fill="#ffd98a" opacity=".85"/>`; }
-    let win = `<rect x="0" y="120" width="178" height="460" fill="#0e0e12"/><g clip-path="url(#pane)"><rect x="0" y="126" width="172" height="448" fill="url(#dusk)"/>${city}</g>`;
-    for (let x = 0; x <= 172; x += 43) win += `<rect x="${x}" y="126" width="3" height="448" fill="#0e0e12"/>`;
-    for (let y = 126; y <= 574; y += 64) win += `<rect x="0" y="${y}" width="172" height="3" fill="#0e0e12"/>`;
+    for (let i = 0; i < 20; i++) { const x = 60 + i * 14 + R() * 6, w = 10 + R() * 16, h = 60 + R() * 170; city += `<rect x="${f1(x)}" y="${f1(580 - h)}" width="${f1(w)}" height="${f1(h)}" fill="#141626"/>`; for (let k = 0; k < h / 9; k++) if (R() < 0.35) city += `<rect x="${f1(x + 2 + R() * (w - 4))}" y="${f1(580 - h + 4 + k * 9)}" width="1.6" height="2.2" fill="#ffd98a" opacity=".85"/>`; }
+    let win = `<rect x="64" y="120" width="272" height="466" fill="#0e0e12"/><g clip-path="url(#pane)"><rect x="70" y="126" width="260" height="454" fill="url(#dusk)"/>${city}</g>`;
+    for (let x = 70; x <= 330; x += 65) win += `<rect x="${x - 1.5}" y="126" width="3" height="454" fill="#0e0e12"/>`;
+    for (let y = 126; y <= 580; y += 64.8) win += `<rect x="70" y="${f1(y - 1.5)}" width="260" height="3" fill="#0e0e12"/>`;
+    win += `<rect x="58" y="584" width="284" height="8" fill="#3a3a3e"/>`;
     // string of Edison bulbs across the top of the wall
     let bulbs = `<path d="M178 118 Q240 150 300 122 Q350 148 400 124" stroke="#0e0e10" stroke-width="1.2" fill="none"/>`, glow = "";
     for (let i = 0; i < 9; i++) { const t = i / 8, x = 184 + t * 212, y = 120 + Math.sin(t * Math.PI * 2) * 0 + (t < 0.55 ? Math.sin(t / 0.55 * Math.PI) * 22 : Math.sin((t - 0.55) / 0.45 * Math.PI) * 18); bulbs += `<line x1="${f1(x)}" y1="${f1(y)}" x2="${f1(x)}" y2="${f1(y + 8)}" stroke="#0e0e10"/><ellipse cx="${f1(x)}" cy="${f1(y + 12)}" rx="2.6" ry="3.6" fill="#ffd27a"/>`; glow += `<circle cx="${f1(x)}" cy="${f1(y + 12)}" r="16" fill="#ffb34a" opacity=".5"/>`; }
@@ -126,12 +127,12 @@
     for (let i = 0; i < 7; i++) { const a = -70 + i * 22 + R() * 8, x = 150 + Math.cos(a * Math.PI / 180) * 10, y = 700; plant += `<path d="M150 760 Q${f1(x)} ${f1(y)} ${f1(150 + Math.sin(a * Math.PI / 180) * 90)} ${f1(650 - Math.cos(a * Math.PI / 180) * 40)}" stroke="#0e1a10" stroke-width="2" fill="none"/><ellipse cx="${f1(150 + Math.sin(a * Math.PI / 180) * 90)}" cy="${f1(650 - Math.cos(a * Math.PI / 180) * 40)}" rx="30" ry="18" transform="rotate(${f1(a)} ${f1(150 + Math.sin(a * Math.PI / 180) * 90)} ${f1(650 - Math.cos(a * Math.PI / 180) * 40)})" fill="#12241a"/>`; }
     const lamp = `<path d="M40 860 L40 640 Q40 600 80 590" stroke="#18181c" stroke-width="3" fill="none"/><path d="M74 580 l22 4 l-6 16 l-20 -6Z" fill="#26262a"/><ellipse cx="95" cy="640" rx="120" ry="110" fill="url(#lampGlow)"/>`;
     const defs = `<linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c2048"/><stop offset=".45" stop-color="#4c3c78"/><stop offset=".72" stop-color="#b0627a"/><stop offset="1" stop-color="#e89a6a"/></linearGradient>`
-      + `<clipPath id="pane"><rect x="0" y="126" width="172" height="448"/></clipPath>`
+      + `<clipPath id="pane"><rect x="70" y="126" width="260" height="454"/></clipPath>`
       + `<radialGradient id="lampGlow"><stop offset="0" stop-color="#ffcf80" stop-opacity=".4"/><stop offset="1" stop-color="#ffcf80" stop-opacity="0"/></radialGradient>`
       + `<linearGradient id="wash" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb060" stop-opacity=".28"/><stop offset=".3" stop-color="#ff9a40" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>`
       + `<linearGradient id="dim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".4"/><stop offset=".5" stop-color="#000" stop-opacity=".45"/><stop offset="1" stop-color="#000" stop-opacity=".62"/></linearGradient>`
       + `<filter id="blur" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7"/></filter>`;
-    return SVG(`${bricks}<rect x="178" y="90" width="222" height="770" fill="url(#wash)"/>${ceil}${win}<rect width="400" height="860" fill="url(#dim)"/>${lamp}`, defs);
+    return SVG(`${bricks}<rect x="0" y="90" width="400" height="770" fill="url(#wash)"/>${ceil}${win}<rect width="400" height="860" fill="url(#dim)"/>`, defs);
   });
 
   // ------------------------------------------------------------------ Candlelit: a dark panelled room, a gilt frame, warm haze
