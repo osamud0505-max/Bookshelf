@@ -194,9 +194,9 @@
   });
 
   // ------------------------------------------------------------------ Candlelit: a salon wall of gilt-framed paintings in candlelight
-  function painting(R, x, y, w, h, kind) {
+  function painting(R, x, y, w, h, kind, fwSet) {
     const g = `pf${Math.floor(R() * 1e6)}`;
-    const fw = Math.max(5, Math.min(w, h) * 0.09);
+    const fw = fwSet || Math.max(5, Math.min(w, h) * 0.09);
     let art = "";
     const ix = x + fw, iy = y + fw, iw = w - fw * 2, ih = h - fw * 2;
     if (kind === "portrait") art = `<rect x="${ix}" y="${iy}" width="${iw}" height="${ih}" fill="#2a1c12"/><ellipse cx="${f1(ix + iw / 2)}" cy="${f1(iy + ih * 0.4)}" rx="${f1(iw * 0.18)}" ry="${f1(ih * 0.17)}" fill="#c9a07a" opacity=".55"/><path d="M${f1(ix + iw * 0.15)} ${iy + ih} Q${f1(ix + iw / 2)} ${f1(iy + ih * 0.5)} ${f1(ix + iw * 0.85)} ${iy + ih}Z" fill="#3a1414"/><ellipse cx="${f1(ix + iw / 2)}" cy="${f1(iy + ih * 0.33)}" rx="${f1(iw * 0.2)}" ry="${f1(ih * 0.12)}" fill="#1a100a"/>`;
@@ -207,15 +207,23 @@
   }
   const candlelit2 = pic("candlelit2", () => {
     const R = rng(13);
-    // a tidy salon hang: three columns with even gaps, nothing overlapping
-    const frames = [
-      [20, 40, 100, 140, "portrait"], [20, 194, 100, 80, "sea"], [20, 288, 100, 120, "still"], [20, 422, 100, 90, "landscape"], [20, 526, 100, 90, "portrait"],
-      [134, 40, 132, 90, "landscape"], [134, 144, 59, 76, "still"], [207, 144, 59, 76, "sea"], [134, 234, 132, 170, "portrait"], [134, 418, 132, 76, "landscape"], [134, 508, 59, 108, "portrait"], [207, 508, 59, 108, "still"],
-      [280, 40, 100, 140, "portrait"], [280, 194, 100, 80, "landscape"], [280, 288, 100, 120, "still"], [280, 422, 100, 90, "sea"], [280, 526, 100, 90, "portrait"],
+    // a salon hang of famous paintings, each frame cut to the painting's real proportions (width / height);
+    // every column is spread evenly between the same top and bottom lines
+    const COLS = [
+      { x: 18, w: 98, fw: 7, items: [[0.88, "portrait"], [0.79, "landscape"], [0.79, "still"], [1.0, "portrait"]] },          // Pearl Earring, Wanderer, Sunflowers, The Kiss
+      { x: 130, w: 140, fw: 8, items: [[1.25, "landscape"], [0.69, "portrait"], [1.62, "sea"], [1.47, "sea"]] },               // Starry Night, Mona Lisa, Birth of Venus, Great Wave
+      { x: 284, w: 98, fw: 7, items: [[0.81, "portrait"], [0.88, "still"], [1.3, "landscape"], [0.81, "portrait"]] },          // The Scream, The Milkmaid, Impression Sunrise, Van Gogh self-portrait
     ];
+    const TOP = 36, BOTTOM = 600, frames = [];
+    for (const c of COLS) {
+      const iw = c.w - c.fw * 2, hs = c.items.map(([r]) => Math.round(iw / r) + c.fw * 2);
+      const gap = (BOTTOM - TOP - hs.reduce((a, b) => a + b, 0)) / (hs.length - 1);
+      let y = TOP;
+      c.items.forEach(([, k], i) => { frames.push([c.x, Math.round(y), c.w, hs[i], k, c.fw]); y += hs[i] + gap; });
+    }
     let wall = `<rect width="400" height="860" fill="#2a1410"/>`;
     for (let x = 0; x < 400; x += 16) wall += `<rect x="${x}" y="0" width="8" height="640" fill="#331a14" opacity=".55"/>`;
-    const art = frames.map(([x, y, w, h, k]) => `<rect x="${x + 3}" y="${y + 5}" width="${w}" height="${h}" fill="#000" opacity=".45" filter="url(#sh)"/>` + painting(R, x, y, w, h, k)).join("");
+    const art = frames.map(([x, y, w, h, k, fw]) => `<rect x="${x + 3}" y="${y + 5}" width="${w}" height="${h}" fill="#000" opacity=".45" filter="url(#sh)"/>` + painting(R, x, y, w, h, k, fw)).join("");
     const dado = `<rect x="0" y="640" width="400" height="12" fill="#3a2214"/><rect x="0" y="640" width="400" height="2" fill="#a9843f" opacity=".5"/><rect x="0" y="652" width="400" height="208" fill="#160c08"/>` + [10, 140, 270].map((x) => `<rect x="${x}" y="676" width="120" height="150" fill="none" stroke="#2a1810" stroke-width="3"/>`).join("");
     const defs = `<linearGradient id="gilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a4a1c"/><stop offset=".3" stop-color="#d4b060"/><stop offset=".5" stop-color="#8a6a2c"/><stop offset=".75" stop-color="#c9a24e"/><stop offset="1" stop-color="#4a3414"/></linearGradient>`
       + `<linearGradient id="varnish" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".08"/><stop offset=".5" stop-color="#000" stop-opacity=".1"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>`
