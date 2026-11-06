@@ -623,22 +623,31 @@
   let sfxBus = null;
   const sfxOut = () => { if (!sfxBus || sfxBus.context !== actx) { sfxBus = actx.createGain(); sfxBus.gain.value = 0.16; const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 140; sfxBus.connect(hp).connect(actx.destination); } return sfxBus; };
   let lastSlide = 0;
-  /** A book sliding a little on a wooden shelf: a soft dry scuff and a light settle. */
+  /** A book dragged a little along a wooden shelf: a dry, grainy scrape with no knock or click. */
   function soundBookSlide() {
     try {
       const now = performance.now(), gap = now - lastSlide; lastSlide = now;
-      if (gap < 55) return;
-      const quick = gap < 220 ? 0.55 : 1; // a fast swipe gets lighter, overlapping scuffs
-      noiseBurst(0.01); const t = actx.currentTime, len = 0.16 + Math.random() * 0.06;
-      const n = noiseBurst(len + 0.05), bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.9;
-      bp.frequency.setValueAtTime(900 + Math.random() * 300, t); bp.frequency.exponentialRampToValueAtTime(520, t + len);
-      const lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2600;
-      const g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5 * quick, t + 0.03); g.gain.exponentialRampToValueAtTime(0.18 * quick, t + len * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
-      n.connect(bp).connect(lp).connect(g).connect(sfxOut()); n.start(t); n.stop(t + len + 0.05);
-      // the board answering softly as the book stops
-      const at = t + len * 0.8, o = actx.createOscillator(), og = actx.createGain(); o.type = "sine";
-      o.frequency.setValueAtTime(240, at); o.frequency.exponentialRampToValueAtTime(150, at + 0.06);
-      env(og, at, 0.12 * quick, 0.004, 0.07); o.connect(og).connect(sfxOut()); o.start(at); o.stop(at + 0.1);
+      if (gap < 70) return;
+      const quick = gap < 260 ? 0.6 : 1; // a fast swipe gets lighter, shorter drags
+      noiseBurst(0.01);
+      const t = actx.currentTime, sr = actx.sampleRate, len = (0.26 + Math.random() * 0.08) * (quick < 1 ? 0.75 : 1);
+      // friction noise: hiss broken into tiny stick-slip grains, like cloth board on wood
+      const buf = actx.createBuffer(1, Math.ceil(sr * len), sr), d = buf.getChannelData(0);
+      let grain = 0, next = 0, lp = 0;
+      for (let i = 0; i < d.length; i++) {
+        if (i >= next) { grain = 0.35 + Math.random() * 0.65; next = i + Math.floor(sr * (0.006 + Math.random() * 0.014)); }
+        grain *= 0.9993;
+        lp += ((Math.random() * 2 - 1) - lp) * 0.35; // takes the fizz off the top
+        d[i] = lp * grain;
+      }
+      const src = actx.createBufferSource(); src.buffer = buf;
+      const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 180;
+      const body = actx.createBiquadFilter(); body.type = "peaking"; body.frequency.value = 420; body.Q.value = 0.8; body.gain.value = 5;
+      const top = actx.createBiquadFilter(); top.type = "lowpass"; top.frequency.setValueAtTime(2200, t); top.frequency.linearRampToValueAtTime(1300, t + len);
+      // eases in, carries, eases out: a push, never a hit
+      const g = actx.createGain(); g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.75 * quick, t + len * 0.3); g.gain.linearRampToValueAtTime(0.55 * quick, t + len * 0.7); g.gain.linearRampToValueAtTime(0.0001, t + len);
+      src.connect(hp).connect(body).connect(top).connect(g).connect(sfxOut()); src.start(t); src.stop(t + len);
     } catch (e) { /* no sound available */ }
   }
   /** A paper page turning over: a crinkly swish that rises and falls, then the page settling. */
