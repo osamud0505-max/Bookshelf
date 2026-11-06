@@ -166,8 +166,8 @@
       };
       R.every(6000, 14000, horn);
       R.every(30000, 60000, siren);
-      let first = true; // the first siren comes within half a minute, then they're rare
-      R.every(3000, 3000, (t) => { if (first) { first = false; siren(t + rnd(1, 4)); } });
+      let first = true; // a siren and a horn right away, so the street is obvious from the start
+      R.every(1000, 1000, (t) => { if (first) { first = false; siren(t + 0.5); horn(t + 3); } });
     },
     hum(R, level = 1) { R.loop("brown", [R.filter("lowpass", 140)], 0.12 * level); },
     city(R) {
