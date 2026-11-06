@@ -145,31 +145,39 @@
     } catch (e) { console.warn(e); }
     return "";
   }
-  /** Cover shape (width ÷ height) and a spine colour sampled from the cover. */
-  function measureCover(url) {
+  /** Cover shape (width ÷ height) and the spine colour: the main colour of the cover's left edge,
+   *  so the spine reads as the same printed wrap as the cover. */
+  function sampleEdge(img) {
+    const W = 50, H = 75;
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0, W, H);
+    const px = g.getImageData(1, 2, 4, H - 4).data; // a thin strip just inside the left edge (skips scan borders)
+    const buckets = new Map();
+    for (let i = 0; i < px.length; i += 4) {
+      const k = (px[i] >> 4) * 256 + (px[i + 1] >> 4) * 16 + (px[i + 2] >> 4);
+      const e = buckets.get(k) || { n: 0, r: 0, g: 0, b: 0 };
+      e.n++; e.r += px[i]; e.g += px[i + 1]; e.b += px[i + 2]; buckets.set(k, e);
+    }
+    let best = null;
+    for (const e of buckets.values()) if (!best || e.n > best.n) best = e;
+    return "#" + [best.r, best.g, best.b].map((v) => Math.round(v / best.n).toString(16).padStart(2, "0")).join("");
+  }
+  function loadImg(url, cors) {
     return new Promise((resolve) => {
       const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        if (img.naturalWidth < 10) return resolve({ aspect: null, color: null });
-        const aspect = Math.round((img.naturalWidth / img.naturalHeight) * 1000) / 1000;
-        let color = null;
-        try {
-          const c = document.createElement("canvas"); c.width = 24; c.height = 36;
-          const g = c.getContext("2d"); g.drawImage(img, 0, 0, 24, 36);
-          const px = g.getImageData(0, 0, 24, 36).data;
-          let r = 0, gg = 0, b = 0, n = 0;
-          for (let i = 0; i < px.length; i += 4) { r += px[i]; gg += px[i + 1]; b += px[i + 2]; n++; }
-          r /= n; gg /= n; b /= n;
-          const l = (0.2126 * r + 0.7152 * gg + 0.0722 * b) / 255;
-          if (l > 0.85) { r *= 0.88; gg *= 0.86; b *= 0.82; } else if (l < 0.08) { r += 28; gg += 22; b += 18; }
-          color = "#" + [r, gg, b].map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
-        } catch (e) { /* cover host refused colour sampling; keep the default */ }
-        resolve({ aspect, color });
-      };
-      img.onerror = () => resolve({ aspect: null, color: null });
+      if (cors) img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img.naturalWidth >= 10 ? img : null);
+      img.onerror = () => resolve(null);
       img.src = url;
     });
+  }
+  async function measureCover(url) {
+    let img = await loadImg(url, true);
+    let color = null;
+    if (img) { try { color = sampleEdge(img); } catch (e) { /* host refused colour reading */ } }
+    else img = await loadImg(url, false); // host has no CORS: we still get the shape, not the colour
+    if (!img) return { aspect: null, color: null };
+    return { aspect: Math.round((img.naturalWidth / img.naturalHeight) * 1000) / 1000, color };
   }
 
   // ---------------------------------------------------------------- helpers
@@ -199,7 +207,6 @@
     const words = custom || b.title;
     const surname = (b.author.split(",")[0].trim().split(" ").pop()) || "";
     const size = b.spineSize || Math.max(9, Math.min(16, d * 0.44));
-    const variant = hash(b.id + 7) % 3;
     const el = h(`<div class="book ${b.finish === "glossy" ? "glossy" : "matte"}">
       <div class="body">
         <div class="face front">
@@ -207,12 +214,10 @@
           <div class="plain" ${b.coverUrl ? "hidden" : ""}><span class="plainRule"></span><span class="plainTitle">${esc(b.title)}</span><span class="plainAuthor">${esc(b.author)}</span></div>
           <span class="grain"></span><span class="hinge"></span><span class="sheen"></span><span class="fShade"></span>
         </div>
-        <div class="face spine v${variant}">
-          <span class="band"></span>
+        <div class="face spine">
           <span class="spineTitle">${esc(words)}</span>
           ${surname && d >= 22 && !custom ? `<span class="spineAuthor">${esc(surname)}</span>` : ""}
-          <span class="band low"></span><span class="grain"></span><span class="sSheen"></span><span class="sShade"></span>
-          ${b.status === "reading" ? `<span class="ribbon"></span>` : ""}
+          <span class="grain"></span><span class="sShade"></span>
         </div>
         <div class="face pages"></div><div class="face back"></div>
       </div></div>`);
@@ -530,7 +535,7 @@
       det.querySelector("#f-start").onchange = (e) => updateBook(id, { startedOn: e.target.value || null });
       det.querySelector("#f-end").onchange = (e) => updateBook(id, { finishedOn: e.target.value || null });
       det.querySelector("#f-pages").onchange = (e) => { updateBook(id, { pageCount: parseInt(e.target.value, 10) || null }); draw(); };
-      det.querySelector("#f-color").onchange = (e) => { updateBook(id, { spineColor: e.target.value }); draw(); };
+      det.querySelector("#f-color").onchange = (e) => { updateBook(id, { spineColor: e.target.value, spineManual: true }); draw(); };
       det.querySelector("#f-cover").onchange = async (e) => {
         const v = e.target.value.trim() || null;
         if (v && !/^https?:\/\//.test(v)) return toast("Paste a link that starts with https://");
@@ -599,6 +604,7 @@
         r.olKey ? findSummary(r) : Promise.resolve(""),
       ]);
       const b = newBook({ ...r, status, summary, coverAspect: cover.aspect, spineColor: cover.color || undefined });
+      if (cover.color) b.edgeColour = true;
       state.books.push(b); save();
       state.filter = ""; document.getElementById("filter").value = "";
       if (state.shelf !== "all" && state.shelf !== status) state.shelf = status;
@@ -698,8 +704,16 @@
   load();
   render();
 
-  // Fill in summaries for seeded/older books that don't have one yet.
+  // Fill in summaries for seeded/older books that don't have one yet,
+  // and give older books a spine colour taken from their cover's edge.
   (async () => {
+    for (const b of state.books.filter((x) => x.coverUrl && !x.spineManual && !x.edgeColour)) {
+      const m = await measureCover(b.coverUrl);
+      if (!m.aspect) continue; // cover didn't load (offline?): try again next visit
+      b.edgeColour = true;
+      if (m.color) { b.spineColor = m.color; render(); }
+      save();
+    }
     for (const b of state.books.filter((x) => !x.summary && !x.summaryTried)) {
       const s = await findSummary(b);
       b.summaryTried = true;

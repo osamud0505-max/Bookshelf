@@ -194,21 +194,11 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 10% 0 8%;
   width: var(--d); left: calc(var(--w) / 2 - var(--d) / 2); transform: rotateY(-90deg) translateZ(calc(var(--w) / 2));
   color: var(--ink);
-  background: linear-gradient(90deg, rgba(0,0,0,.38) 0, rgba(255,255,255,.13) 16%, rgba(255,255,255,.04) 42%, rgba(0,0,0,.08) 72%, rgba(0,0,0,.42) 100%), var(--spine);
+  background: linear-gradient(90deg, rgba(0,0,0,.16) 0, transparent 7%, transparent 93%, rgba(0,0,0,.16) 100%), var(--spine);
 }
 .spineTitle { position: relative; z-index: 1; writing-mode: vertical-rl; line-height: 1.05; max-width: 92%; max-height: 72%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: auto 0; }
 .spineAuthor { position: relative; z-index: 1; writing-mode: vertical-rl; font-size: clamp(7px, calc(var(--d) * .26), 9px); letter-spacing: .14em; text-transform: uppercase; opacity: .75; max-height: 22%; overflow: hidden; white-space: nowrap; }
-.band { position: absolute; left: 0; right: 0; top: 5%; height: 3%; pointer-events: none; }
-.band.low { top: auto; bottom: 4%; }
-.v0 .band { border-top: 1px solid var(--plate); border-bottom: 1px solid var(--plate); opacity: .75; }
-.v1 .band { top: 0; height: 5%; background: rgba(0,0,0,.2); }
-.v1 .band.low { top: auto; bottom: 0; }
-.v1 .spineTitle { padding: 8px 2px; background: rgba(0,0,0,.2); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
-.v2 .band { top: 7%; height: 7%; background: color-mix(in srgb, var(--ink) 18%, transparent); }
-.v2 .band.low { top: auto; bottom: 5%; height: 1%; background: color-mix(in srgb, var(--ink) 30%, transparent); }
-.glossy .sSheen { mix-blend-mode: screen; background: linear-gradient(90deg, transparent 20%, rgba(255,252,240,.28) 34%, transparent 48%); }
 .sShade { background: #000; opacity: calc((1 - sin(var(--turn) * 90deg)) * .7); }
-.ribbon { position: absolute; bottom: -2px; right: 24%; width: 4px; height: 7%; background: linear-gradient(180deg, #9e2f2a, #7b1f1c); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%); }
 .pages { width: var(--d); left: calc(var(--w) / 2 - var(--d) / 2); top: 2px; height: calc(var(--h) - 4px); transform: rotateY(90deg) translateZ(calc(var(--w) / 2 - 2px));
   background: linear-gradient(90deg, rgba(0,0,0,.28), transparent 25%, transparent 75%, rgba(0,0,0,.3)), repeating-linear-gradient(90deg, #efe4cc 0 1px, #dccdae 1px 2px); }
 .back { left: 0; width: var(--w); transform: rotateY(180deg) translateZ(calc(var(--d) / 2)); background: linear-gradient(90deg, rgba(0,0,0,.3), rgba(0,0,0,.1)), var(--spine); }
