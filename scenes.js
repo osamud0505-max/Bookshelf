@@ -456,6 +456,301 @@
       return one(false) + one(true);
     },
   };
+
+  // ------------------------------------------------------------------ Fireworks over the tea house: a few at a time, spaced out, soft trails
+  FX.fireworks = () => { setTimeout(startFireworks, 0); return `<canvas class="fxFireworks" aria-hidden="true"></canvas>`; };
+  function startFireworks() {
+    const cv = document.querySelector("#backdrop .fxFireworks");
+    if (!cv || cv._running || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    cv._running = true;
+    const ctx = cv.getContext("2d");
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    let W = 0, H = 0;
+    const size = () => { W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+    size(); addEventListener("resize", size);
+    const COLS = [["#ffd27a", "#fff3d6"], ["#ff8fb4", "#ffe0ea"], ["#9ff2e2", "#effffb"], ["#c9a6ff", "#f2e8ff"], ["#ff6a52", "#ffd9a8"], ["#fff1dc", "#ffffff"]];
+    const shells = [], sparks = [];
+    let next = 900, last = performance.now(), quiet = 0;
+    const launch = () => {
+      const x = W * (0.12 + Math.random() * 0.33), ty = H * (0.3 + Math.random() * 0.22);
+      const g = 120, vy = -Math.sqrt(2 * g * (H - ty));
+      shells.push({ x, y: H + 4, vx: (Math.random() - 0.5) * 8, vy, g, kind: ["peony", "peony", "ring", "willow", "glitter"][Math.floor(Math.random() * 5)], col: COLS[Math.floor(Math.random() * COLS.length)] });
+    };
+    const burst = (s) => {
+      const r = W * (0.2 + Math.random() * 0.08), n = s.kind === "ring" ? 60 : s.kind === "willow" ? 90 : 110;
+      const life = s.kind === "willow" ? 2.8 : 2;
+      for (let i = 0; i < n; i++) {
+        let a, sp;
+        if (s.kind === "ring") { a = (i / n) * Math.PI * 2; sp = r * 2.6; }
+        else { a = Math.random() * Math.PI * 2; const u = Math.random() * 2 - 1; sp = r * 2.9 * Math.sqrt(1 - u * u) * (0.92 + Math.random() * 0.12); }
+        const inner = s.kind !== "ring" && i % 4 === 0;
+        sparks.push({ x: s.x, y: s.y, px: s.x, py: s.y, vx: Math.cos(a) * sp * (inner ? 0.45 : 1), vy: Math.sin(a) * sp * (inner ? 0.45 : 1), age: 0, life: life * (0.8 + Math.random() * 0.35), col: inner ? s.col[1] : s.col[0], drag: s.kind === "willow" ? 2.4 : 1.7, g: s.kind === "willow" ? 55 : 34, glit: s.kind === "glitter" || s.kind === "willow", w: inner ? 1.5 : 2.1 });
+      }
+      sparks.push({ flash: true, x: s.x, y: s.y, r: r * 1.6, age: 0, life: 0.35, col: s.col[1] });
+    };
+    const frame = (now) => {
+      if (!cv.isConnected) { cv._running = false; removeEventListener("resize", size); return; }
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      next -= dt * 1000;
+      if (next <= 0) { launch(); if (Math.random() < 0.22) setTimeout(launch, 380); next = 1600 + Math.random() * 1900; }
+      // old light fades away, leaving short trails
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.fillStyle = "rgba(0,0,0,.2)"; ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = shells.length - 1; i >= 0; i--) {
+        const s = shells[i]; const ox = s.x, oy = s.y;
+        s.vy += s.g * dt; s.x += s.vx * dt; s.y += s.vy * dt;
+        ctx.strokeStyle = "rgba(255,214,150,.55)"; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(s.x, s.y); ctx.stroke();
+        if (Math.random() < 0.5) sparks.push({ x: s.x, y: s.y, px: s.x, py: s.y, vx: (Math.random() - 0.5) * 10, vy: 10 + Math.random() * 10, age: 0, life: 0.5, col: "#ffcf8a", drag: 2, g: 20, w: 0.8 });
+        if (s.vy > -12) { burst(s); shells.splice(i, 1); }
+      }
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const p = sparks[i]; p.age += dt;
+        const t = p.age / p.life; if (t >= 1) { sparks.splice(i, 1); continue; }
+        if (p.flash) {
+          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+          g.addColorStop(0, `rgba(255,240,220,${(0.12 * (1 - t)).toFixed(3)})`); g.addColorStop(1, "rgba(255,240,220,0)");
+          ctx.fillStyle = g; ctx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2); continue;
+        }
+        const k = Math.exp(-p.drag * dt);
+        p.vx *= k; p.vy = p.vy * k + p.g * dt;
+        p.px = p.x; p.py = p.y; p.x += p.vx * dt; p.y += p.vy * dt;
+        let a = Math.pow(1 - t, 1.4);
+        if (p.glit && t > 0.55 && Math.random() < 0.45) a *= 0.15;
+        ctx.globalAlpha = a; ctx.strokeStyle = p.col; ctx.lineWidth = p.w; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(p.x, p.y); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      // nothing in the sky: wipe it clean so no haze builds up
+      if (!sparks.length && !shells.length) { if ((quiet += dt) > 1) { ctx.clearRect(0, 0, W, H); quiet = 0; } } else quiet = 0;
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }
+  D.BACKDROPS.teaNight.fx = "petals fireworks";
+
+  // ------------------------------------------------------------------ Witch's tower: dark stone, moss in the joints, a leaded window with the moon
+  const ivyStrand = (R, x0, y0, len, sway = 10) => {
+    let d = `M${x0} ${y0}`, x = x0, leaves = "";
+    for (let y = 0; y < len; y += 20) {
+      const nx = x0 + Math.sin(y / 38 + x0) * sway; d += ` Q${f1(x + (R() - 0.5) * 12)} ${f1(y0 + y + 10)} ${f1(nx)} ${f1(y0 + y + 20)}`; x = nx;
+      for (const side of [-1, 1]) if (R() < 0.8) {
+        const lx = nx + side * (4 + R() * 4), ly = y0 + y + 16 + R() * 6, sz = 3.4 + R() * 3.4;
+        leaves += `<path d="M${f1(lx)} ${f1(ly)} c${f1(-sz)} ${f1(-sz * 0.4)} ${f1(-sz * 0.6)} ${f1(-sz * 1.5)} 0 ${f1(-sz * 1.6)} c${f1(sz * 0.6)} ${f1(sz * 0.1)} ${f1(sz)} ${f1(sz * 1.2)} 0 ${f1(sz * 1.6)}Z" fill="${["#22401c", "#2c5224", "#1b3417", "#36602a"][Math.floor(R() * 4)]}" transform="rotate(${f1(side * (20 + R() * 40))} ${f1(lx)} ${f1(ly)})"/>`;
+      }
+    }
+    return `<path d="${d}" stroke="#1c2a14" stroke-width="1.5" fill="none"/>${leaves}`;
+  };
+  const witchRoom = pic("witch", () => {
+    const R = rng(131);
+    let stones = "", moss = "";
+    for (let y = 0, r = 0; y < 860; y += 36, r++) {
+      for (let x = r % 2 ? -28 : 0; x < 420;) {
+        const w = 46 + Math.floor(R() * 36);
+        const c = ["#26252b", "#2b2a31", "#222127", "#302e35", "#1e1d22", "#292830"][Math.floor(R() * 6)];
+        stones += `<rect x="${x + 2}" y="${y + 2}" width="${w - 4}" height="32" rx="4" fill="${c}"/><rect x="${x + 4}" y="${y + 3}" width="${w - 10}" height="2.5" rx="1.2" fill="#fff" opacity=".04"/><rect x="${x + 2}" y="${y + 29}" width="${w - 4}" height="5" rx="2" fill="#000" opacity=".22"/>`;
+        if (R() < 0.3) stones += `<path d="M${f1(x + 6 + R() * (w - 16))} ${y + 4} l${f1(R() * 6 - 3)} ${f1(6 + R() * 8)} l${f1(R() * 6 - 3)} ${f1(5 + R() * 8)}" stroke="#121116" stroke-width=".8" fill="none" opacity=".8"/>`;
+        // moss and little sprigs growing out of the joints
+        if (R() < 0.6) {
+          const mx = x + R() * w, len = 10 + R() * 30;
+          moss += `<path d="M${f1(mx)} ${y + 35} q${f1(len / 2)} ${f1(-3 - R() * 4)} ${f1(len)} 0" stroke="${["#2c4a20", "#36592a", "#24401b"][Math.floor(R() * 3)]}" stroke-width="${f1(3 + R() * 3)}" stroke-linecap="round" fill="none"/>`;
+          for (let k = 0; k < 4; k++) moss += `<circle cx="${f1(mx + R() * len)}" cy="${f1(y + 33 + R() * 4)}" r="${f1(1 + R() * 1.8)}" fill="${R() < 0.5 ? "#4a7a36" : "#3a6a2c"}"/>`;
+          if (R() < 0.35) for (let k = 0; k < 4; k++) { const sx = mx + R() * len; moss += `<path d="M${f1(sx)} ${y + 35} q${f1(R() * 6 - 3)} ${f1(-5 - R() * 6)} ${f1(R() * 8 - 4)} ${f1(-9 - R() * 8)}" stroke="#4f8a3a" stroke-width="1" fill="none"/>`; }
+        }
+        if (R() < 0.18) moss += `<path d="M${x + 1} ${f1(y + 4 + R() * 16)} q${f1(-2 + R() * 4)} ${f1(8 + R() * 10)} 0 ${f1(16 + R() * 12)}" stroke="#2c4a20" stroke-width="3" stroke-linecap="round" fill="none"/>`;
+        x += w;
+      }
+    }
+    // the window: a pointed arch with diamond leading, the moon behind it
+    const WIN = "M128 420 V200 C128 140 160 98 200 78 C240 98 272 140 272 200 V420Z";
+    const OUT = "M110 432 V196 C110 128 148 80 200 56 C252 80 290 128 290 196 V432Z";
+    let stars = ""; for (let i = 0; i < 26; i++) stars += `<circle cx="${f1(130 + R() * 140)}" cy="${f1(84 + R() * 320)}" r="${f1(0.4 + R() * 0.9)}" fill="#e8eeff" opacity="${f1(0.3 + R() * 0.6)}"/>`;
+    let lead = "";
+    for (let k = -14; k <= 14; k++) { const x = 200 + k * 22; lead += `<path d="M${x - 220} 420 L${x + 220} -20 M${x + 220} 420 L${x - 220} -20" />`; }
+    let tint = ""; for (let i = 0; i < 9; i++) tint += `<rect x="${f1(130 + R() * 130)}" y="${f1(100 + R() * 300)}" width="16" height="16" transform="rotate(45 ${f1(138 + R() * 120)} ${f1(110 + R() * 290)})" fill="${["#7fae8a", "#c8b070", "#8fa0d0"][Math.floor(R() * 3)]}" opacity=".07"/>`;
+    const moon = `<circle cx="222" cy="176" r="90" fill="url(#wHalo)"/><circle cx="222" cy="176" r="30" fill="url(#wMoon)"/>`
+      + `<g opacity=".85"><ellipse cx="212" cy="168" rx="10" ry="7.5" fill="#b4ab98" opacity=".5"/><ellipse cx="231" cy="187" rx="8.5" ry="6" fill="#b4ab98" opacity=".45"/><ellipse cx="206" cy="187" rx="5" ry="4" fill="#bdb39e" opacity=".45"/><circle cx="234" cy="166" r="3.4" fill="#bdb39e" opacity=".4"/><circle cx="220" cy="196" r="2" fill="none" stroke="#a49a86" stroke-width=".8" opacity=".6"/></g>`;
+    let voussoirs = "";
+    for (let i = 0; i <= 12; i++) { const t = i / 12, a = Math.PI * (1 - t); voussoirs += `<path d="M${f1(200 + Math.cos(a) * 88)} ${f1(200 - Math.sin(a) * 128)} L${f1(200 + Math.cos(a) * 74)} ${f1(200 - Math.sin(a) * 112)}" stroke="#141318" stroke-width="1.6"/>`; }
+    const window_ = `<path d="${OUT}" fill="url(#wReveal)"/><path d="${OUT}" fill="none" stroke="#0e0d11" stroke-width="3"/>${voussoirs}`
+      + `<g clip-path="url(#wClip)"><rect x="120" y="60" width="160" height="370" fill="url(#wSky)"/>${stars}${moon}${tint}<g stroke="#0c0b0e" stroke-width="2.2" fill="none">${lead}</g>`
+      + `<path d="M200 70 V420 M128 262 H272" stroke="#141217" stroke-width="5"/><path d="M196 300 l8 6 -5 10" stroke="#cfd8ff" stroke-width=".6" fill="none" opacity=".5"/></g>`
+      + `<path d="${WIN}" fill="none" stroke="#0a090c" stroke-width="6"/><path d="${WIN}" fill="url(#wInset)"/>`
+      + `<rect x="98" y="420" width="204" height="18" rx="2" fill="#35333a"/><rect x="98" y="420" width="204" height="3" fill="#4a4850"/><rect x="98" y="436" width="204" height="6" fill="#000" opacity=".35"/>`;
+    // ivy round the window and down from the top corners
+    const ivy = ivyStrand(R, 112, 190, 240, 6) + ivyStrand(R, 288, 150, 300, 6) + ivyStrand(R, 150, 70, 90, 8) + ivyStrand(R, 14, -10, 420) + ivyStrand(R, 386, -10, 520) + ivyStrand(R, 52, -10, 180);
+    // moonlight falling from the window into the room
+    const beam = `<path d="M128 420 L272 420 L250 860 L-60 860Z" fill="url(#wBeam)" filter="url(#wSoft)"/>`;
+    const defs = `<linearGradient id="wSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1230"/><stop offset=".45" stop-color="#1c2b58"/><stop offset="1" stop-color="#121a36"/></linearGradient>`
+      + `<radialGradient id="wHalo"><stop offset=".3" stop-color="#e8eeff" stop-opacity=".4"/><stop offset=".55" stop-color="#b8c8ff" stop-opacity=".12"/><stop offset="1" stop-color="#b8c8ff" stop-opacity="0"/></radialGradient>`
+      + `<radialGradient id="wMoon" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="#fffef8"/><stop offset=".6" stop-color="#ece6d6"/><stop offset="1" stop-color="#cfc6b0"/></radialGradient>`
+      + `<radialGradient id="wGlow" cx=".55" cy=".2" r=".6"><stop offset="0" stop-color="#9fb4ff" stop-opacity=".14"/><stop offset="1" stop-color="#9fb4ff" stop-opacity="0"/></radialGradient>`
+      + `<linearGradient id="wReveal" x1="0" x2="1"><stop offset="0" stop-color="#1c1b20"/><stop offset=".5" stop-color="#3a3840"/><stop offset="1" stop-color="#18171b"/></linearGradient>`
+      + `<linearGradient id="wInset" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".45"/><stop offset=".12" stop-color="#000" stop-opacity="0"/><stop offset=".88" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>`
+      + `<linearGradient id="wBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c4d2ff" stop-opacity=".13"/><stop offset="1" stop-color="#c4d2ff" stop-opacity="0"/></linearGradient>`
+      + `<radialGradient id="wVig" cx=".5" cy=".3" r=".85"><stop offset=".35" stop-color="#040306" stop-opacity="0"/><stop offset="1" stop-color="#040306" stop-opacity=".85"/></radialGradient>`
+      + `<linearGradient id="wPot" x1="0" y1="0" x2="0" y2="1"><stop offset=".6" stop-color="#5aff8a" stop-opacity="0"/><stop offset="1" stop-color="#5aff8a" stop-opacity=".07"/></linearGradient>`
+      + `<filter id="wSoft" x="-20%" y="-10%" width="140%" height="120%"><feGaussianBlur stdDeviation="10"/></filter>`
+      + `<clipPath id="wClip"><path d="${WIN}"/></clipPath>`;
+    return SVG(`<rect width="400" height="860" fill="#141318"/>${stones}${moss}<rect width="400" height="860" fill="#06050a" opacity=".42"/><rect width="400" height="860" fill="url(#wGlow)"/>${window_}${ivy}${beam}<rect width="400" height="860" fill="url(#wVig)"/><rect width="400" height="860" fill="url(#wPot)"/>`, defs);
+  });
+
+  // dried flowers and herbs hung upside down from a rope across the top, each bundle swaying a little
+  FX.herbs = () => {
+    const R = rng(23);
+    const ropeY = (x) => { const t = (x + 10) / 420; return (1 - t) * (1 - t) * 18 + 2 * t * (1 - t) * 78 + t * t * 18; };
+    const bundle = (kind, len) => {
+      let o = "";
+      const stems = kind === "rose" ? 4 : kind === "lavender" ? 9 : 7;
+      for (let i = 0; i < stems; i++) {
+        const spread = (i / (stems - 1) - 0.5) * (kind === "lavender" ? 18 : 22), l = len * (0.78 + R() * 0.22), ex = spread * 1.2 + (R() - 0.5) * 4;
+        o += `<path d="M0 6 Q${f1(spread * 0.5)} ${f1(l * 0.5)} ${f1(ex)} ${f1(l)}" stroke="${kind === "lavender" ? "#5a6a46" : "#5a5236"}" stroke-width=".9" fill="none"/>`;
+        if (kind === "lavender") for (let k = 0; k < 7; k++) { const t = 0.6 + k * 0.06; o += `<ellipse cx="${f1(ex * t)}" cy="${f1(l * t)}" rx="1.5" ry="2.3" fill="${["#7a64a6", "#6a5694", "#8a74b0"][Math.floor(R() * 3)]}"/>`; }
+        else if (kind === "rose") {
+          o += `<path d="M${f1(ex * 0.5)} ${f1(l * 0.5)} q4 -1 6 3 q-4 1 -6 -3Z" fill="#4a5232"/>`;
+          o += `<g transform="translate(${f1(ex)} ${f1(l)})"><ellipse rx="4.6" ry="5.4" fill="#5a1620"/><path d="M-4 -1 Q0 6 4 -1 Q2 3 0 2 Q-2 3 -4 -1Z" fill="#7a2230"/><path d="M-2.5 -3 q2.5 3 5 0" stroke="#3a0c12" stroke-width=".8" fill="none"/><path d="M-3 -5 l-1 -2 M3 -5 l1 -2 M0 -5.4 v-2" stroke="#3d4a28" stroke-width="1"/></g>`;
+        } else if (kind === "herb") for (let k = 0; k < 9; k++) { const t = 0.25 + k * 0.085, px = ex * t, py = l * t, sd = k % 2 ? 1 : -1; o += `<ellipse cx="${f1(px + sd * 2.6)}" cy="${f1(py)}" rx="1.3" ry="3" transform="rotate(${sd * -35} ${f1(px + sd * 2.6)} ${f1(py)})" fill="${["#6b7a58", "#7d8a66", "#5d6b4c"][Math.floor(R() * 3)]}"/>`; }
+        else if (kind === "baby") for (let k = 0; k < 6; k++) { const t = 0.55 + R() * 0.45; o += `<circle cx="${f1(ex * t + (R() - 0.5) * 6)}" cy="${f1(l * t + (R() - 0.5) * 4)}" r="${f1(1 + R() * 0.9)}" fill="${R() < 0.5 ? "#e0d6ba" : "#cfc3a2"}"/>`; }
+        else if (kind === "euca") for (let k = 0; k < 6; k++) { const t = 0.3 + k * 0.12, px = ex * t, py = l * t; o += `<circle cx="${f1(px + (k % 2 ? 3 : -3))}" cy="${f1(py)}" r="${f1(2.4 + R())}" fill="${["#6f8a80", "#7f988e", "#5f786e"][Math.floor(R() * 3)]}"/>`; }
+      }
+      // twine wrapped round the stems
+      return o + `<rect x="-3.6" y="2" width="7.2" height="7" rx="1.5" fill="#8a6a44"/><path d="M-3.6 4 h7.2 M-3.6 6.5 h7.2" stroke="#5a4428" stroke-width=".7"/>`;
+    };
+    const spots = [[24, "lavender"], [70, "rose"], [112, "herb"], [150, "baby"], [246, "euca"], [288, "rose"], [330, "lavender"], [372, "herb"]];
+    let groups = "";
+    for (const [x, kind] of spots) {
+      const y = ropeY(x), drop = 8 + R() * 46, len = 40 + R() * 34;
+      groups += `<g class="hb" style="--t:${f1(5 + R() * 3)}s;--d:-${f1(R() * 6)}s"><path d="M${x} ${f1(y)} V${f1(y + drop)}" stroke="#8a7a5a" stroke-width=".8"/><g transform="translate(${x} ${f1(y + drop)})">${bundle(kind, len)}</g></g>`;
+    }
+    return `<div class="fxHerbs"><svg viewBox="0 0 400 220" preserveAspectRatio="xMidYMin slice" aria-hidden="true"><path d="M-10 18 Q200 78 410 18" stroke="#6a5a40" stroke-width="2.2" fill="none"/><path d="M-10 18 Q200 78 410 18" stroke="#a08a62" stroke-width=".8" stroke-dasharray="2 2" fill="none"/>${groups}</svg></div>`;
+  };
+  // pale green and violet sparks drifting up through the room
+  FX.witchMotes = () => { const R = rng(57); let o = ""; for (let i = 0; i < 18; i++) o += `<i class="mote" style="left:${f1(R() * 100)}%;top:${f1(30 + R() * 65)}%;--c:${R() > 0.4 ? "#9dff9a" : "#d0a8ff"};--s:${f1(1.6 + R() * 2.4)}px;--t:${f1(11 + R() * 12)}s;--p:${f1(2 + R() * 3)}s;--d:-${f1(R() * 20)}s;--dx:${f1((R() - 0.5) * 70)}px;--dy:${f1(-50 - R() * 110)}px"></i>`; return o; };
+
+  D.BACKDROPS.witchTower = { label: "Witch's tower", tone: "dark", fx: "herbs witchMotes", css: () => `${witchRoom()} center / cover no-repeat, #0e0d11` };
+  D.PALETTES.witch = { label: "Witch", t: ["#0d0c10", "#e8e6dc", "#15141a", "#18171d", "#1d1b22", "#9a978c", "#2a2830", "#27252c", "#3a3842", "dark"] };
+
+  // ------------------------------------------------------------------ the skull a witch keeps on the shelf (a candle melted onto it)
+  const skullOutline = (cx, cy, s) => {
+    const P = (x, y) => `${f1(cx + x * s)} ${f1(cy + y * s)}`;
+    return `M${P(0, -0.56)} C${P(0.3, -0.56)} ${P(0.46, -0.36)} ${P(0.46, -0.1)} C${P(0.46, 0.04)} ${P(0.42, 0.12)} ${P(0.38, 0.17)} C${P(0.36, 0.22)} ${P(0.35, 0.27)} ${P(0.28, 0.3)} C${P(0.26, 0.35)} ${P(0.24, 0.41)} ${P(0.22, 0.45)} C${P(0.2, 0.53)} ${P(0.12, 0.57)} ${P(0, 0.57)}`
+      + ` C${P(-0.12, 0.57)} ${P(-0.2, 0.53)} ${P(-0.22, 0.45)} C${P(-0.24, 0.41)} ${P(-0.26, 0.35)} ${P(-0.28, 0.3)} C${P(-0.35, 0.27)} ${P(-0.36, 0.22)} ${P(-0.38, 0.17)} C${P(-0.42, 0.12)} ${P(-0.46, 0.04)} ${P(-0.46, -0.1)} C${P(-0.46, -0.36)} ${P(-0.3, -0.56)} ${P(0, -0.56)}Z`;
+  };
+  const skullHoles = (cx, cy, s) => {
+    const P = (x, y) => `${f1(cx + x * s)} ${f1(cy + y * s)}`;
+    const eye = (x, d) => `M${P(x - 0.13 * d, 0.0)} C${P(x - 0.12 * d, -0.08)} ${P(x + 0.12 * d, -0.07)} ${P(x + 0.14 * d, 0.03)} C${P(x + 0.15 * d, 0.12)} ${P(x + 0.06 * d, 0.17)} ${P(x, 0.17)} C${P(x - 0.08 * d, 0.17)} ${P(x - 0.14 * d, 0.1)} ${P(x - 0.13 * d, 0.0)}Z`;
+    const nose = `M${P(0, 0.19)} C${P(0.03, 0.21)} ${P(0.065, 0.28)} ${P(0.05, 0.31)} C${P(0.04, 0.33)} ${P(0.01, 0.32)} ${P(0, 0.3)} C${P(-0.01, 0.32)} ${P(-0.04, 0.33)} ${P(-0.05, 0.31)} C${P(-0.065, 0.28)} ${P(-0.03, 0.21)} ${P(0, 0.19)}Z`;
+    return eye(0.18, -1) + eye(-0.18, 1) + nose;
+  };
+  const skullArt = (g, cx, cy, s) => {
+    const P = (x, y) => `${f1(cx + x * s)} ${f1(cy + y * s)}`;
+    let teeth = "";
+    for (let i = 0; i < 8; i++) { const x = -0.155 + i * 0.039; teeth += `<rect x="${f1(cx + x * s)}" y="${f1(cy + 0.375 * s)}" width="${f1(0.034 * s)}" height="${f1(0.07 * s)}" rx="${f1(0.01 * s)}" fill="url(#${g}t)"/><rect x="${f1(cx + x * s)}" y="${f1(cy + 0.452 * s)}" width="${f1(0.034 * s)}" height="${f1(0.06 * s)}" rx="${f1(0.01 * s)}" fill="url(#${g}t)"/>`; }
+    return `<defs><radialGradient id="${g}b" cx=".38" cy=".3" r=".75"><stop offset="0" stop-color="#f1e8d2"/><stop offset=".55" stop-color="#cdbf9f"/><stop offset="1" stop-color="#7d6f56"/></radialGradient>`
+      + `<linearGradient id="${g}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9dfc6"/><stop offset="1" stop-color="#a8987a"/></linearGradient>`
+      + `<radialGradient id="${g}e" cx=".5" cy=".4" r=".6"><stop offset="0" stop-color="#050404"/><stop offset=".7" stop-color="#16110c"/><stop offset="1" stop-color="#4a3e2e"/></radialGradient></defs>`
+      + `<path d="${skullOutline(cx, cy, s)}" fill="url(#${g}b)"/>`
+      // temples and cheek hollows in shadow, a light brow
+      + `<ellipse cx="${P(0.4, 0.08).split(" ")[0]}" cy="${P(0.4, 0.08).split(" ")[1]}" rx="${f1(0.08 * s)}" ry="${f1(0.16 * s)}" fill="#5a4c3a" opacity=".45"/><ellipse cx="${P(-0.4, 0.08).split(" ")[0]}" cy="${P(-0.4, 0.08).split(" ")[1]}" rx="${f1(0.08 * s)}" ry="${f1(0.16 * s)}" fill="#5a4c3a" opacity=".35"/>`
+      + `<path d="M${P(-0.3, -0.07)} Q${P(-0.17, -0.12)} ${P(-0.04, -0.06)} M${P(0.04, -0.06)} Q${P(0.17, -0.12)} ${P(0.3, -0.07)}" stroke="#fff6e2" stroke-width="${f1(0.025 * s)}" stroke-linecap="round" fill="none" opacity=".5"/>`
+      + `<path d="M${P(-0.3, 0.3)} Q${P(-0.2, 0.36)} ${P(-0.19, 0.46)} M${P(0.3, 0.3)} Q${P(0.2, 0.36)} ${P(0.19, 0.46)}" stroke="#6a5a44" stroke-width="${f1(0.03 * s)}" fill="none" opacity=".5"/>`
+      + `<rect x="${f1(cx - 0.175 * s)}" y="${f1(cy + 0.36 * s)}" width="${f1(0.35 * s)}" height="${f1(0.17 * s)}" rx="${f1(0.04 * s)}" fill="#1a140e"/>${teeth}`
+      + `<path d="${skullHoles(cx, cy, s)}" fill="url(#${g}e)"/>`
+      + `<path d="M${P(0.12, -0.5)} l${f1(0.03 * s)} ${f1(0.08 * s)} l${f1(-0.04 * s)} ${f1(0.06 * s)} l${f1(0.03 * s)} ${f1(0.07 * s)}" stroke="#5a4c3a" stroke-width="${f1(0.012 * s)}" fill="none"/>`;
+  };
+  D.ORNAMENTS.skull = {
+    label: "Skull & candle", scale: 0.62, vw: 110,
+    draw: (g) => {
+      const wax = "#e6dbc0";
+      return skullArt(g, 55, 147, 92)
+        + `<rect x="47" y="58" width="16" height="40" rx="2" fill="${wax}"/><rect x="47" y="58" width="5" height="40" fill="#fff" opacity=".3"/>`
+        + `<path d="M47 94 q-6 2 -9 9 q-2 6 1 12 q2 3 3 -1 q0 -8 6 -12Z M63 93 q5 3 7 9 q1 9 -2 14 q-3 2 -3 -3 q1 -10 -4 -14Z M52 97 q0 6 -1 11 q1 4 3 0 q1 -6 0 -11Z" fill="${wax}"/>`
+        + `<path d="M48 61 q-1 8 .5 13 M61 60 q1.5 6 .2 10" stroke="${wax}" stroke-width="3" stroke-linecap="round" fill="none"/>`
+        + `<line x1="55" y1="58" x2="55" y2="54" stroke="#2a2420" stroke-width="1.2"/>`
+        + `<circle class="ember" cx="55" cy="53.5" r="1.4" fill="#ff7a2a"/><g class="ornFlame" data-x="55" data-y="54"><g class="ornFlicker"><ellipse cx="55" cy="45" rx="5" ry="11" fill="#ffb347" opacity=".55"/><path d="M55 34 C61 42 60 52 55 54 C50 52 49 42 55 34Z" fill="#ffc861"/><path d="M55 42 C57.4 46 57 51.5 55 52.5 C53 51.5 52.6 46 55 42Z" fill="#fffbe6"/></g></g>`;
+    },
+  };
+
+  // ------------------------------------------------------------------ potion bottles that light the shelf; tapped, the potions rise out, become a skull and vanish
+  const POTS = [
+    // body path, liquid top, colour, mouth, glow centre
+    { body: "M12 112 H26 V190 Q26 198 19 198 Q12 198 12 190Z", neck: [13, 104, 12, 8], cork: [14, 96, 10, 9], level: 132, col: "#4ff0d8", mouth: [19, 96], c: [19, 160, 14, 40] },
+    { body: "M40 104 H52 V136.6 A30 30 0 1 1 40 136.6Z", neck: null, cork: [41, 92, 10, 12], level: 148, col: "#6dff6a", mouth: [46, 92], c: [46, 168, 34, 32] },
+    { body: "M84 198 V132 Q84 122 94 120 H108 Q118 122 118 132 V198Z", neck: [95, 106, 12, 15], cork: [96, 95, 10, 12], level: 140, col: "#b46bff", mouth: [101, 95], c: [101, 160, 22, 40], label: true },
+    { body: "M128 156 H136 V167.6 A15 15 0 1 1 128 167.6Z", neck: null, cork: [128.5, 148, 7, 9], level: 172, col: "#ffae3a", mouth: [132, 148], c: [132, 182, 18, 18] },
+    { body: "M69 160 H75 V172 C81 177 84 182 84 188 A12 12 0 0 1 60 188 C60 182 63 177 69 172Z", neck: null, cork: [69, 152, 6, 9], level: 180, col: "#ff5fa8", mouth: [72, 152], c: [72, 188, 14, 12] },
+  ];
+  D.ORNAMENTS.potions = {
+    label: "Potions & skull", scale: 0.74, vw: 150, alt: "skull", glow: "rgba(120,255,160,.32)",
+    draw: (g) => {
+      let back = "", art = "";
+      POTS.forEach((p, i) => {
+        back += `<ellipse class="litOnly potGlow" cx="${p.c[0]}" cy="${p.c[1]}" rx="${p.c[2] * 1.4}" ry="${p.c[3] * 1.3}" fill="${p.col}" filter="url(#${g}b)"/>`;
+        let bub = ""; for (let k = 0; k < 4; k++) bub += `<circle class="potBub" cx="${p.c[0] + (k - 1.5) * p.c[2] * 0.22}" cy="196" r="${1 + (k % 2) * 0.7}" fill="#fff" style="--d:-${(k * 0.7 + i * 0.3).toFixed(1)}s;--rise:${(196 - p.level).toFixed(0)}px"/>`;
+        art += `<clipPath id="${g}c${i}"><path d="${p.body}"/>${p.neck ? `<rect x="${p.neck[0]}" y="${p.neck[1]}" width="${p.neck[2]}" height="${p.neck[3]}"/>` : ""}</clipPath>`
+          + `<g clip-path="url(#${g}c${i})"><rect x="0" y="0" width="150" height="200" fill="#0c0c10" opacity=".35"/>`
+          + `<g class="potLiq" style="--i:${i}"><rect x="0" y="${p.level}" width="150" height="${200 - p.level}" fill="${p.col}"/><rect x="0" y="${p.level}" width="150" height="${200 - p.level}" fill="url(#${g}d)"/><rect x="0" y="${p.level}" width="150" height="1.6" fill="#fff" opacity=".55"/>${bub}</g></g>`
+          + (p.neck ? `<rect x="${p.neck[0]}" y="${p.neck[1]}" width="${p.neck[2]}" height="${p.neck[3]}" fill="rgba(210,235,255,.1)" stroke="rgba(230,245,255,.45)" stroke-width="1"/>` : "")
+          + `<path d="${p.body}" fill="rgba(210,235,255,.08)" stroke="rgba(230,245,255,.5)" stroke-width="1.2"/>`
+          + `<path d="${p.body}" fill="url(#${g}h)"/>`
+          + `<rect x="${p.cork[0]}" y="${p.cork[1]}" width="${p.cork[2]}" height="${p.cork[3]}" rx="2" fill="#7a5a38"/><rect x="${p.cork[0]}" y="${p.cork[1]}" width="${p.cork[2]}" height="2.4" rx="1" fill="#a07a4c"/>`
+          + (p.label ? `<rect x="89" y="152" width="24" height="22" rx="1.5" fill="#cbb88e"/><rect x="89" y="152" width="24" height="22" rx="1.5" fill="none" stroke="#7a6440" stroke-width=".8"/><path d="M104 158 a5 5 0 1 0 0 9 a4 4 0 1 1 0 -9Z" fill="#4a3a26"/><path d="M92 170 h10 M92 172.5 h14" stroke="#6a5436" stroke-width=".7"/>` : "");
+      });
+      // the potions' spirits: one stream from each bottle, meeting above them
+      const C = [74, 42];
+      const streams = POTS.map((p, i) => `<path class="potStream" pathLength="1" style="--i:${i}" d="M${p.mouth[0]} ${p.mouth[1]} C${p.mouth[0]} ${p.mouth[1] - 30} ${(p.mouth[0] + C[0]) / 2 + (i % 2 ? 18 : -18)} ${C[1] + 24} ${C[0]} ${C[1]}" stroke="${p.col}"/>`).join("");
+      const ghost = `<g class="potGhost"><path d="${skullOutline(C[0], C[1], 46)}${skullHoles(C[0], C[1], 46)}" fill="url(#${g}s)" fill-rule="evenodd"/><path d="M${C[0] - 8} ${C[1] + 17} h16" stroke="#0a1a10" stroke-width="2.4" stroke-dasharray="1.6 1.2" opacity=".6"/></g>`;
+      const blob = `<g class="potBlob"><circle cx="${C[0]}" cy="${C[1]}" r="11" fill="url(#${g}s)"/></g>`;
+      const wisps = [-12, 0, 12].map((dx, k) => `<path class="potWisp" pathLength="1" style="--k:${k}" d="M${C[0] + dx} ${C[1] - 18} c-6 -8 6 -14 0 -22 c-6 -8 5 -14 1 -22" />`).join("");
+      return `<defs><filter id="${g}b" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7"/></filter><filter id="${g}f" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>`
+        + `<linearGradient id="${g}d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>`
+        + `<linearGradient id="${g}h" x1="0" x2="1"><stop offset=".08" stop-color="#fff" stop-opacity="0"/><stop offset=".2" stop-color="#fff" stop-opacity=".32"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".8" stop-color="#fff" stop-opacity="0"/><stop offset=".88" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`
+        + `<radialGradient id="${g}s" cx=".45" cy=".4" r=".7"><stop offset="0" stop-color="#f2fff0"/><stop offset=".45" stop-color="#9dffa8"/><stop offset=".8" stop-color="#8a6bff" stop-opacity=".8"/><stop offset="1" stop-color="#6a4bd8" stop-opacity=".2"/></radialGradient></defs>`
+        + `<g data-y="150"></g>${back}${art}<g class="potMagic" filter="url(#${g}f)">${streams}${blob}${ghost}${wisps}</g>`;
+    },
+    /** Out: the liquid drains as streams rise from each bottle, they gather into a skull that drifts up and evaporates. In: the bottles fill and glow again. */
+    toggle: (el, out) => {
+      if (out) {
+        el.classList.add("witching", "snuffing"); el.classList.remove("filling");
+        witchSound(true);
+        setTimeout(() => el.classList.remove("lit"), 150);
+        setTimeout(() => el.classList.remove("witching", "snuffing"), 3700);
+      } else {
+        el.classList.remove("witching", "snuffing"); el.classList.add("lit", "filling");
+        witchSound(false);
+        setTimeout(() => el.classList.remove("filling"), 1400);
+      }
+    },
+  };
+  let wctx = null;
+  function witchSound(out) {
+    try {
+      wctx = wctx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = wctx.currentTime, len = out ? 2.6 : 1.2;
+      // an airy whoosh
+      const buf = wctx.createBuffer(1, wctx.sampleRate * len, wctx.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const n = wctx.createBufferSource(); n.buffer = buf;
+      const bp = wctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.9;
+      bp.frequency.setValueAtTime(out ? 300 : 900, t); bp.frequency.exponentialRampToValueAtTime(out ? 1600 : 280, t + len * 0.8);
+      const g = wctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.09, t + len * 0.35); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+      n.connect(bp).connect(g).connect(wctx.destination); n.start(t); n.stop(t + len);
+      // a soft glassy shimmer
+      [0, 0.12, 0.24].forEach((dt, k) => {
+        const o = wctx.createOscillator(), og = wctx.createGain();
+        o.type = "sine"; const f = [880, 1175, 1568][k];
+        o.frequency.setValueAtTime(out ? f : f / 2, t + dt); o.frequency.exponentialRampToValueAtTime(out ? f / 2 : f, t + dt + len * 0.7);
+        og.gain.setValueAtTime(0.0001, t + dt); og.gain.exponentialRampToValueAtTime(0.025, t + dt + 0.1); og.gain.exponentialRampToValueAtTime(0.0001, t + dt + len * 0.8);
+        o.connect(og).connect(wctx.destination); o.start(t + dt); o.stop(t + dt + len);
+      });
+    } catch (e) { /* no sound */ }
+  }
+
+  // a black feather bookmark for the witch
+  D.BOOKMARKS.feather = { label: "Raven feather", draw: (g) => `<defs><linearGradient id="${g}" x1="0" x2="1"><stop offset="0" stop-color="#0c0c12"/><stop offset=".5" stop-color="#2a2a3a"/><stop offset="1" stop-color="#0a0a10"/></linearGradient></defs><line x1="14" y1="0" x2="14" y2="12" stroke="#6a5a40" stroke-width=".8"/><path d="M14 12 C22 22 22 52 15 84 C6 60 5 26 14 12Z" fill="url(#${g})"/><path d="M14 14 Q15.5 48 15 84" stroke="#7a7a90" stroke-width=".7" fill="none"/>${Array.from({ length: 9 }, (_, k) => `<path d="M15 ${22 + k * 6} l${k % 2 ? 5 : -5} 3" stroke="#3c3c50" stroke-width=".5"/>`).join("")}<path d="M9 50 l-3 4 M20 62 l3 3" stroke="#0c0c12" stroke-width="1.2"/>` };
+
+  D.LOOKS.witch = { label: "Witch's tower", set: { theme: "witch", accent: "#8fe388", shelfMat: "ebony", backdrop: "witchTower", lights: { style: "none", colour: "warm", on: false }, headFont: "fell", ornament: { kind: "potions", pos: "end" }, bookmark: "feather" } };
+  D.READER_PAGES.witch = { bg: "#17161b", fg: "#dcdccc" };
   const baseFx = D.backdropFx;
   D.backdropFx = (kinds) => String(kinds).split(" ").map((k) => (FX[k] ? FX[k]() : baseFx(k))).join("");
 })();

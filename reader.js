@@ -698,21 +698,33 @@
 
   /** The book you picked lifts off the shelf towards you, its cover swings open, the room fades to black.
    *  Resolves (with the overlay) once the screen is black, so the reader can appear underneath. */
+  /** The book on screen that stands for `b`: its big cover on the open book page, or its slot on the shelf. */
+  function bookOnScreen(b) {
+    const front = [...document.querySelectorAll(".slot")].find((s) => s.getAttribute("aria-label") === b.title && s.classList.contains("front"))
+      || [...document.querySelectorAll(".slot")].find((s) => s.getAttribute("aria-label") === b.title);
+    return document.querySelector("#bookSheet:not([hidden]) .heroBook .book") || (front && front.querySelector(".book"));
+  }
+  /** The overlay with a big copy of the book, centred, ready to be animated. */
+  function bookFx(b) {
+    const aspect = Math.max(0.5, Math.min(0.9, b.coverAspect || 2 / 3));
+    const H = Math.min(innerHeight * 0.6, 520, (innerWidth * 0.4) / aspect), W = H * aspect;
+    const cx = innerWidth / 2 - W / 2, cy = innerHeight / 2 - H / 2;
+    const cover = b.coverUrl ? `<img alt="" src="${esc(b.coverUrl)}" referrerpolicy="no-referrer">` : `<span class="ofPlain">${esc(b.title)}</span>`;
+    const fx = h(`<div class="openFx"><div class="ofDim"></div><div class="ofBook" style="left:${cx}px;top:${cy}px;width:${W}px;height:${H}px;--spine:${b.spineColor || "#334"}">
+      <div class="ofPages" style="--W:${W}px">${pageHtml(b)}</div><div class="ofCover"><div class="ofFront">${cover}</div><div class="ofInside"></div></div></div><div class="ofBlack"></div></div>`);
+    const book = fx.querySelector(".ofBook");
+    const from = (src) => {
+      const r = src ? src.getBoundingClientRect() : { left: innerWidth / 2 - 30, top: innerHeight / 2 - 45, width: 60, height: 90 };
+      return `translate(${r.left - cx}px, ${r.top - cy}px) scale(${r.height / H})`;
+    };
+    return { fx, book, W, H, from };
+  }
   function openingAnim(b) {
     return new Promise((done) => {
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) return done(null);
-      const front = [...document.querySelectorAll(".slot.front")].find((s) => s.getAttribute("aria-label") === b.title);
-      const src = document.querySelector("#bookSheet:not([hidden]) .heroBook .book") || (front && front.querySelector(".book"));
-      const aspect = Math.max(0.5, Math.min(0.9, b.coverAspect || 2 / 3));
-      const H = Math.min(innerHeight * 0.6, 520, (innerWidth * 0.4) / aspect), W = H * aspect;
-      const r = src ? src.getBoundingClientRect() : { left: innerWidth / 2 - 30, top: innerHeight / 2 - 45, width: 60, height: 90 };
-      const cx = innerWidth / 2 - W / 2, cy = innerHeight / 2 - H / 2;
-      const s0 = r.height / H, x0 = r.left - cx, y0 = r.top - cy;
-      const cover = b.coverUrl ? `<img alt="" src="${esc(b.coverUrl)}" referrerpolicy="no-referrer">` : `<span class="ofPlain">${esc(b.title)}</span>`;
-      const fx = h(`<div class="openFx"><div class="ofDim"></div><div class="ofBook" style="left:${cx}px;top:${cy}px;width:${W}px;height:${H}px;--spine:${b.spineColor || "#334"}">
-        <div class="ofPages"><i style="background-image:url('${scribble()}')"></i></div><div class="ofCover"><div class="ofFront">${cover}</div><div class="ofInside"></div></div></div><div class="ofBlack"></div></div>`);
-      const book = fx.querySelector(".ofBook");
-      book.style.transform = `translate(${x0}px, ${y0}px) scale(${s0})`;
+      const src = bookOnScreen(b);
+      const { fx, book, W, from } = bookFx(b);
+      book.style.transform = from(src);
       document.body.append(fx);
       if (src) src.style.visibility = "hidden";
       requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -724,24 +736,48 @@
       }));
     });
   }
-  /** Lines of handwriting that look like cursive from a distance but can't be read. */
-  function scribble() {
-    let seed = 5; const R = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
-    let d = "";
-    for (let y = 14; y < 300; y += 17) {
-      let x = 4 + (y === 14 ? 30 : 0); const end = 190 - (R() < 0.15 ? 60 + R() * 60 : R() * 12);
-      d += `M${x} ${y}`;
-      while (x < end) {
-        const w = 4 + R() * 6, up = 4 + R() * 7, kind = R();
-        if (kind < 0.55) d += ` c${(w * 0.3).toFixed(1)} ${(-up).toFixed(1)} ${(w * 0.9).toFixed(1)} ${(-up).toFixed(1)} ${(w * 0.5).toFixed(1)} 0 s${(-w * 0.2).toFixed(1)} ${(up * 0.5).toFixed(1)} ${(w * 0.5).toFixed(1)} 0`;
-        else if (kind < 0.8) d += ` c${(w * 0.2).toFixed(1)} ${(-up * 1.8).toFixed(1)} ${(w * 0.8).toFixed(1)} ${(-up * 1.8).toFixed(1)} ${(w * 0.4).toFixed(1)} 0 l${(w * 0.6).toFixed(1)} 0`;
-        else { d += ` l${(w * 0.6).toFixed(1)} -1`; if (R() < 0.5) { x += w + 4; d += ` M${x.toFixed(1)} ${y}`; continue; } }
-        x += w;
-      }
-    }
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300"><path d="${d}" fill="none" stroke="#4a3626" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/></svg>`;
-    return "data:image/svg+xml," + encodeURIComponent(svg).replace(/'/g, "%27").replace(/\(/g, "%28").replace(/\)/g, "%29");
+  /** Leaving the book: the page fades to black, the open book appears, its cover swings shut and it flies back to its place. */
+  function closingAnim(b, hideReader) {
+    if (!b || matchMedia("(prefers-reduced-motion: reduce)").matches) { hideReader(); return; }
+    const { fx, book, W, from } = bookFx(b);
+    // the open book waits, hidden, while the reader fades to black over it
+    fx.classList.add("lift", "opened", "pre");
+    book.style.transform = `translate(${W / 2}px, 0) scale(1.12)`;
+    document.body.append(fx);
+    room.classList.add("leaving");
+    requestAnimationFrame(() => requestAnimationFrame(() => fx.classList.add("dark")));
+    setTimeout(() => {
+      hideReader(); room.classList.remove("leaving"); fx.classList.remove("pre");
+      requestAnimationFrame(() => requestAnimationFrame(() => fx.classList.remove("dark"))); // black lifts off the open book
+    }, 500);
+    let src = null;
+    setTimeout(() => { fx.classList.remove("opened"); book.style.transform = "translate(0, 0) scale(1)"; }, 1000);
+    setTimeout(() => {
+      src = bookOnScreen(b); if (src) src.style.visibility = "hidden";
+      fx.classList.add("home"); fx.classList.remove("lift"); book.style.transform = from(src);
+    }, 1900);
+    setTimeout(() => { if (src) src.style.visibility = ""; fx.classList.add("gone"); setTimeout(() => fx.remove(), 200); }, 2650);
   }
+  /** A page of old copperplate handwriting: real script, but made-up words, so it looks like a letter and says nothing. */
+  const SYL = ["al", "en", "mor", "ta", "lis", "ve", "ra", "quo", "dis", "mi", "ne", "ser", "tu", "ca", "lum", "pe", "ri", "ost", "an", "de", "sol", "ia", "nu", "ex", "il", "or", "um", "fa", "bel", "con", "tre", "la", "vi", "so", "gen", "mar"];
+  function handwriting(seed, words) {
+    const R = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    let out = "", cap = true;
+    for (let i = 0; i < words; i++) {
+      let w = ""; const n = 1 + Math.floor(R() * 3);
+      for (let k = 0; k < n; k++) w += SYL[Math.floor(R() * SYL.length)];
+      if (cap) { w = w[0].toUpperCase() + w.slice(1); cap = false; }
+      const p = R();
+      out += w + (p < 0.06 ? ". " : p < 0.13 ? ", " : " ");
+      if (p < 0.06) cap = true;
+    }
+    return out.trim().replace(/[,]?$/, ".");
+  }
+  try { document.fonts && document.fonts.load('16px "Pinyon Script"'); } catch (e) { /* fonts load on their own */ }
+  const pageHtml = (b) => {
+    const seed = 11 + (b.id || 0) * 7;
+    return `<div class="ofScript"><p>${handwriting(seed, 46)}</p><p>${handwriting(seed + 3, 58)}</p><p>${handwriting(seed + 5, 40)}</p></div>`;
+  };
   function endOpening(fx) {
     if (!fx || fx._ended) return; fx._ended = true;
     fx.classList.add("reveal"); setTimeout(() => fx.remove(), 650);
@@ -816,13 +852,17 @@
   }
 
   function close() {
-    if (turn) { turn.layers.forEach((l) => l.remove()); view.style.clipPath = ""; view.style.zIndex = ""; turn = null; }
-    if (cur) { try { cur.book.destroy(); } catch (e) { /* ignore */ } }
-    setPen(false); ribbon.hidden = true; clearTimeout(primeTimer); dropPrime();
-    cur = null; view.replaceChildren(); room.hidden = true; document.body.style.overflow = "";
-    room.querySelector(".rdLoading").textContent = "Opening…";
-    room.querySelector(".rdScrub").disabled = true;
-    render();
+    if (room.hidden || room.classList.contains("leaving")) return;
+    const b = cur && byId(cur.id);
+    closingAnim(b, () => {
+      if (turn) { turn.layers.forEach((l) => l.remove()); view.style.clipPath = ""; view.style.zIndex = ""; turn = null; }
+      if (cur) { try { cur.book.destroy(); } catch (e) { /* ignore */ } }
+      setPen(false); ribbon.hidden = true; clearTimeout(primeTimer); dropPrime();
+      cur = null; view.replaceChildren(); room.hidden = true; document.body.style.overflow = "";
+      room.querySelector(".rdLoading").textContent = "Opening…";
+      room.querySelector(".rdScrub").disabled = true;
+      render();
+    });
   }
   function keys(e) {
     if (room.hidden || !cur) return;

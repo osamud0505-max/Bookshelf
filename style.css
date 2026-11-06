@@ -828,7 +828,12 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .openFx .ofBook { position: absolute; transform-origin: 0 0; transform-style: preserve-3d; transition: transform .72s cubic-bezier(.2,.75,.25,1); }
 .openFx.opened .ofBook { transition: transform .8s cubic-bezier(.45,0,.25,1); }
 .openFx .ofPages { position: absolute; inset: 1.5% 0 1.5% 0; border-radius: 0 3px 3px 0; background: #f4ecdc; box-shadow: 0 30px 60px rgba(0,0,0,.6); overflow: hidden; }
-.openFx .ofPages i { position: absolute; inset: 8% 11%; background-size: 100% 100%; background-repeat: no-repeat; }
+.openFx .ofScript { position: absolute; inset: 9% 10% 6% 11%; overflow: hidden; font-family: "Pinyon Script", "Italianno", cursive; font-size: calc(var(--W) * .064); line-height: 1.32; color: #33231a; opacity: .86; text-align: left; letter-spacing: .01em; }
+.openFx .ofScript p { margin: 0 0 .35em; text-indent: 1.4em; }
+.openFx .ofScript p:first-child::first-letter { font-size: 1.9em; line-height: 1; color: #4a2a18; }
+.openFx .ofPages::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(60,40,20,.18), transparent 9%), radial-gradient(ellipse at 70% 30%, transparent 55%, rgba(120,90,50,.12)); }
+.openFx.pre .ofBook, .openFx.pre .ofDim { visibility: hidden; }
+.openFx.gone { opacity: 0; transition: opacity .18s ease; }
 .openFx .ofCover { position: absolute; inset: 0; transform-origin: 0 50%; transform-style: preserve-3d; transition: transform .85s cubic-bezier(.45,0,.25,1); }
 .openFx.opened .ofCover { transform: rotateY(-168deg); }
 .openFx .ofFront, .openFx .ofInside { position: absolute; inset: 0; border-radius: 2px 4px 4px 2px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; background: var(--spine); }
@@ -869,3 +874,37 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 #backdrop .fxSwag { transform-origin: 50% 0; animation: swagSway 7s ease-in-out infinite alternate; }
 @keyframes swagSway { from { transform: scaleY(1); } to { transform: scaleY(1.06); } }
 @media (prefers-reduced-motion: reduce) { #backdrop .fxDrape, #backdrop .fxSwag { animation: none; } }
+
+/* tea house fireworks: in the sky between the screens, under the eave */
+#backdrop .fxFireworks { position: absolute; pointer-events: none; left: 18%; width: 64%; top: 0; height: 62%; mix-blend-mode: screen; }
+
+/* witch's tower: herbs hung from a rope, each bundle swaying on its string */
+#backdrop .fxHerbs { left: 0; top: 0; width: 100%; height: 30vh; }
+#backdrop .fxHerbs svg { width: 100%; height: 100%; display: block; }
+#backdrop .fxHerbs .hb { transform-box: fill-box; transform-origin: 50% 0; animation: herbSway var(--t) ease-in-out var(--d) infinite alternate; }
+@keyframes herbSway { from { transform: rotate(-2.4deg); } to { transform: rotate(2.4deg); } }
+
+/* potion bottles */
+.ornament .potLiq { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); transition: transform 1.1s cubic-bezier(.5,0,.3,1); }
+.ornament.lit .potLiq { transform: scaleY(1); }
+.ornament.witching .potLiq { transition: transform 1.5s cubic-bezier(.4,0,.6,1); transition-delay: calc(var(--i) * .06s); }
+.ornament.filling .potLiq { transition: transform 1.3s cubic-bezier(.3,0,.2,1); transition-delay: calc(var(--i) * .08s); }
+.ornament .potBub { opacity: 0; }
+.ornament.lit .potBub { animation: potBub 2.6s ease-in infinite; animation-delay: var(--d); }
+@keyframes potBub { 0% { opacity: 0; transform: translateY(0); } 15% { opacity: .7; } 90% { opacity: .5; } 100% { opacity: 0; transform: translateY(calc(var(--rise) * -1)); } }
+.ornament.lit .potGlow { opacity: .75; animation: potPulse 3.4s ease-in-out infinite alternate; }
+@keyframes potPulse { from { opacity: .55; } to { opacity: .85; } }
+.ornament.witching .ornGlow { transition: opacity 1.4s ease; }
+.ornament.witching .potGlow { transition: opacity 1.2s ease; }
+.ornament .potMagic > * { opacity: 0; }
+.ornament .potStream { fill: none; stroke-width: 4.6; stroke-linecap: round; stroke-dasharray: .5 1.6; stroke-dashoffset: .5; }
+.ornament.witching .potStream { animation: potStream 1.4s cubic-bezier(.45,0,.4,1) forwards; animation-delay: calc(.12s + var(--i) * .07s); }
+@keyframes potStream { 0% { opacity: 0; stroke-dashoffset: .5; } 15% { opacity: .95; } 85% { opacity: .9; } 100% { opacity: 0; stroke-dashoffset: -1; } }
+.ornament .potBlob, .ornament .potGhost { transform-box: fill-box; transform-origin: 50% 50%; }
+.ornament.witching .potBlob { animation: potBlob 1.2s ease-in-out .95s forwards; }
+@keyframes potBlob { 0% { opacity: 0; transform: scale(.2); } 40% { opacity: 1; transform: scale(1) scaleX(1.1); } 65% { transform: scale(1.15) scaleY(1.1); opacity: 1; } 100% { opacity: 0; transform: scale(1.5, 1.7); } }
+.ornament.witching .potGhost { animation: potGhost 2.3s ease-out 1.45s forwards; }
+@keyframes potGhost { 0% { opacity: 0; transform: scale(.7); filter: blur(2px); } 22% { opacity: .95; transform: scale(1); filter: blur(0); } 50% { opacity: .9; transform: translateY(-3px) scale(1.02); filter: blur(0); } 100% { opacity: 0; transform: translateY(-26px) scale(1.25, 1.4); filter: blur(5px); } }
+.ornament .potWisp { fill: none; stroke: #c8ffd0; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.ornament.witching .potWisp { animation: smoke 1.9s ease-out forwards; animation-delay: calc(2.4s + var(--k) * .15s); }
+@media (prefers-reduced-motion: reduce) { #backdrop .fxHerbs .hb, .ornament.lit .potBub, .ornament.lit .potGlow { animation: none; } }

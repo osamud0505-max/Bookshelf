@@ -508,6 +508,8 @@
   /** Blow out or light the candle(s) of one ornament, with smoke rising from the wick. */
   function toggleFlame(el, out) {
     const svg = el.querySelector("svg");
+    const od = D.ORNAMENTS[el.dataset.kind];
+    if (od && od.toggle) { od.toggle(el, out); return; }
     if (el.classList.contains("soft")) { soundChime(!out); el.classList.toggle("lit", !out); return; }
     if (out) {
       soundBlow();
@@ -585,6 +587,9 @@
     const slots = [], bookNodes = [];
     // an ornament (a candlestick…) stands in the row and gets pushed along when a book turns
     const ornCfg = { kind: "none", pos: "end", ...(state.settings.ornament || {}) };
+    // some objects take turns with a partner from shelf to shelf (potions, then a skull)
+    const od = D.ORNAMENTS[ornCfg.kind];
+    if (od && od.alt && (opts.idx || 0) % 2) ornCfg.kind = od.alt;
     if (shelfDecor(key).noCandle) ornCfg.kind = "none";
     ornCfg.on = !shelfDecor(key).out;
     let orn = null, ornW = 0, ornIdx = -1, ornX = null, ornT = 0;
@@ -743,6 +748,7 @@
 
     main.querySelectorAll(".shelf").forEach((s) => s._dispose && s._dispose());
     main.replaceChildren();
+    let shelfN = 0;
     const section = (key, title, list, opts = {}) => {
       const sec = h(`<section><div class="sectionHead"><h2 class="sectionTitle">${esc(title)}<span class="count">${list.length}</span></h2></div></section>`);
       if (opts.more) { const m = h(`<button class="linkBtn">Only this shelf</button>`); m.onclick = opts.more; sec.firstElementChild.append(m); }
@@ -764,7 +770,7 @@
         };
         sec.firstElementChild.append(btn);
       }
-      sec.append(shelfEl(key, list, opts));
+      sec.append(shelfEl(key, list, { ...opts, idx: shelfN++ }));
       main.append(sec);
     };
 

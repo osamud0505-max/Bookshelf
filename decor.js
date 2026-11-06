@@ -406,7 +406,7 @@
     const o = ORNAMENTS[kind]; if (!o || !o.draw) return null;
     const h = Math.round(H * (o.scale || 0.7)), w = Math.round(h * o.vw / 200);
     const el = document.createElement("div");
-    el.className = "ornament" + (lit ? " lit" : "");
+    el.className = "ornament" + (lit ? " lit" : ""); el.dataset.kind = kind;
     el.style.width = w + "px"; el.style.height = h + "px";
     if (o.soft) el.classList.add("soft");
     el.innerHTML = `<div class="ornGlow"${o.glow ? ` style="background:radial-gradient(closest-side, ${o.glow}, transparent)"` : ""}></div><svg viewBox="0 0 ${o.vw} 200" width="${w}" height="${h}" aria-hidden="true">${o.draw("orn" + ornN++)}</svg>`;
