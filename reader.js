@@ -429,6 +429,7 @@
     const W = t.W;
     const target = complete ? (t.dir === "next" ? -W : W) : (t.dir === "next" ? W : -W);
     const dist = Math.abs(target - t.f) / (2 * W);
+    if (complete && window.ShelfSfx) window.ShelfSfx.page();
     await animateTurn(target, t.y0, 160 + 340 * dist, 0);
     if (t.moving) await t.moving;
     if (!complete && cur) { if (t.dir === "next") await cur.rendition.prev(); else await cur.rendition.next(); }
@@ -444,6 +445,7 @@
     const H = viewRect().height;
     const t = await beginTurn(dir, H * 0.88); if (!t) return;
     const W = t.W;
+    if (window.ShelfSfx) window.ShelfSfx.page();
     await animateTurn(dir === "next" ? -W : W, H * 0.88, 520, H * 0.06);
     if (t.moving) await t.moving;
     t.layers.forEach((l) => l.remove());

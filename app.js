@@ -605,6 +605,53 @@
       for (let k = 0; k < 4; k++) click(at + 0.16 + k * 0.03, 6000, 0.035, 0.01);
     } catch (e) { /* no sound available */ }
   }
+  // small handling sounds (books, pages): quiet, close, no boom
+  let sfxBus = null;
+  const sfxOut = () => { if (!sfxBus || sfxBus.context !== actx) { sfxBus = actx.createGain(); sfxBus.gain.value = 0.16; const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 140; sfxBus.connect(hp).connect(actx.destination); } return sfxBus; };
+  let lastSlide = 0;
+  /** A book sliding a little on a wooden shelf: a soft dry scuff and a light settle. */
+  function soundBookSlide() {
+    try {
+      const now = performance.now(), gap = now - lastSlide; lastSlide = now;
+      if (gap < 55) return;
+      const quick = gap < 220 ? 0.55 : 1; // a fast swipe gets lighter, overlapping scuffs
+      noiseBurst(0.01); const t = actx.currentTime, len = 0.16 + Math.random() * 0.06;
+      const n = noiseBurst(len + 0.05), bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.9;
+      bp.frequency.setValueAtTime(900 + Math.random() * 300, t); bp.frequency.exponentialRampToValueAtTime(520, t + len);
+      const lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2600;
+      const g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5 * quick, t + 0.03); g.gain.exponentialRampToValueAtTime(0.18 * quick, t + len * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+      n.connect(bp).connect(lp).connect(g).connect(sfxOut()); n.start(t); n.stop(t + len + 0.05);
+      // the board answering softly as the book stops
+      const at = t + len * 0.8, o = actx.createOscillator(), og = actx.createGain(); o.type = "sine";
+      o.frequency.setValueAtTime(240, at); o.frequency.exponentialRampToValueAtTime(150, at + 0.06);
+      env(og, at, 0.12 * quick, 0.004, 0.07); o.connect(og).connect(sfxOut()); o.start(at); o.stop(at + 0.1);
+    } catch (e) { /* no sound available */ }
+  }
+  /** A paper page turning over: a crinkly swish that rises and falls, then the page settling. */
+  function soundPageTurn() {
+    try {
+      noiseBurst(0.01); const t = actx.currentTime, len = 0.42 + Math.random() * 0.08, sr = actx.sampleRate;
+      // paper noise: hiss with little crinkles in it
+      const buf = actx.createBuffer(1, Math.ceil(sr * len), sr), d = buf.getChannelData(0);
+      let crink = 0;
+      for (let i = 0; i < d.length; i++) {
+        if (Math.random() < 0.0016) crink = 0.6 + Math.random() * 0.8;
+        crink *= 0.9975;
+        d[i] = (Math.random() * 2 - 1) * (0.45 + crink);
+      }
+      const src = actx.createBufferSource(); src.buffer = buf;
+      const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 700;
+      const bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.55;
+      bp.frequency.setValueAtTime(1400, t); bp.frequency.exponentialRampToValueAtTime(3800, t + len * 0.45); bp.frequency.exponentialRampToValueAtTime(1800, t + len);
+      const g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + len * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+      src.connect(hp).connect(bp).connect(g).connect(sfxOut()); src.start(t); src.stop(t + len);
+      // the page landing: a soft papery flap
+      const at = t + len * 0.78, n = noiseBurst(0.12), lp = actx.createBiquadFilter(); lp.type = "bandpass"; lp.frequency.value = 900; lp.Q.value = 0.7;
+      const fg = actx.createGain(); env(fg, at, 0.4, 0.006, 0.09);
+      n.connect(lp).connect(fg).connect(sfxOut()); n.start(at); n.stop(at + 0.12);
+    } catch (e) { /* no sound available */ }
+  }
+  window.ShelfSfx = { page: soundPageTurn, slide: soundBookSlide };
   /** A soft glassy shimmer, for things that glow rather than burn. */
   function soundChime(up) {
     try {
@@ -727,6 +774,7 @@
     let orns = []; // { it, el, w, idx, x, t }
     let bookPos = []; // left edge of each slot as last laid out
     let drag = null;
+    let userMoved = false; // books only make a sound when you move them, not when the page lays out
     books.forEach((b, i) => {
       const slot = h(`<button type="button" class="slot" tabindex="-1"></button>`);
       slot.onclick = () => (i === front ? openBook(b.id) : goTo(i));
@@ -768,10 +816,13 @@
       orns.forEach((o) => o.el.remove());
       orns = [];
       if (!books.length) return;
-      items.forEach((it) => {
+      items.forEach((it) => { const o = makeOrn(it); if (o) orns.push(o); });
+      sortOrns();
+    }
+    function makeOrn(it) {
         const kind = resolveKind(it.kind, shelfIdx);
         const el = kind && D.ornamentEl(kind, H, it.on !== false);
-        if (!el) return;
+        if (!el) return null;
         const o = { it, el, w: parseFloat(el.style.width) + 10, idx: idxOf(it), x: null, t: 0 };
         el.onclick = (e) => {
           if (el._noClick) { el._noClick = false; return; }
@@ -784,9 +835,8 @@
           saveItems();
         };
         armDrag(o);
-        stage.append(el); orns.push(o);
-      });
-      sortOrns();
+        stage.append(el);
+        return o;
     }
     // keep the stored order the same as the order on the shelf
     const sortOrns = () => { orns = orns.map((o, k) => [o, k]).sort((a, b) => a[0].idx - b[0].idx || a[1] - b[1]).map((p) => p[0]); };
@@ -930,7 +980,7 @@
       }
       while (k < orns.length) placeOrn(orns[k++]);
       const n = Math.min(Math.round(f), books.length - 1);
-      if (n !== front) { front = n; scrollMemory.set(key, n); slots.forEach((s, i) => s.classList.toggle("front", i === n)); drawCaption(); }
+      if (n !== front) { if (front >= 0 && !drag && userMoved) soundBookSlide(); front = n; scrollMemory.set(key, n); slots.forEach((s, i) => s.classList.toggle("front", i === n)); drawCaption(); }
     }
 
     function drawCaption() {
@@ -958,9 +1008,11 @@
 
     function goTo(i, instant) {
       const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!instant) userMoved = true;
       scroller.scrollTo({ left: Math.max(0, Math.min(count - 1, i)) * STEP, behavior: instant || reduce ? "auto" : "smooth" });
     }
 
+    ["pointerdown", "wheel", "keydown"].forEach((ev) => scroller.addEventListener(ev, () => (userMoved = true), { passive: true }));
     scroller.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(layout); }, { passive: true });
     scroller.addEventListener("keydown", (e) => {
       if (e.key === "ArrowRight") { e.preventDefault(); goTo(front + 1); }
@@ -975,9 +1027,12 @@
       const fb = books[front >= 0 ? front : scrollMemory.get(key) || 0];
       items.push({ id: "d" + Date.now().toString(36), kind, after: fb ? fb.id : "end", on: true });
       setShelfDecor(key, { items });
-      buildOrns(); layout();
-      const o = orns.find((x) => x.it === items[items.length - 1]);
-      if (o) { o.el.classList.add("appear"); setTimeout(() => o.el.classList.remove("appear"), 500); }
+      // books ease aside to make room while it drops straight into its place
+      const o = books.length ? makeOrn(items[items.length - 1]) : null;
+      if (o) { orns.push(o); sortOrns(); o.el.classList.add("appear"); setTimeout(() => o.el.classList.remove("appear"), 600); }
+      root.classList.add("arranging");
+      layout();
+      setTimeout(() => { if (!drag) root.classList.remove("arranging"); }, 340);
     };
     if (!books.length) drawCaption();
     return root;
@@ -1051,9 +1106,13 @@
               t.firstElementChild.append(ornArt(k, 50));
               t.onclick = () => {
                 const sh = main.querySelector(`.shelf[data-key="${CSS.escape(key)}"]`);
-                if (sh && sh._addDecor) sh._addDecor(k);
-                else setShelfDecor(key, { items: [...its, { id: "d" + Date.now().toString(36), kind: k, after: "end", on: true }] });
-                draw();
+                // the menu gets out of the way and the new object drops onto the shelf
+                menu.remove(); btn.setAttribute("aria-expanded", "false");
+                if (sh && sh._addDecor) {
+                  const r = sh.getBoundingClientRect();
+                  if (r.top < 60 || r.bottom > innerHeight - 40) sh.scrollIntoView({ block: "center", behavior: "smooth" });
+                  sh._addDecor(k);
+                } else setShelfDecor(key, { items: [...its, { id: "d" + Date.now().toString(36), kind: k, after: "end", on: true }] });
               };
               grid.append(t);
             });
