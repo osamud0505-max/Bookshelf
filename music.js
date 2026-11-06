@@ -119,15 +119,36 @@
     return pick ? pick.id : null;
   }
 
-  async function play(body) {
+  // When no device is ready, remember what to play, offer to open the Spotify app, and retry when they come back.
+  let pending = null, retryTimer = 0;
+  const ANDROID = /Android/i.test(navigator.userAgent);
+  const SPOTIFY_APP = ANDROID ? "intent://open.spotify.com/#Intent;scheme=spotify;package=com.spotify.music;end" : "spotify:";
+  const prompt = h(`<div class="mPrompt" hidden role="alertdialog"><span>Spotify needs to be open on this phone to play.</span><a class="btn small primary" href="${SPOTIFY_APP}">Open Spotify</a><button class="btn small" aria-label="Dismiss">✕</button></div>`);
+  document.body.append(prompt);
+  prompt.querySelector("button").onclick = () => { prompt.hidden = true; pending = null; };
+  async function retryPending(tries) {
+    if (!pending) return;
+    const dev = await chooseDevice().catch(() => null);
+    if (dev) { const body = pending.body; pending = null; prompt.hidden = true; return play(body, true); }
+    if (tries > 0) retryTimer = setTimeout(() => retryPending(tries - 1), 1500);
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && pending) { clearTimeout(retryTimer); retryPending(6); } });
+
+  async function play(body, isRetry) {
     try {
       const dev = await chooseDevice();
-      if (!dev) return toast("Open the Spotify app on this phone, play any song for a second, then try again.");
+      if (!dev) {
+        if (isRetry) return toast("Still can't see Spotify. In the Spotify app, play any song for a second, then come back.");
+        pending = { body }; prompt.hidden = false; return;
+      }
       await api("/me/player/play?device_id=" + encodeURIComponent(dev), { method: "PUT", body: JSON.stringify(body || {}) });
       if (!m.show) { m.show = true; save(); }
       now.playing = true; render();
       setTimeout(poll, 700);
-    } catch (e) { toast(explain(e)); }
+    } catch (e) {
+      if (!isRetry && (e.reason === "NO_ACTIVE_DEVICE" || e.status === 404)) { pending = { body }; prompt.hidden = false; return; }
+      toast(explain(e));
+    }
   }
   async function command(path, method) {
     try { await api(path, { method }); setTimeout(poll, 500); } catch (e) { toast(explain(e)); }
