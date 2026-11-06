@@ -31,6 +31,7 @@ body {
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  overflow-x: clip; /* clips without turning the body into its own scroller (iPhones then scroll fixed layers along) */
 }
 button { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
@@ -538,7 +539,9 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 
 /* ---------- decor: backdrop, materials, hanging lights ---------- */
 /* sized to the tallest viewport so the phone's toolbar showing/hiding never stretches it; its own layer so scrolling never repaints it */
-#backdrop { position: fixed; left: 0; top: 0; width: 100%; height: 100vh; height: 100lvh; z-index: -1; background: var(--backdrop, var(--background)); pointer-events: none; transform: translateZ(0); backface-visibility: hidden; }
+#backdrop { position: fixed; left: 0; top: 0; width: 100%; height: 100vh; height: 100lvh; z-index: 0; background: var(--backdrop, var(--background)); pointer-events: none; will-change: transform; }
+/* the page sits on its own layer above the room, so iPhones never carry the room along while scrolling */
+.page { position: relative; z-index: 1; }
 html:not([data-mat="paint"]) .plank::after { display: none; }
 html[data-mat="glass"] .plank { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 10px 16px -10px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.5); }
 .lights { position: absolute; left: 0; top: 100%; width: 100%; pointer-events: none; }
@@ -825,7 +828,7 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .openFx .ofBook { position: absolute; transform-origin: 0 0; transform-style: preserve-3d; transition: transform .72s cubic-bezier(.2,.75,.25,1); }
 .openFx.opened .ofBook { transition: transform .8s cubic-bezier(.45,0,.25,1); }
 .openFx .ofPages { position: absolute; inset: 1.5% 0 1.5% 0; border-radius: 0 3px 3px 0; background: #f4ecdc; box-shadow: 0 30px 60px rgba(0,0,0,.6); overflow: hidden; }
-.openFx .ofPages i { position: absolute; inset: 9% 12%; background: repeating-linear-gradient(#f4ecdc 0 9px, rgba(60,50,40,.18) 9px 10px); }
+.openFx .ofPages i { position: absolute; inset: 8% 11%; background-size: 100% 100%; background-repeat: no-repeat; }
 .openFx .ofCover { position: absolute; inset: 0; transform-origin: 0 50%; transform-style: preserve-3d; transition: transform .85s cubic-bezier(.45,0,.25,1); }
 .openFx.opened .ofCover { transform: rotateY(-168deg); }
 .openFx .ofFront, .openFx .ofInside { position: absolute; inset: 0; border-radius: 2px 4px 4px 2px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; background: var(--spine); }
@@ -854,3 +857,15 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .swatchRow.dots button span { width: 30px; height: 30px; border-radius: 50%; }
 .swatchRow button[aria-pressed="true"] { color: var(--foreground); }
 .swatchRow button[aria-pressed="true"] span { box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--accent); }
+
+/* thicker fog for the forest */
+#backdrop .fog.thick.f1 { height: 55%; filter: brightness(1.25); }
+#backdrop .fog.thick.f2 { filter: brightness(1.3); }
+#backdrop .fog.f4 { bottom: 30%; height: 50%; background: radial-gradient(ellipse 34% 40% at 25% 50%, rgba(170,200,230,.13), transparent 70%), radial-gradient(ellipse 30% 36% at 72% 40%, rgba(190,180,230,.12), transparent 70%); animation: fogDrift 46s linear infinite alternate-reverse; }
+#backdrop .fog.f5 { bottom: -10%; height: 30%; background: radial-gradient(ellipse 50% 60% at 50% 70%, rgba(200,225,235,.24), transparent 70%); animation: fogDrift 30s linear infinite alternate; }
+/* velvet curtains breathe like the cottage ones */
+#backdrop .fxDrape { transform-origin: 50% 0; animation: curtainSway 8s ease-in-out infinite alternate; }
+#backdrop .fxDrape.r { animation: curtainSwayR 9s ease-in-out infinite alternate; animation-delay: -3s; }
+#backdrop .fxSwag { transform-origin: 50% 0; animation: swagSway 7s ease-in-out infinite alternate; }
+@keyframes swagSway { from { transform: scaleY(1); } to { transform: scaleY(1.06); } }
+@media (prefers-reduced-motion: reduce) { #backdrop .fxDrape, #backdrop .fxSwag { animation: none; } }

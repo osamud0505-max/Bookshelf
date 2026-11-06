@@ -1330,6 +1330,6 @@
   })();
 
   // Shared helpers for music.js
-  window.Shelf = { settings: () => state.settings, books: () => state.books, h, esc, toast, showSheet, closeSheet, closeBtn, spineInk, byId, save, render, undo, redo, undoPair, recentRow, rememberColor };
+  window.Shelf = { settings: () => state.settings, books: () => state.books, lookKey: () => state.settings.lookKey || (Object.entries(D.LOOKS).find(([, L]) => L.set.backdrop === state.settings.backdrop && L.set.theme === state.settings.theme) || [""])[0], h, esc, toast, showSheet, closeSheet, closeBtn, spineInk, byId, save, render, undo, redo, undoPair, recentRow, rememberColor };
   document.querySelector(".headerActions").prepend(undoPair("headerUndo"));
 })();

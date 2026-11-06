@@ -355,7 +355,7 @@
   Object.assign(L.cottage.set, { theme: "cottageWarm", accent: "#c9707f", shelfMat: "paintedWhite", backdrop: "cottageRoses", headFont: "fell" });
   Object.assign(L.candle.set, { backdrop: "galleryWall" });
   Object.assign(L.castle.set, { backdrop: "castleIvy" });
-  D.BACKDROPS.enchanted.fx = "motes fog";
+  D.BACKDROPS.enchanted.fx = "motes fogThick";
   Object.assign(L.vampire.set, { backdrop: "vampireMirror", lights: { style: "none", colour: "warm", on: false } });
   Object.assign(L.academia.set, { theme: "library", accent: "#c9a25b", shelfMat: "walnut", backdrop: "study", headFont: "fell", lights: { style: "none", colour: "warm", on: false } });
   D.BACKDROPS.greenDamask.fx = "drapesGreen";
@@ -368,6 +368,15 @@
     const swag = `<div class="fxSwag"><svg viewBox="0 0 400 60" preserveAspectRatio="none" aria-hidden="true">${Array.from({ length: 5 }, (_, i) => `<path d="M${i * 80 - 4} 0 h88 v14 Q${i * 80 + 40} 58 ${i * 80 - 4} 14Z" fill="${i % 2 ? col[1] : col[0]}"/><path d="M${i * 80 - 4} 14 Q${i * 80 + 40} 58 ${i * 80 + 84} 14" stroke="${gold}" stroke-width="2.4" fill="none"/>`).join("")}<rect x="0" y="0" width="400" height="5" fill="${gold}"/></svg></div>`;
     return side(false) + side(true) + swag;
   }
+
+  // ------------------------------------------------------------------ reading pages to match each look (you can still pick others in the reader)
+  D.READER_PAGES = {
+    minimal: { bg: "#f6f1e7", fg: "#2b2620" }, cabin: { bg: "#f1e2c6", fg: "#3a2614" }, nook: { bg: "#f6e7c8", fg: "#3e2c18" },
+    library: { bg: "#e9dcbf", fg: "#2e2216" }, loft: { bg: "#26211e", fg: "#e6dccf" }, starry: { bg: "#0f1528", fg: "#cfd8ee" },
+    cottage: { bg: "#f8ece2", fg: "#4a2e2a" }, candle: { bg: "#241810", fg: "#f0d9b0" }, vampire: { bg: "#1a0a0d", fg: "#e8cfc8" },
+    victorian: { bg: "#efe6d2", fg: "#253626" }, castle: { bg: "#1c1d22", fg: "#cfd2da" }, bordello: { bg: "#f3e3d6", fg: "#4a1420" },
+    forest: { bg: "#0f1a1a", fg: "#cfe8df" }, academia: { bg: "#e6d8bc", fg: "#2a1e14" }, teahouse: { bg: "#f3e6cf", fg: "#5a1a10" },
+  };
 
   // ------------------------------------------------------------------ moving pieces
   const FX = {
@@ -395,6 +404,7 @@
     },
     // low drifting fog in three layers
     fog: () => `<i class="fog f1"></i><i class="fog f2"></i><i class="fog f3"></i>`,
+    fogThick: () => `<i class="fog f1 thick"></i><i class="fog f2 thick"></i><i class="fog f3 thick"></i><i class="fog f4"></i><i class="fog f5"></i>`,
     // warm specks of light floating in the air
     glowmotes: () => { const R = rng(31); let o = ""; for (let i = 0; i < 22; i++) o += `<i class="mote" style="left:${f1(R() * 100)}%;top:${f1(10 + R() * 85)}%;--c:${R() > 0.25 ? "#ffcf7a" : "#ffe8b8"};--s:${f1(2 + R() * 3)}px;--t:${f1(10 + R() * 12)}s;--p:${f1(2 + R() * 3)}s;--d:-${f1(R() * 20)}s;--dx:${f1((R() - 0.5) * 90)}px;--dy:${f1(-40 - R() * 110)}px"></i>`; return o; },
     // a cluster of church candles on the mantel

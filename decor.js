@@ -509,6 +509,8 @@
       + canopy + moss
       + `<ellipse cx='200' cy='705' rx='260' ry='42' fill='#7fd9c8' opacity='.16' filter='url(#fog)'/>`
       + ground
+      // a thick carpet of grass over the ground, darker at the back, catching the glow at the front
+      + (() => { let g = ""; for (let i = 0; i < 420; i++) { const x = R() * 410 - 5, base = 700 + R() * 160, h = 10 + R() * 26 + (base - 700) * 0.12, lean = (R() - 0.5) * 14; const c = ["#0d2416", "#123020", "#18402a", "#0a1c12", "#1f4a2e"][Math.floor(R() * 5)]; g += `<path d='M${x.toFixed(1)} ${base.toFixed(1)} q${(lean * 0.3).toFixed(1)} ${(-h * 0.6).toFixed(1)} ${lean.toFixed(1)} ${(-h).toFixed(1)} q${(-lean * 0.2 + 1).toFixed(1)} ${(h * 0.5).toFixed(1)} 2 ${h.toFixed(1)}Z' fill='${c}'/>`; } for (let i = 0; i < 60; i++) { const x = R() * 400, base = 760 + R() * 100, h = 14 + R() * 20, lean = (R() - 0.5) * 12; g += `<path d='M${x.toFixed(1)} ${base.toFixed(1)} q${(lean * 0.3).toFixed(1)} ${(-h * 0.6).toFixed(1)} ${lean.toFixed(1)} ${(-h).toFixed(1)}' stroke='#5fbf8a' stroke-width='.7' fill='none' opacity='.35'/>`; } return g; })()
       // bluebells glowing in the moss
       + (() => { let b = ""; for (let i = 0; i < 40; i++) { const x = R() * 400, y = 712 + R() * 70; b += `<path d='M${x.toFixed(1)} ${(y + 10).toFixed(1)} q1 -6 0 -12' stroke='#2f5a34' stroke-width='.8' fill='none'/><ellipse cx='${(x + 0.5).toFixed(1)}' cy='${(y - 2).toFixed(1)}' rx='1.8' ry='2.4' fill='${R() > 0.5 ? "#8fb8ff" : "#c9a0ff"}'/>`; } return `<g filter='url(#glowS)' opacity='.8'>${b}</g>${b}`; })()
       + shrooms + specks

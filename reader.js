@@ -81,7 +81,7 @@
     sans: { label: "Sans", css: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" },
   };
   const PREF = "shelf.reader.v1";
-  let pref = { theme: "paper", size: 105, family: "book", spacing: 1.5 };
+  let pref = { theme: "look", size: 105, family: "book", spacing: 1.5 };
   try { pref = { ...pref, ...(JSON.parse(localStorage.getItem(PREF)) || {}) }; } catch (e) { /* defaults */ }
   const savePref = () => { try { localStorage.setItem(PREF, JSON.stringify(pref)); } catch (e) { /* ignore */ } };
 
@@ -106,10 +106,16 @@
   const hidePanels = () => panels.forEach((p) => (p.hidden = true));
   const toggleChrome = () => room.classList.toggle("bare");
 
+  // each look has its own page colours; they're used unless you picked others while on that look
+  const currentLook = () => (window.Shelf.lookKey ? window.Shelf.lookKey() : "") || "minimal";
+  const lookPage = () => { const P = (window.Decor && window.Decor.READER_PAGES) || {}; return P[currentLook()] || THEMES.paper; };
+  const usingLook = () => !pref.theme || pref.theme === "look" || pref.chosenFor !== currentLook();
+  const pageTheme = () => (usingLook() ? { ...lookPage(), label: "Match look" } : THEMES[pref.theme] || THEMES.paper);
+  const isDark = (hex) => { const n = parseInt(String(hex).slice(1), 16); return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 < 110; };
   function applyLook() {
-    const t = THEMES[pref.theme] || THEMES.paper;
+    const t = pageTheme();
     room.style.setProperty("--rd-bg", t.bg); room.style.setProperty("--rd-fg", t.fg);
-    room.dataset.dark = ["dusk", "night"].includes(pref.theme) ? "1" : "";
+    room.dataset.dark = isDark(t.bg) ? "1" : "";
     if (!cur) return;
     const r = cur.rendition;
     const fam = FAMILIES[pref.family] && FAMILIES[pref.family].css;
@@ -168,12 +174,12 @@
       <div class="rdRow"><span>Text size</span><button class="rdChip" data-s="-">A−</button><b>${pref.size}%</b><button class="rdChip" data-s="+">A+</button></div>
       <div class="rdRow"><span>Font</span>${Object.entries(FAMILIES).map(([k, f]) => `<button class="rdChip" data-f="${k}" aria-pressed="${pref.family === k}">${f.label}</button>`).join("")}</div>
       <div class="rdRow"><span>Spacing</span>${[1.3, 1.5, 1.8].map((v, i) => `<button class="rdChip" data-l="${v}" aria-pressed="${pref.spacing === v}">${["Tight", "Normal", "Airy"][i]}</button>`).join("")}</div>
-      <div class="rdRow rdThemes">${Object.entries(THEMES).map(([k, t]) => `<button class="rdTheme" data-t="${k}" aria-pressed="${pref.theme === k}" style="background:${t.bg};color:${t.fg}">${t.label}</button>`).join("")}</div>
+      <div class="rdRow rdThemes">${[["look", { ...lookPage(), label: "Match look" }], ...Object.entries(THEMES)].map(([k, t]) => `<button class="rdTheme" data-t="${k}" aria-pressed="${k === "look" ? usingLook() : !usingLook() && pref.theme === k}" style="background:${t.bg};color:${t.fg}">${t.label}</button>`).join("")}</div>
     </div>`));
     p.querySelectorAll("[data-s]").forEach((b) => (b.onclick = () => { pref.size = Math.max(70, Math.min(200, pref.size + (b.dataset.s === "+" ? 10 : -10))); savePref(); applyLook(); drawAa(); }));
     p.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { pref.family = b.dataset.f; savePref(); applyLook(); drawAa(); }));
     p.querySelectorAll("[data-l]").forEach((b) => (b.onclick = () => { pref.spacing = +b.dataset.l; savePref(); applyLook(); drawAa(); }));
-    p.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => { pref.theme = b.dataset.t; savePref(); applyLook(); drawAa(); }));
+    p.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => { pref.theme = b.dataset.t; pref.chosenFor = b.dataset.t === "look" ? "" : currentLook(); savePref(); applyLook(); drawAa(); }));
   }
 
   let tocTab = "chapters";
@@ -704,7 +710,7 @@
       const s0 = r.height / H, x0 = r.left - cx, y0 = r.top - cy;
       const cover = b.coverUrl ? `<img alt="" src="${esc(b.coverUrl)}" referrerpolicy="no-referrer">` : `<span class="ofPlain">${esc(b.title)}</span>`;
       const fx = h(`<div class="openFx"><div class="ofDim"></div><div class="ofBook" style="left:${cx}px;top:${cy}px;width:${W}px;height:${H}px;--spine:${b.spineColor || "#334"}">
-        <div class="ofPages"><i></i></div><div class="ofCover"><div class="ofFront">${cover}</div><div class="ofInside"></div></div></div><div class="ofBlack"></div></div>`);
+        <div class="ofPages"><i style="background-image:url('${scribble()}')"></i></div><div class="ofCover"><div class="ofFront">${cover}</div><div class="ofInside"></div></div></div><div class="ofBlack"></div></div>`);
       const book = fx.querySelector(".ofBook");
       book.style.transform = `translate(${x0}px, ${y0}px) scale(${s0})`;
       document.body.append(fx);
@@ -717,6 +723,24 @@
         setTimeout(() => { if (src) src.style.visibility = ""; done(fx); }, 1950);
       }));
     });
+  }
+  /** Lines of handwriting that look like cursive from a distance but can't be read. */
+  function scribble() {
+    let seed = 5; const R = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    let d = "";
+    for (let y = 14; y < 300; y += 17) {
+      let x = 4 + (y === 14 ? 30 : 0); const end = 190 - (R() < 0.15 ? 60 + R() * 60 : R() * 12);
+      d += `M${x} ${y}`;
+      while (x < end) {
+        const w = 4 + R() * 6, up = 4 + R() * 7, kind = R();
+        if (kind < 0.55) d += ` c${(w * 0.3).toFixed(1)} ${(-up).toFixed(1)} ${(w * 0.9).toFixed(1)} ${(-up).toFixed(1)} ${(w * 0.5).toFixed(1)} 0 s${(-w * 0.2).toFixed(1)} ${(up * 0.5).toFixed(1)} ${(w * 0.5).toFixed(1)} 0`;
+        else if (kind < 0.8) d += ` c${(w * 0.2).toFixed(1)} ${(-up * 1.8).toFixed(1)} ${(w * 0.8).toFixed(1)} ${(-up * 1.8).toFixed(1)} ${(w * 0.4).toFixed(1)} 0 l${(w * 0.6).toFixed(1)} 0`;
+        else { d += ` l${(w * 0.6).toFixed(1)} -1`; if (R() < 0.5) { x += w + 4; d += ` M${x.toFixed(1)} ${y}`; continue; } }
+        x += w;
+      }
+    }
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300"><path d="${d}" fill="none" stroke="#4a3626" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/></svg>`;
+    return "data:image/svg+xml," + encodeURIComponent(svg).replace(/'/g, "%27").replace(/\(/g, "%28").replace(/\)/g, "%29");
   }
   function endOpening(fx) {
     if (!fx || fx._ended) return; fx._ended = true;
