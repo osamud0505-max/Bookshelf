@@ -327,6 +327,9 @@
     t.shUnderBand.style.opacity = Math.min(1, flapW / 40);
     t.shFlat.style.clipPath = polyCss(flat);
     band(t.shFlatBand, M, Math.min(60, flapW + 10), angU + 180);
+    // as the page lands flat (or falls back), its shadows melt away instead of vanishing on the last frame
+    const k = Math.max(0, Math.min(1, Math.min(M.x, W - M.x) / (W * 0.16))), fade = (k * k * (3 - 2 * k)).toFixed(3);
+    t.shUnder.style.opacity = fade; t.shFlat.style.opacity = fade; t.backShade.style.opacity = fade;
   }
 
   // The copies of the page a turn needs take a moment to build, so they are made ahead of time, right
