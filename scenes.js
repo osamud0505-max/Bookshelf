@@ -1024,9 +1024,12 @@
     return box(`<div class="fxWindow painted"><div class="pane">${drops}</div></div>`);
   };
   FX.paintedFireworks = () => { setTimeout(startFireworks, 0); return box(`<canvas class="fxFireworks painted" aria-hidden="true"></canvas>`); };
+  // red eyes in the vampire's mirror: now and then a pair glows up in the dark glass, blinks once and fades away
+  FX.mirrorEyes = () => box([[50, 57, 41, 6], [60, 30, 53, 27], [38, 73, 47, 44]].map(([x, y, t, d]) =>
+    `<i class="mEyes" style="left:${x}%;top:${y}%;--t:${t}s;--d:${d}s"><b></b><b></b></i>`).join(""));
   const PAINTED = {
     libraryStacks: ["library", "dust", 0.4619], cabinNight: ["cabin", "paintedFire"], loftDusk: ["loft", "glowmotes"], galleryWall: ["candle", ""],
-    teaNight: ["teahouse", "petals paintedFireworks"], castleIvy: ["castle", "fog"], vampireMirror: ["vampire", "fog bats vampGloom"], study: ["academia", "paintedRain"],
+    teaNight: ["teahouse", "petals paintedFireworks"], castleIvy: ["castle", "fog"], vampireMirror: ["vampire", "fog mirrorEyes vampGloom"], study: ["academia", "paintedRain"],
     cottageRoses: ["cottage", ""], greenDamask: ["victorian", ""], damask: ["bordello", ""], enchanted: ["forest", "motes fogThick"],
     witchTower: ["witch", "witchMotes"], goldenHour: ["nook", ""],
   };
