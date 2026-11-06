@@ -1019,13 +1019,13 @@
     return box(`<div class="fxHearth painted"><div class="fireGlow"></div><svg viewBox="80 70 240 130" preserveAspectRatio="none" aria-hidden="true"><g class="flames">${flames}</g></svg>${sparks}</div>`);
   };
   FX.paintedRain = () => {
-    const R = rng(12); let drops = ""; for (let i = 0; i < 60; i++) drops += `<i class="drop" style="left:${f1(R() * 100)}%;--t:${f1(0.7 + R() * 0.9)}s;--d:-${f1(R() * 2)}s;--h:${f1(10 + R() * 18)}px"></i>`;
+    const R = rng(12); let drops = ""; for (let i = 0; i < 90; i++) drops += `<i class="drop" style="left:${f1(R() * 100)}%;--t:${f1(0.7 + R() * 0.9)}s;--d:-${f1(R() * 2)}s;--h:${f1(10 + R() * 18)}px"></i>`;
     let beads = ""; for (let i = 0; i < 34; i++) beads += `<i class="bead" style="left:${f1(R() * 96)}%;top:${f1(4 + R() * 90)}%;--t:${f1(5 + R() * 8)}s;--d:-${f1(R() * 10)}s"></i>`;
-    return box(`<div class="fxWindow painted"><div class="pane">${drops}${beads}</div></div>`);
+    return box(`<div class="fxWindow painted"><div class="pane">${drops}</div></div>`);
   };
   const PAINTED = {
     libraryStacks: ["library", "dust", 0.4619], cabinNight: ["cabin", "paintedFire"], loftDusk: ["loft", "glowmotes"], galleryWall: ["candle", ""],
-    teaNight: ["teahouse", "petals"], castleIvy: ["castle", "fog"], vampireMirror: ["vampire", "fog bats vampGloom"], study: ["academia", "paintedRain"],
+    teaNight: ["teahouse", "petals fireworks"], castleIvy: ["castle", "fog"], vampireMirror: ["vampire", "fog bats vampGloom"], study: ["academia", "paintedRain"],
     cottageRoses: ["cottage", ""], greenDamask: ["victorian", ""], damask: ["bordello", ""], enchanted: ["forest", "motes fogThick"],
     witchTower: ["witch", "witchMotes"], goldenHour: ["nook", ""],
   };

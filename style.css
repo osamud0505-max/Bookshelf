@@ -1086,5 +1086,7 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 #backdrop .fxHearth.painted { position: absolute; left: 33%; right: auto; width: 34%; top: 82%; bottom: auto; height: 11.5%; mix-blend-mode: screen; }
 #backdrop .fxHearth.painted svg { filter: blur(1.6px) saturate(1.1); opacity: .9; }
 #backdrop .fxHearth.painted .fireGlow { left: -40%; right: -40%; bottom: -20%; height: 200%; }
-#backdrop .fxWindow.painted { position: absolute; left: 29.5%; top: 25%; width: 41.3%; height: 54.5%; transform: none; filter: none; }
-#backdrop .fxWindow.painted .pane { clip-path: none; background: none; }
+#backdrop .fxWindow.painted { position: absolute; left: 27.95%; top: 7.98%; width: 44.02%; height: 72.99%; transform: none; filter: none;
+  /* rain is outside: it only shows through the glass, behind the stone tracery and mullion */
+  -webkit-mask: url('bg/academia-glass.png?v=1') 0 0 / 100% 100% no-repeat; mask: url('bg/academia-glass.png?v=1') 0 0 / 100% 100% no-repeat; }
+#backdrop .fxWindow.painted .pane { clip-path: none; background: none; opacity: .75; filter: blur(.4px); }
