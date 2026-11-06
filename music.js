@@ -322,17 +322,28 @@
 
   // ------------------------------------------------------------------ the Music sheet
   const firstImg = (imgs) => (imgs && imgs.length ? (imgs[imgs.length > 1 ? imgs.length - 2 : 0] || imgs[0]).url : "");
+  /** Fetch every page of a list (Spotify sends 50-100 at a time with a "next" link). */
+  async function allPages(path, max = 3000) {
+    const out = [];
+    let r = await api(path);
+    while (r) {
+      out.push(...(r.items || []));
+      if (!r.next || out.length >= max) break;
+      r = await api(r.next.replace("https://api.spotify.com/v1", ""));
+    }
+    return out;
+  }
   async function loadTracks(open) {
     try {
       if (open.type === "album") {
-        const r = await api(`/albums/${open.id}/tracks?limit=50`);
-        return (r.items || []).map((t) => ({ name: t.name, uri: t.uri, sub: (t.artists || []).map((a) => a.name).join(", "), img: open.img }));
+        const items = await allPages(`/albums/${open.id}/tracks?limit=50`);
+        return items.map((t) => ({ name: t.name, uri: t.uri, sub: (t.artists || []).map((a) => a.name).join(", "), img: open.img }));
       }
-      let r;
-      try { r = await api(`/playlists/${open.id}/items?limit=100`); }
-      catch (e) { if (e.status === 404 || e.status === 403 || e.status === 400) r = await api(`/playlists/${open.id}/tracks?limit=100`); else throw e; }
-      return (r.items || []).map((it) => it.item || it.track).filter((t) => t && t.uri && !t.is_local)
-        .map((t) => ({ name: t.name, uri: t.uri, sub: (t.artists || []).map((a) => a.name).join(", "), img: firstImg(t.album && t.album.images) }));
+      let items;
+      try { items = await allPages(`/playlists/${open.id}/items?limit=100`); }
+      catch (e) { if (e.status === 404 || e.status === 403 || e.status === 400) items = await allPages(`/playlists/${open.id}/tracks?limit=100`); else throw e; }
+      return items.map((it) => it.item || it.track).filter((t) => t && t.uri)
+        .map((t) => ({ name: t.name || "Unknown", uri: t.uri, local: !!t.is_local || t.uri.startsWith("spotify:local"), sub: (t.artists || []).map((a) => a.name).join(", "), img: firstImg(t.album && t.album.images) }));
     } catch (e) { return { error: explain(e) }; }
   }
 
@@ -393,7 +404,7 @@
       if (!open.tracks) list.append(h(`<p class="hint">Loading songs…</p>`));
       else if (open.tracks.error) list.append(h(`<p class="hint">Spotify wouldn't share these songs: ${esc(open.tracks.error)} You can still press Play all.</p>`));
       else if (!open.tracks.length) list.append(h(`<p class="hint">No playable songs here.</p>`));
-      else open.tracks.forEach((t) => list.append(row(t.img, t.name, t.sub, null, () => play({ context_uri: open.uri, offset: { uri: t.uri } }))));
+      else open.tracks.forEach((t) => list.append(row(t.img, t.name, t.local ? t.sub + " · on your device only" : t.sub, null, () => (t.local ? toast("That's a local file, so Spotify can only play it from your own phone's Spotify app.") : play({ context_uri: open.uri, offset: { uri: t.uri } })))));
       body.append(g);
     }
 
