@@ -654,7 +654,9 @@
       draw: (g) => {
         let lights = "", wire = "M22 182";
         const pts = [[26, 176], [52, 168], [30, 156], [56, 146], [28, 134], [50, 122], [36, 112], [54, 102], [30, 96]];
-        pts.forEach(([x, y]) => { wire += ` Q${x + 8} ${y + 6} ${x} ${y}`; lights += `<circle cx="${x}" cy="${y}" r="2.2" fill="#6b5a3a"/><circle class="litOnly" cx="${x}" cy="${y}" r="3.6" fill="#ffe7a8"/><circle class="litOnly" cx="${x}" cy="${y}" r="8" fill="#ffd27a" opacity=".35" filter="url(#${g}b)"/>`; });
+        // each bulb wakes in turn along the wire from the bottom, flaring then settling; going out they fade top-down
+        const n = pts.length;
+        pts.forEach(([x, y], i) => { wire += ` Q${x + 8} ${y + 6} ${x} ${y}`; lights += `<circle cx="${x}" cy="${y}" r="2.2" fill="#6b5a3a"/><g class="fjBulb" style="--i:${i};--j:${n - 1 - i};--tw:${(1.6 + ((i * 7) % 5) * 0.37).toFixed(2)}s"><circle cx="${x}" cy="${y}" r="9" fill="#ffd27a" opacity=".45" filter="url(#${g}b)"/><circle cx="${x}" cy="${y}" r="3.4" fill="#fff1c4"/><circle cx="${x - 0.8}" cy="${y - 0.8}" r="1.2" fill="#fff"/></g>`; });
         return `<defs><filter id="${g}b" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2.5"/></filter><linearGradient id="${g}" x1="0" x2="1"><stop offset="0" stop-color="#cfe3e0" stop-opacity=".25"/><stop offset=".3" stop-color="#fff" stop-opacity=".4"/><stop offset=".45" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#b9d0cc" stop-opacity=".3"/></linearGradient></defs><g data-y="130"></g>`
           + `<path d="${wire}" stroke="#4a3f2a" stroke-width=".9" fill="none"/>` + lights
           + `<path d="M14 92 C10 96 10 104 12 110 L12 192 Q12 200 20 200 L60 200 Q68 200 68 192 L68 110 C70 104 70 96 66 92Z" fill="url(#${g})" stroke="rgba(255,255,255,.45)" stroke-width="1.2"/>`

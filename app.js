@@ -1638,10 +1638,12 @@
           <div class="field"><span class="subLabel">Accent</span><div class="swatchRow dots" id="m-acc">${ACCENTS.map((c) => `<button data-v="${c}" aria-pressed="${(s.accent || "").toLowerCase() === c}" aria-label="Accent ${c}"><span style="background:${c}"></span></button>`).join("")}</div></div>
           <div class="field"><span class="subLabel">Shelf</span><div class="swatchRow dots" id="m-shelf">${SHELVES.map(([l, c]) => `<button data-v="${c}" aria-pressed="${(s.shelf || "").toLowerCase() === c.toLowerCase()}" aria-label="${l}" title="${l}"><span style="background:${c}"></span></button>`).join("")}</div></div>
           <div class="field"><span class="subLabel">Lettering</span><div class="chips" id="m-font">${fonts.map((k) => `<button data-v="${k}" aria-pressed="${(s.headFont || "bricolage") === k}" style="font-family:${D.HEAD_FONTS[k][1]};font-size:1rem">${D.HEAD_FONTS[k][0]}</button>`).join("")}</div></div></div>`);
-        mo.querySelectorAll("#m-bg button").forEach((b) => (b.onclick = () => set({ theme: b.dataset.v })));
-        mo.querySelectorAll("#m-acc button").forEach((b) => (b.onclick = () => set({ accent: b.dataset.v })));
-        mo.querySelectorAll("#m-shelf button").forEach((b) => (b.onclick = () => set({ shelf: b.dataset.v, shelfMat: "paint" })));
-        mo.querySelectorAll("#m-font button").forEach((b) => (b.onclick = () => set({ headFont: b.dataset.v })));
+        // a pick shows as chosen for a moment, then the menu closes so you see it on the shelves
+        const pick = (b, patch) => { b.parentElement.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b)); Object.assign(state.settings, patch); save(); render(); setTimeout(closeSheet, 260); };
+        mo.querySelectorAll("#m-bg button").forEach((b) => (b.onclick = () => pick(b, { theme: b.dataset.v })));
+        mo.querySelectorAll("#m-acc button").forEach((b) => (b.onclick = () => pick(b, { accent: b.dataset.v })));
+        mo.querySelectorAll("#m-shelf button").forEach((b) => (b.onclick = () => pick(b, { shelf: b.dataset.v, shelfMat: "paint" })));
+        mo.querySelectorAll("#m-font button").forEach((b) => (b.onclick = () => pick(b, { headFont: b.dataset.v })));
         body.append(mo);
       }
 

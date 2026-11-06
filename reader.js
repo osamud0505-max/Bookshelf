@@ -101,6 +101,8 @@
 
   let cur = null; // { id, book, rendition }
   const view = room.querySelector(".rdView");
+  // the bookmark lives on the page itself, so it shrinks, grows and turns with the page
+  view.append(room.querySelector(".rdRibbon"));
   const panels = room.querySelectorAll(".rdPanel");
   const showPanel = (name) => panels.forEach((p) => (p.hidden = p.dataset.p !== name || !p.hidden));
   const hidePanels = () => panels.forEach((p) => (p.hidden = true));
@@ -1005,7 +1007,7 @@
       room.querySelector(".rdScrub").disabled = true;
     }, () => {
       if (old) { try { old.book.destroy(); } catch (e) { /* ignore */ } }
-      if (!cur) view.replaceChildren();
+      if (!cur) [...view.children].forEach((n) => { if (!n.classList.contains("rdRibbon")) n.remove(); });
       render();
     });
   }
