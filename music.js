@@ -195,66 +195,99 @@
   }
 
   // ------------------------------------------------------------------ the turntable object
-  const table = h(`<div class="turntable" hidden aria-label="Record player">
+  let ringN = 0;
+  const tableMarkup = (cls) => { const id = "ttRing" + ringN++; return `<div class="${cls}" aria-label="Record player">
     <div class="tt-sleeve"><img alt="" draggable="false"><span class="tt-sleeveBlank"></span></div>
     <div class="tt-record">
       <div class="tt-spin">
         <div class="tt-disc"></div>
         <div class="tt-label">
-          <svg viewBox="0 0 100 100" class="tt-ring" aria-hidden="true"><defs><path id="ttRingPath" d="M50,50 m-41,0 a41,41 0 1,1 82,0 a41,41 0 1,1 -82,0"/></defs>
-            <text><textPath href="#ttRingPath">SIDE A · 33⅓ RPM · SHELF RECORDS · STEREO · SIDE A · 33⅓ RPM ·</textPath></text></svg>
+          <svg viewBox="0 0 100 100" class="tt-ring" aria-hidden="true"><defs><path id="${id}" d="M50,50 m-41,0 a41,41 0 1,1 82,0 a41,41 0 1,1 -82,0"/></defs>
+            <text><textPath href="#${id}">SIDE A · 33⅓ RPM · SHELF RECORDS · STEREO · SIDE A · 33⅓ RPM ·</textPath></text></svg>
           <span class="tt-title"></span><span class="tt-artist"></span>
         </div>
       </div>
       <div class="tt-sheen"></div><span class="tt-spindle"></span>
     </div>
     <div class="tt-arm"><span class="tt-base"></span><span class="tt-rod"></span><span class="tt-head"></span></div>
-    <div class="tt-controls" hidden>
+    ${cls.includes("tt-inline") ? "" : `<div class="tt-controls" hidden>
       <button data-a="prev" aria-label="Previous">⏮</button><button data-a="toggle" aria-label="Play or pause" class="tt-play">▶</button><button data-a="next" aria-label="Next">⏭</button><button data-a="hide" aria-label="Put the record player away">✕</button>
-    </div>
-  </div>`);
+    </div>`}
+  </div>`; };
+  const table = h(tableMarkup("turntable"));
+  table.hidden = true;
   document.body.append(table);
+  let preview = null; // the copy shown in the Music sheet while styling
 
+  /** Put the current song and look onto a record player element. */
+  function paint(el) {
+    el.dataset.vinyl = m.vinyl;
+    el.classList.toggle("playing", !!now.playing);
+    const label = m.label === "cover" ? (now.color || "#ecdcae") : m.label;
+    el.style.setProperty("--label", label);
+    el.style.setProperty("--labelInk", spineInk(label));
+    const img = el.querySelector(".tt-sleeve img");
+    if (now.cover) { if (img.getAttribute("src") !== now.cover) img.src = now.cover; img.hidden = false; } else img.hidden = true;
+    el.querySelector(".tt-title").textContent = now.title || "Shelf";
+    el.querySelector(".tt-artist").textContent = now.artist || "Tap to play";
+    const pb = el.querySelector(".tt-play"); if (pb) pb.textContent = now.playing ? "⏸" : "▶";
+  }
+
+  const MIN_S = 110, MAX_S = 460;
   const recordSize = () => m.size || Math.round(Math.min(240, Math.max(150, innerWidth * 0.46)));
   function place() {
     const s = recordSize();
     table.style.setProperty("--s", s + "px");
-    const w = s * 1.78, hgt = s * 1.02;
+    const w = s * 1.7, hgt = s * 1.02;
     let { x, y } = m.pos || { x: (innerWidth - w) / 2, y: innerHeight - hgt - 96 };
-    x = Math.max(-w * 0.35, Math.min(innerWidth - w * 0.65, x));
-    y = Math.max(0, Math.min(innerHeight - hgt * 0.6, y));
+    x = Math.max(-w * 0.4, Math.min(innerWidth - w * 0.6, x));
+    y = Math.max(-hgt * 0.3, Math.min(innerHeight - hgt * 0.6, y));
     table.style.transform = `translate(${x}px, ${y}px)`;
     return { x, y };
   }
   addEventListener("resize", place);
 
   function render() {
+    if (preview && preview.isConnected) paint(preview);
     table.hidden = !(m.token && m.show);
     if (table.hidden) return;
     place();
-    table.dataset.vinyl = m.vinyl;
-    table.classList.toggle("playing", !!now.playing);
-    const label = m.label === "cover" ? (now.color || "#ecdcae") : m.label;
-    table.style.setProperty("--label", label);
-    table.style.setProperty("--labelInk", spineInk(label));
-    const img = table.querySelector(".tt-sleeve img");
-    if (now.cover) { if (img.getAttribute("src") !== now.cover) img.src = now.cover; img.hidden = false; } else img.hidden = true;
-    table.querySelector(".tt-title").textContent = now.title || "Shelf";
-    table.querySelector(".tt-artist").textContent = now.artist || "Tap to play";
-    table.querySelector(".tt-play").textContent = now.playing ? "⏸" : "▶";
+    paint(table);
   }
 
-  // drag anywhere; a tap on the record plays/pauses, a tap on the sleeve opens Music
-  let drag = null, hideCtl = 0;
+  // Drag with one finger, pinch with two; a tap on the record plays/pauses, a tap on the sleeve opens Music.
+  const pts = new Map();
+  let drag = null, pinch = null, hideCtl = 0;
   const controls = table.querySelector(".tt-controls");
   const flashControls = () => { controls.hidden = false; clearTimeout(hideCtl); hideCtl = setTimeout(() => (controls.hidden = true), 4000); };
+  const startPinch = () => {
+    const [a, b] = [...pts.values()];
+    const p = place();
+    pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, s0: recordSize(), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, x0: p.x, y0: p.y };
+    drag = null; table.classList.add("dragging");
+  };
   table.addEventListener("pointerdown", (e) => {
     if (e.target.closest(".tt-controls")) return;
+    try { table.setPointerCapture(e.pointerId); } catch (err) { /* pointer already gone */ }
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2) return startPinch();
+    if (pts.size > 2) return;
     const p = place();
     drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, x: p.x, y: p.y, moved: false, on: e.target };
-    table.setPointerCapture(e.pointerId);
   });
   table.addEventListener("pointermove", (e) => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && pts.size >= 2) {
+      const [a, b] = [...pts.values()];
+      const k = Math.max(MIN_S / pinch.s0, Math.min(MAX_S / pinch.s0, Math.hypot(a.x - b.x, a.y - b.y) / pinch.d0));
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      m.size = Math.round(pinch.s0 * k);
+      // keep the spot between the fingers under the fingers
+      m.pos = { x: mx - (pinch.mx - pinch.x0) * k, y: my - (pinch.my - pinch.y0) * k };
+      place();
+      return;
+    }
     if (!drag || e.pointerId !== drag.id) return;
     const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
     if (!drag.moved && Math.hypot(dx, dy) < 6) return;
@@ -262,14 +295,24 @@
     m.pos = { x: drag.x + dx, y: drag.y + dy }; place();
   });
   const end = (e) => {
+    if (!pts.has(e.pointerId)) return;
+    pts.delete(e.pointerId);
+    if (pinch) { if (pts.size === 0) { pinch = null; table.classList.remove("dragging"); m.pos = place(); save(); } return; }
     if (!drag || e.pointerId !== drag.id) return;
     const wasTap = !drag.moved, on = drag.on; drag = null; table.classList.remove("dragging");
     if (!wasTap) { m.pos = place(); save(); return; }
+    if (e.type === "pointercancel") return;
     if (on.closest(".tt-sleeve")) openMusic();
     else { flashControls(); if (on.closest(".tt-record")) toggle(); }
   };
   table.addEventListener("pointerup", end);
-  table.addEventListener("pointercancel", (e) => { if (drag && e.pointerId === drag.id) { drag = null; table.classList.remove("dragging"); } });
+  table.addEventListener("pointercancel", end);
+  // on a computer: scroll over the record player to resize it
+  table.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    m.size = Math.round(Math.max(MIN_S, Math.min(MAX_S, recordSize() * (e.deltaY < 0 ? 1.06 : 1 / 1.06))));
+    place(); clearTimeout(hideCtl); save();
+  }, { passive: false });
   controls.addEventListener("click", (e) => {
     const a = e.target.closest("button") && e.target.closest("button").dataset.a; if (!a) return;
     flashControls();
@@ -278,110 +321,159 @@
   });
 
   // ------------------------------------------------------------------ the Music sheet
-  function openMusic() {
+  const firstImg = (imgs) => (imgs && imgs.length ? (imgs[imgs.length > 1 ? imgs.length - 2 : 0] || imgs[0]).url : "");
+  async function loadTracks(open) {
+    try {
+      if (open.type === "album") {
+        const r = await api(`/albums/${open.id}/tracks?limit=50`);
+        return (r.items || []).map((t) => ({ name: t.name, uri: t.uri, sub: (t.artists || []).map((a) => a.name).join(", "), img: open.img }));
+      }
+      let r;
+      try { r = await api(`/playlists/${open.id}/items?limit=100`); }
+      catch (e) { if (e.status === 404 || e.status === 403 || e.status === 400) r = await api(`/playlists/${open.id}/tracks?limit=100`); else throw e; }
+      return (r.items || []).map((it) => it.item || it.track).filter((t) => t && t.uri && !t.is_local)
+        .map((t) => ({ name: t.name, uri: t.uri, sub: (t.artists || []).map((a) => a.name).join(", "), img: firstImg(t.album && t.album.images) }));
+    } catch (e) { return { error: explain(e) }; }
+  }
+
+  function openMusic(startTab) {
     const sheet = document.getElementById("musicSheet");
-    let q = "", results = null, playlists = null, devices = null, searchTimer = 0;
+    let tab = typeof startTab === "string" ? startTab : "music";
+    let q = "", results = null, playlists = null, devices = null, searchTimer = 0, open = null, scrollBack = 0;
     const draw = () => {
       const scroll = sheet.scrollTop;
       sheet.replaceChildren(closeBtn());
-      const body = h(`<div class="sheetBody padded"><div><h2 class="sheetTitle">Music</h2><p class="hint">Play Spotify on a record player that sits on your shelf.</p></div></div>`);
-      if (!m.token) {
-        const setup = h(`<div class="group">
-          <h3 class="label">Connect Spotify (one-time setup)</h3>
-          <ol class="steps">
-            <li>Open <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">developer.spotify.com/dashboard</a>, sign in with your Spotify account and tap <b>Create app</b>.</li>
-            <li>Name it anything (e.g. Shelf). For <b>Redirect URI</b> paste this exactly:
-              <span class="row" style="flex-wrap:nowrap;margin-top:6px"><input class="input" readonly value="${esc(REDIRECT)}" id="m-redirect"><button class="btn small" id="m-copy">Copy</button></span></li>
-            <li>Tick <b>Web API</b> and <b>Web Playback SDK</b>, agree, and save.</li>
-            <li>Open the app's <b>Settings</b>, copy the <b>Client ID</b> and paste it here:
-              <input class="input" id="m-client" placeholder="Client ID" autocomplete="off" style="margin-top:6px" value="${esc(m.clientId)}"></li>
-          </ol>
-          <button class="btn primary" id="m-connect">Connect Spotify</button>
-          <p class="hint">Spotify only lets apps play music for <b>Premium</b> accounts. On a phone, the sound comes from your Spotify app and this page controls it, so keep the Spotify app installed and signed in.</p>
-        </div>`);
-        setup.querySelector("#m-copy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(REDIRECT).then(() => toast("Copied")); };
-        setup.querySelector("#m-client").oninput = (e) => { m.clientId = e.target.value.trim(); save(); };
-        setup.querySelector("#m-connect").onclick = connect;
-        body.append(setup);
-      } else {
-        // search + library
-        const find = h(`<div class="group"><h3 class="label">Find music</h3>
-          <input class="input" type="search" id="m-q" placeholder="Song, album or playlist" autocomplete="off">
-          <div class="mResults"></div></div>`);
-        const qIn = find.querySelector("#m-q"); qIn.value = q;
-        const list = find.querySelector(".mResults");
-        const row = (img, title, sub, onPlay) => {
-          const r = h(`<button class="mRow">${img ? `<img alt="" loading="lazy" src="${esc(img)}">` : `<span class="mNoImg">♪</span>`}<span class="mText"><b>${esc(title)}</b><span>${esc(sub)}</span></span><span class="mPlay">▶</span></button>`);
-          r.onclick = onPlay; return r;
-        };
-        const fill = () => {
-          list.replaceChildren();
-          if (q && !results) { list.append(h(`<p class="hint">Searching…</p>`)); return; }
-          if (q && results) {
-            const tracks = (results.tracks && results.tracks.items) || [], albums = (results.albums && results.albums.items) || [], pls = ((results.playlists && results.playlists.items) || []).filter(Boolean);
-            if (!tracks.length && !albums.length && !pls.length) list.append(h(`<p class="hint">Nothing found.</p>`));
-            if (tracks.length) list.append(h(`<p class="label mHead">Songs</p>`));
-            tracks.forEach((t) => list.append(row(t.album.images.slice(-1)[0] && t.album.images.slice(-1)[0].url, t.name, t.artists.map((a) => a.name).join(", "), () => play({ context_uri: t.album.uri, offset: { uri: t.uri } }))));
-            if (albums.length) list.append(h(`<p class="label mHead">Albums</p>`));
-            albums.forEach((a) => list.append(row(a.images.slice(-1)[0] && a.images.slice(-1)[0].url, a.name, a.artists.map((x) => x.name).join(", "), () => play({ context_uri: a.uri }))));
-            if (pls.length) list.append(h(`<p class="label mHead">Playlists</p>`));
-            pls.forEach((p) => list.append(row(p.images && p.images[0] && p.images[0].url, p.name, "Playlist", () => play({ context_uri: p.uri }))));
-            return;
-          }
-          if (!playlists) { list.append(h(`<p class="hint">Loading your playlists…</p>`)); return; }
-          if (playlists.length) list.append(h(`<p class="label mHead">Your playlists</p>`));
-          playlists.forEach((p) => list.append(row(p.images && p.images[0] && p.images[0].url, p.name, `${p.tracks ? p.tracks.total + " songs" : "Playlist"}`, () => play({ context_uri: p.uri }))));
-        };
-        qIn.oninput = () => {
-          q = qIn.value.trim(); results = null; fill(); clearTimeout(searchTimer);
-          if (!q) return;
-          searchTimer = setTimeout(async () => {
-            const asked = q;
-            try { const r = await api("/search?type=track,album,playlist&limit=6&q=" + encodeURIComponent(asked)); if (asked === q) { results = r; fill(); } }
-            catch (e) { if (asked === q) { results = {}; fill(); toast(explain(e)); } }
-          }, 350);
-        };
-        fill();
-        if (!playlists) api("/me/playlists?limit=30").then((r) => { playlists = (r && r.items || []).filter(Boolean); if (!q) fill(); }).catch(() => { playlists = []; fill(); });
-        body.append(find);
+      const body = h(`<div class="sheetBody padded"><div><h2 class="sheetTitle">Music</h2></div>
+        <div class="seg tabsSeg" id="m-tabs"><button data-v="music" aria-pressed="${tab === "music"}">Music</button><button data-v="look" aria-pressed="${tab === "look"}">Record player</button></div></div>`);
+      body.querySelectorAll("#m-tabs button").forEach((b) => (b.onclick = () => { tab = b.dataset.v; sheet.scrollTop = 0; draw(); }));
+      if (tab === "look") drawLook(body);
+      else if (!m.token) drawSetup(body);
+      else if (open) drawOpen(body);
+      else drawLibrary(body);
+      sheet.append(body);
+      if (!open) sheet.scrollTop = scroll;
+    };
 
-        // where it plays
-        const dev = h(`<div class="group"><h3 class="label">Playing on</h3><div class="row" style="flex-wrap:nowrap"><select class="input" id="m-dev"><option value="">Automatic</option></select><button class="btn small" id="m-devRefresh">Refresh</button></div>
-          <p class="hint">${MOBILE ? "On a phone the music plays from your Spotify app. If nothing shows here, open Spotify and play any song for a second." : "“Shelf turntable” plays right here in the browser."}</p></div>`);
-        const sel = dev.querySelector("#m-dev");
-        (devices || []).forEach((d) => sel.append(h(`<option value="${esc(d.id)}" ${m.deviceId === d.id ? "selected" : ""}>${esc(d.name)}${d.is_active ? " (active)" : ""}</option>`)));
-        sel.onchange = () => { m.deviceId = sel.value || null; save(); };
-        const loadDevices = () => api("/me/player/devices").then((r) => { devices = (r && r.devices) || []; draw(); }).catch((e) => toast(explain(e)));
-        dev.querySelector("#m-devRefresh").onclick = loadDevices;
-        if (!devices) { devices = []; loadDevices(); }
-        body.append(dev);
-      }
+    const row = (img, title, sub, onOpen, onPlay) => {
+      const r = h(`<div class="mRow" role="button" tabindex="0">${img ? `<img alt="" loading="lazy" src="${esc(img)}">` : `<span class="mNoImg">♪</span>`}<span class="mText"><b>${esc(title)}</b><span>${esc(sub)}</span></span>${onOpen ? `<span class="mChev">›</span>` : ""}<button class="mPlay" aria-label="Play ${esc(title)}">▶</button></div>`);
+      r.onclick = (e) => { if (e.target.closest(".mPlay") || !onOpen) onPlay(); else onOpen(); };
+      r.onkeydown = (e) => { if (e.key === "Enter") r.click(); };
+      return r;
+    };
+    const openList = (o) => { scrollBack = sheet.scrollTop; open = { ...o, tracks: null }; draw(); sheet.scrollTop = 0; loadTracks(open).then((t) => { if (open && open.id === o.id) { open.tracks = t; draw(); } }); };
 
-      // record player look
-      const look = h(`<div class="group"><h3 class="label">Record player</h3>
+    function drawSetup(body) {
+      const setup = h(`<div class="group">
+        <h3 class="label">Connect Spotify (one-time setup)</h3>
+        <ol class="steps">
+          <li>Open <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">developer.spotify.com/dashboard</a>, sign in with your Spotify account and tap <b>Create app</b>.</li>
+          <li>Name it anything (e.g. Shelf). For <b>Redirect URI</b> paste this exactly:
+            <span class="row" style="flex-wrap:nowrap;margin-top:6px"><input class="input" readonly value="${esc(REDIRECT)}" id="m-redirect"><button class="btn small" id="m-copy">Copy</button></span></li>
+          <li>Tick <b>Web API</b> and <b>Web Playback SDK</b>, agree, and save.</li>
+          <li>Open the app's <b>Settings</b>, copy the <b>Client ID</b> and paste it here:
+            <input class="input" id="m-client" placeholder="Client ID" autocomplete="off" style="margin-top:6px" value="${esc(m.clientId)}"></li>
+        </ol>
+        <button class="btn primary" id="m-connect">Connect Spotify</button>
+        <p class="hint">Spotify only lets apps play music for <b>Premium</b> accounts. On a phone, the sound comes from your Spotify app and this page controls it.</p>
+      </div>`);
+      setup.querySelector("#m-copy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(REDIRECT).then(() => toast("Copied")); };
+      setup.querySelector("#m-client").oninput = (e) => { m.clientId = e.target.value.trim(); save(); };
+      setup.querySelector("#m-connect").onclick = connect;
+      body.append(setup);
+    }
+
+    function drawOpen(body) {
+      const g = h(`<div class="group"><button class="linkBtn mBack">‹ Back</button>
+        <div class="mHeader">${open.img ? `<img alt="" src="${esc(open.img)}">` : `<span class="mNoImg big">♪</span>`}<div><b>${esc(open.name)}</b><span class="hint">${open.type === "album" ? "Album" : "Playlist"}${Array.isArray(open.tracks) ? " · " + open.tracks.length + " songs" : ""}</span>
+        <button class="btn small primary" id="m-playAll" style="margin-top:8px">▶ Play all</button></div></div>
+        <div class="mResults"></div></div>`);
+      g.querySelector(".mBack").onclick = () => { open = null; draw(); sheet.scrollTop = scrollBack; };
+      g.querySelector("#m-playAll").onclick = () => play({ context_uri: open.uri });
+      const list = g.querySelector(".mResults");
+      if (!open.tracks) list.append(h(`<p class="hint">Loading songs…</p>`));
+      else if (open.tracks.error) list.append(h(`<p class="hint">Spotify wouldn't share these songs: ${esc(open.tracks.error)} You can still press Play all.</p>`));
+      else if (!open.tracks.length) list.append(h(`<p class="hint">No playable songs here.</p>`));
+      else open.tracks.forEach((t) => list.append(row(t.img, t.name, t.sub, null, () => play({ context_uri: open.uri, offset: { uri: t.uri } }))));
+      body.append(g);
+    }
+
+    function drawLibrary(body) {
+      const find = h(`<div class="group"><h3 class="label">Find music</h3>
+        <input class="input" type="search" id="m-q" placeholder="Song, album or playlist" autocomplete="off">
+        <div class="mResults"></div></div>`);
+      const qIn = find.querySelector("#m-q"); qIn.value = q;
+      const list = find.querySelector(".mResults");
+      const fill = () => {
+        list.replaceChildren();
+        if (q && !results) { list.append(h(`<p class="hint">Searching…</p>`)); return; }
+        if (q && results) {
+          const tracks = (results.tracks && results.tracks.items) || [], albums = ((results.albums && results.albums.items) || []).filter(Boolean), pls = ((results.playlists && results.playlists.items) || []).filter(Boolean);
+          if (!tracks.length && !albums.length && !pls.length) list.append(h(`<p class="hint">Nothing found.</p>`));
+          if (tracks.length) list.append(h(`<p class="label mHead">Songs</p>`));
+          tracks.filter(Boolean).forEach((t) => list.append(row(firstImg(t.album.images), t.name, t.artists.map((a) => a.name).join(", "), null, () => play({ context_uri: t.album.uri, offset: { uri: t.uri } }))));
+          if (albums.length) list.append(h(`<p class="label mHead">Albums</p>`));
+          albums.forEach((a) => list.append(row(firstImg(a.images), a.name, a.artists.map((x) => x.name).join(", "), () => openList({ type: "album", id: a.id, uri: a.uri, name: a.name, img: firstImg(a.images) }), () => play({ context_uri: a.uri }))));
+          if (pls.length) list.append(h(`<p class="label mHead">Playlists</p>`));
+          pls.forEach((p) => list.append(row(firstImg(p.images), p.name, "Playlist", () => openList({ type: "playlist", id: p.id, uri: p.uri, name: p.name, img: firstImg(p.images) }), () => play({ context_uri: p.uri }))));
+          return;
+        }
+        if (!playlists) { list.append(h(`<p class="hint">Loading your playlists…</p>`)); return; }
+        if (playlists.length) list.append(h(`<p class="label mHead">Your playlists</p>`));
+        playlists.forEach((p) => {
+          const total = (p.items && p.items.total) ?? (p.tracks && p.tracks.total);
+          list.append(row(firstImg(p.images), p.name, total != null ? total + " songs" : "Playlist", () => openList({ type: "playlist", id: p.id, uri: p.uri, name: p.name, img: firstImg(p.images) }), () => play({ context_uri: p.uri })));
+        });
+      };
+      qIn.oninput = () => {
+        q = qIn.value.trim(); results = null; fill(); clearTimeout(searchTimer);
+        if (!q) return;
+        searchTimer = setTimeout(async () => {
+          const asked = q;
+          try { const r = await api("/search?type=track,album,playlist&limit=6&q=" + encodeURIComponent(asked)); if (asked === q) { results = r || {}; fill(); } }
+          catch (e) { if (asked === q) { results = {}; fill(); toast(explain(e)); } }
+        }, 350);
+      };
+      fill();
+      if (!playlists) api("/me/playlists?limit=50").then((r) => { playlists = ((r && r.items) || []).filter(Boolean); if (!q && !open) fill(); }).catch(() => { playlists = []; if (!open) fill(); });
+      body.append(find);
+
+      const dev = h(`<div class="group"><h3 class="label">Playing on</h3><div class="row" style="flex-wrap:nowrap"><select class="input" id="m-dev"><option value="">Automatic</option></select><button class="btn small" id="m-devRefresh">Refresh</button></div>
+        <p class="hint">${MOBILE ? "On a phone the music plays from your Spotify app. If nothing shows here, open Spotify and play any song for a second." : "“Shelf turntable” plays right here in the browser."}</p>
+        <button class="btn small danger" id="m-out" style="align-self:flex-start;margin-top:8px">Disconnect Spotify</button></div>`);
+      const sel = dev.querySelector("#m-dev");
+      (devices || []).forEach((d) => sel.append(h(`<option value="${esc(d.id)}" ${m.deviceId === d.id ? "selected" : ""}>${esc(d.name)}${d.is_active ? " (active)" : ""}</option>`)));
+      sel.onchange = () => { m.deviceId = sel.value || null; save(); };
+      const loadDevices = () => api("/me/player/devices").then((r) => { devices = (r && r.devices) || []; if (!open && tab === "music") draw(); }).catch((e) => toast(explain(e)));
+      dev.querySelector("#m-devRefresh").onclick = loadDevices;
+      if (!devices) { devices = []; loadDevices(); }
+      dev.querySelector("#m-out").onclick = () => { if (player) player.disconnect(); player = null; sdkDevice = null; m.token = null; m.show = false; save(); render(); draw(); toast("Spotify disconnected"); };
+      body.append(dev);
+    }
+
+    function drawLook(body) {
+      // live preview stays pinned at the top while you pick colours
+      const stage = h(`<div class="ttStage"></div>`);
+      preview = h(tableMarkup("turntable tt-inline"));
+      const fit = Math.min(200, Math.max(120, ((sheet.clientWidth || innerWidth) - 48) / 1.7));
+      preview.style.setProperty("--s", fit + "px");
+      stage.append(preview); paint(preview);
+      const look = h(`<div class="group">
         <label class="check"><input type="checkbox" id="m-show" ${m.show ? "checked" : ""} ${m.token ? "" : "disabled"}> Show it on my shelf</label>
-        <p class="hint">Drag it anywhere. Tap the record to play or pause, tap the sleeve to open Music.</p>
-        <div class="field"><span class="hint">Size</span><input type="range" id="m-size" min="130" max="340" step="5" value="${recordSize()}"></div>
+        <p class="hint">On the shelf: drag it with one finger, pinch with two to resize. Tap the record to play or pause, tap the sleeve to open Music.</p>
         <div class="field"><span class="hint">Vinyl</span><div class="vinylDots">${VINYLS.map(([k, l]) => `<button class="vDot" data-vinyl="${k}" aria-pressed="${m.vinyl === k}" title="${l}"><span></span><em>${l}</em></button>`).join("")}</div></div>
         <div class="field"><span class="hint">Label</span><div class="colors">${LABELS.map(([c, l]) => `<button class="dot ${c === "cover" ? "custom" : ""} ${m.label === c ? "on" : ""}" data-label="${c}" title="${l}" aria-label="${l}" style="${c === "cover" ? "" : "background:" + c}"></button>`).join("")}</div></div>
-        ${m.token ? `<button class="btn small danger" id="m-out" style="align-self:flex-start">Disconnect Spotify</button>` : ""}
       </div>`);
       look.querySelector("#m-show").onchange = (e) => { m.show = e.target.checked; save(); render(); if (m.show) poll(); };
-      look.querySelector("#m-size").oninput = (e) => { m.size = +e.target.value; save(); render(); };
-      look.querySelectorAll(".vDot").forEach((b) => (b.onclick = () => { m.vinyl = b.dataset.vinyl; save(); render(); draw(); }));
-      look.querySelectorAll("[data-label]").forEach((b) => (b.onclick = () => { m.label = b.dataset.label; save(); render(); draw(); }));
-      const out = look.querySelector("#m-out");
-      if (out) out.onclick = () => { if (player) player.disconnect(); player = null; sdkDevice = null; m.token = null; m.show = false; save(); render(); draw(); toast("Spotify disconnected"); };
-      body.append(look);
+      look.querySelectorAll(".vDot").forEach((b) => (b.onclick = () => { m.vinyl = b.dataset.vinyl; save(); render(); look.querySelectorAll(".vDot").forEach((x) => x.setAttribute("aria-pressed", x === b)); }));
+      look.querySelectorAll("[data-label]").forEach((b) => (b.onclick = () => { m.label = b.dataset.label; save(); render(); look.querySelectorAll("[data-label]").forEach((x) => x.classList.toggle("on", x === b)); }));
+      body.append(stage, look);
+    }
 
-      sheet.append(body);
-      sheet.scrollTop = scroll;
-    };
     draw();
     showSheet(sheet);
   }
 
-  document.getElementById("musicBtn").onclick = openMusic;
+  document.getElementById("musicBtn").onclick = () => openMusic();
 
   (async () => {
     const justConnected = await finishSignIn();

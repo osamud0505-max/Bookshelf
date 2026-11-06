@@ -393,3 +393,14 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 .mPrompt[hidden] { display: none; }
 .mPrompt span { flex: 1; }
 .mPrompt .btn:not(.primary) { background: transparent; color: inherit; border-color: transparent; }
+
+.turntable.tt-inline { position: relative; z-index: auto; transform: none; cursor: default; touch-action: auto; margin: 0 auto; pointer-events: none; }
+.ttStage { position: sticky; top: -1px; z-index: 4; display: flex; justify-content: center; padding: 18px 0 22px; margin: 0 -20px; background: var(--popup); border-bottom: 1px solid var(--border); }
+.mRow { width: 100%; }
+.mRow .mPlay { border: 0; cursor: pointer; }
+.mChev { flex: none; color: var(--muted-fg); font-size: 1.4rem; line-height: 1; padding: 0 2px; }
+.mBack { align-self: flex-start; font-size: .95rem; color: var(--primary); }
+.mHeader { display: flex; gap: 14px; align-items: flex-end; margin: 4px 0 8px; }
+.mHeader img, .mNoImg.big { width: 104px; height: 104px; border-radius: 6px; object-fit: cover; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+.mHeader b { display: block; font-size: 1.15rem; line-height: 1.2; }
+.mHeader > div { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
