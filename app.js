@@ -522,6 +522,34 @@
     all[key] = { ...(all[key] || {}), ...patch };
     state.settings.shelfDecor = all; save();
   }
+  // the decorations standing on a shelf. "auto" is the room's own object. Until a shelf is
+  // arranged by hand it shows the room's object where the old single-ornament setting put it.
+  function decorItems(key) {
+    const dz = shelfDecor(key);
+    if (Array.isArray(dz.items)) return dz.items;
+    const oc = state.settings.ornament || {};
+    if (!oc.kind || oc.kind === "none" || dz.noCandle) return [];
+    const pos = oc.pos || "end";
+    return [{ id: "d0", kind: "auto", after: pos === "start" ? null : pos === "middle" ? "mid" : "end", on: !dz.out }];
+  }
+  // a picture of a decoration sized to fill a menu tile
+  function ornArt(k, box) {
+    const o = D.ORNAMENTS[k], hgt = Math.min(box, (box * 1.15 * 200) / (o.vw || 100));
+    return D.ornamentEl(k, Math.round(hgt / (o.scale || 0.7)), true);
+  }
+  function resolveKind(kind, idx) {
+    if (kind !== "auto") return D.ORNAMENTS[kind] ? kind : null;
+    const k = (state.settings.ornament || {}).kind;
+    const od = D.ORNAMENTS[k];
+    if (!od) return null;
+    return od.alt && idx % 2 ? od.alt : k;
+  }
+  // the bin that shows while a decoration is lifted
+  const bin = document.createElement("div");
+  bin.className = "decorBin"; bin.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg><span>Drop here to remove</span>`;
+  document.body.append(bin);
+  function showBin(on) { bin.classList.toggle("show", on); document.body.classList.toggle("arrangingDecor", on); if (!on) bin.classList.remove("over"); }
+  function binHit(x, y) { if (!bin.classList.contains("show")) return false; const r = bin.getBoundingClientRect(); return x > r.left - 16 && x < r.right + 16 && y > r.top - 24 && y < r.bottom + 16; }
 
   // ---------------------------------------------------------------- candle sounds (made on the fly, no files)
   let actx = null;
@@ -534,7 +562,7 @@
   }
   // candle sounds are small, close-up sounds: kept well under the room sound
   let candleBus = null;
-  const candleOut = () => { if (!candleBus || candleBus.context !== actx) { candleBus = actx.createGain(); candleBus.gain.value = 0.2; candleBus.connect(actx.destination); } return candleBus; };
+  const candleOut = () => { if (!candleBus || candleBus.context !== actx) { candleBus = actx.createGain(); candleBus.gain.value = 0.08; const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 450; candleBus.connect(hp).connect(actx.destination); } return candleBus; }; // soft and light: no low thump
   function env(g, t0, peak, attack, decay) { g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(peak, t0 + attack); g.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + decay); }
   /** Someone blowing a candle out: a long soft "fffooh" of breath, the flame fluttering in it, then quiet. */
   function soundBlow() {
@@ -692,15 +720,13 @@
     const count = books.length + (opts.onAdd ? 1 : 0);
     let H = 246, STEP = 103, viewW = 0, PAD = 16, front = -1, raf = 0;
     const slots = [], bookNodes = [];
-    // an ornament (a candlestick…) stands in the row and gets pushed along when a book turns
-    const ornCfg = { kind: "none", pos: "end", ...(state.settings.ornament || {}) };
-    // some objects take turns with a partner from shelf to shelf (potions, then a skull)
-    const od = D.ORNAMENTS[ornCfg.kind];
-    if (od && od.alt && (opts.idx || 0) % 2) ornCfg.kind = od.alt;
-    if (shelfDecor(key).noCandle) ornCfg.kind = "none";
-    ornCfg.on = !shelfDecor(key).out;
-    let orn = null, ornW = 0, ornIdx = -1, ornX = null, ornT = 0;
-
+    // decorations stand in the row between books and get pushed along when a book turns.
+    // hold one to lift it and move it anywhere on the shelf, or onto the bin to take it away.
+    const shelfIdx = opts.idx || 0;
+    let items = decorItems(key).map((it) => ({ ...it }));
+    let orns = []; // { it, el, w, idx, x, t }
+    let bookPos = []; // left edge of each slot as last laid out
+    let drag = null;
     books.forEach((b, i) => {
       const slot = h(`<button type="button" class="slot" tabindex="-1"></button>`);
       slot.onclick = () => (i === front ? openBook(b.id) : goTo(i));
@@ -728,20 +754,131 @@
         slots[i].setAttribute("aria-label", b.title);
       });
       if (opts.onAdd) slots[books.length].style.height = Math.round(H * 0.86) + "px";
-      if (orn) orn.remove();
-      orn = books.length ? D.ornamentEl(ornCfg.kind, H, ornCfg.on) : null;
-      ornW = 0;
-      if (orn) {
-        ornW = parseFloat(orn.style.width) + 10;
-        ornIdx = ornCfg.pos === "start" ? 0 : ornCfg.pos === "middle" ? Math.ceil(books.length / 2) : books.length;
-        orn.onclick = () => {
-          if (orn.classList.contains("snuffing")) return;
-          ornCfg.on = !ornCfg.on;
-          toggleFlame(orn, !ornCfg.on);
-          setShelfDecor(key, { out: !ornCfg.on });
+      buildOrns();
+    }
+
+    function idxOf(it) {
+      if (it.after == null) return 0;
+      if (it.after === "end") return books.length;
+      if (it.after === "mid") return Math.ceil(books.length / 2);
+      const i = books.findIndex((b) => b.id === it.after);
+      return i < 0 ? books.length : i + 1;
+    }
+    function buildOrns() {
+      orns.forEach((o) => o.el.remove());
+      orns = [];
+      if (!books.length) return;
+      items.forEach((it) => {
+        const kind = resolveKind(it.kind, shelfIdx);
+        const el = kind && D.ornamentEl(kind, H, it.on !== false);
+        if (!el) return;
+        const o = { it, el, w: parseFloat(el.style.width) + 10, idx: idxOf(it), x: null, t: 0 };
+        el.onclick = (e) => {
+          if (el._noClick) { el._noClick = false; return; }
+          e.stopPropagation();
+          const od = D.ORNAMENTS[kind];
+          if (od && od.still) { el.classList.remove("nudge"); void el.offsetWidth; el.classList.add("nudge"); return; }
+          if (el.classList.contains("snuffing")) return;
+          it.on = it.on === false;
+          toggleFlame(el, !it.on);
+          saveItems();
         };
-        stage.append(orn);
+        armDrag(o);
+        stage.append(el); orns.push(o);
+      });
+      sortOrns();
+    }
+    // keep the stored order the same as the order on the shelf
+    const sortOrns = () => { orns = orns.map((o, k) => [o, k]).sort((a, b) => a[0].idx - b[0].idx || a[1] - b[1]).map((p) => p[0]); };
+    function saveItems() {
+      items = orns.map((o) => o.it);
+      setShelfDecor(key, { items: items.map(({ id, kind, after, on }) => ({ id, kind, after, on })) });
+    }
+
+    // ---- hold to lift, then drag
+    function armDrag(o) {
+      const el = o.el;
+      el.addEventListener("contextmenu", (e) => e.preventDefault());
+      el.addEventListener("touchmove", (e) => { if (drag && drag.o === o) e.preventDefault(); }, { passive: false });
+      el.addEventListener("pointerdown", (e) => {
+        if (drag || (e.pointerType === "mouse" && e.button !== 0)) return;
+        const sx = e.clientX, sy = e.clientY, id = e.pointerId;
+        let timer = setTimeout(() => start(e), 380);
+        const cancel = () => { clearTimeout(timer); timer = 0; off(); };
+        const pre = (ev) => { if (ev.pointerId === id && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 8) cancel(); };
+        const off = () => { el.removeEventListener("pointermove", pre); el.removeEventListener("pointerup", cancel); el.removeEventListener("pointercancel", cancel); };
+        el.addEventListener("pointermove", pre); el.addEventListener("pointerup", cancel); el.addEventListener("pointercancel", cancel);
+        function start(ev) {
+          off(); if (!el.isConnected) return;
+          try { el.setPointerCapture(id); } catch {}
+          const r = el.getBoundingClientRect();
+          // a copy follows the finger above everything; the real one keeps its gap in the row
+          const ghost = el.cloneNode(true);
+          ghost.classList.add("ornGhost"); ghost.onclick = null;
+          ghost.style.transform = `translate3d(${r.left}px,${r.top}px,0)`;
+          document.body.append(ghost);
+          requestAnimationFrame(() => ghost.classList.add("up"));
+          drag = { o, id, ghost, gx: sx - r.left, gy: sy - r.top, cx: sx, cy: sy, raf: 0, over: false };
+          root.classList.add("arranging"); el.classList.add("placeholder");
+          if (navigator.vibrate) navigator.vibrate(12);
+          showBin(true);
+          const move = (m) => { if (m.pointerId !== id) return; drag.cx = m.clientX; drag.cy = m.clientY; dragFrame(); };
+          const end = (m) => {
+            if (m.pointerId !== id) return;
+            el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", end); el.removeEventListener("pointercancel", end);
+            el._noClick = true; setTimeout(() => (el._noClick = false), 400);
+            drop(m.type === "pointercancel");
+          };
+          el.addEventListener("pointermove", move); el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+          const tick = () => { if (!drag) return; autoScroll(); drag.raf = requestAnimationFrame(tick); };
+          drag.raf = requestAnimationFrame(tick);
+          dragFrame();
+        }
+      });
+    }
+    function autoScroll() {
+      const r = scroller.getBoundingClientRect(), edge = 46;
+      let v = 0;
+      if (drag.cx < r.left + edge) v = -(r.left + edge - drag.cx) / edge;
+      else if (drag.cx > r.right - edge) v = (drag.cx - (r.right - edge)) / edge;
+      if (v) { scroller.scrollLeft += Math.max(-1, Math.min(1, v)) * 9; dragFrame(); }
+    }
+    function dragFrame() {
+      const o = drag.o, sr = stage.getBoundingClientRect();
+      const left = drag.cx - sr.left - drag.gx, mid = left + (o.w - 10) / 2;
+      drag.ghost.style.transform = `translate3d(${drag.cx - drag.gx}px,${drag.cy - drag.gy}px,0)`;
+      // the gap goes before the first book whose middle is still to the right of the object
+      let idx = 0;
+      for (let i = 0; i < books.length; i++) if (bookPos[i] != null && bookPos[i].c < mid) idx = i + 1;
+      if (idx !== o.idx) { o.idx = idx; sortOrns(); }
+      drag.over = binHit(drag.cx, drag.cy);
+      bin.classList.toggle("over", drag.over);
+      drag.ghost.classList.toggle("binning", drag.over);
+      layout();
+    }
+    function drop(cancelled) {
+      const o = drag.o, ghost = drag.ghost; cancelAnimationFrame(drag.raf);
+      const remove = drag.over && !cancelled;
+      drag = null; showBin(false);
+      ghost.classList.remove("up", "binning");
+      if (remove) {
+        ghost.classList.add("vanish");
+        orns = orns.filter((x) => x !== o); o.el.remove();
+        setTimeout(() => ghost.remove(), 320);
+        if (navigator.vibrate) navigator.vibrate(8);
+      } else {
+        o.it.after = o.idx === 0 ? null : o.idx >= books.length ? "end" : books[o.idx - 1].id;
       }
+      saveItems();
+      layout();
+      if (!remove) {
+        // the copy glides down into its gap, then the real one takes over
+        const sr = stage.getBoundingClientRect(), h = parseFloat(o.el.style.height);
+        ghost.classList.add("settle");
+        ghost.style.transform = `translate3d(${sr.left + o.x}px,${sr.bottom - h}px,0)`;
+        setTimeout(() => { o.el.classList.remove("placeholder"); ghost.remove(); }, 300);
+      }
+      setTimeout(() => root.classList.remove("arranging"), 320);
     }
 
     function layout() {
@@ -762,25 +899,27 @@
       const fl = Math.floor(f);
       let openAt = 0; for (let i = 0; i < fl; i++) openAt += widths[i];
       openAt += (f - fl) * (widths[fl] || 0);
-      // the open point passes over the ornament gradually, so the row never jumps
-      if (orn) openAt += ornW * Math.max(0, Math.min(1, f - (ornIdx - 1)));
-      const total = widths.reduce((s, v) => s + v, 0) + ornW;
+      // the open point passes over each decoration gradually, so the row never jumps
+      let ornTotal = 0;
+      for (const o of orns) { openAt += o.w * Math.max(0, Math.min(1, f - (o.idx - 1))); ornTotal += o.w; }
+      const total = widths.reduce((s, v) => s + v, 0) + ornTotal;
       const offset = Math.max(0, Math.min(Math.max(0, total - (viewW - PAD * 2)), openAt - viewW * 0.3));
-      let x = 0;
-      const placeOrn = () => {
-        const left = PAD + x - offset + 5; x += ornW;
-        orn.style.transform = `translate3d(${left}px,0,0)`;
-        // the flame leans away from the way it is being pushed, then settles
-        if (ornX !== null && Math.abs(left - ornX) > 0.3) {
-          const lean = Math.max(-30, Math.min(30, -(left - ornX) * 6));
-          orn.style.setProperty("--lean", lean.toFixed(1) + "deg");
-          clearTimeout(ornT); ornT = setTimeout(() => orn && orn.style.setProperty("--lean", "0deg"), 140);
+      let x = 0, k = 0;
+      const placeOrn = (o) => {
+        const left = PAD + x - offset + 5; x += o.w;
+        o.el.style.transform = `translate3d(${left}px,0,0)`;
+        // a flame leans away from the way it is being pushed, then settles
+        if (o.x !== null && Math.abs(left - o.x) > 0.3 && !root.classList.contains("arranging")) {
+          const lean = Math.max(-30, Math.min(30, -(left - o.x) * 6));
+          o.el.style.setProperty("--lean", lean.toFixed(1) + "deg");
+          clearTimeout(o.t); o.t = setTimeout(() => o.el.style.setProperty("--lean", "0deg"), 140);
         }
-        ornX = left;
+        o.x = left;
       };
       for (let i = 0; i < count; i++) {
-        if (orn && i === ornIdx) placeOrn();
+        while (k < orns.length && orns[k].idx <= i) placeOrn(orns[k++]);
         const left = PAD + x - offset; x += widths[i];
+        bookPos[i] = { l: left, c: left + widths[i] / 2 };
         const slot = slots[i];
         const vis = left + widths[i] > -80 && left < viewW + 80;
         slot.style.visibility = vis ? "visible" : "hidden";
@@ -789,7 +928,7 @@
         slot.style.transform = `translate3d(${left}px,0,0)`;
         if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", turns[i]);
       }
-      if (orn && ornIdx >= count) placeOrn();
+      while (k < orns.length) placeOrn(orns[k++]);
       const n = Math.min(Math.round(f), books.length - 1);
       if (n !== front) { front = n; scrollMemory.set(key, n); slots.forEach((s, i) => s.classList.toggle("front", i === n)); drawCaption(); }
     }
@@ -831,12 +970,23 @@
     const ro = new ResizeObserver(() => { const keep = front < 0 ? scrollMemory.get(key) || 0 : front; build(); front = -1; goTo(keep, true); layout(); });
     ro.observe(scroller);
     root._dispose = () => ro.disconnect();
+    // the ✦ menu adds a decoration next to the book in front
+    root._addDecor = (kind) => {
+      const fb = books[front >= 0 ? front : scrollMemory.get(key) || 0];
+      items.push({ id: "d" + Date.now().toString(36), kind, after: fb ? fb.id : "end", on: true });
+      setShelfDecor(key, { items });
+      buildOrns(); layout();
+      const o = orns.find((x) => x.it === items[items.length - 1]);
+      if (o) { o.el.classList.add("appear"); setTimeout(() => o.el.classList.remove("appear"), 500); }
+    };
     if (!books.length) drawCaption();
     return root;
   }
 
   // ---------------------------------------------------------------- page
   const main = document.getElementById("main");
+  let reopenDecor = null;
+  const keepOpen = () => { const m = document.querySelector(".decorMenu"); const sec = m && m.closest("section"); const sh = sec && sec.querySelector(".shelf"); reopenDecor = sh ? sh.dataset.key : null; };
   function render() {
     applyAppearance();
     if (window.ShelfAmbience) window.ShelfAmbience.update();
@@ -861,25 +1011,66 @@
       const sec = h(`<section><div class="sectionHead"><h2 class="sectionTitle">${esc(title)}<span class="count">${list.length}</span></h2></div></section>`);
       if (opts.more) { const m = h(`<button class="linkBtn">Only this shelf</button>`); m.onclick = opts.more; sec.firstElementChild.append(m); }
       const hasLights = (state.settings.lights || {}).style && state.settings.lights.style !== "none";
-      const hasCandle = (state.settings.ornament || {}).kind && state.settings.ornament.kind !== "none";
-      if (hasLights || hasCandle) {
-        const dz = shelfDecor(key);
+      const sIdx = shelfN;
+      {
         const btn = h(`<button class="decorBtn" aria-label="Decor on this shelf" aria-expanded="false">✦</button>`);
         btn.onclick = (e) => {
           e.stopPropagation();
+          const was = document.querySelector(".decorMenu");
           document.querySelectorAll(".decorMenu").forEach((m) => m.remove());
-          const menu = h(`<div class="decorMenu" role="menu">
-            ${hasLights ? `<label class="check"><input type="checkbox" data-k="noLights" ${dz.noLights ? "" : "checked"}> Lights on this shelf</label>` : ""}
-            ${hasCandle ? `<label class="check"><input type="checkbox" data-k="noCandle" ${dz.noCandle ? "" : "checked"}> ${esc(D.ORNAMENTS[state.settings.ornament.kind].label)} on this shelf</label>` : ""}</div>`);
-          menu.querySelectorAll("input").forEach((i) => (i.onchange = () => { setShelfDecor(key, { [i.dataset.k]: !i.checked }); render(); }));
+          if (was && was.previousElementSibling === btn) return;
+          const menu = h(`<div class="decorMenu" role="dialog" aria-label="Decor on this shelf"></div>`);
+          const draw = () => {
+            const dz = shelfDecor(key), its = decorItems(key);
+            menu.replaceChildren();
+            if (hasLights) {
+              const l = h(`<label class="check"><input type="checkbox" ${dz.noLights ? "" : "checked"}> Lights on this shelf</label>`);
+              l.querySelector("input").onchange = (ev) => { setShelfDecor(key, { noLights: !ev.target.checked }); render(); };
+              menu.append(l);
+            }
+            menu.append(h(`<span class="subLabel">On this shelf</span>`));
+            const cur = h(`<div class="decorNow"></div>`);
+            if (!its.length) cur.append(h(`<span class="hint small">Nothing yet. Pick something below.</span>`));
+            its.forEach((it) => {
+              const kind = resolveKind(it.kind, sIdx);
+              if (!kind) return;
+              const chip = h(`<span class="decorChip"><span class="ornArt"></span><button aria-label="Remove ${esc(D.ORNAMENTS[kind].label)}">×</button></span>`);
+              chip.firstElementChild.append(ornArt(kind, 44));
+              chip.querySelector("button").onclick = () => {
+                setShelfDecor(key, { items: its.filter((x) => x !== it) });
+                keepOpen(); render();
+              };
+              cur.append(chip);
+            });
+            menu.append(cur);
+            menu.append(h(`<span class="subLabel">Add to this shelf</span>`));
+            const grid = h(`<div class="ornGrid"></div>`);
+            Object.entries(D.ORNAMENTS).forEach(([k, o]) => {
+              if (!o.draw) return;
+              const t = h(`<button class="ornTile" aria-label="Add ${esc(o.label)}"><span class="ornArt"></span><span class="name">${esc(o.label)}</span></button>`);
+              t.firstElementChild.append(ornArt(k, 50));
+              t.onclick = () => {
+                const sh = main.querySelector(`.shelf[data-key="${CSS.escape(key)}"]`);
+                if (sh && sh._addDecor) sh._addDecor(k);
+                else setShelfDecor(key, { items: [...its, { id: "d" + Date.now().toString(36), kind: k, after: "end", on: true }] });
+                draw();
+              };
+              grid.append(t);
+            });
+            menu.append(grid);
+            menu.append(h(`<p class="hint small">Hold a decoration on the shelf to move it between any books. Drag it to the bin to take it off.</p>`));
+          };
+          draw();
           menu.onclick = (ev) => ev.stopPropagation();
-          btn.after(menu);
-          setTimeout(() => document.addEventListener("click", () => menu.remove(), { once: true }), 0);
+          btn.after(menu); btn.setAttribute("aria-expanded", "true");
+          const close = () => { menu.remove(); btn.setAttribute("aria-expanded", "false"); };
+          setTimeout(() => document.addEventListener("click", close, { once: true }), 0);
         };
         sec.firstElementChild.append(btn);
       }
       sec.append(shelfEl(key, list, { ...opts, idx: shelfN++ }));
       main.append(sec);
+      if (reopenDecor === key) { reopenDecor = null; const b = sec.querySelector(".decorBtn"); setTimeout(() => b && b.isConnected && b.click(), 0); }
     };
 
     if (!books.length) {
@@ -1377,14 +1568,21 @@
       body.append(lg);
 
       // something standing on the shelf
-      const ornCfg = { kind: "none", on: true, pos: "end", ...(s.ornament || {}) };
-      const og = h(`<div class="group"><h3 class="label">On the shelf</h3><p class="hint">Something that stands among your books and gets nudged along as they turn. Tap it on the shelf to light it or put it out.</p>
-        <div class="field"><span class="subLabel">What stands there</span><div class="chips" id="o-kind">${Object.entries(D.ORNAMENTS).map(([k, o]) => `<button data-v="${k}" aria-pressed="${ornCfg.kind === k}">${o.label}</button>`).join("")}</div></div>
-        <div class="field" id="o-posF"><span class="subLabel">Where</span><div class="chips" id="o-pos">${[["start", "At the start"], ["middle", "In the middle"], ["end", "At the end"]].map(([k, l]) => `<button data-v="${k}" aria-pressed="${ornCfg.pos === k}">${l}</button>`).join("")}</div></div>
-        <p class="hint small">Tip: use ✦ next to a shelf's name to remove the lights or the candle from just that shelf.</p></div>`);
-      og.querySelectorAll("#o-kind button").forEach((b) => (b.onclick = () => set({ ornament: { ...ornCfg, kind: b.dataset.v, on: true } })));
-      og.querySelectorAll("#o-pos button").forEach((b) => (b.onclick = () => set({ ornament: { ...ornCfg, pos: b.dataset.v } })));
-      if (ornCfg.kind === "none") og.querySelector("#o-posF").hidden = true;
+      const ornCfg = { kind: "none", on: true, ...(s.ornament || {}) };
+      const og = h(`<div class="group"><h3 class="label">On the shelf</h3><p class="hint">The object every shelf starts with. Tap it on the shelf to light it or put it out. Hold it to move it between any books, or drag it to the bin to take it off.</p>
+        <div class="ornGrid big" id="o-kind"></div>
+        <p class="hint small">Use ✦ next to a shelf's name to add as many more as you like.</p></div>`);
+      const okind = og.querySelector("#o-kind");
+      const noneT = h(`<button class="ornTile" aria-pressed="${ornCfg.kind === "none"}"><span class="ornArt"><span class="ornNone">∅</span></span><span class="name">Nothing</span></button>`);
+      noneT.onclick = () => set({ ornament: { ...ornCfg, kind: "none" } });
+      okind.append(noneT);
+      Object.entries(D.ORNAMENTS).forEach(([k, o]) => {
+        if (!o.draw) return;
+        const t = h(`<button class="ornTile" aria-pressed="${ornCfg.kind === k}"><span class="ornArt"></span><span class="name">${esc(o.label)}</span></button>`);
+        t.firstElementChild.append(ornArt(k, 50));
+        t.onclick = () => set({ ornament: { ...ornCfg, kind: k, on: true } });
+        okind.append(t);
+      });
       body.append(og);
 
       // the bookmark that marks your page in the reader

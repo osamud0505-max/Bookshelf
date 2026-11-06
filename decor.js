@@ -412,7 +412,8 @@
     el.innerHTML = `<div class="ornGlow"${o.glow ? ` style="background:radial-gradient(closest-side, ${o.glow}, transparent)"` : ""}></div><svg viewBox="0 0 ${o.vw} 200" width="${w}" height="${h}" aria-hidden="true">${o.draw("orn" + ornN++)}</svg>`;
     // where the glow sits: the highest flame
     const ys = [...o.draw("x").matchAll(/data-y="([\d.]+)"/g)].map((m) => +m[1]);
-    el.style.setProperty("--fy", (Math.min(...ys) / 200 * 100).toFixed(1) + "%");
+    if (ys.length) el.style.setProperty("--fy", (Math.min(...ys) / 200 * 100).toFixed(1) + "%");
+    if (o.still) el.classList.add("still");
     return el;
   }
 
@@ -537,6 +538,153 @@
           + `<circle cx="${x - r * 0.4}" cy="${y - h - r * 0.2}" r="${r * 0.12}" fill="#fff" opacity=".8"/><circle cx="${x + r * 0.3}" cy="${y - h - r * 0.35}" r="${r * 0.09}" fill="#fff" opacity=".7"/>`).join("");
     },
   };
+  // ------------------------------------------------------------------ more things to stand among the books
+  // (`still` ones have no light: a tap just nudges them)
+  const leaf = (x, y, rot, s, c) => `<path transform="translate(${x} ${y}) rotate(${rot}) scale(${s})" d="M0 0 C-7 -3 -9 -12 -4 -17 C-2 -19 0 -18 0 -16 C0 -18 2 -19 4 -17 C9 -12 7 -3 0 0Z" fill="${c}"/><path transform="translate(${x} ${y}) rotate(${rot}) scale(${s})" d="M0 -1 L0 -15" stroke="rgba(255,255,255,.25)" stroke-width=".8" fill="none"/>`;
+  const TERRA = [[0, "#7a3a1e"], [0.35, "#c46a3c"], [0.55, "#d9824f"], [1, "#6b3018"]];
+  const CERAMIC = [[0, "#b8b2a8"], [0.35, "#f4f0e8"], [0.55, "#ffffff"], [1, "#a9a296"]];
+  const WOOD = [[0, "#3b2210"], [0.35, "#7a4a24"], [0.55, "#9a6232"], [1, "#2e1a0c"]];
+  Object.assign(ORNAMENTS, {
+    plant: {
+      label: "Trailing plant", scale: 0.66, vw: 120, still: true,
+      draw: (g) => {
+        const greens = ["#2f6b3a", "#3f8a4a", "#57a35c", "#2a5e33"];
+        let vines = "", leaves = "";
+        // leaves on top, then vines trailing over the rim and down the side
+        [[48, 118, -30], [60, 104, -5], [74, 112, 25], [40, 132, -55], [86, 128, 50], [56, 120, 10], [66, 98, 0], [32, 140, -70], [92, 140, 65]].forEach(([x, y, r], i) => (leaves += leaf(x, y, r, 1.25, greens[i % 4])));
+        [[30, 148, 18, 196], [90, 148, 104, 186], [24, 150, 8, 178]].forEach(([x0, y0, x1, y1], k) => {
+          vines += `<path d="M${x0} ${y0} C${x0 - 8 + k * 4} ${y0 + 12} ${x1 + 6} ${y1 - 18} ${x1} ${y1}" stroke="#2d5a30" stroke-width="1.4" fill="none"/>`;
+          for (let j = 1; j <= 4; j++) { const t = j / 5, x = x0 + (x1 - x0) * t + (k === 1 ? 3 : -3), y = y0 + (y1 - y0) * t; leaves += leaf(x, y + 4, k === 1 ? 140 + j * 8 : -140 - j * 8, 0.85, greens[(j + k) % 4]); }
+        });
+        return `<defs>${metal(g, TERRA)}</defs>`
+          + `<path d="M30 200 L88 200 L96 152 L22 152Z" fill="url(#${g})"/><path d="M30 200 L88 200 L89 194 L29 194Z" fill="#000" opacity=".15"/>`
+          + `<rect x="16" y="140" width="86" height="14" rx="3" fill="url(#${g})"/><rect x="16" y="140" width="86" height="3" rx="1.5" fill="#fff" opacity=".15"/>`
+          + `<ellipse cx="59" cy="141" rx="40" ry="3.5" fill="#3a2414"/>` + vines + leaves;
+      },
+    },
+    succulent: {
+      label: "Succulent", scale: 0.4, vw: 110, still: true,
+      draw: (g) => {
+        let petals = "";
+        const ring = (n, r, len, wd, c, rot0) => { for (let i = 0; i < n; i++) { const a = rot0 + (i / n) * 180 - 90; petals += `<path transform="translate(55 122) rotate(${a})" d="M0 0 C${wd} ${-len * 0.4} ${wd * 0.7} ${-len * 0.9} 0 ${-len} C${-wd * 0.7} ${-len * 0.9} ${-wd} ${-len * 0.4} 0 0Z" fill="${c}" stroke="#4f7a6e" stroke-width=".6"/>`; } };
+        ring(9, 0, 46, 13, "#8fb7a5", 0); ring(7, 0, 36, 12, "#a6c9b6", 10); ring(5, 0, 26, 10, "#bcd9c6", 4); ring(3, 0, 16, 8, "#d3e8d6", 20);
+        return `<defs>${metal(g, CERAMIC)}</defs>`
+          + `<path d="M24 200 L86 200 C92 176 94 150 92 128 L18 128 C16 150 18 176 24 200Z" fill="url(#${g})"/><rect x="14" y="122" width="82" height="9" rx="4" fill="url(#${g})"/>`
+          + `<ellipse cx="55" cy="124" rx="38" ry="3" fill="#3a2a1e"/>` + petals + `<path d="M30 168 C46 162 64 174 80 166" stroke="#c9a96b" stroke-width="1.4" fill="none" opacity=".7"/>`;
+      },
+    },
+    hourglass: {
+      label: "Hourglass", scale: 0.62, vw: 76, still: true,
+      draw: (g) => `<defs>${metal(g, WOOD)}<linearGradient id="${g}gl" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".05"/><stop offset=".3" stop-color="#fff" stop-opacity=".35"/><stop offset=".45" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient></defs>`
+        + `<path d="M22 34 C18 70 34 92 36 104 C34 116 18 138 22 176 L54 176 C58 138 42 116 40 104 C42 92 58 70 54 34Z" fill="rgba(210,230,240,.12)"/>`
+        + `<path d="M24 54 C26 72 34 88 38 102 C42 88 50 72 52 54 C44 60 32 60 24 54Z" fill="#d8b47a"/>`
+        + `<path d="M23 176 L53 176 C52 164 44 156 38 150 C32 156 24 164 23 176Z" fill="#d8b47a"/><line x1="38" y1="102" x2="38" y2="152" stroke="#d8b47a" stroke-width="1.2"/>`
+        + `<path d="M22 34 C18 70 34 92 36 104 C34 116 18 138 22 176 L54 176 C58 138 42 116 40 104 C42 92 58 70 54 34Z" fill="url(#${g}gl)" stroke="rgba(255,255,255,.4)" stroke-width="1"/>`
+        + `<rect x="8" y="22" width="60" height="12" rx="3" fill="url(#${g})"/><rect x="8" y="176" width="60" height="12" rx="3" fill="url(#${g})"/>`
+        + [12, 64].map((x) => `<rect x="${x - 2.5}" y="34" width="5" height="142" rx="2" fill="url(#${g})"/>`).join("")
+        + `<rect x="4" y="188" width="68" height="12" rx="3" fill="url(#${g})"/>`,
+    },
+    globe: {
+      label: "Antique globe", scale: 0.78, vw: 120, still: true,
+      draw: (g) => `<defs>${metal(g, BRASS)}<radialGradient id="${g}o" cx=".35" cy=".32" r=".8"><stop offset="0" stop-color="#e9dcb4"/><stop offset=".55" stop-color="#c9b27c"/><stop offset="1" stop-color="#6e5a33"/></radialGradient><clipPath id="${g}c"><circle cx="60" cy="86" r="44"/></clipPath></defs>`
+        + `<path d="M40 200 L44 192 L76 192 L80 200Z" fill="url(#${g})"/><path d="M57 192 L55 150 L65 150 L63 192Z" fill="url(#${g})"/>`
+        + `<circle cx="60" cy="86" r="44" fill="url(#${g}o)"/>`
+        + `<g clip-path="url(#${g}c)" fill="#8a7444" opacity=".75"><path d="M30 60 C40 50 52 56 50 66 C56 72 48 82 40 78 C34 86 24 78 26 70Z"/><path d="M62 70 C74 64 86 70 84 82 C92 92 80 108 70 104 C66 116 56 112 58 100 C52 92 56 80 62 70Z"/><path d="M78 46 C86 44 94 50 92 56 C86 58 80 54 78 46Z"/><path d="M34 100 C40 98 44 106 40 112 C36 112 32 106 34 100Z"/></g>`
+        + `<g clip-path="url(#${g}c)" fill="none" stroke="#6e5a33" stroke-width=".6" opacity=".5"><ellipse cx="60" cy="86" rx="44" ry="14"/><ellipse cx="60" cy="86" rx="20" ry="44"/><line x1="16" y1="86" x2="104" y2="86"/></g>`
+        + `<path d="M60 36 A50 50 0 0 1 60 136" stroke="url(#${g})" stroke-width="5" fill="none" transform="rotate(-20 60 86)"/><path d="M60 36 A50 50 0 0 0 60 136" stroke="url(#${g})" stroke-width="2" fill="none" opacity=".5" transform="rotate(-20 60 86)"/>`
+        + `<path d="M42 150 Q60 140 78 150" stroke="url(#${g})" stroke-width="4" fill="none"/><ellipse cx="44" cy="62" rx="10" ry="16" fill="#fff" opacity=".15" transform="rotate(30 44 62)"/>`,
+    },
+    bookStack: {
+      label: "Stack of books", scale: 0.66, vw: 130, still: true,
+      draw: () => [[8, 172, 116, 26, "#6b2a2a", "#d8c9a8"], [16, 150, 100, 22, "#2b4a3a", "#e3d7bb"], [4, 132, 110, 18, "#2b3550", "#dccfb0"]].map(([x, y, w, h, c, pg]) =>
+        `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2.5" fill="${c}"/><rect x="${x + 4}" y="${y + 3}" width="${w - 6}" height="${h - 6}" fill="${pg}"/>`
+        + `<rect x="${x}" y="${y}" width="9" height="${h}" rx="2.5" fill="${c}"/><rect x="${x}" y="${y + 3}" width="${w}" height="1.5" fill="#000" opacity=".12"/>`
+        + `<line x1="${x + 13}" y1="${y + h * 0.35}" x2="${x + w - 4}" y2="${y + h * 0.35}" stroke="#b9a988" stroke-width=".6"/><line x1="${x + 13}" y1="${y + h * 0.65}" x2="${x + w - 4}" y2="${y + h * 0.65}" stroke="#b9a988" stroke-width=".6"/>`
+        + `<rect x="${x + 2}" y="${y + h * 0.3}" width="4" height="${h * 0.4}" fill="#e3c27a" opacity=".8"/>`).join("")
+        + `<path d="M70 132 L70 124 Q74 118 80 124 L80 132" fill="#c9a65e"/>`,
+    },
+    crystal: {
+      label: "Amethyst crystals", scale: 0.48, vw: 120, soft: true, glow: "rgba(190,120,255,.42)",
+      draw: (g) => {
+        const shard = (x, h, w, lean, c1, c2) => `<path d="M${x - w} 196 L${x - w * 0.8 + lean} ${196 - h + 14} L${x + lean} ${196 - h} L${x + w * 0.8 + lean} ${196 - h + 14} L${x + w} 196Z" fill="${c1}"/><path d="M${x + lean} ${196 - h} L${x + w * 0.8 + lean} ${196 - h + 14} L${x + w} 196 L${x + 1} 196Z" fill="${c2}"/>`;
+        const shards = [[34, 70, 12, -10], [60, 104, 15, 2], [84, 80, 13, 9], [46, 52, 9, -4], [76, 48, 9, 5], [98, 42, 8, 12], [22, 40, 8, -12]];
+        return `<defs><filter id="${g}b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter></defs><g data-y="110"></g>`
+          + `<ellipse class="litOnly" cx="60" cy="140" rx="46" ry="40" fill="#c08cff" filter="url(#${g}b)"/>`
+          + `<path d="M6 200 C10 186 30 182 60 184 C90 182 110 186 114 200Z" fill="#5a5560"/>`
+          + shards.map(([x, h, w, l]) => shard(x, h, w, l, "#7d4bb0", "#a77ad6")).join("")
+          + `<g class="litOnly">` + shards.map(([x, h, w, l]) => shard(x, h, w, l, "rgba(214,170,255,.55)", "rgba(240,220,255,.6)")).join("") + `</g>`;
+      },
+    },
+    teacup: {
+      label: "Teacup", scale: 0.3, vw: 150, still: true,
+      draw: (g) => `<defs>${metal(g, CERAMIC)}</defs>`
+        + `<ellipse cx="72" cy="194" rx="66" ry="7" fill="url(#${g})"/><ellipse cx="72" cy="191" rx="40" ry="4" fill="#d9d2c5"/>`
+        + `<path d="M28 120 C30 170 48 190 72 190 C96 190 114 170 116 120Z" fill="url(#${g})"/>`
+        + `<path d="M114 132 C138 128 140 160 112 164" stroke="url(#${g})" stroke-width="7" fill="none"/>`
+        + `<ellipse cx="72" cy="120" rx="44" ry="7" fill="#efe9de"/><ellipse cx="72" cy="121" rx="40" ry="5" fill="#7a4a24"/>`
+        + `<path d="M34 140 C50 146 94 146 110 140" stroke="#7aa0c8" stroke-width="2" fill="none"/><path d="M40 156 C56 160 88 160 104 156" stroke="#c9a65e" stroke-width="1.2" fill="none"/>`
+        + `<path d="M62 108 C56 96 70 90 64 76 M80 108 C74 96 88 88 82 72" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+    },
+    lavender: {
+      label: "Dried lavender", scale: 0.82, vw: 80, still: true,
+      draw: (g) => {
+        let stems = "", buds = "";
+        [[40, 20, 0], [30, 30, -10], [50, 26, 9], [22, 44, -18], [58, 40, 16], [36, 38, -4], [46, 34, 5]].forEach(([x, top, lean], i) => {
+          stems += `<path d="M40 150 Q${40 + lean * 0.5} ${(150 + top) / 2} ${x + lean} ${top + 20}" stroke="#7b8a5a" stroke-width="1.3" fill="none"/>`;
+          for (let k = 0; k < 7; k++) { const t = k / 7, bx = x + lean - lean * 0.08 * k, by = top + 20 - k * 4.2; buds += `<ellipse cx="${bx + (k % 2 ? 1.6 : -1.6)}" cy="${by}" rx="2.4" ry="3.6" fill="${["#8d6fc4", "#a68ad6", "#7a5bb4"][(i + k) % 3]}"/>`; }
+        });
+        return `<defs><linearGradient id="${g}" x1="0" x2="1"><stop offset="0" stop-color="#9fb8b0" stop-opacity=".35"/><stop offset=".35" stop-color="#e6f2ee" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#7f9a92" stop-opacity=".4"/></linearGradient></defs>`
+          + stems + buds
+          + `<path d="M28 200 C16 196 14 176 22 164 C26 158 32 154 32 146 L32 132 L48 132 L48 146 C48 154 54 158 58 164 C66 176 64 196 52 200Z" fill="url(#${g})" stroke="rgba(255,255,255,.4)" stroke-width="1"/>`
+          + `<path d="M30 190 C26 182 28 172 34 166 L46 166 C52 172 54 182 50 190Z" fill="#9fb8b0" opacity=".25"/><rect x="30" y="128" width="20" height="6" rx="2" fill="#c9a96b"/><path d="M33 140 q7 6 14 0" stroke="#b08a45" stroke-width="1.4" fill="none"/>`;
+      },
+    },
+    cat: {
+      label: "Sleeping cat", scale: 0.42, vw: 170, still: true,
+      draw: () => `<path d="M14 200 C6 170 30 142 74 140 C112 138 150 152 156 182 C158 192 152 200 140 200Z" fill="#1d1b1f"/>`
+        + `<path d="M140 200 C162 200 168 176 150 170 C140 168 138 184 146 186" stroke="#1d1b1f" stroke-width="12" fill="none" stroke-linecap="round"/>`
+        + `<path d="M24 176 C18 150 40 134 60 140 C74 146 74 170 58 182 C46 190 28 190 24 176Z" fill="#26232a"/>`
+        + `<path d="M28 150 L24 128 L42 142Z M54 140 L64 122 L68 146Z" fill="#26232a"/><path d="M30 146 L28 134 L38 142Z" fill="#6b4c5c" opacity=".7"/>`
+        + `<path d="M34 164 q6 4 12 0 M52 162 q6 4 12 0" stroke="#8c8790" stroke-width="1.6" fill="none" stroke-linecap="round"/>`
+        + `<path d="M48 172 l-2 2 l4 0Z" fill="#c98a9a"/><path d="M40 176 L18 174 M40 178 L20 182 M58 176 L78 172 M58 178 L76 182" stroke="#8c8790" stroke-width=".7"/>`
+        + `<path d="M80 150 C100 146 130 152 146 168" stroke="#3a363e" stroke-width="2" fill="none" opacity=".6"/>`,
+    },
+    fairyJar: {
+      label: "Fairy-light jar", scale: 0.56, vw: 80, soft: true, glow: "rgba(255,210,120,.45)",
+      draw: (g) => {
+        let lights = "", wire = "M22 182";
+        const pts = [[26, 176], [52, 168], [30, 156], [56, 146], [28, 134], [50, 122], [36, 112], [54, 102], [30, 96]];
+        pts.forEach(([x, y]) => { wire += ` Q${x + 8} ${y + 6} ${x} ${y}`; lights += `<circle cx="${x}" cy="${y}" r="2.2" fill="#6b5a3a"/><circle class="litOnly" cx="${x}" cy="${y}" r="3.6" fill="#ffe7a8"/><circle class="litOnly" cx="${x}" cy="${y}" r="8" fill="#ffd27a" opacity=".35" filter="url(#${g}b)"/>`; });
+        return `<defs><filter id="${g}b" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2.5"/></filter><linearGradient id="${g}" x1="0" x2="1"><stop offset="0" stop-color="#cfe3e0" stop-opacity=".25"/><stop offset=".3" stop-color="#fff" stop-opacity=".4"/><stop offset=".45" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#b9d0cc" stop-opacity=".3"/></linearGradient></defs><g data-y="130"></g>`
+          + `<path d="${wire}" stroke="#4a3f2a" stroke-width=".9" fill="none"/>` + lights
+          + `<path d="M14 92 C10 96 10 104 12 110 L12 192 Q12 200 20 200 L60 200 Q68 200 68 192 L68 110 C70 104 70 96 66 92Z" fill="url(#${g})" stroke="rgba(255,255,255,.45)" stroke-width="1.2"/>`
+          + `<rect x="14" y="78" width="52" height="16" rx="3" fill="#9b8a6a"/>` + [82, 86, 90].map((y) => `<line x1="14" y1="${y}" x2="66" y2="${y}" stroke="#6e5f44" stroke-width=".8"/>`).join("")
+          + `<rect x="20" y="100" width="5" height="80" rx="2.5" fill="#fff" opacity=".22"/>`;
+      },
+    },
+    clock: {
+      label: "Mantel clock", scale: 0.52, vw: 120, still: true,
+      draw: (g) => `<defs>${metal(g, WOOD)}${metal(g + "b", BRASS)}</defs>`
+        + `<path d="M6 200 L6 190 L114 190 L114 200Z" fill="url(#${g})"/><path d="M14 190 L14 112 C14 62 106 62 106 112 L106 190Z" fill="url(#${g})"/>`
+        + `<circle cx="60" cy="122" r="36" fill="url(#${g}b)"/><circle cx="60" cy="122" r="31" fill="#f3ead6"/>`
+        + Array.from({ length: 12 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return `<line x1="${60 + Math.sin(a) * 26}" y1="${122 - Math.cos(a) * 26}" x2="${60 + Math.sin(a) * 29}" y2="${122 - Math.cos(a) * 29}" stroke="#2a2018" stroke-width="${i % 3 ? 1 : 2}"/>`; }).join("")
+        + `<line x1="60" y1="122" x2="60" y2="102" stroke="#2a2018" stroke-width="2.2" stroke-linecap="round"/><line x1="60" y1="122" x2="74" y2="130" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round"/><circle cx="60" cy="122" r="2" fill="#2a2018"/>`
+        + `<rect x="30" y="166" width="60" height="14" rx="2" fill="#000" opacity=".2"/><path d="M40 80 Q60 70 80 80" stroke="url(#${g}b)" stroke-width="2" fill="none"/>`
+        + [16, 104].map((x) => `<circle cx="${x}" cy="194" r="4" fill="url(#${g}b)"/>`).join(""),
+    },
+    bust: {
+      label: "Marble bust", scale: 0.8, vw: 90, still: true,
+      draw: (g) => `<defs>${metal(g, [[0, "#9c978f"], [0.35, "#e9e5dd"], [0.55, "#fbfaf6"], [1, "#8a857c"]])}</defs>`
+        + `<path d="M20 200 L22 186 L68 186 L70 200Z" fill="url(#${g})"/><rect x="30" y="176" width="30" height="10" fill="url(#${g})"/>`
+        + `<path d="M10 176 C10 146 26 132 45 130 C64 132 80 146 80 176Z" fill="url(#${g})"/>`
+        + `<path d="M38 132 L38 118 L52 118 L52 132Z" fill="url(#${g})"/>`
+        + `<path d="M30 92 C28 66 40 54 48 54 C60 54 66 66 64 88 C64 104 58 118 46 120 C36 120 31 108 30 92Z" fill="url(#${g})"/>`
+        + `<path d="M28 82 C24 58 36 44 50 46 C64 46 70 60 66 78 C62 64 56 60 48 60 C40 60 34 66 28 82Z" fill="#cfcac0"/>`
+        + `<path d="M28 70 q-4 6 0 12 M66 66 q4 6 0 12 M34 54 q4 -4 8 -2 M50 50 q6 -2 10 2" stroke="#b5afa4" stroke-width="2" fill="none" stroke-linecap="round"/>`
+        + `<path d="M56 86 L62 96 L56 98" stroke="#b5afa4" stroke-width="1.4" fill="none"/><path d="M40 82 q4 -2 8 0 M54 82 q3 -2 6 0" stroke="#a49e92" stroke-width="1.2" fill="none"/>`
+        + `<path d="M22 150 C34 140 46 152 58 142 C66 136 74 146 78 160" stroke="#cfcac0" stroke-width="3" fill="none"/>`,
+    },
+  });
   LOOKS.forest.set = { theme: "moonwood", accent: "#8ff7e4", shelfMat: "moss", backdrop: "enchanted", lights: { style: "fireflies", colour: "warm", on: true }, headFont: "cormorant", ornament: { kind: "mushrooms", pos: "end" } };
 
   // ------------------------------------------------------------------ bookmarks for the reader, one to suit each look

@@ -195,6 +195,16 @@
   }
 
   // ------------------------------------------------------------------ the turntable object
+  // thin line icons for the record player's controls
+  const tti = (d, fill) => `<svg viewBox="0 0 24 24" width="18" height="18" ${fill ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"'} aria-hidden="true">${d}</svg>`;
+  const TT_ICON = {
+    prev: tti('<path d="M7 6v12"/><path d="M18 6.5 10 12l8 5.5z" fill="currentColor"/>'),
+    next: tti('<path d="M17 6v12"/><path d="M6 6.5 14 12l-8 5.5z" fill="currentColor"/>'),
+    play: tti('<path d="M8.5 5.8v12.4L18.5 12z"/>', true),
+    pause: tti('<rect x="7" y="5.5" width="3.4" height="13" rx="1"/><rect x="13.6" y="5.5" width="3.4" height="13" rx="1"/>', true),
+    pin: tti('<path d="M9 4h6l-1 6 3 3H7l3-3z"/><path d="M12 13v7"/>'),
+    close: tti('<path d="M7 7l10 10M17 7 7 17"/>'),
+  };
   let ringN = 0;
   const tableMarkup = (cls) => { const id = "ttRing" + ringN++; return `<div class="${cls}" aria-label="Record player">
     <div class="tt-sleeve"><img alt="" draggable="false"><span class="tt-sleeveBlank"></span></div>
@@ -211,7 +221,7 @@
     </div>
     <div class="tt-arm"><span class="tt-base"></span><span class="tt-rod"></span><span class="tt-head"></span></div>
     ${cls.includes("tt-inline") ? "" : `<div class="tt-controls" hidden>
-      <button data-a="prev" aria-label="Previous">⏮</button><button data-a="toggle" aria-label="Play or pause" class="tt-play">▶</button><button data-a="next" aria-label="Next">⏭</button><button data-a="pin" class="tt-pin" aria-label="Pin it to the page" aria-pressed="false">📌</button><button data-a="hide" aria-label="Put the record player away">✕</button>
+      <button data-a="prev" aria-label="Previous">${TT_ICON.prev}</button><button data-a="toggle" aria-label="Play or pause" class="tt-play">${TT_ICON.play}</button><button data-a="next" aria-label="Next">${TT_ICON.next}</button><i class="tt-sep"></i><button data-a="pin" class="tt-pin tt-small" aria-label="Pin it to the page" aria-pressed="false">${TT_ICON.pin}</button><button data-a="hide" class="tt-small" aria-label="Put the record player away">${TT_ICON.close}</button>
     </div>`}
   </div>`; };
   const table = h(tableMarkup("turntable"));
@@ -230,7 +240,7 @@
     if (now.cover) { if (img.getAttribute("src") !== now.cover) img.src = now.cover; img.hidden = false; } else img.hidden = true;
     el.querySelector(".tt-title").textContent = now.title || "Shelf";
     el.querySelector(".tt-artist").textContent = now.artist || "Tap to play";
-    const pb = el.querySelector(".tt-play"); if (pb) pb.textContent = now.playing ? "⏸" : "▶";
+    const pb = el.querySelector(".tt-play"); if (pb) pb.innerHTML = now.playing ? TT_ICON.pause : TT_ICON.play;
   }
 
   const MIN_S = 110, MAX_S = 460;
@@ -275,7 +285,13 @@
   const pts = new Map();
   let drag = null, pinch = null, hideCtl = 0;
   const controls = table.querySelector(".tt-controls");
-  const flashControls = () => { controls.hidden = false; clearTimeout(hideCtl); hideCtl = setTimeout(() => (controls.hidden = true), 4000); };
+  const hideControls = () => { clearTimeout(hideCtl); controls.classList.remove("show"); hideCtl = setTimeout(() => (controls.hidden = true), 260); };
+  const flashControls = () => {
+    clearTimeout(hideCtl); controls.hidden = false; requestAnimationFrame(() => controls.classList.add("show"));
+    hideCtl = setTimeout(hideControls, 4000);
+  };
+  // a touch anywhere else puts the controls away
+  document.addEventListener("pointerdown", (e) => { if (!controls.hidden && !table.contains(e.target)) hideControls(); }, true);
   const startPinch = () => {
     const [a, b] = [...pts.values()];
     const p = place();
