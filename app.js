@@ -400,6 +400,11 @@
       if (b.rating) main.querySelector(".capMeta").append(starsEl(b.rating, null, 12));
       main.onclick = () => openBook(b.id);
       caption.append(main);
+      if (b.hasEpub && window.ShelfReader) {
+        const rd = h(`<button type="button" class="readPill" aria-label="Read ${esc(b.title)}">${b.readPct ? Math.round(b.readPct * 100) + "% · " : ""}Read</button>`);
+        rd.onclick = () => window.ShelfReader.open(b.id);
+        caption.append(rd);
+      }
       if (books.length > 1) {
         const nav = h(`<div class="nav"><span class="counter">${front + 1} / ${books.length}</span>
           <button class="navBtn" aria-label="Previous book" ${front === 0 ? "disabled" : ""}>‹</button>
@@ -577,6 +582,11 @@
       quick.querySelectorAll(".seg button").forEach((btn) => (btn.onclick = () => stage({ finish: btn.dataset.v })));
       body.append(quick);
 
+      // read
+      const readG = h(`<div class="group"><h3 class="label">Read</h3><div></div></div>`);
+      if (window.ShelfReader) window.ShelfReader.readBox(readG.lastElementChild, b, stage);
+      body.append(readG);
+
       // summary
       const sum = h(`<div class="group"><h3 class="label">Summary</h3></div>`);
       if (b.summary) {
@@ -728,6 +738,7 @@
       <div class="row" style="flex-wrap:nowrap"><input class="input pill" id="q" type="search" placeholder="e.g. The Bell Jar" autocomplete="off"><span class="spinner" hidden></span></div>
       <label class="field"><span class="label">Put it on</span><select class="input" id="addStatus">${shelves().map(([k, l]) => `<option value="${k}" ${k === defStatus ? "selected" : ""}>${l}</option>`).join("")}</select></label>
       <div class="results"></div>
+      <label class="btn" style="cursor:pointer;align-self:flex-start">📖 Add from an EPUB file<input type="file" id="epubIn" accept=".epub,application/epub+zip" hidden></label>
       <details><summary class="hint" style="cursor:pointer">Can't find it? Add it by hand</summary>
         <div class="field" style="margin-top:10px"><input class="input" id="mTitle" placeholder="Title"><input class="input" id="mAuthor" placeholder="Author"><button class="btn primary" id="mAdd" style="align-self:flex-end">Add to shelf</button></div>
       </details></div>`);
@@ -756,7 +767,13 @@
       const title = body.querySelector("#mTitle").value.trim(); if (!title) return;
       addBook({ title, author: body.querySelector("#mAuthor").value.trim() });
     };
-    async function addBook(r, row) {
+    body.querySelector("#epubIn").onchange = async (e) => {
+      const f = e.target.files && e.target.files[0]; if (!f || !window.ShelfReader) return;
+      toast("Reading the EPUB…");
+      try { const meta = await window.ShelfReader.importEpub(f); await addBook(meta, null, f); }
+      catch (err) { console.warn(err); toast("That EPUB couldn't be read. It may be DRM-protected."); }
+    };
+    async function addBook(r, row, epubFile) {
       if (row) { row.disabled = true; row.querySelector(".rAdd").replaceChildren(h(`<span class="spinner"></span>`)); }
       const status = body.querySelector("#addStatus").value;
       const [cover, summary] = await Promise.all([
@@ -766,6 +783,7 @@
       const b = newBook({ ...r, status, summary, coverAspect: cover.aspect, spineColor: cover.color || undefined });
       if (cover.color) { b.edgeV = 2; b.edgeInset = cover.inset; }
       state.books.push(b); save();
+      if (epubFile) { try { await window.ShelfReader.storeFile(b.id, epubFile); } catch (e) { toast("The book was added, but the EPUB couldn't be stored."); } }
       state.filter = ""; document.getElementById("filter").value = "";
       if (state.shelf !== "all" && state.shelf !== status) state.shelf = status;
       render();
@@ -927,5 +945,5 @@
   })();
 
   // Shared helpers for music.js
-  window.Shelf = { h, esc, toast, showSheet, closeSheet, closeBtn, spineInk };
+  window.Shelf = { h, esc, toast, showSheet, closeSheet, closeBtn, spineInk, byId, save, render };
 })();

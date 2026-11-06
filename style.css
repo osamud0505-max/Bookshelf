@@ -410,3 +410,39 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 .shelfRow { display: flex; align-items: center; gap: 10px; }
 .shelfRow .input { flex: 1; min-width: 0; }
 .shelfRow .hint { flex: none; }
+
+/* ------------------------------------------------------------------ reading */
+.readBox { display: flex; flex-direction: column; gap: 10px; }
+.readBox .readGo { align-self: flex-start; }
+.readPill { flex: none; height: 32px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--primary); color: var(--primary-fg); font-weight: 600; font-size: .85rem; cursor: pointer; }
+.reader { position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column; background: var(--rd-bg); color: var(--rd-fg); }
+.reader[hidden] { display: none; }
+.rdTop { display: flex; align-items: center; gap: 6px; padding: calc(6px + env(safe-area-inset-top)) 8px 6px; transition: opacity .25s; }
+.rdTitle { flex: 1; min-width: 0; text-align: center; font: 600 .9rem/1.2 "Inter Tight", sans-serif; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rdBtn { flex: none; width: 40px; height: 40px; border: 0; border-radius: 999px; background: transparent; color: inherit; font: 600 1rem "Inter Tight", sans-serif; cursor: pointer; }
+.rdBtn:hover { background: color-mix(in srgb, var(--rd-fg) 8%, transparent); }
+.rdView { flex: 1; min-height: 0; margin: 0 max(16px, calc((100vw - 720px) / 2)); }
+.rdZone { position: absolute; top: 56px; bottom: 64px; width: 14%; border: 0; background: transparent; cursor: pointer; z-index: 1; }
+.rdPrev { left: 0; } .rdNext { right: 0; }
+.rdBottom { padding: 4px 20px calc(10px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 4px; transition: opacity .25s; }
+.rdInfo { display: flex; justify-content: space-between; gap: 12px; font: 500 .75rem "Inter Tight", sans-serif; opacity: .6; }
+.rdChapter { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rdScrub { width: 100%; accent-color: var(--rd-fg); opacity: .5; }
+.reader.bare .rdTop, .reader.bare .rdBottom { opacity: 0; pointer-events: none; }
+.rdLoading { position: absolute; inset: 0; display: grid; place-items: center; padding: 32px; text-align: center; font: 500 .95rem "Inter Tight", sans-serif; background: var(--rd-bg); }
+.rdLoading[hidden] { display: none; }
+.rdPanel { position: absolute; left: 50%; bottom: calc(70px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 3; width: min(420px, calc(100vw - 24px)); max-height: 70vh; overflow: auto; padding: 16px; border-radius: 18px; background: color-mix(in srgb, var(--rd-bg) 88%, var(--rd-fg)); box-shadow: 0 18px 50px rgba(0,0,0,.35); font-family: "Inter Tight", sans-serif; }
+.rdPanel[hidden] { display: none; }
+.rdTocPanel { top: calc(56px + env(safe-area-inset-top)); bottom: auto; }
+.rdSet { display: flex; flex-direction: column; gap: 14px; }
+.rdRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .88rem; }
+.rdRow > span { min-width: 64px; opacity: .7; }
+.rdChip { height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--rd-fg) 20%, transparent); background: transparent; color: inherit; font: 600 .85rem "Inter Tight", sans-serif; cursor: pointer; }
+.rdChip[aria-pressed="true"] { background: var(--rd-fg); color: var(--rd-bg); }
+.rdThemes { gap: 6px; }
+.rdTheme { flex: 1; min-width: 60px; height: 40px; border-radius: 10px; border: 1px solid rgba(127,127,127,.35); font: 600 .78rem "Inter Tight", sans-serif; cursor: pointer; }
+.rdTheme[aria-pressed="true"] { outline: 2px solid var(--rd-fg); outline-offset: 2px; }
+.rdToc h3 { margin: 0 0 8px; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; opacity: .6; }
+.rdTocItem { display: block; width: 100%; text-align: left; padding: 10px 12px; border: 0; border-radius: 10px; background: transparent; color: inherit; font: 500 .95rem "Inter Tight", sans-serif; cursor: pointer; }
+.rdTocItem:hover { background: color-mix(in srgb, var(--rd-fg) 8%, transparent); }
+.rdHint { opacity: .6; font-size: .88rem; }
