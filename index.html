@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#131318">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Shelf</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter+Tight:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Playfair+Display:wght@600&family=Bebas+Neue&family=Caveat:wght@600&family=Special+Elite&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="page">
+  <header class="header">
+    <div>
+      <h1 class="title">Shelf</h1>
+      <p class="subtitle" id="stats"></p>
+    </div>
+    <div class="headerActions">
+      <button class="iconBtn" id="customizeBtn" aria-label="Customize">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.56-2.5 5.56-5.55C22 6.04 17.5 2 12 2z"/></svg>
+      </button>
+      <button class="btn primary addTop" id="addTopBtn">+ Add a book</button>
+    </div>
+  </header>
+
+  <div class="searchBox">
+    <svg class="searchIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="filter" class="input pill" type="search" placeholder="Find a book on your shelves" autocomplete="off">
+  </div>
+
+  <nav class="tabs" id="tabs" aria-label="Shelves"></nav>
+  <main class="main" id="main"></main>
+</div>
+
+<button class="fab" id="fab" aria-label="Add a book">
+  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<!-- sheets -->
+<div class="scrim" id="scrim" hidden></div>
+<section class="sheet" id="bookSheet" hidden aria-modal="true" role="dialog" aria-label="Book"></section>
+<section class="sheet" id="addSheet" hidden aria-modal="true" role="dialog" aria-label="Add a book"></section>
+<section class="sheet" id="customizeSheet" hidden aria-modal="true" role="dialog" aria-label="Customize"></section>
+<div class="toast" id="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
