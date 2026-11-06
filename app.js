@@ -450,9 +450,6 @@
       t.onclick = () => { state.shelf = k; render(); };
       return t;
     }));
-    const addTab = h(`<button type="button" class="tab addShelfTab" aria-label="Add or edit shelves">+ New shelf</button>`);
-    addTab.onclick = () => openShelves();
-    tabs.append(addTab);
 
     main.querySelectorAll(".shelf").forEach((s) => s._dispose && s._dispose());
     main.replaceChildren();
@@ -903,6 +900,8 @@
   // ---------------------------------------------------------------- wire up
   document.getElementById("fab").onclick = () => openAdd("");
   document.getElementById("addTopBtn").onclick = () => openAdd("");
+  document.getElementById("fabShelf").onclick = () => openShelves();
+  document.getElementById("addShelfTopBtn").onclick = () => openShelves();
   document.getElementById("customizeBtn").onclick = openCustomize;
   const filter = document.getElementById("filter");
   let ft = 0;
