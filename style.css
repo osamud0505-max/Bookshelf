@@ -567,3 +567,20 @@ label.themeBtn { position: relative; }
 .title, .sectionTitle, .capTitle { text-shadow: 0 1px 12px color-mix(in srgb, var(--background) 60%, transparent); }
 html[data-bd="1"] .tab:not([aria-pressed="true"]), html[data-bd="1"] .navBtn { background: color-mix(in srgb, var(--background) 62%, transparent); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45%, transparent); }
+
+/* candles, lanterns, fireflies */
+.lights.candles .flame { opacity: 0; transform-box: fill-box; transform-origin: 50% 100%; transition: opacity .3s; }
+.lights.candles.on .flame { opacity: 1; animation: flicker 1.6s ease-in-out infinite alternate; animation-delay: var(--d); }
+.lights.candles .bulb { animation: none !important; }
+.lights.candles.on .halo { animation: candleGlow 2.2s ease-in-out infinite alternate; animation-delay: var(--d); }
+@keyframes flicker { 0% { transform: scale(1, 1) skewX(0); } 25% { transform: scale(.94, 1.08) skewX(3deg); } 50% { transform: scale(1.03, .94) skewX(-2deg); } 75% { transform: scale(.97, 1.05) skewX(2deg); } 100% { transform: scale(1, .98) skewX(-1deg); } }
+@keyframes candleGlow { 0% { opacity: .55; } 40% { opacity: .75; } 70% { opacity: .5; } 100% { opacity: .7; } }
+.shelf.hasLights[data-lights="candles"] .caption { padding-top: 80px; }
+.shelf.hasLights[data-lights="lanterns"] .caption { padding-top: 66px; }
+.shelf.hasLights[data-lights="fireflies"] .caption { padding-top: 12px; }
+.lights.fireflies { top: auto; bottom: -40px; height: 280px; overflow: visible; }
+.lights.fireflies i { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--c); opacity: 0; box-shadow: 0 0 6px 2px var(--c), 0 0 14px 4px color-mix(in srgb, var(--c) 45%, transparent); }
+.lights.fireflies.on i { animation: drift var(--t) ease-in-out infinite alternate, blink calc(var(--t) * .7) ease-in-out infinite; animation-delay: var(--d); }
+@keyframes drift { from { transform: translate(0, 0); } to { transform: translate(var(--dx), var(--dy)); } }
+@keyframes blink { 0%, 100% { opacity: .15; } 30%, 60% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .lights.candles.on .flame, .lights.candles.on .halo, .lights.fireflies.on i { animation: none; opacity: .8; } }
