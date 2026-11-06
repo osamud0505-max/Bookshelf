@@ -191,13 +191,13 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   background-position: calc(10% + var(--turn) * 140%) 0, 0 0; }
 .glossy .front::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); pointer-events: none; }
 .spine {
-  display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 10% 0 8%;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 12% 0 9%;
   width: var(--d); left: calc(var(--w) / 2 - var(--d) / 2); transform: rotateY(-90deg) translateZ(calc(var(--w) / 2));
   color: var(--ink);
   background: var(--spine);
 }
-.spineTitle { position: relative; z-index: 1; writing-mode: vertical-rl; line-height: 1.05; max-width: 92%; max-height: 72%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: auto 0; }
-.spineAuthor { position: relative; z-index: 1; writing-mode: vertical-rl; font-size: clamp(7px, calc(var(--d) * .26), 9px); letter-spacing: .14em; text-transform: uppercase; opacity: .75; max-height: 22%; overflow: hidden; white-space: nowrap; }
+.spineTitle { position: relative; z-index: 1; writing-mode: vertical-rl; line-height: 1.1; max-width: 72%; max-height: 74%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: auto 0; color: color-mix(in srgb, var(--ink) 92%, var(--spine)); text-rendering: geometricPrecision; -webkit-font-smoothing: antialiased; }
+.spineAuthor { position: relative; z-index: 1; writing-mode: vertical-rl; letter-spacing: .16em; text-transform: uppercase; font-family: "Inter Tight", sans-serif; font-weight: 500; color: color-mix(in srgb, var(--ink) 78%, var(--spine)); white-space: nowrap; -webkit-font-smoothing: antialiased; }
 /* Physical shape: rounded back, hinge creases next to each board, darker head and tail. */
 .sForm { background:
   linear-gradient(180deg, rgba(0,0,0,.28) 0, transparent 2.5%, transparent 97%, rgba(0,0,0,.34) 100%),
@@ -205,6 +205,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   linear-gradient(270deg, transparent 0, transparent 5px, rgba(0,0,0,.32) 5px, rgba(0,0,0,.32) 6px, rgba(255,255,255,.12) 6px, rgba(255,255,255,.12) 7px, transparent 7px),
   linear-gradient(90deg, rgba(0,0,0,.42) 0, rgba(0,0,0,.12) 9%, rgba(255,255,255,.07) 26%, rgba(255,255,255,.1) 36%, transparent 55%, rgba(0,0,0,.1) 78%, rgba(0,0,0,.45) 100%); }
 .glossy .sForm { box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+.spine .grain, .spine .sShade { z-index: 2; }
 .sShade { background: #000; opacity: calc((1 - sin(var(--turn) * 90deg)) * .7); }
 .pages { width: var(--d); left: calc(var(--w) / 2 - var(--d) / 2); top: 2px; height: calc(var(--h) - 4px); transform: rotateY(90deg) translateZ(calc(var(--w) / 2 - 2px));
   background: linear-gradient(90deg, rgba(0,0,0,.28), transparent 25%, transparent 75%, rgba(0,0,0,.3)), repeating-linear-gradient(90deg, #efe4cc 0 1px, #dccdae 1px 2px); }

@@ -17,11 +17,11 @@
     ["White", "#eeece8"], ["Black", "#0b0b0d"], ["Sage", "#7d9580"], ["Rose", "#c99aa0"],
   ];
   const FONTS = {
-    classic: { label: "Classic serif", family: "'Playfair Display', Georgia, serif", weight: 600, upper: false },
-    modern: { label: "Modern sans", family: "'Bricolage Grotesque', 'Inter Tight', sans-serif", weight: 600, upper: false },
-    bold: { label: "Tall capitals", family: "'Bebas Neue', 'Inter Tight', sans-serif", weight: 400, upper: true },
-    script: { label: "Handwritten", family: "'Caveat', cursive", weight: 600, upper: false },
-    typewriter: { label: "Typewriter", family: "'Special Elite', 'Courier New', monospace", weight: 400, upper: false },
+    classic: { cw: 0.5, label: "Classic serif", family: "'Playfair Display', Georgia, serif", weight: 600, upper: false },
+    modern: { cw: 0.52, label: "Modern sans", family: "'Bricolage Grotesque', 'Inter Tight', sans-serif", weight: 600, upper: false },
+    bold: { cw: 0.42, label: "Tall capitals", family: "'Bebas Neue', 'Inter Tight', sans-serif", weight: 400, upper: true },
+    script: { cw: 0.4, label: "Handwritten", family: "'Caveat', cursive", weight: 600, upper: false },
+    typewriter: { cw: 0.6, label: "Typewriter", family: "'Special Elite', 'Courier New', monospace", weight: 400, upper: false },
   };
   const SIZES = { small: ["Small", 0.86], regular: ["Regular", 1], large: ["Large", 1.1] };
   const STATUS = [["reading", "Reading"], ["to_read", "To read"], ["read", "Read"], ["did_not_finish", "Did not finish"]];
@@ -38,7 +38,8 @@
     return "#" + [1, 2, 3].map((i) => Math.round(parseInt(m[i], 16) * (1 - a) + parseInt(n[i], 16) * a).toString(16).padStart(2, "0")).join("");
   };
   const inkOn = (hex) => (lum(hex) > 0.4 ? "#1b1508" : "#ffffff");
-  const spineInk = (hex) => (lum(hex) > 0.36 ? "#2a1d14" : "#f5ead8");
+  // Pick whichever ink reads better on this spine (WCAG contrast), not a fixed brightness cut-off.
+  const spineInk = (hex) => { const L = lum(hex), dark = (L + 0.05) / (lum("#2a1d14") + 0.05), light = (lum("#f5ead8") + 0.05) / (L + 0.05); return dark >= light ? "#2a1d14" : "#f5ead8"; };
 
   function applyAppearance() {
     const s = state.settings;
@@ -217,7 +218,11 @@
     const custom = (b.spineText || "").trim();
     const words = custom || b.title;
     const surname = (b.author.split(",")[0].trim().split(" ").pop()) || "";
-    const size = b.spineSize || Math.max(9, Math.min(16, d * 0.44));
+    // Fit the title like a printed spine: limited by the spine's width and by the title's length.
+    const longest = Math.max(...words.split("\n").map((l) => l.trim().length), 1);
+    const lines = custom ? words.split("\n").length : 1;
+    const fit = Math.min((d * 0.5) / lines, (hh * (surname && !custom ? 0.6 : 0.78)) / (longest * font.cw));
+    const size = b.spineSize || Math.round(Math.max(7.5, Math.min(14, fit)) * 2) / 2;
     const el = h(`<div class="book ${b.finish === "glossy" ? "glossy" : "matte"}">
       <div class="body">
         <div class="face front">
@@ -228,7 +233,7 @@
         <div class="face spine">
           <span class="sForm"></span>
           <span class="spineTitle">${esc(words)}</span>
-          ${surname && d >= 22 && !custom ? `<span class="spineAuthor">${esc(surname)}</span>` : ""}
+          ${surname && d >= 18 && !custom ? `<span class="spineAuthor" style="font-size:${Math.max(6, Math.min(9, size * 0.62, d * 0.3, (hh * 0.17) / (surname.length * 0.95)))}px">${esc(surname)}</span>` : ""}
           <span class="grain"></span><span class="sShade"></span>
         </div>
         <div class="face pages"></div><div class="face back"></div>
@@ -237,7 +242,7 @@
     const st = el.querySelector(".spineTitle");
     Object.assign(st.style, {
       fontFamily: font.family, fontWeight: font.weight, fontSize: size + "px",
-      textTransform: font.upper ? "uppercase" : "", letterSpacing: font.upper ? "0.06em" : "",
+      textTransform: font.upper ? "uppercase" : "", letterSpacing: font.upper ? "0.08em" : "0.01em",
       whiteSpace: custom ? "pre" : "",
     });
     const img = el.querySelector(".art");
@@ -519,7 +524,7 @@
         <div class="lookRow"><div class="lookPreview"></div><div class="lookControls">
           <label class="field"><span class="hint">Spine wording (a new line makes a second column)</span><textarea class="input" rows="2" id="f-spinetext" placeholder="${esc(b.title)}"></textarea></label>
           <label class="field"><span class="hint">Spine font</span><select class="input" id="f-font"><option value="">Library default (${FONTS[state.settings.spineFont].label})</option>${Object.entries(FONTS).map(([k, f]) => `<option value="${k}" ${b.spineFont === k ? "selected" : ""}>${f.label}</option>`).join("")}</select></label>
-          <div class="field"><span class="hint">Spine text size: <b id="sizeVal">${b.spineSize ? b.spineSize + "px" : "Auto"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-size" min="7" max="26" step="1" value="${b.spineSize || Math.round(Math.max(9, Math.min(16, dims(b, 200).d * 0.44)))}"><button class="btn small" id="f-auto">Auto</button></div></div>
+          <div class="field"><span class="hint">Spine text size: <b id="sizeVal">${b.spineSize ? b.spineSize + "px" : "Auto"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-size" min="7" max="26" step="1" value="${b.spineSize || 11}"><button class="btn small" id="f-auto">Auto</button></div></div>
           <div class="field"><span class="hint">Thickness: <b id="thickVal">${b.thickness ? b.thickness + "%" : "Auto (from page count)"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-thick" min="40" max="180" step="5" value="${b.thickness || 100}"><button class="btn small" id="f-thickAuto">Auto</button></div></div>
           <div class="field"><span class="hint">Book size</span><div class="seg">${Object.entries(SIZES).map(([k, [l]]) => `<button data-v="${k}" aria-pressed="${(b.size || "regular") === k}">${l}</button>`).join("")}</div></div>
         </div></div></div>`);
