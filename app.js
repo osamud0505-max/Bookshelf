@@ -151,7 +151,18 @@
     const W = 50, H = 75;
     const c = document.createElement("canvas"); c.width = W; c.height = H;
     const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0, W, H);
-    const px = g.getImageData(1, 2, 4, H - 4).data; // a thin strip just inside the left edge (skips scan borders)
+    // Skip plain white/black scan borders: walk in from the left until a column has real cover in it.
+    let x0 = 1;
+    for (let x = 0; x < 8; x++) {
+      const col = g.getImageData(x, 3, 1, H - 6).data;
+      let sum = 0, sq = 0, n = 0;
+      for (let i = 0; i < col.length; i += 4) { const l = (col[i] + col[i + 1] + col[i + 2]) / 765; sum += l; sq += l * l; n++; }
+      const mean = sum / n, sd = Math.sqrt(Math.max(0, sq / n - mean * mean));
+      const border = sd < 0.04 && (mean > 0.9 || mean < 0.07);
+      if (!border) { x0 = Math.max(1, x + 1); break; }
+      if (x === 7) x0 = 1; // the whole edge is plain: it's a plain cover, not a border
+    }
+    const px = g.getImageData(x0, 2, 4, H - 4).data;
     const buckets = new Map();
     for (let i = 0; i < px.length; i += 4) {
       const k = (px[i] >> 4) * 256 + (px[i + 1] >> 4) * 16 + (px[i + 2] >> 4);
@@ -160,7 +171,7 @@
     }
     let best = null;
     for (const e of buckets.values()) if (!best || e.n > best.n) best = e;
-    return "#" + [best.r, best.g, best.b].map((v) => Math.round(v / best.n).toString(16).padStart(2, "0")).join("");
+    return { color: "#" + [best.r, best.g, best.b].map((v) => Math.round(v / best.n).toString(16).padStart(2, "0")).join(""), inset: x0 / W };
   }
   function loadImg(url, cors) {
     return new Promise((resolve) => {
@@ -173,11 +184,11 @@
   }
   async function measureCover(url) {
     let img = await loadImg(url, true);
-    let color = null;
-    if (img) { try { color = sampleEdge(img); } catch (e) { /* host refused colour reading */ } }
+    let color = null, inset = null;
+    if (img) { try { ({ color, inset } = sampleEdge(img)); } catch (e) { /* host refused colour reading */ } }
     else img = await loadImg(url, false); // host has no CORS: we still get the shape, not the colour
     if (!img) return { aspect: null, color: null };
-    return { aspect: Math.round((img.naturalWidth / img.naturalHeight) * 1000) / 1000, color };
+    return { aspect: Math.round((img.naturalWidth / img.naturalHeight) * 1000) / 1000, color, inset };
   }
 
   // ---------------------------------------------------------------- helpers
@@ -215,7 +226,7 @@
           <span class="grain"></span><span class="hinge"></span><span class="sheen"></span><span class="fShade"></span>
         </div>
         <div class="face spine">
-          ${b.coverUrl ? `<span class="sArt" style="background-image:url('${esc(b.coverUrl)}')"></span>` : ""}<span class="sForm"></span>
+          ${b.coverUrl ? `<span class="sArt" style="background-image:url('${esc(b.coverUrl)}');--edge:${(b.edgeInset ?? 0.02) + 0.01}"></span>` : ""}<span class="sForm"></span>
           <span class="spineTitle">${esc(words)}</span>
           ${surname && d >= 22 && !custom ? `<span class="spineAuthor">${esc(surname)}</span>` : ""}
           <span class="grain"></span><span class="sShade"></span>
@@ -541,7 +552,7 @@
         const v = e.target.value.trim() || null;
         if (v && !/^https?:\/\//.test(v)) return toast("Paste a link that starts with https://");
         const patch = { coverUrl: v };
-        if (v) { const m = await measureCover(v); if (m.aspect) patch.coverAspect = m.aspect; if (m.color) patch.spineColor = m.color; }
+        if (v) { const m = await measureCover(v); if (m.aspect) patch.coverAspect = m.aspect; if (m.color) { patch.spineColor = m.color; patch.edgeInset = m.inset; patch.edgeV = 2; } }
         updateBook(id, patch); draw();
       };
       body.append(det);
@@ -605,7 +616,7 @@
         r.olKey ? findSummary(r) : Promise.resolve(""),
       ]);
       const b = newBook({ ...r, status, summary, coverAspect: cover.aspect, spineColor: cover.color || undefined });
-      if (cover.color) b.edgeColour = true;
+      if (cover.color) { b.edgeV = 2; b.edgeInset = cover.inset; }
       state.books.push(b); save();
       state.filter = ""; document.getElementById("filter").value = "";
       if (state.shelf !== "all" && state.shelf !== status) state.shelf = status;
@@ -708,11 +719,13 @@
   // Fill in summaries for seeded/older books that don't have one yet,
   // and give older books a spine colour taken from their cover's edge.
   (async () => {
-    for (const b of state.books.filter((x) => x.coverUrl && !x.spineManual && !x.edgeColour)) {
+    for (const b of state.books.filter((x) => x.coverUrl && (x.edgeV || 0) < 2)) {
       const m = await measureCover(b.coverUrl);
       if (!m.aspect) continue; // cover didn't load (offline?): try again next visit
-      b.edgeColour = true;
-      if (m.color) { b.spineColor = m.color; render(); }
+      b.edgeV = 2;
+      if (m.inset != null) b.edgeInset = m.inset;
+      if (m.color && !b.spineManual) b.spineColor = m.color;
+      render();
       save();
     }
     for (const b of state.books.filter((x) => !x.summary && !x.summaryTried)) {
