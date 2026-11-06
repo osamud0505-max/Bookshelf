@@ -714,14 +714,20 @@
   function bookFx(b) {
     const aspect = Math.max(0.5, Math.min(0.9, b.coverAspect || 2 / 3));
     const H = Math.min(innerHeight * 0.6, 520, (innerWidth * 0.4) / aspect), W = H * aspect;
-    const cx = innerWidth / 2 - W / 2, cy = innerHeight / 2 - H / 2, T = Math.max(8, W * 0.09);
+    // laid out at the biggest size it reaches and scaled down from there, so it never gets blurry as it grows
+    const SM = 1.65, W2 = W * SM, H2 = H * SM;
+    const cx = innerWidth / 2 - W2 / 2, cy = innerHeight / 2 - H2 / 2, T = Math.max(8, W * 0.09) * SM;
     const cover = b.coverUrl ? `<img alt="" src="${esc(b.coverUrl)}" referrerpolicy="no-referrer">` : `<span class="ofPlain">${esc(b.title)}</span>`;
-    const leaves = Array.from({ length: LEAVES }, (_, k) => `<div class="ofLeaf" style="--z:${(0.6 + k * 0.35).toFixed(2)}px"></div>`).join("");
-    const fx = h(`<div class="openFx"><div class="ofDim"></div><div class="ofBook" style="left:${cx}px;top:${cy}px;width:${W}px;height:${H}px;--W:${W}px;--T:${T}px;--spine:${b.spineColor || "#334"}">
-      <div class="ofEdge"></div><div class="ofPages">${pageHtml(b)}<i class="ofGutter"></i></div>${leaves}<div class="ofCover"><div class="ofFront">${cover}<i class="ofShade"></i></div><div class="ofInside"><i class="ofShade"></i></div></div></div><div class="ofBlack"></div></div>`);
+    const leaves = Array.from({ length: LEAVES }, (_, k) => `<div class="ofLeaf" style="--z:${((0.6 + k * 0.35) * SM).toFixed(2)}px"><i class="lf"></i><i class="lb"></i></div>`).join("");
+    const fx = h(`<div class="openFx"><div class="ofDim"></div><div class="ofBook" style="left:${cx}px;top:${cy}px;width:${W2}px;height:${H2}px;--sm:${SM};--T:${T}px;--spine:${b.spineColor || "#334"}">
+      <div class="ofEdge"></div><div class="ofPages"><i class="ofGutter"></i></div>${leaves}<div class="ofCover"><div class="ofFront">${cover}<i class="ofShade"></i></div><div class="ofInside"><i class="ofShade"></i></div></div></div><div class="ofBlack"></div></div>`);
     const book = fx.querySelector(".ofBook"), coverEl = fx.querySelector(".ofCover"), leafEls = [...fx.querySelectorAll(".ofLeaf")];
     const dim = fx.querySelector(".ofDim"), black = fx.querySelector(".ofBlack"), edge = fx.querySelector(".ofEdge"), gutter = fx.querySelector(".ofGutter");
     const fShade = fx.querySelector(".ofFront .ofShade"), iShade = fx.querySelector(".ofInside .ofShade");
+    // handwriting on every page you see, front and back
+    const ar = (H2 * 0.976) / W2, sd = 11 + (b.id || 0) * 7;
+    fx.querySelector(".ofPages").style.backgroundImage = scriptPage(sd, ar);
+    leafEls.forEach((l, k) => { l.querySelector(".lf").style.backgroundImage = scriptPage(sd + 100 + k * 2, ar); l.querySelector(".lb").style.backgroundImage = scriptPage(sd + 101 + k * 2, ar); });
     let start = { dx: 0, dy: 0, s: 0.25 };
     /** Where the book starts (or ends up): over the copy on the shelf or the book page. */
     const setHome = (src) => {
@@ -733,14 +739,14 @@
       const lRaw = clamp01(p / 1.0), L = easeIO(lRaw), arc = Math.sin(Math.PI * lRaw);
       const oRaw = clamp01((p - 0.78) / 1.1), O = easeIO(oRaw);
       const Z = easeIO(clamp01((p - 1.75) / 0.85)), B = easeSine(clamp01((p - 2.15) / 0.45));
-      const S = lerp(start.s, 1, L) * (1 + 0.1 * O) * (1 + 1.5 * Z);
+      const S = lerp(start.s, 1, L) * (1 + 0.1 * O) * (1 + 0.5 * Z);
       // centred spread while open, then the camera moves onto the right-hand page
       const tx = lerp(start.dx, 0, L) + (S * W / 2) * O * (1 - Z), ty = lerp(start.dy, 0, L) - arc * Math.min(60, innerHeight * 0.06);
       const ry = -14 * arc + 6 * Math.sin(Math.PI * oRaw) * (1 - Z), rx = 7 * arc;
-      book.style.transform = `translate3d(${tx.toFixed(2)}px, ${ty.toFixed(2)}px, 0) scale(${S.toFixed(4)}) rotateY(${ry.toFixed(2)}deg) rotateX(${rx.toFixed(2)}deg)`;
+      book.style.transform = `translate3d(${tx.toFixed(2)}px, ${ty.toFixed(2)}px, 0) scale(${(S / SM).toFixed(5)}) rotateY(${ry.toFixed(2)}deg) rotateX(${rx.toFixed(2)}deg)`;
       book.style.setProperty("--lift", (0.35 + 0.65 * arc * (1 - O)).toFixed(3));
       const a = 179 * O;
-      coverEl.style.transform = `rotateY(${(-a).toFixed(2)}deg) translateZ(2px)`;
+      coverEl.style.transform = `rotateY(${(-a).toFixed(2)}deg) translateZ(${2 * SM}px)`;
       // a few leaves follow the cover over, each a moment later, and settle on top of each other
       leafEls.forEach((l, k) => {
         const d = 0.1 + k * 0.09, t = easeIO(clamp01((oRaw - d) / (1 - d)));
@@ -774,7 +780,11 @@
     const src = bookOnScreen(b);
     const A = bookFx(b);
     A.setHome(src); A.pose(0);
+    // draw it once, invisibly, so the pages are ready before anything moves
+    A.fx.style.opacity = "0.001";
     document.body.append(A.fx);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    A.fx.style.opacity = "";
     if (src) src.style.visibility = "hidden";
     await A.play(0, OPEN_END);
     if (src) src.style.visibility = "";
@@ -807,26 +817,64 @@
     if (src) src.style.visibility = "";
     A.fx.classList.add("gone"); setTimeout(() => A.fx.remove(), 200);
   }
-  /** A page of old copperplate handwriting: real script, but made-up words, so it looks like a letter and says nothing. */
-  const SYL = ["al", "en", "mor", "ta", "lis", "ve", "ra", "quo", "dis", "mi", "ne", "ser", "tu", "ca", "lum", "pe", "ri", "ost", "an", "de", "sol", "ia", "nu", "ex", "il", "or", "um", "fa", "bel", "con", "tre", "la", "vi", "so", "gen", "mar"];
-  function handwriting(seed, words) {
+  // ------------------------------------------------------------------ handwriting for the pages: flowing pen strokes made of letter-like shapes that never spell anything
+  const GLYPHS = [
+    [[0, 0], [0.15, -0.85], [0.42, -1], [0.58, -0.45], [0.66, 0]], // n
+    [[0, -1], [0.08, -0.25], [0.32, 0], [0.56, -0.45], [0.62, -1], [0.66, 0]], // u
+    [[0, 0], [0.38, -0.45], [0.46, -0.92], [0.22, -0.9], [0.16, -0.3], [0.5, 0]], // e
+    [[0, 0], [0.42, -1.5], [0.5, -2.25], [0.26, -2.2], [0.2, -1], [0.36, 0]], // l
+    [[0, -0.55], [0.22, -1], [0.5, -0.88], [0.54, -0.3], [0.3, 0], [0.08, -0.4], [0.32, -0.95], [0.66, -0.9]], // o
+    [[0, -0.6], [0.3, -1], [0.5, -0.72], [0.42, 0], [0.46, 0.9], [0.3, 1.3], [0.12, 1], [0.42, 0.3], [0.72, 0]], // g
+    [[0, 0], [0.18, -0.9], [0.24, -0.2], [0.4, 0]], // i
+    [[0, 0], [0.1, -0.9], [0.3, -0.84], [0.36, -1], [0.46, -0.5], [0.56, 0]], // r
+    [[0, 0], [0.12, -0.85], [0.3, -1], [0.4, -0.5], [0.42, 0], [0.48, -0.85], [0.66, -1], [0.78, -0.5], [0.86, 0]], // m
+    [[0, 0], [0.4, -1.4], [0.46, -2.1], [0.26, -2], [0.22, -0.9], [0.24, 0], [0.5, -0.8], [0.58, -0.1], [0.72, 0]], // h
+    [[0, -0.5], [0.3, -1], [0.5, -0.6], [0.48, 0], [0.52, -1.3], [0.56, -2.1], [0.6, -0.4], [0.74, 0]], // d
+  ];
+  const pageArt = {};
+  /** One page of handwriting as an SVG picture (`seed` picks the words, `ar` is height / width). */
+  function scriptPage(seed, ar) {
+    const key = seed + ":" + ar.toFixed(2);
+    if (pageArt[key]) return pageArt[key];
     const R = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
-    let out = "", cap = true;
-    for (let i = 0; i < words; i++) {
-      let w = ""; const n = 1 + Math.floor(R() * 3);
-      for (let k = 0; k < n; k++) w += SYL[Math.floor(R() * SYL.length)];
-      if (cap) { w = w[0].toUpperCase() + w.slice(1); cap = false; }
-      const p = R();
-      out += w + (p < 0.06 ? ". " : p < 0.13 ? ", " : " ");
-      if (p < 0.06) cap = true;
+    const Wp = 200, Hp = Math.round(200 * ar), xh = 3.1, lead = 10.6, left = 20, right = Wp - 18, slant = 0.28;
+    let d = "", dots = "";
+    let base = 0;
+    const pt = (x, yy) => `${(x - (yy - base) * slant).toFixed(2)} ${yy.toFixed(2)}`;
+    const curve = (P) => {
+      let s = `M${pt(P[0][0], P[0][1])}`;
+      for (let i = 0; i < P.length - 1; i++) {
+        const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;
+        s += ` C${pt(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6)} ${pt(p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6)} ${pt(p2[0], p2[1])}`;
+      }
+      return s;
+    };
+    let y = 30, x = left + 14; // first line indented
+    const lines = Math.floor((Hp - 44) / lead);
+    for (let ln = 0; ln < lines; ln++, y += lead) {
+      base = y;
+      const endPara = R() < 0.12 && ln > 2, stop = endPara ? left + 50 + R() * 80 : right;
+      while (x < stop - 14) {
+        const n = 2 + Math.floor(R() * 5), P = [[x - 1.2, y + 0.2]];
+        let gx = x;
+        for (let k = 0; k < n; k++) {
+          const g = GLYPHS[Math.floor(R() * GLYPHS.length)], sc = xh * (0.92 + R() * 0.16);
+          for (const [a, b] of g) P.push([gx + a * sc * 1.05 + (R() - 0.5) * 0.25, y + b * sc + (R() - 0.5) * 0.25]);
+          if (g === GLYPHS[6] && R() < 0.8) dots += `<circle cx="${(gx + 0.3 * sc + sc * 1.5 * slant).toFixed(2)}" cy="${(y - sc * 1.5).toFixed(2)}" r=".38"/>`;
+          gx += g[g.length - 1][0] * sc * 1.05 + 0.35;
+        }
+        P.push([gx + 1, y - 0.6]);
+        if (gx > stop + 4 && x > left + 20) break; // the word would run off the line
+        d += curve(P);
+        x = gx + 2.6 + R() * 1.8;
+        if (R() < 0.05) { dots += `<circle cx="${(x - 1.8).toFixed(2)}" cy="${y.toFixed(2)}" r=".45"/>`; x += 1.5; }
+      }
+      x = endPara ? left + 14 : left + (R() - 0.5) * 1.2;
     }
-    return out.trim().replace(/[,]?$/, ".");
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${Wp} ${Hp}"><g fill="none" stroke="#3a281a" stroke-width=".55" stroke-linecap="round" stroke-linejoin="round" opacity=".88"><path d="${d}"/></g><g fill="#3a281a" opacity=".88">${dots}</g></svg>`;
+    pageArt[key] = `url("data:image/svg+xml,${encodeURIComponent(svg).replace(/'/g, "%27").replace(/\(/g, "%28").replace(/\)/g, "%29")}")`;
+    return pageArt[key];
   }
-  try { document.fonts && document.fonts.load('16px "Pinyon Script"'); } catch (e) { /* fonts load on their own */ }
-  const pageHtml = (b) => {
-    const seed = 11 + (b.id || 0) * 7;
-    return `<div class="ofScript"><p>${handwriting(seed, 46)}</p><p>${handwriting(seed + 3, 58)}</p><p>${handwriting(seed + 5, 40)}</p></div>`;
-  };
   function endOpening(fx) {
     if (!fx || fx._ended) return; fx._ended = true;
     fx.classList.add("reveal"); setTimeout(() => fx.remove(), 650);

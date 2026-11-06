@@ -756,6 +756,115 @@
 
   D.LOOKS.witch = { label: "Witch's tower", set: { theme: "witch", accent: "#8fe388", shelfMat: "ebony", backdrop: "witchTower", lights: { style: "none", colour: "warm", on: false }, headFont: "fell", ornament: { kind: "potions", pos: "end" }, bookmark: "feather" } };
   D.READER_PAGES.witch = { bg: "#17161b", fg: "#dcdccc" };
+
+  // ------------------------------------------------------------------ Enchanted forest: a moonlit glade of weeping willows
+  // The trunks and ground are one picture; the hanging willow curtains and the grass are moving layers drawn on the same grid.
+  const WILLOWS = [
+    { x: 64, g: 738, w: 50, fork: 300, lean: 10, crowns: [[22, 128], [72, 70], [128, 150]], far: false },
+    { x: 338, g: 740, w: 58, fork: 330, lean: -12, crowns: [[290, 116], [346, 58], [398, 150]], far: false },
+    { x: 206, g: 702, w: 24, fork: 400, lean: 4, crowns: [[184, 268], [226, 250]], far: true },
+  ];
+  const willowGlade = pic("willowGlade", () => {
+    const R = rng(311);
+    const trunk = (t) => {
+      const { x, g, w, fork, lean } = t, L = x + lean;
+      const shape = `M${x - w * 1.35} ${g + 8} C${x - w * 0.8} ${g + 2} ${x - w * 0.62} ${g - 16} ${x - w * 0.55} ${g - 50} C${x - w * 0.5} ${g - 160} ${L - w * 0.46} ${fork + 120} ${L - w * 0.4} ${fork} L${L + w * 0.4} ${fork} C${L + w * 0.46} ${fork + 120} ${x + w * 0.5} ${g - 160} ${x + w * 0.55} ${g - 50} C${x + w * 0.62} ${g - 16} ${x + w * 0.8} ${g + 2} ${x + w * 1.35} ${g + 8}Z`;
+      // ridges of bark running up the trunk, some dark furrows, some lit edges
+      let ridges = "";
+      for (let i = 0; i < (t.far ? 6 : 15); i++) {
+        const f = -0.42 + (i / ((t.far ? 6 : 15) - 1)) * 0.84 + (R() - 0.5) * 0.04;
+        let d = `M${f1(x + f * w * 1.1)} ${g - 6}`;
+        for (let y = g - 6; y > fork + 4; y -= 26) {
+          const k = (g - y) / (g - fork), cxp = x + (L - x) * k + f * w * (1 - 0.1 * k);
+          d += ` Q${f1(cxp + (R() - 0.5) * 5)} ${f1(y - 13)} ${f1(cxp + (R() - 0.5) * 2)} ${f1(y - 26)}`;
+        }
+        const lit = i % 3 === 2;
+        ridges += `<path d="${d}" stroke="${lit ? "#9a7a5a" : "#160d07"}" stroke-width="${lit ? 0.7 : f1(1 + R() * 1.4)}" fill="none" opacity="${lit ? 0.35 : 0.75}"/>`;
+      }
+      let knots = "";
+      if (!t.far) for (let k = 0; k < 3; k++) { const ky = g - 120 - R() * (g - fork - 200), kx = x + (L - x) * ((g - ky) / (g - fork)) + (R() - 0.5) * w * 0.4; knots += `<ellipse cx="${f1(kx)}" cy="${f1(ky)}" rx="${f1(3 + R() * 3)}" ry="${f1(6 + R() * 5)}" fill="#120a05"/><ellipse cx="${f1(kx)}" cy="${f1(ky)}" rx="${f1(5 + R() * 3)}" ry="${f1(9 + R() * 4)}" fill="none" stroke="#6a5038" stroke-width=".8" opacity=".5"/>`; }
+      // limbs from the fork up to each crown, and the thin arching branches the curtains hang from
+      let limbs = "", twigs = "";
+      for (const [cx, cy] of t.crowns) {
+        const wd = w * 0.36, mx = (L + cx) / 2 + (cx < L ? -8 : 8), my = (fork + cy) / 2;
+        limbs += `<path d="M${L} ${fork + 10} Q${f1(mx)} ${f1(my)} ${cx} ${cy}" stroke="url(#wd${t.far ? "f" : ""})" stroke-width="${f1(wd)}" stroke-linecap="round" fill="none"/><path d="M${L - wd * 0.2} ${fork + 10} Q${f1(mx - wd * 0.2)} ${f1(my)} ${cx - 2} ${cy}" stroke="#1a0f08" stroke-width="${f1(wd * 0.18)}" fill="none" opacity=".7"/>`;
+        for (const dx of [-70, -40, -14, 14, 42, 74]) twigs += `<path d="M${cx} ${cy} Q${f1(cx + dx * 0.45)} ${f1(cy - 34 - R() * 16)} ${f1(cx + dx)} ${f1(cy + 6 + R() * 18)}" stroke="#24180e" stroke-width="${t.far ? 1.2 : 2.2}" fill="none"/>`;
+      }
+      // moss and roots at the foot
+      let moss = ""; for (let i = 0; i < (t.far ? 10 : 30); i++) moss += `<circle cx="${f1(x + (R() - 0.5) * w * 1.6)}" cy="${f1(g - R() * 70)}" r="${f1(1 + R() * 2.4)}" fill="${R() < 0.5 ? "#2f5a34" : "#3e7a44"}" opacity=".8"/>`;
+      const body = `<path d="${shape}" fill="url(#wd${t.far ? "f" : ""}h)"/><path d="${shape}" fill="#000" filter="url(#barkTex)" opacity=".55"/>${ridges}${knots}${limbs}${twigs}${moss}`;
+      return t.far ? `<g opacity=".55" filter="url(#farSoft)">${body}</g>` : body;
+    };
+    let specks = ""; for (let i = 0; i < 60; i++) specks += `<circle cx="${f1(R() * 400)}" cy="${f1(140 + R() * 600)}" r="${f1(0.6 + R() * 1.3)}" fill="${R() > 0.35 ? "#ffe08a" : "#9ff6e8"}" opacity="${f1(0.3 + R() * 0.6)}"/>`;
+    const shroom = (x, y, r, col) => `<rect x="${f1(x - r * 0.18)}" y="${f1(y - r * 1.1)}" width="${f1(r * 0.36)}" height="${f1(r * 1.1)}" rx="${f1(r * 0.15)}" fill="#cfeee6" opacity=".85"/><ellipse cx="${f1(x)}" cy="${f1(y - r * 1.2)}" rx="${f1(r * 1.8)}" ry="${f1(r * 1.6)}" fill="${col}" opacity=".35" filter="url(#glowBl)"/><path d="M${f1(x - r)} ${f1(y - r * 1.05)} C${f1(x - r)} ${f1(y - r * 2)} ${f1(x + r)} ${f1(y - r * 2)} ${f1(x + r)} ${f1(y - r * 1.05)}Z" fill="${col}"/>`;
+    let shrooms = "";
+    for (const [cx, cy, n, col] of [[66, 736, 6, "#8ff7e4"], [206, 704, 3, "#a8f0ff"], [336, 738, 5, "#8ff7e4"], [130, 770, 3, "#ffd79a"], [270, 762, 4, "#b9fff0"], [384, 752, 3, "#ffc7ef"]]) for (let k = 0; k < n; k++) shrooms += shroom(cx + (R() - 0.5) * 56, cy + R() * 12, 3 + R() * 5, col);
+    let far = ""; for (const x of [20, 110, 150, 260, 300, 380]) far += `<path d="M${x - 8} 860 L${x - 5} 0 L${x + 5} 0 L${x + 8} 860Z" fill="#1a2840"/>`;
+    // distant willow domes in the mist
+    let domes = ""; for (const [x, y, r] of [[120, 470, 90], [270, 450, 110], [10, 430, 80], [400, 480, 90]]) domes += `<path d="M${x - r} ${y + r * 1.4} C${x - r} ${y - r * 0.4} ${x + r} ${y - r * 0.4} ${x + r} ${y + r * 1.4}Z" fill="#1d3448"/>`;
+    const defs = `<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070a18"/><stop offset=".3" stop-color="#152a52"/><stop offset=".55" stop-color="#2c5274"/><stop offset=".75" stop-color="#1a4448"/><stop offset="1" stop-color="#08130f"/></linearGradient>`
+      + `<radialGradient id="dusk" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#d3a0d8" stop-opacity=".45"/><stop offset=".5" stop-color="#7a74c0" stop-opacity=".2"/><stop offset="1" stop-color="#1a1f4a" stop-opacity="0"/></radialGradient>`
+      + `<linearGradient id="wdh" x1="0" x2="1"><stop offset="0" stop-color="#1c120a"/><stop offset=".3" stop-color="#3e2c1c"/><stop offset=".62" stop-color="#5a432e"/><stop offset=".82" stop-color="#7a6248"/><stop offset="1" stop-color="#2a1c10"/></linearGradient>`
+      + `<linearGradient id="wd" x1="0" x2="1"><stop offset="0" stop-color="#2a1c10"/><stop offset=".6" stop-color="#5a432e"/><stop offset="1" stop-color="#3a2a1a"/></linearGradient>`
+      + `<linearGradient id="wdfh" x1="0" x2="1"><stop offset="0" stop-color="#22232e"/><stop offset=".6" stop-color="#3e4250"/><stop offset="1" stop-color="#262834"/></linearGradient>`
+      + `<linearGradient id="wdf" x1="0" x2="1"><stop offset="0" stop-color="#262834"/><stop offset="1" stop-color="#3a3e4c"/></linearGradient>`
+      + `<filter id="barkTex" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.35 0.025" numOctaves="3" seed="7" result="n"/><feColorMatrix in="n" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 2.2 -1" result="a"/><feComposite in="a" in2="SourceGraphic" operator="in"/></filter>`
+      + `<filter id="glowBl" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="4"/></filter><filter id="fogF" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="22"/></filter>`
+      + `<filter id="farSoft"><feGaussianBlur stdDeviation="1.4"/></filter><filter id="mistF"><feGaussianBlur stdDeviation="6"/></filter><filter id="rayF" x="-20%" y="-5%" width="140%" height="110%"><feGaussianBlur stdDeviation="8"/></filter>`;
+    return SVG(`<rect width="400" height="860" fill="url(#sky)"/><ellipse cx="200" cy="470" rx="240" ry="220" fill="url(#dusk)"/>`
+      + `<g filter="url(#mistF)" opacity=".8">${far}${domes}</g>`
+      + `<ellipse cx="200" cy="600" rx="300" ry="70" fill="#a9c6e0" opacity=".2" filter="url(#fogF)"/><ellipse cx="140" cy="480" rx="200" ry="45" fill="#c3b6e2" opacity=".14" filter="url(#fogF)"/>`
+      + `<g filter="url(#rayF)"><path d="M150 0 L210 0 L300 760 L200 760Z" fill="#bfe6ff" opacity=".09"/><path d="M228 0 L256 0 L330 700 L282 700Z" fill="#d8c8ff" opacity=".07"/></g>`
+      + `<path d="M0 720 C60 694 110 712 160 702 C220 688 260 714 320 700 C360 690 390 702 400 698 L400 860 L0 860Z" fill="#0b1a12"/><path d="M0 762 C80 744 140 770 210 754 C280 738 330 764 400 750 L400 860 L0 860Z" fill="#07110c"/>`
+      + WILLOWS.map(trunk).join("")
+      + `<ellipse cx="200" cy="712" rx="260" ry="40" fill="#7fd9c8" opacity=".14" filter="url(#fogF)"/>`
+      + shrooms + specks, defs, "xMidYMax");
+  });
+  /** The hanging curtains of one willow, in two layers that sway a little out of step. */
+  function willowCurtains(t, seed) {
+    const R = rng(seed), layers = [""];
+    const cols = t.far ? ["#22383c", "#284044", "#2c4648"] : ["#1f3d2a", "#264a32", "#2d5638", "#1a3424", "#335f3f"];
+    const grads = cols.concat("#5f9a72").map((c, i) => `<linearGradient id="wf${seed}_${i}" gradientUnits="userSpaceOnUse" x1="0" y1="60" x2="0" y2="720"><stop offset="0" stop-color="${c}"/><stop offset=".55" stop-color="${c}" stop-opacity=".85"/><stop offset="1" stop-color="${c}" stop-opacity=".15"/></linearGradient>`).join("");
+    for (const [cx, cy] of t.crowns) {
+      for (const dx of [-70, -40, -14, 14, 42, 74]) {
+        const ex = cx + dx, ey = cy + 6 + R() * 18, qx = cx + dx * 0.45, qy = cy - 40;
+        for (let s = 0.12; s <= 1; s += t.far ? 0.18 : 0.095) {
+          const px = (1 - s) * (1 - s) * cx + 2 * s * (1 - s) * qx + s * s * ex, py = (1 - s) * (1 - s) * cy + 2 * s * (1 - s) * qy + s * s * ey;
+          const len = (t.far ? 120 : 230) + R() * (t.far ? 90 : 220) - Math.abs(dx) * 0.6, drift = (dx > 0 ? 1 : -1) * (4 + R() * 10);
+          const d = `M${f1(px)} ${f1(py)} Q${f1(px + drift * 0.3)} ${f1(py + len * 0.5)} ${f1(px + drift)} ${f1(py + len)}`;
+          const ci = R() < 0.08 && !t.far ? cols.length : Math.floor(R() * cols.length);
+          layers[0] += `<path d="${d}" stroke="#14261a" stroke-width=".5" fill="none" opacity=".8"/><path d="${d}" stroke="url(#wf${seed}_${ci})" stroke-width="${t.far ? 1.6 : 2.2}" stroke-dasharray="${f1(2.6 + R() * 1.6)} ${f1(1.2 + R() * 1)}" stroke-linecap="round" fill="none"/>`;
+        }
+      }
+    }
+    // the curtain swings from the middle of the tree's crown
+    const ox = t.crowns.reduce((a, c) => a + c[0], 0) / t.crowns.length, oy = Math.min(...t.crowns.map((c) => c[1]));
+    // the layer only covers this tree, so it stays light to move
+    const bx = Math.min(...t.crowns.map((c) => c[0])) - 110, bw = Math.max(...t.crowns.map((c) => c[0])) + 110 - bx, by = oy - 70, bh = Math.min(860, oy + 560) - by;
+    return layers.map((body, i) => `<div class="fxWillow${t.far ? " far" : ""}" style="--x0:${bx};--y0:${by};--w:${bw};--h:${bh};--ox:${f1(((ox - bx) / bw) * 100)}%;--oy:${f1(((oy - by) / bh) * 100)}%;--t:${f1(6.5 + i * 1.7 + R() * 1.5)}s;--d:-${f1(R() * 8)}s"><svg viewBox="${bx} ${by} ${bw} ${bh}" preserveAspectRatio="none" aria-hidden="true"><defs>${grads}</defs>${body}</svg></div>`).join("");
+  }
+  FX.willows = () => willowCurtains(WILLOWS[2], 41) + willowCurtains(WILLOWS[0], 42) + willowCurtains(WILLOWS[1], 43);
+  // rows of grass from the back of the glade to the front; each row bends in the wind, a gust travelling across
+  FX.grassWind = () => {
+    const R = rng(77); let o = "";
+    const rows = [740, 762, 786, 812, 838, 866];
+    rows.forEach((yb, ri) => {
+      const near = ri / (rows.length - 1), cols = near < 0.4 ? ["#0c2216", "#102a1c", "#0a1c12"] : ["#123020", "#18402a", "#1f4a2e", "#0f2a1a", "#2a5a36"];
+      for (let seg = 0; seg < 2; seg++) {
+        const x0 = seg * 200 - 6, x1 = x0 + 212;
+        let blades = "";
+        for (let i = 0; i < 115; i++) {
+          const x = x0 + R() * (x1 - x0), h = 14 + R() * 22 + near * 22, lean = (R() - 0.5) * 12, bw = 1.4 + R() * 1.8 + near;
+          const c = cols[Math.floor(R() * cols.length)];
+          blades += `<path d="M${f1(x)} ${yb} Q${f1(x + lean * 0.35)} ${f1(yb - h * 0.55)} ${f1(x + lean)} ${f1(yb - h)} Q${f1(x + lean * 0.35 + bw * 0.6)} ${f1(yb - h * 0.5)} ${f1(x + bw)} ${yb}Z" fill="${c}"/>`;
+          if (near > 0.5 && R() < 0.12) blades += `<path d="M${f1(x + lean * 0.5)} ${f1(yb - h * 0.6)} Q${f1(x + lean * 0.8)} ${f1(yb - h * 0.85)} ${f1(x + lean)} ${f1(yb - h)}" stroke="#6fd0a8" stroke-width=".6" fill="none" opacity=".5"/>`;
+        }
+        o += `<div class="fxGrass" style="--x0:${x0};--w:${x1 - x0};--yb:${yb};--d:-${f1(6 - seg * 0.7 - ri * 0.15)}s;--t:${f1(5.6 + (ri % 2) * 0.5)}s"><svg viewBox="${x0} ${yb - 72} ${x1 - x0} 74" preserveAspectRatio="none" aria-hidden="true">${blades}</svg></div>`;
+      }
+    });
+    return o;
+  };
+  Object.assign(D.BACKDROPS.enchanted, { fx: "willows grassWind motes fogThick", css: () => `${willowGlade()} center bottom / cover no-repeat, #0c0f22` });
   const baseFx = D.backdropFx;
   D.backdropFx = (kinds) => String(kinds).split(" ").map((k) => (FX[k] ? FX[k]() : baseFx(k))).join("");
 })();
