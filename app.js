@@ -567,9 +567,6 @@
     };
     plank.append(cord);
   }
-  // the backdrop's mirror shows the shelves moving as you scroll
-  let syRaf = 0;
-  addEventListener("scroll", () => { cancelAnimationFrame(syRaf); syRaf = requestAnimationFrame(() => { const bd = document.getElementById("backdrop"); if (bd && bd.dataset.fx && bd.dataset.fx.includes("mirror")) bd.style.setProperty("--sy", Math.round(scrollY)); }); }, { passive: true });
   let lightsT = 0, lastW = innerWidth;
   addEventListener("resize", () => { if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(lightsT); lightsT = setTimeout(() => document.querySelectorAll(".shelf").forEach(addLights), 200); });
 
@@ -804,6 +801,7 @@
     if (openSheet && openSheet !== el) { openSheet.hidden = true; sheetGuard = null; }
     if (el.id !== "bookSheet") localUndo = null;
     if (el.id !== "bookSheet" && el.id !== "customizeSheet") redrawOpen = null;
+    el.classList.remove("closing"); scrim.classList.remove("closing");
     openSheet = el; el.hidden = false; scrim.hidden = false; el.scrollTop = 0;
     document.body.style.overflow = "hidden";
   }
@@ -812,7 +810,15 @@
     if (!openSheet) return;
     if (force !== true && sheetGuard && !sheetGuard()) return;
     sheetGuard = null; localUndo = null; redrawOpen = null; setTimeout(refreshUndo, 0);
-    openSheet.hidden = true; openSheet.replaceChildren(); openSheet = null; scrim.hidden = true;
+    // slide the sheet away and fade the dimming, then tidy up
+    const el = openSheet; openSheet = null;
+    el.classList.add("closing"); scrim.classList.add("closing");
+    setTimeout(() => {
+      el.classList.remove("closing"); scrim.classList.remove("closing");
+      if (openSheet === el) return; // opened again meanwhile
+      el.hidden = true; el.replaceChildren();
+      if (!openSheet) scrim.hidden = true;
+    }, 340);
     document.body.style.overflow = "";
   }
   scrim.onclick = closeSheet;
@@ -1186,19 +1192,45 @@
       // ready-made looks and your own
       const looks = h(`<div class="group"><h3 class="label">Looks</h3><p class="hint">Each look is a whole room: walls, shelf, colours and lettering. Below you can change the lights, the object on the shelf and your bookmark.</p><div class="looks"></div></div>`);
       const lookWrap = looks.querySelector(".looks");
+      // which look is on (older saves didn't record it, so match by room and colours)
+      const current = s.lookKey || (Object.entries(D.LOOKS).find(([, L]) => L.set.backdrop === s.backdrop && L.set.theme === s.theme) || [""])[0];
+      const mark = (btn, on) => { btn.setAttribute("aria-pressed", on); if (on) btn.append(h(`<span class="lookNow">✓ Current</span>`)); };
+      const applyLook = (key, set_) => {
+        const patch = { ...JSON.parse(JSON.stringify(set_)), shelfDecor: clearShelfSwitches(), lookKey: key };
+        if (key === "minimal") { set(patch); requestAnimationFrame(() => { const m = sheet.querySelector("#minimalOpts"); if (m) m.scrollIntoView({ behavior: "smooth", block: "start" }); }); return; }
+        closeSheet(); setTimeout(() => set(patch), 30);
+      };
       for (const [k, L] of Object.entries(D.LOOKS)) {
         const btn = h(`<button class="lookBtn"></button>`); btn.append(lookTile(L.label, { ...DEFAULT_SETTINGS, ...L.set }));
-        btn.onclick = () => { set({ ...JSON.parse(JSON.stringify(L.set)), shelfDecor: clearShelfSwitches() }); closeSheet(); };
+        mark(btn, current === k);
+        btn.onclick = () => applyLook(k, L.set);
         lookWrap.append(btn);
       }
       (s.looks || []).forEach((L) => {
         const btn = h(`<div class="lookBtn mine"><button class="lookApply"></button><button class="lookDel" aria-label="Delete ${esc(L.name)}">✕</button></div>`);
         btn.firstElementChild.append(lookTile(L.name, { ...DEFAULT_SETTINGS, ...L.set }));
-        btn.firstElementChild.onclick = () => { set({ ...JSON.parse(JSON.stringify(L.set)), shelfDecor: clearShelfSwitches() }); closeSheet(); };
+        mark(btn, current === "mine:" + L.id);
+        btn.firstElementChild.onclick = () => applyLook("mine:" + L.id, L.set);
         btn.lastElementChild.onclick = () => set({ looks: s.looks.filter((x) => x !== L) });
         lookWrap.append(btn);
       });
       body.append(looks);
+
+      // Minimal can be tuned, quietly: a few colours, an accent, the shelf colour and the lettering
+      if (current === "minimal") {
+        const pal = ["graphite", "midnight", "plum", "forest", "paper", "blush"].filter((k) => THEMES[k]);
+        const fonts = ["bricolage", "playfair", "cormorant", "dmserif"].filter((k) => D.HEAD_FONTS[k]);
+        const mo = h(`<div class="group minimalOpts" id="minimalOpts"><h3 class="label">Minimal options</h3><p class="hint">Keep it simple: pick a background, an accent colour, the shelf colour and the lettering.</p>
+          <div class="field"><span class="subLabel">Background</span><div class="swatchRow" id="m-bg">${pal.map((k) => `<button data-v="${k}" aria-pressed="${s.theme === k}" aria-label="${THEMES[k].label}" title="${THEMES[k].label}"><span style="background:${THEMES[k].t[0]};border-color:${THEMES[k].t[6]}"><i style="background:${THEMES[k].t[1]}"></i></span>${THEMES[k].label}</button>`).join("")}</div></div>
+          <div class="field"><span class="subLabel">Accent</span><div class="swatchRow dots" id="m-acc">${ACCENTS.map((c) => `<button data-v="${c}" aria-pressed="${(s.accent || "").toLowerCase() === c}" aria-label="Accent ${c}"><span style="background:${c}"></span></button>`).join("")}</div></div>
+          <div class="field"><span class="subLabel">Shelf</span><div class="swatchRow dots" id="m-shelf">${SHELVES.map(([l, c]) => `<button data-v="${c}" aria-pressed="${(s.shelf || "").toLowerCase() === c.toLowerCase()}" aria-label="${l}" title="${l}"><span style="background:${c}"></span></button>`).join("")}</div></div>
+          <div class="field"><span class="subLabel">Lettering</span><div class="chips" id="m-font">${fonts.map((k) => `<button data-v="${k}" aria-pressed="${(s.headFont || "bricolage") === k}" style="font-family:${D.HEAD_FONTS[k][1]};font-size:1rem">${D.HEAD_FONTS[k][0]}</button>`).join("")}</div></div></div>`);
+        mo.querySelectorAll("#m-bg button").forEach((b) => (b.onclick = () => set({ theme: b.dataset.v })));
+        mo.querySelectorAll("#m-acc button").forEach((b) => (b.onclick = () => set({ accent: b.dataset.v })));
+        mo.querySelectorAll("#m-shelf button").forEach((b) => (b.onclick = () => set({ shelf: b.dataset.v, shelfMat: "paint" })));
+        mo.querySelectorAll("#m-font button").forEach((b) => (b.onclick = () => set({ headFont: b.dataset.v })));
+        body.append(mo);
+      }
 
       // hanging lights
       const lg = h(`<div class="group"><h3 class="label">Lights</h3><p class="hint">Hang a string of lights under every shelf. Pull the little cord under a shelf to switch just that shelf on or off.</p>

@@ -767,13 +767,13 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
   100% { transform: translate(calc(100vw + 80px), calc(var(--y2) * .2)) rotate(-2deg); }
 }
 /* rainy window in the study */
-#backdrop .fxWindow { left: 50%; top: 8vh; width: clamp(110px, 34vw, 300px); height: 36vh; transform: translateX(-50%); padding: 7px; background: #24140a; box-shadow: 0 0 0 3px #160b05, 0 10px 30px rgba(0,0,0,.6); filter: brightness(.8); }
-#backdrop .fxWindow::after { content: ""; position: absolute; inset: 7px; background: linear-gradient(90deg, transparent calc(50% - 2px), #24140a calc(50% - 2px) calc(50% + 2px), transparent calc(50% + 2px)), linear-gradient(transparent calc(45% - 2px), #24140a calc(45% - 2px) calc(45% + 2px), transparent calc(45% + 2px)); pointer-events: none; }
-#backdrop .fxWindow .pane { position: relative; width: 100%; height: 100%; overflow: hidden; background: linear-gradient(#0e1724, #1b2a3a 60%, #2a2a2e); }
+#backdrop .fxWindow { left: 50%; top: 6vh; width: clamp(110px, 30vw, 250px); aspect-ratio: 100 / 190; transform: translateX(-50%); filter: brightness(.82) drop-shadow(0 10px 24px rgba(0,0,0,.6)); }
+#backdrop .fxWindow .tracery { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+#backdrop .fxWindow .pane { position: absolute; inset: 0; overflow: hidden; clip-path: url(#gothArch); background: linear-gradient(#0e1724, #1b2a3a 60%, #2a2a2e); }
 #backdrop .fxWindow .pane b { position: absolute; width: 14px; height: 14px; margin: -7px; border-radius: 50%; background: #ffc46a; filter: blur(5px); opacity: .6; }
 #backdrop .fxWindow .drop { position: absolute; top: -30px; width: 1px; height: var(--h); background: linear-gradient(rgba(200,220,255,0), rgba(200,220,255,.55)); animation: rainFall var(--t) linear infinite; animation-delay: var(--d); }
 #backdrop .fxWindow .bead { position: absolute; width: 3px; height: 4px; border-radius: 50%; background: rgba(210,225,255,.45); box-shadow: 0 0 2px rgba(255,255,255,.5); animation: beadSlide var(--t) ease-in infinite; animation-delay: var(--d); }
-@keyframes rainFall { to { transform: translateY(calc(36vh + 40px)); } }
+@keyframes rainFall { to { transform: translateY(560px); } }
 @keyframes beadSlide { 0%, 60% { transform: translateY(0); } 100% { transform: translateY(80px); opacity: 0; } }
 /* velvet drapes and swag */
 #backdrop .fxDrape { top: 0; left: 0; height: 100%; width: clamp(30px, 11vw, 200px); filter: brightness(.75) drop-shadow(6px 0 12px rgba(0,0,0,.5)); }
@@ -802,8 +802,11 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 /* the antique mirror */
 #backdrop .fxMirror { left: 50%; top: 7vh; bottom: 5vh; width: clamp(220px, 74vw, 560px); transform: translateX(-50%); padding: 11px; border-radius: 999px 999px 10px 10px / 170px 170px 10px 10px;
   background: linear-gradient(135deg, #5a3e16, #e0bc6a 28%, #7a5a24 46%, #d4ae58 70%, #3e2c10); box-shadow: inset 0 0 0 2px #3a2a10, 0 24px 60px rgba(0,0,0,.75); filter: brightness(.85); }
-#backdrop .fxMirror .glass { position: relative; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: linear-gradient(165deg, #2e2832, #120e14 60%, #0a080c); box-shadow: inset 0 0 0 2px #2a1e0c; }
-#backdrop .fxMirror .refl { position: absolute; inset: 0; transform: scaleX(-1); background-size: 300px 340px; background-repeat: repeat; background-position: 50% calc(var(--sy, 0) * -1px + 40px); opacity: .65; filter: blur(1.1px) sepia(.35) brightness(.8); }
+#backdrop .fxMirror .glass { position: relative; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: linear-gradient(160deg, #5e5a66 0%, #34303a 28%, #18141c 55%, #2a2430 78%, #120e14 100%); box-shadow: inset 0 0 0 2px #2a1e0c; }
+#backdrop .fxMirror .spots { position: absolute; inset: 0; border-radius: inherit; background:
+  radial-gradient(circle at 18% 22%, rgba(120,100,70,.25) 0 2px, transparent 3px), radial-gradient(circle at 74% 64%, rgba(120,100,70,.22) 0 3px, transparent 4px),
+  radial-gradient(circle at 40% 82%, rgba(120,100,70,.2) 0 2px, transparent 3px), radial-gradient(ellipse 30% 12% at 50% 100%, rgba(90,70,40,.35), transparent),
+  radial-gradient(ellipse 18% 30% at 0 50%, rgba(90,70,40,.3), transparent), radial-gradient(ellipse 18% 30% at 100% 40%, rgba(90,70,40,.28), transparent); }
 #backdrop .fxMirror .glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background:
   linear-gradient(120deg, rgba(255,255,255,.1), rgba(255,255,255,0) 30%, rgba(255,255,255,0) 62%, rgba(255,255,255,.06) 70%, rgba(255,255,255,0) 78%),
   radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.6)); }
@@ -814,3 +817,40 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 #backdrop .fog.f3 { top: 20%; height: 35%; background: radial-gradient(ellipse 32% 40% at 50% 50%, rgba(180,195,215,.08), transparent 70%); animation: fogDrift 70s linear infinite alternate; }
 @keyframes fogDrift { from { transform: translateX(-12%); } to { transform: translateX(12%); } }
 @media (prefers-reduced-motion: reduce) { #backdrop .fog { animation: none; } }
+
+/* opening a book: it lifts towards you, the cover swings open, fade to black, the page appears */
+.openFx { position: fixed; inset: 0; z-index: 300; perspective: 1600px; pointer-events: none; }
+.openFx .ofDim { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .7s ease; }
+.openFx.lift .ofDim { opacity: .6; }
+.openFx .ofBook { position: absolute; transform-origin: 0 0; transform-style: preserve-3d; transition: transform .72s cubic-bezier(.2,.75,.25,1); }
+.openFx.opened .ofBook { transition: transform .8s cubic-bezier(.45,0,.25,1); }
+.openFx .ofPages { position: absolute; inset: 1.5% 0 1.5% 0; border-radius: 0 3px 3px 0; background: #f4ecdc; box-shadow: 0 30px 60px rgba(0,0,0,.6); overflow: hidden; }
+.openFx .ofPages i { position: absolute; inset: 9% 12%; background: repeating-linear-gradient(#f4ecdc 0 9px, rgba(60,50,40,.18) 9px 10px); }
+.openFx .ofCover { position: absolute; inset: 0; transform-origin: 0 50%; transform-style: preserve-3d; transition: transform .85s cubic-bezier(.45,0,.25,1); }
+.openFx.opened .ofCover { transform: rotateY(-168deg); }
+.openFx .ofFront, .openFx .ofInside { position: absolute; inset: 0; border-radius: 2px 4px 4px 2px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; background: var(--spine); }
+.openFx .ofFront { box-shadow: inset 6px 0 8px -4px rgba(0,0,0,.45), 0 20px 50px rgba(0,0,0,.55); }
+.openFx .ofFront img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.openFx .ofPlain { display: block; padding: 18% 14%; color: #fff; font: 600 1.3rem/1.15 var(--font-display); }
+.openFx .ofInside { transform: rotateY(180deg); background: linear-gradient(90deg, rgba(0,0,0,.25), transparent 20%), #e9dfc8; }
+.openFx .ofBlack { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .45s ease; }
+.openFx.dark .ofBlack { opacity: 1; }
+.openFx.reveal { transition: opacity .6s ease; opacity: 0; }
+/* closing a sheet: it glides down (or out to the side) and the dimming fades */
+.sheet.closing { animation: sheetDown .34s cubic-bezier(.4,0,.7,.2) forwards; pointer-events: none; }
+.scrim.closing { animation: scrimOut .34s ease forwards; pointer-events: none; }
+@keyframes sheetDown { to { transform: translateY(105%); } }
+@keyframes sheetOutSide { to { transform: translateX(105%); } }
+@keyframes scrimOut { to { opacity: 0; } }
+@media (min-width: 768px) { .sheet.closing { animation-name: sheetOutSide; } }
+/* the look that's on */
+.lookBtn[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.lookNow { position: absolute; top: 6px; left: 6px; padding: 2px 8px; border-radius: 999px; background: var(--accent); color: #111; font-size: .7rem; font-weight: 700; }
+/* minimal options */
+.swatchRow { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatchRow button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: var(--muted-fg); font: inherit; font-size: .72rem; cursor: pointer; }
+.swatchRow button span { position: relative; display: block; width: 44px; height: 32px; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
+.swatchRow button span i { position: absolute; left: 8px; top: 9px; width: 18px; height: 3px; border-radius: 2px; }
+.swatchRow.dots button span { width: 30px; height: 30px; border-radius: 50%; }
+.swatchRow button[aria-pressed="true"] { color: var(--foreground); }
+.swatchRow button[aria-pressed="true"] span { box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--accent); }

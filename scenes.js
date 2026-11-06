@@ -161,12 +161,19 @@
     let roof = `<path d="M-10 0 H410 V70 Q380 66 370 96 Q300 80 200 82 Q100 80 30 96 Q20 66 -10 70Z" fill="#0b0505"/>`;
     for (let x = 0; x < 400; x += 11) roof += `<rect x="${x}" y="0" width="5" height="${f1(76 + Math.abs(x - 200) * 0.07)}" fill="#1a0b08"/>`;
     roof += `<path d="M-10 70 Q20 66 30 96 Q100 80 200 82 Q300 80 370 96 Q380 66 410 70" stroke="#6a1a10" stroke-width="5" fill="none"/>`;
-    const moon = `<circle cx="300" cy="200" r="34" fill="#f3d9b0" opacity=".85"/><circle cx="300" cy="200" r="70" fill="#f3c88a" opacity=".12"/>`;
+    // a full moon: soft halo, a bright limb, darker seas and a few craters
+    const moon = `<circle cx="290" cy="210" r="120" fill="url(#halo)"/><circle cx="290" cy="210" r="36" fill="url(#moonG)"/>`
+      + `<g clip-path="url(#moonC)" opacity=".9"><ellipse cx="278" cy="198" rx="12" ry="9" fill="#b8a78e" opacity=".55"/><ellipse cx="300" cy="222" rx="10" ry="7" fill="#b8a78e" opacity=".5"/><ellipse cx="270" cy="222" rx="6" ry="5" fill="#c2b296" opacity=".5"/><ellipse cx="303" cy="196" rx="5" ry="4" fill="#bfae94" opacity=".45"/>`
+      + `<circle cx="288" cy="230" r="2.6" fill="none" stroke="#a8977e" stroke-width="1" opacity=".6"/><circle cx="310" cy="208" r="2" fill="none" stroke="#a8977e" stroke-width=".9" opacity=".6"/><circle cx="276" cy="186" r="1.6" fill="none" stroke="#a8977e" stroke-width=".8" opacity=".6"/>`
+      + `<circle cx="${290 + 8}" cy="${210 + 6}" r="36" fill="url(#terminator)"/></g><circle cx="290" cy="210" r="36" fill="none" stroke="#fffaf0" stroke-width=".8" opacity=".6"/>`;
     const defs = `<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14050a"/><stop offset=".5" stop-color="#2a0a0a"/><stop offset="1" stop-color="#0c0303"/></linearGradient>`
       + `<linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8742a" stop-opacity=".55"/><stop offset=".6" stop-color="#e8a050" stop-opacity=".45"/><stop offset="1" stop-color="#7a3010" stop-opacity=".35"/></linearGradient>`
-      + `<filter id="b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>`
+      + `<radialGradient id="halo"><stop offset=".25" stop-color="#fff2d8" stop-opacity=".35"/><stop offset=".45" stop-color="#ffd9a0" stop-opacity=".12"/><stop offset="1" stop-color="#ffd9a0" stop-opacity="0"/></radialGradient>`
+      + `<radialGradient id="moonG" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="#fffdf6"/><stop offset=".6" stop-color="#f3ead4"/><stop offset="1" stop-color="#d9c9a8"/></radialGradient>`
+      + `<radialGradient id="terminator" cx=".3" cy=".3" r=".9"><stop offset=".7" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#3a2a1a" stop-opacity=".35"/></radialGradient>`
+      + `<clipPath id="moonC"><circle cx="290" cy="210" r="36"/></clipPath>`
       + `<linearGradient id="mid" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset=".22" stop-color="#000" stop-opacity=".55"/><stop offset=".78" stop-color="#000" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>`;
-    return SVG(`<rect width="400" height="860" fill="url(#sky)"/>${moon}<g filter="url(#b)">${far}</g>${screen(0, 72)}${screen(328, 72)}<rect width="400" height="860" fill="url(#mid)"/>${roof}`, defs);
+    return SVG(`<rect width="400" height="860" fill="url(#sky)"/>${screen(0, 72)}${screen(328, 72)}<rect width="400" height="860" fill="url(#mid)"/>${moon}${roof}`, defs);
   });
 
   // ------------------------------------------------------------------ Cottage at dusk: rose wallpaper, painted panelling, lamplight
@@ -199,7 +206,12 @@
   }
   const candlelit2 = pic("candlelit2", () => {
     const R = rng(13);
-    const frames = [[24, 70, 110, 140, "portrait"], [150, 40, 160, 110, "landscape"], [330, 60, 64, 84, "portrait"], [148, 166, 76, 96, "still"], [240, 166, 70, 70, "sea"], [20, 230, 72, 96, "still"], [104, 230, 30, 40, "portrait"], [322, 160, 70, 120, "portrait"], [44, 352, 140, 96, "landscape"], [200, 260, 124, 150, "portrait"], [340, 300, 50, 64, "sea"], [16, 470, 90, 70, "sea"], [120, 470, 64, 84, "still"], [210, 430, 96, 74, "landscape"], [320, 390, 72, 110, "still"], [326, 516, 60, 46, "landscape"]];
+    // a tidy salon hang: three columns with even gaps, nothing overlapping
+    const frames = [
+      [20, 40, 100, 140, "portrait"], [20, 194, 100, 80, "sea"], [20, 288, 100, 120, "still"], [20, 422, 100, 90, "landscape"], [20, 526, 100, 90, "portrait"],
+      [134, 40, 132, 90, "landscape"], [134, 144, 59, 76, "still"], [207, 144, 59, 76, "sea"], [134, 234, 132, 170, "portrait"], [134, 418, 132, 76, "landscape"], [134, 508, 59, 108, "portrait"], [207, 508, 59, 108, "still"],
+      [280, 40, 100, 140, "portrait"], [280, 194, 100, 80, "landscape"], [280, 288, 100, 120, "still"], [280, 422, 100, 90, "sea"], [280, 526, 100, 90, "portrait"],
+    ];
     let wall = `<rect width="400" height="860" fill="#2a1410"/>`;
     for (let x = 0; x < 400; x += 16) wall += `<rect x="${x}" y="0" width="8" height="640" fill="#331a14" opacity=".55"/>`;
     const art = frames.map(([x, y, w, h, k]) => `<rect x="${x + 3}" y="${y + 5}" width="${w}" height="${h}" fill="#000" opacity=".45" filter="url(#sh)"/>` + painting(R, x, y, w, h, k)).join("");
@@ -321,7 +333,7 @@
     cabinNight: { label: "Log cabin", tone: "dark", fx: "hearth", css: () => `${cabin()} center / cover no-repeat, #1e1008` },
     loftDusk: { label: "Loft at dusk", tone: "dark", fx: "glowmotes", css: () => `${loft()} center / cover no-repeat, #1a120e` },
     candleRoom: { label: "Candlelit room", tone: "dark", fx: "candles", css: () => `${candlelit()} center bottom / cover no-repeat, #140b07` },
-    teaNight: { label: "Tea house night", tone: "dark", fx: "lanterns petals", css: () => `${teahouse()} center / cover no-repeat, #14050a` },
+    teaNight: { label: "Tea house night", tone: "dark", fx: "petals", css: () => `${teahouse()} center / cover no-repeat, #14050a` },
     castleIvy: { label: "Ivy-covered stone", tone: "dark", fx: "fog", css: () => `${castle()} center / cover no-repeat, #1a1b20` },
     galleryWall: { label: "Gallery wall", tone: "dark", css: () => `${candlelit2()} center / cover no-repeat, #1a0c08` },
     vampireMirror: { label: "Velvet & mirror", tone: "dark", fx: "mirror drapesVamp bats", css: () => `${vampire()} center / cover no-repeat, #12050a` },
@@ -402,20 +414,28 @@
     // bats crossing the room, wings beating
     bats: () => { const R = rng(8); let o = ""; for (let i = 0; i < 7; i++) { const s = 0.5 + R() * 0.8; o += `<i class="bat" style="--y:${f1(5 + R() * 55)}%;--y2:${f1(-30 + R() * 60)}vh;--s:${f1(s)};--t:${f1(9 + R() * 10)}s;--d:-${f1(R() * 18)}s;--f:${f1(0.16 + R() * 0.1)}s;--dir:${R() > 0.5 ? 1 : -1}"><svg viewBox="0 0 60 26" aria-hidden="true"><path class="w l" d="M30 12 C24 4 14 2 2 6 C8 8 9 12 7 15 C12 12 16 14 17 18 C20 14 25 14 30 16Z"/><path class="w r" d="M30 12 C36 4 46 2 58 6 C52 8 51 12 53 15 C48 12 44 14 43 18 C40 14 35 14 30 16Z"/><ellipse cx="30" cy="14" rx="3.4" ry="5"/><path d="M27.6 10 l.8 -3 1.2 2.4 M32.4 10 l-.8 -3 -1.2 2.4"/></svg></i>`; } return o; },
     // rain running down a tall study window
-    rainWindow: () => { const R = rng(12); let drops = ""; for (let i = 0; i < 40; i++) drops += `<i class="drop" style="left:${f1(R() * 100)}%;--t:${f1(0.7 + R() * 0.9)}s;--d:-${f1(R() * 2)}s;--h:${f1(10 + R() * 18)}px"></i>`; let beads = ""; for (let i = 0; i < 26; i++) beads += `<i class="bead" style="left:${f1(R() * 96)}%;top:${f1(R() * 90)}%;--t:${f1(5 + R() * 8)}s;--d:-${f1(R() * 10)}s"></i>`; return `<div class="fxWindow"><div class="pane">${[[20, 70], [62, 40], [80, 78], [35, 30], [50, 85]].map(([x, y]) => `<b style="left:${x}%;top:${y}%"></b>`).join("")}${drops}${beads}</div></div>`; },
+    rainWindow: () => {
+      const R = rng(12); let drops = ""; for (let i = 0; i < 40; i++) drops += `<i class="drop" style="left:${f1(R() * 100)}%;--t:${f1(0.7 + R() * 0.9)}s;--d:-${f1(R() * 2)}s;--h:${f1(10 + R() * 18)}px"></i>`;
+      let beads = ""; for (let i = 0; i < 26; i++) beads += `<i class="bead" style="left:${f1(R() * 96)}%;top:${f1(20 + R() * 75)}%;--t:${f1(5 + R() * 8)}s;--d:-${f1(R() * 10)}s"></i>`;
+      const arch = "M0 190 V70 C0 34 22 10 50 0 C78 10 100 34 100 70 V190Z";
+      const stone = "#2a1d14";
+      // gothic tracery: two pointed lancets under a quatrefoil, with a transom
+      const tracery = `<svg class="tracery" viewBox="0 0 100 190" preserveAspectRatio="none" aria-hidden="true">`
+        + `<path d="${arch}" fill="none" stroke="${stone}" stroke-width="7"/>`
+        + `<path d="M50 62 V190" stroke="${stone}" stroke-width="4"/>`
+        + `<path d="M6 190 V96 C6 80 16 68 28 62 C40 68 50 80 50 96 M50 96 C50 80 60 68 72 62 C84 68 94 80 94 96 V190" stroke="${stone}" stroke-width="3" fill="none"/>`
+        + `<circle cx="50" cy="38" r="13" fill="none" stroke="${stone}" stroke-width="3"/>`
+        + [[50, 29], [59, 38], [50, 47], [41, 38]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5.4" fill="none" stroke="${stone}" stroke-width="1.8"/>`).join("")
+        + `<path d="M0 140 H100" stroke="${stone}" stroke-width="3"/><path d="M28 96 V190 M72 96 V190" stroke="${stone}" stroke-width="1.2" opacity=".8"/>`
+        + `<path d="M6 118 H94 M6 164 H94" stroke="${stone}" stroke-width="1" opacity=".7"/>`
+        + `<path d="M-4 190 V68 C-4 30 20 4 50 -6 C80 4 104 30 104 68 V190" stroke="#160d08" stroke-width="5" fill="none"/></svg>`;
+      return `<div class="fxWindow gothic"><svg width="0" height="0" style="position:absolute"><clipPath id="gothArch" clipPathUnits="objectBoundingBox"><path d="M0 1 V0.368 C0 0.179 0.22 0.053 0.5 0 C0.78 0.053 1 0.179 1 0.368 V1Z"/></clipPath></svg><div class="pane">${[[30, 70], [62, 50], [80, 82], [35, 40], [52, 88]].map(([x, y]) => `<b style="left:${x}%;top:${y}%"></b>`).join("")}${drops}${beads}</div>${tracery}</div>`;
+    },
     drapesGreen: () => drapesFx(["#0e2a1c", "#1e4a32"], "#d4af5a"),
     drapesRed: () => drapesFx(["#3a0610", "#76121f"], "#d4af5a"),
     drapesVamp: () => drapesFx(["#4a0710", "#8a1222"], "#d4af5a", "wide"),
-    // a tall antique mirror; it reflects your shelves and the reflection moves as you scroll
-    mirror: () => {
-      const books = (window.Shelf && window.Shelf.books ? window.Shelf.books() : []).map((b) => b.spineColor).filter(Boolean);
-      const cols = books.length ? books : ["#5a1a14", "#2b3550", "#3d5c4a", "#7a4a22", "#c9a6c6", "#e8dcc5"];
-      const R = rng(3); let row = "", x = 14, k = 0;
-      while (x < 290) { const w = 12 + R() * 20, h = 150 + R() * 70; row += `<rect x="${f1(x)}" y="${f1(296 - h)}" width="${f1(w - 1)}" height="${f1(h)}" fill="${cols[k++ % cols.length]}"/>`; x += w; }
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="340" viewBox="0 0 300 340">${row}<rect x="0" y="296" width="300" height="12" fill="#3a2414"/><rect x="0" y="308" width="300" height="20" fill="#000" opacity=".4"/></svg>`;
-      let url = ""; try { url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" })); } catch (e) { /* no reflection */ }
-      return `<div class="fxMirror"><div class="glass"><div class="refl" style="background-image:url('${url}')"></div></div></div>`;
-    },
+    // a tall antique mirror: old silvered glass, dim and still
+    mirror: () => `<div class="fxMirror"><div class="glass"><i class="spots"></i></div></div>`,
     // floral curtains tied back at both edges, always behind the text
     curtains: () => {
       const one = (flip) => `<div class="fxCurtain${flip ? " r" : ""}"><svg viewBox="0 0 100 860" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="cf${flip ? "r" : "l"}" x1="0" x2="1">${[0, 0.12, 0.24, 0.36, 0.5, 0.62, 0.76, 0.88, 1].map((o, i) => `<stop offset="${o}" stop-color="${i % 2 ? "#f0d8cc" : "#c99a94"}"/>`).join("")}</linearGradient><pattern id="cp${flip ? "r" : "l"}" width="14" height="18" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="1.8" fill="#c0606e" opacity=".7"/><circle cx="11" cy="13" r="1.5" fill="#8e9a64" opacity=".7"/></pattern></defs>`

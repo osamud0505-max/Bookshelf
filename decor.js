@@ -492,16 +492,29 @@
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 860' preserveAspectRatio='xMidYMax slice'><defs>`
       + `<linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#070a18'/><stop offset='.3' stop-color='#152a52'/><stop offset='.55' stop-color='#2c5274'/><stop offset='.75' stop-color='#1a4448'/><stop offset='1' stop-color='#08130f'/></linearGradient>`
       + `<radialGradient id='dusk' cx='.5' cy='.5' r='.5'><stop offset='0' stop-color='#d3a0d8' stop-opacity='.5'/><stop offset='.5' stop-color='#7a74c0' stop-opacity='.22'/><stop offset='1' stop-color='#1a1f4a' stop-opacity='0'/></radialGradient>`
-      + `<filter id='bl' x='-100%' y='-100%' width='300%' height='300%'><feGaussianBlur stdDeviation='4'/></filter><filter id='fog' x='-20%' y='-50%' width='140%' height='200%'><feGaussianBlur stdDeviation='22'/></filter><filter id='soft'><feGaussianBlur stdDeviation='1.5'/></filter></defs>`
+      + `<filter id='bl' x='-100%' y='-100%' width='300%' height='300%'><feGaussianBlur stdDeviation='4'/></filter><filter id='fog' x='-20%' y='-50%' width='140%' height='200%'><feGaussianBlur stdDeviation='22'/></filter><filter id='ray' x='-20%' y='-5%' width='140%' height='110%'><feGaussianBlur stdDeviation='9'/></filter><filter id='glowS' x='-200%' y='-200%' width='500%' height='500%'><feGaussianBlur stdDeviation='2.4'/></filter>`
+      + `<filter id='bark' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='0.06 0.004' numOctaves='3' seed='4' result='n'/><feColorMatrix in='n' values='0 0 0 0 0.12  0 0 0 0 0.16  0 0 0 0 0.2  0 0 0 1.4 -0.55' result='s'/><feComposite in='s' in2='SourceGraphic' operator='in' result='t'/><feMerge><feMergeNode in='SourceGraphic'/><feMergeNode in='t'/></feMerge></filter>`
+      + `<filter id='soft'><feGaussianBlur stdDeviation='1.5'/></filter></defs>`
       + `<rect width='400' height='860' fill='url(#sky)'/><ellipse cx='200' cy='470' rx='240' ry='220' fill='url(#dusk)'/>`
       + `<g filter='url(#soft)' opacity='.85'>${far.replace(/#1b2740/g, "#14243e")}</g>`
       + `<ellipse cx='200' cy='600' rx='300' ry='70' fill='#a9c6e0' opacity='.22' filter='url(#fog)'/>`
       + `<ellipse cx='140' cy='480' rx='200' ry='45' fill='#c3b6e2' opacity='.16' filter='url(#fog)'/>`
-      + mid.replace(/#0e1622/g, "#070d16")
+      // shafts of moonlight slanting down through the canopy
+      + `<g filter='url(#ray)' opacity='.9'><path d='M150 0 L210 0 L300 760 L200 760Z' fill='#bfe6ff' opacity='.10'/><path d='M228 0 L256 0 L330 700 L282 700Z' fill='#d8c8ff' opacity='.08'/><path d='M96 0 L118 0 L170 640 L136 640Z' fill='#bff5ea' opacity='.07'/></g>`
+      // the near trees, with bark, flared roots and glowing moss
+      + `<g filter='url(#bark)'>${mid.replace(/#0e1622/g, "#0a121c")}</g>`
+      + [[60, 46], [205, 34], [330, 52]].map(([x, w]) => [-1, 1].map((d) => `<path d='M${x + d * w * 0.3} 690 C${x + d * w * 0.9} 700 ${x + d * w * 1.3} 712 ${x + d * w * 1.9} 722 L${x + d * w * 1.6} 728 C${x + d * w * 1.1} 718 ${x + d * w * 0.7} 712 ${x + d * w * 0.1} 712Z' fill='#0a121c'/>`).join("")).join("")
+      + (() => { let g = ""; for (const [x, w] of [[60, 46], [205, 34], [330, 52]]) for (let i = 0; i < 26; i++) { const yy = 560 + R() * 150, xx = x + (R() - 0.5) * w * 0.9; g += `<circle cx='${xx.toFixed(1)}' cy='${yy.toFixed(1)}' r='${(0.8 + R() * 1.6).toFixed(1)}' fill='${R() > 0.5 ? "#7ff0d2" : "#5fae6a"}' opacity='${(0.4 + R() * 0.5).toFixed(2)}'/>`; } return `<g filter='url(#glowS)'>${g}</g>${g}`; })()
       + `<path d='M0 0 L0 860 L30 860 C44 760 36 520 50 0Z' fill='#040809'/><path d='M400 0 L400 860 L370 860 C358 760 366 500 352 0Z' fill='#040809'/>`
       + canopy + moss
       + `<ellipse cx='200' cy='705' rx='260' ry='42' fill='#7fd9c8' opacity='.16' filter='url(#fog)'/>`
-      + ground + shrooms + specks + `</svg>`;
+      + ground
+      // bluebells glowing in the moss
+      + (() => { let b = ""; for (let i = 0; i < 40; i++) { const x = R() * 400, y = 712 + R() * 70; b += `<path d='M${x.toFixed(1)} ${(y + 10).toFixed(1)} q1 -6 0 -12' stroke='#2f5a34' stroke-width='.8' fill='none'/><ellipse cx='${(x + 0.5).toFixed(1)}' cy='${(y - 2).toFixed(1)}' rx='1.8' ry='2.4' fill='${R() > 0.5 ? "#8fb8ff" : "#c9a0ff"}'/>`; } return `<g filter='url(#glowS)' opacity='.8'>${b}</g>${b}`; })()
+      + shrooms + specks
+      // ferns curling in from the corners, closest to you
+      + (() => { let f = ""; for (const [x0, y0, dir, len] of [[0, 860, 1, 150], [20, 860, 1, 110], [400, 860, -1, 160], [380, 860, -1, 120]]) { const tx = x0 + dir * len, ty = y0 - len * 0.9; f += `<path d='M${x0} ${y0} Q${x0 + dir * len * 0.2} ${y0 - len * 0.7} ${tx} ${ty}' stroke='#06100b' stroke-width='2.5' fill='none'/>`; for (let t = 0.12; t < 1; t += 0.07) { const px = x0 + dir * len * (0.2 * 2 * t * (1 - t) + t * t), py = y0 - len * 0.7 * 2 * t * (1 - t) - len * 0.9 * t * t, L = 26 * (1 - t) + 6; f += `<path d='M${px.toFixed(1)} ${py.toFixed(1)} q${(dir * L * 0.4).toFixed(1)} ${(-L * 0.6).toFixed(1)} ${(dir * L).toFixed(1)} ${(-L * 0.2).toFixed(1)} q${(-dir * L * 0.5).toFixed(1)} ${(L * 0.3).toFixed(1)} ${(-dir * L).toFixed(1)} ${(L * 0.2).toFixed(1)}Z M${px.toFixed(1)} ${py.toFixed(1)} q${(-dir * L * 0.3).toFixed(1)} ${(-L * 0.7).toFixed(1)} ${(-dir * L * 0.6).toFixed(1)} ${(-L * 0.5).toFixed(1)} q${(dir * L * 0.3).toFixed(1)} ${(L * 0.4).toFixed(1)} ${(dir * L * 0.6).toFixed(1)} ${(L * 0.5).toFixed(1)}Z' fill='#071510'/>`; } } return f; })()
+      + `</svg>`;
     return svgUrl(svg);
   }
   BACKDROPS.enchanted = { label: "Enchanted glade", tone: "dark", fx: "motes", css: () => [`${enchantedScene()} center bottom / cover no-repeat`, "#0c0f22"].join(",") };

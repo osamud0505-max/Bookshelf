@@ -690,10 +690,45 @@
   gesture.addEventListener("pointerup", release);
   gesture.addEventListener("pointercancel", release);
 
+  /** The book you picked lifts off the shelf towards you, its cover swings open, the room fades to black.
+   *  Resolves (with the overlay) once the screen is black, so the reader can appear underneath. */
+  function openingAnim(b) {
+    return new Promise((done) => {
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return done(null);
+      const front = [...document.querySelectorAll(".slot.front")].find((s) => s.getAttribute("aria-label") === b.title);
+      const src = document.querySelector("#bookSheet:not([hidden]) .heroBook .book") || (front && front.querySelector(".book"));
+      const aspect = Math.max(0.5, Math.min(0.9, b.coverAspect || 2 / 3));
+      const H = Math.min(innerHeight * 0.6, 520, (innerWidth * 0.4) / aspect), W = H * aspect;
+      const r = src ? src.getBoundingClientRect() : { left: innerWidth / 2 - 30, top: innerHeight / 2 - 45, width: 60, height: 90 };
+      const cx = innerWidth / 2 - W / 2, cy = innerHeight / 2 - H / 2;
+      const s0 = r.height / H, x0 = r.left - cx, y0 = r.top - cy;
+      const cover = b.coverUrl ? `<img alt="" src="${esc(b.coverUrl)}" referrerpolicy="no-referrer">` : `<span class="ofPlain">${esc(b.title)}</span>`;
+      const fx = h(`<div class="openFx"><div class="ofDim"></div><div class="ofBook" style="left:${cx}px;top:${cy}px;width:${W}px;height:${H}px;--spine:${b.spineColor || "#334"}">
+        <div class="ofPages"><i></i></div><div class="ofCover"><div class="ofFront">${cover}</div><div class="ofInside"></div></div></div><div class="ofBlack"></div></div>`);
+      const book = fx.querySelector(".ofBook");
+      book.style.transform = `translate(${x0}px, ${y0}px) scale(${s0})`;
+      document.body.append(fx);
+      if (src) src.style.visibility = "hidden";
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        fx.classList.add("lift");
+        book.style.transform = "translate(0, 0) scale(1)";
+        setTimeout(() => { fx.classList.add("opened"); book.style.transform = `translate(${W / 2}px, 0) scale(1.12)`; }, 720);
+        setTimeout(() => fx.classList.add("dark"), 1500);
+        setTimeout(() => { if (src) src.style.visibility = ""; done(fx); }, 1950);
+      }));
+    });
+  }
+  function endOpening(fx) {
+    if (!fx || fx._ended) return; fx._ended = true;
+    fx.classList.add("reveal"); setTimeout(() => fx.remove(), 650);
+  }
+
   async function open(id) {
     const b = byId(id); if (!b) return;
     const file = await getFile(id).catch(() => null);
     if (!file) { toast("The EPUB for this book isn't on this device. Add it again from the book's page."); return; }
+    const fx = await openingAnim(b);
+    if (fx) setTimeout(() => endOpening(fx), 3500); // never leave the screen black
     room.hidden = false; room.classList.remove("bare"); hidePanels();
     room.querySelector(".rdTitle").textContent = b.title;
     room.querySelector(".rdLoading").hidden = false;
@@ -740,6 +775,7 @@
       await book.ready;
       await rendition.display(b.readCfi || undefined);
       room.querySelector(".rdLoading").hidden = true;
+      endOpening(fx);
       layoutGesture();
       // page positions for the percentage: cached per book because working them out takes a few seconds
       const cached = await idb("locs", "readonly", (s) => s.get(id)).catch(() => null);
@@ -750,7 +786,7 @@
       const loc = rendition.currentLocation();
       if (loc && loc.start) { const pct = book.locations.percentageFromCfi(loc.start.cfi); scrub.value = pct * 100; room.querySelector(".rdPct").textContent = Math.round(pct * 100) + "%"; }
     } catch (e) {
-      console.warn(e);
+      console.warn(e); endOpening(fx);
       room.querySelector(".rdLoading").textContent = "This file couldn't be opened. It may not be a valid EPUB, or it may be DRM-protected.";
     }
   }
