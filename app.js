@@ -207,7 +207,7 @@
     const aspect = Math.max(0.5, Math.min(0.9, b.coverAspect || 2 / 3));
     const w = Math.round(hh * aspect);
     const pages = b.pageCount || 280;
-    const d = Math.round(Math.max(24, Math.min(62, 14 + pages / 14)) * (hh / 230));
+    const d = Math.max(8, Math.round(Math.max(24, Math.min(62, 14 + pages / 14)) * (hh / 230) * (b.thickness || 100) / 100));
     return { h: hh, w, d };
   }
 
@@ -520,6 +520,7 @@
           <label class="field"><span class="hint">Spine wording (a new line makes a second column)</span><textarea class="input" rows="2" id="f-spinetext" placeholder="${esc(b.title)}"></textarea></label>
           <label class="field"><span class="hint">Spine font</span><select class="input" id="f-font"><option value="">Library default (${FONTS[state.settings.spineFont].label})</option>${Object.entries(FONTS).map(([k, f]) => `<option value="${k}" ${b.spineFont === k ? "selected" : ""}>${f.label}</option>`).join("")}</select></label>
           <div class="field"><span class="hint">Spine text size: <b id="sizeVal">${b.spineSize ? b.spineSize + "px" : "Auto"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-size" min="7" max="26" step="1" value="${b.spineSize || Math.round(Math.max(9, Math.min(16, dims(b, 200).d * 0.44)))}"><button class="btn small" id="f-auto">Auto</button></div></div>
+          <div class="field"><span class="hint">Thickness: <b id="thickVal">${b.thickness ? b.thickness + "%" : "Auto (from page count)"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-thick" min="40" max="180" step="5" value="${b.thickness || 100}"><button class="btn small" id="f-thickAuto">Auto</button></div></div>
           <div class="field"><span class="hint">Book size</span><div class="seg">${Object.entries(SIZES).map(([k, [l]]) => `<button data-v="${k}" aria-pressed="${(b.size || "regular") === k}">${l}</button>`).join("")}</div></div>
         </div></div></div>`);
       const preview = look.querySelector(".lookPreview");
@@ -532,6 +533,10 @@
       const range = look.querySelector("#f-size");
       range.oninput = () => { look.querySelector("#sizeVal").textContent = range.value + "px"; drawPreview({ spineSize: +range.value, spineText: spineText.value }); };
       range.onchange = () => updateBook(id, { spineSize: +range.value });
+      const thick = look.querySelector("#f-thick");
+      thick.oninput = () => { look.querySelector("#thickVal").textContent = thick.value + "%"; drawPreview({ thickness: +thick.value, spineText: spineText.value }); };
+      thick.onchange = () => updateBook(id, { thickness: +thick.value });
+      look.querySelector("#f-thickAuto").onclick = () => { updateBook(id, { thickness: null }); draw(); };
       look.querySelector("#f-auto").onclick = () => { updateBook(id, { spineSize: null }); draw(); };
       look.querySelectorAll(".seg button").forEach((btn) => (btn.onclick = () => { updateBook(id, { size: btn.dataset.v }); draw(); }));
       body.append(look);
