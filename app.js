@@ -524,9 +524,18 @@
   }
   // the decorations standing on a shelf. "auto" is the room's own object. Until a shelf is
   // arranged by hand it shows the room's object where the old single-ornament setting put it.
+  // each look keeps its own arrangement: objects placed in one room stay in that room
+  const lookId = () => state.settings.lookKey || (Object.entries(D.LOOKS).find(([, L]) => L.set.backdrop === state.settings.backdrop && L.set.theme === state.settings.theme) || ["minimal"])[0];
   function decorItems(key) {
-    const dz = shelfDecor(key);
-    if (Array.isArray(dz.items)) return dz.items;
+    const dz = shelfDecor(key), mine = (dz.byLook || {})[lookId()];
+    if (Array.isArray(mine)) return mine;
+    // arranged before looks kept their own (v56–57): those belong to the look in use then
+    if (Array.isArray(dz.items) && !dz.byLook) {
+      const all = { ...(state.settings.shelfDecor || {}) }, { items, ...rest } = dz;
+      all[key] = { ...rest, byLook: { [lookId()]: items } };
+      state.settings.shelfDecor = all; save(true);
+      return items;
+    }
     const oc = state.settings.ornament || {};
     if (!oc.kind || oc.kind === "none" || dz.noCandle) return [];
     const pos = oc.pos || "end";
@@ -536,6 +545,11 @@
   function ornArt(k, box) {
     const o = D.ORNAMENTS[k], hgt = Math.min(box, (box * 1.15 * 200) / (o.vw || 100));
     return D.ornamentEl(k, Math.round(hgt / (o.scale || 0.7)), true);
+  }
+  function setDecorItems(key, items) {
+    const dz = shelfDecor(key), byLook = { ...(dz.byLook || {}) };
+    byLook[lookId()] = items.map(({ id, kind, after, on }) => ({ id, kind, after, on }));
+    setShelfDecor(key, { byLook, items: undefined });
   }
   function resolveKind(kind, idx) {
     if (kind !== "auto") return D.ORNAMENTS[kind] ? kind : null;
@@ -842,7 +856,7 @@
     const sortOrns = () => { orns = orns.map((o, k) => [o, k]).sort((a, b) => a[0].idx - b[0].idx || a[1] - b[1]).map((p) => p[0]); };
     function saveItems() {
       items = orns.map((o) => o.it);
-      setShelfDecor(key, { items: items.map(({ id, kind, after, on }) => ({ id, kind, after, on })) });
+      setDecorItems(key, items);
     }
 
     // ---- hold to lift, then drag
@@ -1026,7 +1040,7 @@
     root._addDecor = (kind) => {
       const fb = books[front >= 0 ? front : scrollMemory.get(key) || 0];
       items.push({ id: "d" + Date.now().toString(36), kind, after: fb ? fb.id : "end", on: true });
-      setShelfDecor(key, { items });
+      setDecorItems(key, items);
       // books ease aside to make room while it drops straight into its place
       const o = books.length ? makeOrn(items[items.length - 1]) : null;
       if (o) { orns.push(o); sortOrns(); o.el.classList.add("appear"); setTimeout(() => o.el.classList.remove("appear"), 600); }
@@ -1092,7 +1106,7 @@
               const chip = h(`<span class="decorChip"><span class="ornArt"></span><button aria-label="Remove ${esc(D.ORNAMENTS[kind].label)}">×</button></span>`);
               chip.firstElementChild.append(ornArt(kind, 44));
               chip.querySelector("button").onclick = () => {
-                setShelfDecor(key, { items: its.filter((x) => x !== it) });
+                setDecorItems(key, its.filter((x) => x !== it));
                 keepOpen(); render();
               };
               cur.append(chip);
@@ -1112,7 +1126,7 @@
                   const r = sh.getBoundingClientRect();
                   if (r.top < 60 || r.bottom > innerHeight - 40) sh.scrollIntoView({ block: "center", behavior: "smooth" });
                   sh._addDecor(k);
-                } else setShelfDecor(key, { items: [...its, { id: "d" + Date.now().toString(36), kind: k, after: "end", on: true }] });
+                } else setDecorItems(key, [...its, { id: "d" + Date.now().toString(36), kind: k, after: "end", on: true }]);
               };
               grid.append(t);
             });
