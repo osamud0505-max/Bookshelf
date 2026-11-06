@@ -259,7 +259,7 @@
     return new Promise((resolve) => {
       const vr = viewRect(), frame = pageFrame();
       const wrap = h(`<div class="rdLayer"></div>`);
-      Object.assign(wrap.style, { left: (at ? at.left : 0) + "px", top: (at ? at.top : 0) + "px", width: vr.width + "px", height: vr.height + "px" }, at && at.z ? { zIndex: at.z } : {});
+      Object.assign(wrap.style, { left: (at ? at.left : 0) + "px", top: (at ? at.top : 0) + "px", width: vr.width + "px", height: vr.height + "px" }, at && at.z ? { zIndex: at.z } : {}, at && at.hidden ? { visibility: "hidden" } : {});
       parent.append(wrap);
       if (!frame || !frame.contentDocument) return resolve(wrap);
       const fr = frame.getBoundingClientRect();
@@ -338,7 +338,7 @@
     const backInner = h(`<div class="rdBackInner"></div>`); backInner.style.background = paper; back.append(backInner);
     room.append(back);
     const p = { back, backInner, front: null, ready: false };
-    const [front, copy] = await Promise.all([snapshot(room, { left: vr.left, top: vr.top, z: 4 }), snapshot(backInner)]);
+    const [front, copy] = await Promise.all([snapshot(room, { left: vr.left, top: vr.top, z: 4, hidden: true }), snapshot(backInner)]);
     front.style.visibility = "hidden"; copy.style.opacity = "0.16"; p.front = front;
     if (gen !== primeGen || turn || !cur || primed) { front.remove(); back.remove(); return; }
     p.ready = true; primed = p;
