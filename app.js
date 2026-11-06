@@ -621,7 +621,8 @@
   }
   // small handling sounds (books, pages): quiet, close, no boom
   let sfxBus = null;
-  const sfxOut = () => { if (!sfxBus || sfxBus.context !== actx) { sfxBus = actx.createGain(); sfxBus.gain.value = 0.16; const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 140; sfxBus.connect(hp).connect(actx.destination); } return sfxBus; };
+  const sfxVol = () => { try { return window.ShelfSfxLevel ? window.ShelfSfxLevel() : 1; } catch (e) { return 1; } };
+  const sfxOut = () => { if (!sfxBus || sfxBus.context !== actx) { sfxBus = actx.createGain(); sfxBus.gain.value = 0.16 * sfxVol(); const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 140; sfxBus.connect(hp).connect(actx.destination); } return sfxBus; };
   let lastSlide = 0;
   /** A book dragged a little along a wooden shelf: a dry, grainy scrape with no knock or click. */
   function soundBookSlide() {
@@ -674,7 +675,7 @@
       n.connect(lp).connect(fg).connect(sfxOut()); n.start(at); n.stop(at + 0.12);
     } catch (e) { /* no sound available */ }
   }
-  window.ShelfSfx = { page: soundPageTurn, slide: soundBookSlide };
+  window.ShelfSfx = { page: soundPageTurn, slide: soundBookSlide, setVolume(v) { if (sfxBus) sfxBus.gain.setTargetAtTime(0.16 * v, sfxBus.context.currentTime, 0.05); } };
   /** A soft glassy shimmer, for things that glow rather than burn. */
   function soundChime(up) {
     try {

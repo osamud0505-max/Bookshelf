@@ -4,7 +4,7 @@
 (() => {
   "use strict";
   const KEY = "shelf.ambience.v1";
-  let pref = { on: true, vol: 0.5 };
+  let pref = { on: true, vol: 0.5, sfx: 1, sfxMute: false, mix: {} };
   try { pref = { ...pref, ...(JSON.parse(localStorage.getItem(KEY)) || {}) }; } catch (e) { /* first visit */ }
   const savePref = () => { try { localStorage.setItem(KEY, JSON.stringify(pref)); } catch (e) { /* private mode */ } };
 
@@ -39,7 +39,7 @@
     const out = ctx.createGain(); out.gain.value = dest === master ? 0 : 1; out.connect(dest);
     const { nodes, timers, cleanups } = shared;
     const R = {
-      out,
+      out, shared,
       /** A part of the room heard from further away: muffled (lowpass) and quieter, e.g. through a wall or window. */
       far(cutoff, level) { const lp = R.filter("lowpass", cutoff, 0.5), g = ctx.createGain(); g.gain.value = level; lp.connect(g).connect(out); return makeRoom(lp, shared); },
       onStop(fn) { cleanups.push(fn); },
@@ -295,24 +295,33 @@
       R.every(60, 260, (t) => { const f = rnd(160, 320); R.tone(t, f, f * rnd(1.6, 2.4), rnd(0.03, 0.07), rnd(0.03, 0.08), "sine", R.out, 0.006); });
     },
   };
+  // each room is a list of layers: [id, name shown in the sound panel, how to make it]
   const ROOMS = {
     // wind is only outdoors (forest, starry night); in the castle and the witch's tower it is faint and far off
-    cabin: (R) => S.fire(R),
-    loft: (R) => { S.city(R.far(520, 0.45)); S.sirens(R.far(1100, 0.7)); },
-    academia: (R) => { S.rain(R.far(1000, 0.5), 0.8); S.clock(R, false, 0.5); },
-    nook: (R) => S.birdsFar(R),
-    library: (R) => { S.clock(R, false, 0.8); S.hum(R); },
-    starry: (R) => { S.crickets(R); S.wind(R, 0, 0.6); },
-    cottage: (R) => S.birdsFar(R),
-    candle: (R) => S.writing(R),
-    vampire: (R) => S.drone(R),
-    victorian: (R) => S.clock(R, true, 0.8),
-    castle: (R) => { S.wind(R.far(380, 0.35), 1); S.drips(R); },
-    bordello: (R) => S.clock(R, false, 1),
-    forest: (R) => { S.crickets(R, 0.8); S.owl(R); S.wind(R, 0, 0.55); S.sparkle(R); },
-    teahouse: (R) => { S.water(R); S.chimes(R); S.crickets(R, 0.4); S.fireworks(R); },
-    witch: (R) => S.cauldron(R),
+    cabin: [["fire", "Fireplace", (R) => S.fire(R)]],
+    loft: [["city", "City traffic", (R) => S.city(R.far(520, 0.45))], ["sirens", "Distant sirens", (R) => S.sirens(R.far(1100, 0.7))]],
+    academia: [["rain", "Rain", (R) => S.rain(R.far(1000, 0.5), 0.8)], ["clock", "Clock", (R) => S.clock(R, false, 0.5)]],
+    nook: [["birds", "Birds", (R) => S.birdsFar(R)]],
+    library: [["clock", "Clock", (R) => S.clock(R, false, 0.8)], ["hum", "Room hum", (R) => S.hum(R)]],
+    starry: [["crickets", "Crickets", (R) => S.crickets(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.6)]],
+    cottage: [["birds", "Birds", (R) => S.birdsFar(R)]],
+    candle: [["writing", "Pen on paper", (R) => S.writing(R)]],
+    vampire: [["drone", "Low drone", (R) => S.drone(R)]],
+    victorian: [["clock", "Grandfather clock", (R) => S.clock(R, true, 0.8)]],
+    castle: [["wind", "Wind", (R) => S.wind(R.far(380, 0.35), 1)], ["drips", "Dripping water", (R) => S.drips(R)]],
+    bordello: [["clock", "Clock", (R) => S.clock(R, false, 1)]],
+    forest: [["crickets", "Crickets", (R) => S.crickets(R, 0.8)], ["owl", "Owl", (R) => S.owl(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.55)], ["sparkle", "Magic sparkles", (R) => S.sparkle(R)]],
+    teahouse: [["water", "Stream", (R) => S.water(R)], ["chimes", "Wind chimes", (R) => S.chimes(R)], ["crickets", "Crickets", (R) => S.crickets(R, 0.4)], ["fireworks", "Fireworks", (R) => S.fireworks(R)]],
+    witch: [["pot", "Bubbling pot", (R) => S.cauldron(R)]],
   };
+  /** A layer's own level: 0 when muted, otherwise its slider (1 = as designed, up to 1.5). */
+  const mixOf = (key, id) => ((pref.mix[key] || {})[id]) || { v: 1, m: false };
+  const layerLevel = (key, id) => { const x = mixOf(key, id); return x.m ? 0 : x.v; };
+  function setLayer(key, id, patch) {
+    pref.mix[key] = pref.mix[key] || {};
+    pref.mix[key][id] = { ...mixOf(key, id), ...patch }; savePref();
+    if (room && roomKey === key && room.layers[id]) { const g = room.layers[id].gain, t = ctx.currentTime; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(layerLevel(key, id), t + 0.25); }
+  }
 
   // evens out how loud the rooms are against each other
   const ROOM_GAIN = { nook: 3, cottage: 3, starry: 2.8, forest: 2.8, castle: 1.6, library: 1.5, candle: 2.5, vampire: 1.5, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1.2, teahouse: 0.8 };
@@ -330,7 +339,11 @@
     roomKey = key;
     if (!key) return;
     room = makeRoom();
-    ROOMS[key](room);
+    room.layers = {};
+    for (const [id, , make] of ROOMS[key]) {
+      const g = ctx.createGain(); g.gain.value = layerLevel(key, id); g.connect(room.out);
+      make(makeRoom(g, room.shared)); room.layers[id] = g;
+    }
     room.out.gain.setValueAtTime(0, t); room.out.gain.linearRampToValueAtTime(ROOM_GAIN[key] || 1, t + 2.5);
   }
   function start() {
@@ -357,13 +370,86 @@
   const btn = document.getElementById("soundBtn");
   function paintBtn() {
     if (!btn) return;
+    btn.hidden = false; // book and page sounds play in every look, so the panel is always there
     const has = !!ROOMS[look()];
-    btn.hidden = !has;
-    btn.classList.toggle("off", !pref.on);
-    btn.setAttribute("aria-pressed", pref.on);
-    btn.setAttribute("aria-label", pref.on ? "Room sound on. Tap to mute." : "Room sound off. Tap to play.");
+    btn.classList.toggle("off", has ? !pref.on : !!pref.sfxMute);
+    btn.setAttribute("aria-label", "Sound settings");
+    btn.setAttribute("aria-expanded", !!panel);
+    if (panel) renderPanel();
   }
-  if (btn) btn.onclick = () => setOn(!pref.on);
+
+  // ------------------------------------------------------------------ book and page sounds (played by app.js)
+  const sfxLevel = () => (pref.sfxMute ? 0 : pref.sfx);
+  const pushSfx = () => { if (window.ShelfSfx && window.ShelfSfx.setVolume) window.ShelfSfx.setVolume(sfxLevel()); };
+  window.ShelfSfxLevel = sfxLevel;
+  addEventListener("load", pushSfx);
+
+  // ------------------------------------------------------------------ the sound panel under the speaker button
+  let panel = null;
+  const ICON_ON = `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/></svg>`;
+  const ICON_OFF = `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>`;
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const row = (id, name, muted, value, max, extra = "") =>
+    `<div class="spRow${muted ? " muted" : ""}${extra}"><button type="button" class="spMute" data-mute="${id}" aria-pressed="${muted}" aria-label="${muted ? "Unmute" : "Mute"} ${esc(name)}">${muted ? ICON_OFF : ICON_ON}</button>`
+    + `<label for="sp-${id}">${esc(name)}</label><input type="range" id="sp-${id}" data-vol="${id}" min="0" max="${max}" step="0.05" value="${value}" aria-label="${esc(name)} volume"></div>`;
+  function renderPanel() {
+    const key = look(), layers = ROOMS[key] || [];
+    let h = "";
+    if (layers.length) {
+      h += `<div class="spHead"><span>Room sound</span><button type="button" class="spSwitch" id="sp-on" role="switch" aria-checked="${pref.on}"><i></i><span class="sr">Room sound</span></button></div>`;
+      h += `<div class="spGroup${pref.on ? "" : " off"}">` + row("all", "All room sounds", false, pref.vol, 1, " master").replace(/<button[^>]*data-mute="all"[^]*?<\/button>/, `<span class="spIcon">${ICON_ON}</span>`);
+      for (const [id, name] of layers) { const x = mixOf(key, id); h += row("l-" + id, name, x.m, x.v, 1.5); }
+      h += `</div><hr>`;
+    }
+    h += row("sfx", "Books and pages", !!pref.sfxMute, pref.sfx, 2);
+    panel.innerHTML = h;
+  }
+  function onPanel(e) {
+    const t = e.target, key = look();
+    const sw = t.closest("#sp-on");
+    if (sw && e.type === "click") { setOn(!pref.on); return; }
+    const m = t.closest("[data-mute]");
+    if (m && e.type === "click") {
+      const id = m.dataset.mute;
+      if (id === "sfx") { pref.sfxMute = !pref.sfxMute; savePref(); pushSfx(); if (!pref.sfxMute && window.ShelfSfx) window.ShelfSfx.slide(); }
+      else if (id.startsWith("l-")) setLayer(key, id.slice(2), { m: !mixOf(key, id.slice(2)).m });
+      renderPanel(); paintBtn(); return;
+    }
+    const v = t.dataset && t.dataset.vol;
+    if (v && e.type === "input") {
+      const val = +t.value;
+      if (v === "all") { pref.vol = val; savePref(); if (pref.on) start(); setLevel(0.2); }
+      else if (v === "sfx") { pref.sfx = val; if (pref.sfxMute) { pref.sfxMute = false; t.closest(".spRow").classList.remove("muted"); } savePref(); pushSfx(); }
+      else if (v.startsWith("l-")) { const id = v.slice(2); setLayer(key, id, { v: val, m: false }); t.closest(".spRow").classList.remove("muted"); }
+    }
+    if (v === "sfx" && e.type === "change" && window.ShelfSfx) window.ShelfSfx.slide(); // let you hear the new level
+  }
+  function place() {
+    if (!panel || !btn) return;
+    const r = btn.getBoundingClientRect();
+    panel.style.top = `${Math.round(r.bottom + 8)}px`;
+    const w = panel.offsetWidth;
+    panel.style.left = `${Math.max(12, Math.min(Math.round(r.right + 6 - w), innerWidth - w - 12))}px`;
+  }
+  const outside = (e) => { if (panel && !panel.contains(e.target) && !btn.contains(e.target)) closePanel(); };
+  const onKey = (e) => { if (e.key === "Escape") { closePanel(); btn.focus(); } };
+  function openPanel() {
+    panel = document.createElement("div");
+    panel.className = "soundPanel"; panel.setAttribute("role", "dialog"); panel.setAttribute("aria-label", "Sound");
+    for (const ev of ["click", "input", "change"]) panel.addEventListener(ev, onPanel);
+    renderPanel(); document.body.append(panel); place();
+    requestAnimationFrame(() => panel && panel.classList.add("open"));
+    addEventListener("pointerdown", outside, true); addEventListener("keydown", onKey); addEventListener("resize", place);
+    paintBtn();
+  }
+  function closePanel() {
+    if (!panel) return;
+    const p = panel; panel = null; p.classList.remove("open"); setTimeout(() => p.remove(), 180);
+    removeEventListener("pointerdown", outside, true); removeEventListener("keydown", onKey); removeEventListener("resize", place);
+    paintBtn();
+  }
+  if (btn) btn.onclick = () => (panel ? closePanel() : openPanel());
+  addEventListener("shelf:look", () => panel && renderPanel());
 
   /** The "Room sound" box in Customize. */
   function controls() {
