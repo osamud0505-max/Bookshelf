@@ -1079,3 +1079,12 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 @keyframes fjTwinkle { from { opacity: 1; } to { opacity: .55; } }
 .ornament[data-kind="fairyJar"] .ornGlow { transition: opacity 1s ease .4s; }
 @media (prefers-reduced-motion: reduce) { .ornament[data-kind="fairyJar"] .fjBulb { animation: none !important; } }
+
+/* painted rooms: a box with the picture's shape, sized and centred like background-size: cover, so fx can sit on spots in the picture */
+#backdrop .paintBox { position: absolute; left: 50%; top: 50%; width: max(100vw, calc(100vh * var(--r))); height: max(100vh, calc(100vw / var(--r))); transform: translate(-50%, -50%); pointer-events: none; }
+@supports (height: 100lvh) { #backdrop .paintBox { width: max(100vw, calc(100lvh * var(--r))); height: max(100lvh, calc(100vw / var(--r))); } }
+#backdrop .fxHearth.painted { position: absolute; left: 33%; right: auto; width: 34%; top: 82%; bottom: auto; height: 11.5%; mix-blend-mode: screen; }
+#backdrop .fxHearth.painted svg { filter: blur(1.6px) saturate(1.1); opacity: .9; }
+#backdrop .fxHearth.painted .fireGlow { left: -40%; right: -40%; bottom: -20%; height: 200%; }
+#backdrop .fxWindow.painted { position: absolute; left: 29.5%; top: 25%; width: 41.3%; height: 54.5%; transform: none; filter: none; }
+#backdrop .fxWindow.painted .pane { clip-path: none; background: none; }

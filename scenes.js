@@ -1006,6 +1006,30 @@
     return o;
   };
   Object.assign(D.BACKDROPS.enchanted, { fx: "willows grassWind motes fogThick", css: () => `${willowGlade()} center bottom / cover no-repeat, #0c0f22` });
+
+  // ------------------------------------------------------------------ painted rooms: osamu's illustrations are the rooms now.
+  // The picture carries everything that stands still; only moving parts stay as fx. Pieces that must sit on a spot in the
+  // picture go in a .paintBox, a box with the picture's own shape, scaled and centred exactly like the cover background.
+  const box = (inner, r = 0.4242) => `<div class="paintBox" style="--r:${r}">${inner}</div>`;
+  FX.paintedFire = () => {
+    const R = rng(19);
+    const flames = [[200, 1.25, "#ff6a10"], [160, 0.95, "#ff5a0c"], [240, 1, "#ff6a14"], [128, 0.7, "#ff7a1a"], [272, 0.72, "#ff7a1a"], [200, 0.85, "#ffb030"], [178, 0.6, "#ffd36a"], [222, 0.62, "#ffd36a"], [200, 0.42, "#fff0b0"]]
+      .map(([x, sc, c], i) => `<path class="fl" style="--d:-${(i * 0.23).toFixed(2)}s;--t:${(0.9 + (i % 3) * 0.25).toFixed(2)}s" d="M${x - 30 * sc} 196 C${x - 40 * sc} ${196 - 50 * sc} ${x - 12 * sc} ${196 - 80 * sc} ${x} ${196 - 120 * sc} C${x + 6 * sc} ${196 - 80 * sc} ${x + 40 * sc} ${196 - 60 * sc} ${x + 30 * sc} 196Z" fill="${c}"/>`).join("");
+    let sparks = ""; for (let i = 0; i < 10; i++) sparks += `<i class="spark" style="left:${f1(35 + R() * 30)}%;--t:${f1(2 + R() * 2.4)}s;--d:-${f1(R() * 4)}s;--dx:${f1((R() - 0.5) * 50)}px"></i>`;
+    return box(`<div class="fxHearth painted"><div class="fireGlow"></div><svg viewBox="80 70 240 130" preserveAspectRatio="none" aria-hidden="true"><g class="flames">${flames}</g></svg>${sparks}</div>`);
+  };
+  FX.paintedRain = () => {
+    const R = rng(12); let drops = ""; for (let i = 0; i < 60; i++) drops += `<i class="drop" style="left:${f1(R() * 100)}%;--t:${f1(0.7 + R() * 0.9)}s;--d:-${f1(R() * 2)}s;--h:${f1(10 + R() * 18)}px"></i>`;
+    let beads = ""; for (let i = 0; i < 34; i++) beads += `<i class="bead" style="left:${f1(R() * 96)}%;top:${f1(4 + R() * 90)}%;--t:${f1(5 + R() * 8)}s;--d:-${f1(R() * 10)}s"></i>`;
+    return box(`<div class="fxWindow painted"><div class="pane">${drops}${beads}</div></div>`);
+  };
+  const PAINTED = {
+    libraryStacks: ["library", "dust", 0.4619], cabinNight: ["cabin", "paintedFire"], loftDusk: ["loft", "glowmotes"], galleryWall: ["candle", ""],
+    teaNight: ["teahouse", "petals"], castleIvy: ["castle", "fog"], vampireMirror: ["vampire", "fog bats vampGloom"], study: ["academia", "paintedRain"],
+    cottageRoses: ["cottage", ""], greenDamask: ["victorian", ""], damask: ["bordello", ""], enchanted: ["forest", "motes fogThick"],
+    witchTower: ["witch", "witchMotes"], goldenHour: ["nook", ""],
+  };
+  for (const [key, [file, fx]] of Object.entries(PAINTED)) if (D.BACKDROPS[key]) Object.assign(D.BACKDROPS[key], { fx, css: () => `url('bg/${file}.jpg?v=1') center / cover no-repeat, #120a08` });
   const baseFx = D.backdropFx;
   D.backdropFx = (kinds) => String(kinds).split(" ").map((k) => (FX[k] ? FX[k]() : baseFx(k))).join("");
 })();
