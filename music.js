@@ -247,7 +247,9 @@
   }
   addEventListener("resize", place);
 
+  const listeners = new Set();
   function render() {
+    listeners.forEach((fn) => { try { fn(now); } catch (e) {} });
     if (preview && preview.isConnected) paint(preview);
     table.hidden = !(m.token && m.show);
     if (table.hidden) return;
@@ -493,4 +495,13 @@
     if (m.token) { loadSdk(); poll(); }
     if (justConnected) openMusic();
   })();
+
+  // small remote for other screens (the reader)
+  window.ShelfMusic = {
+    get now() { return now; },
+    connected: () => !!m.token,
+    toggle, next, prev,
+    refresh: () => { if (m.token) poll(); },
+    listen(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+  };
 })();

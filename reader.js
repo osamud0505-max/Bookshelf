@@ -87,11 +87,12 @@
 
   const room = h(`<div class="reader" hidden role="dialog" aria-label="Reader">
     <header class="rdTop"><button class="rdBtn" data-a="close" aria-label="Close the book">✕</button><div class="rdTitle"></div>
-      <button class="rdBtn" data-a="toc" aria-label="Chapters">☰</button><button class="rdBtn" data-a="aa" aria-label="Text settings">Aa</button></header>
+      <button class="rdBtn rdMusicBtn" data-a="music" aria-label="Music"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></button><button class="rdBtn" data-a="toc" aria-label="Chapters">☰</button><button class="rdBtn" data-a="aa" aria-label="Text settings">Aa</button></header>
     <div class="rdView"></div>
     <footer class="rdBottom"><input type="range" class="rdScrub" min="0" max="100" step="0.1" value="0" aria-label="Jump to a place in the book" disabled><div class="rdInfo"><span class="rdChapter"></span><span class="rdPct">…</span></div></footer>
     <div class="rdPanel" data-p="aa" hidden></div>
     <div class="rdPanel rdTocPanel" data-p="toc" hidden></div>
+    <div class="rdPanel rdMusic" data-p="music" hidden></div>
     <div class="rdLoading">Opening…</div>
   </div>`);
   document.body.append(room);
@@ -119,6 +120,44 @@
     });
     r.themes.fontSize(pref.size + "%");
   }
+
+  // ------------------------------------------------------------------ music remote
+  const musicPanel = room.querySelector('[data-p="music"]');
+  const musicBtn = room.querySelector(".rdMusicBtn");
+  const ICON = {
+    prev: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>',
+    next: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>',
+    play: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M6 4.5h4.5v15H6zM13.5 4.5H18v15h-4.5z"/></svg>',
+  };
+  function drawMusic() {
+    const M = window.ShelfMusic;
+    if (!M || !M.connected()) {
+      musicPanel.replaceChildren(h(`<p class="rdHint">Connect Spotify from the Music button on your shelf, then you can control it from here.</p>`));
+      return;
+    }
+    const n = M.now;
+    musicPanel.replaceChildren(h(`<div class="rdNow">
+      <div class="rdArt">${n.cover ? `<img alt="" src="${esc(n.cover)}" onerror="this.remove()">` : ""}</div>
+      <div class="rdSong"><b>${esc(n.title || "Nothing playing")}</b><span>${esc(n.artist || "Pick something from Music on your shelf")}</span></div>
+      <div class="rdCtl">
+        <button class="rdBtn" data-m="prev" aria-label="Previous song">${ICON.prev}</button>
+        <button class="rdBtn rdPlay" data-m="toggle" aria-label="${n.playing ? "Pause" : "Play"}">${n.playing ? ICON.pause : ICON.play}</button>
+        <button class="rdBtn" data-m="next" aria-label="Next song">${ICON.next}</button>
+      </div></div>`));
+  }
+  musicPanel.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-m]"); const M = window.ShelfMusic; if (!b || !M) return;
+    M[b.dataset.m]();
+    if (b.dataset.m === "toggle") { M.now.playing = !M.now.playing; drawMusic(); }
+  });
+  const syncMusic = () => {
+    const M = window.ShelfMusic;
+    musicBtn.classList.toggle("on", !!(M && M.now.playing));
+    if (!musicPanel.hidden) drawMusic();
+  };
+  if (window.ShelfMusic) window.ShelfMusic.listen(syncMusic);
+  else window.addEventListener("load", () => window.ShelfMusic && window.ShelfMusic.listen(syncMusic));
 
   function drawAa() {
     const p = room.querySelector('[data-p="aa"]');
@@ -468,6 +507,7 @@
     if (a === "close") close();
     else if (a === "aa") { drawAa(); showPanel("aa"); }
     else if (a === "toc") { drawToc(); showPanel("toc"); }
+    else if (a === "music") { drawMusic(); showPanel("music"); if (window.ShelfMusic) window.ShelfMusic.refresh(); }
   });
   room.querySelector(".rdScrub").onchange = (e) => {
     if (!cur || !cur.book.locations.length()) return;
