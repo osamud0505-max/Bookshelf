@@ -394,6 +394,13 @@
     room.querySelector(".rdLoading").hidden = false;
     room.querySelector(".rdPct").textContent = b.readPct ? Math.round(b.readPct * 100) + "%" : "…";
     document.body.style.overflow = "hidden";
+    // starting a book moves it to Reading (only from To read / Did not finish, so Read and your own shelves stay put)
+    if (b.status === "to_read" || b.status === "did_not_finish") {
+      b.status = "reading";
+      if (!b.startedOn) b.startedOn = new Date().toISOString().slice(0, 10);
+      save(); render();
+      toast("Moved to Reading");
+    }
     layoutGesture();
     applyLook();
     try {
@@ -411,6 +418,13 @@
         bk.readCfi = loc.start.cfi;
         if (book.locations && book.locations.length()) bk.readPct = book.locations.percentageFromCfi(loc.start.cfi) || 0;
         bk.readAt = Date.now();
+        // reaching the last page moves it to Read
+        if (bk.status === "reading" && (loc.atEnd || bk.readPct >= 0.995)) {
+          bk.status = "read";
+          if (!bk.finishedOn) bk.finishedOn = new Date().toISOString().slice(0, 10);
+          render();
+          toast("Finished! Moved to Read");
+        }
         save();
         room.querySelector(".rdPct").textContent = book.locations && book.locations.length() ? Math.round(bk.readPct * 100) + "%" : "";
         room.querySelector(".rdScrub").value = (bk.readPct || 0) * 100;
