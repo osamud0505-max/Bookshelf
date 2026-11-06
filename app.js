@@ -424,10 +424,81 @@
     return wrap;
   }
 
+  // ---------------------------------------------------------------- per-shelf decor switches
+  const shelfDecor = (key) => (state.settings.shelfDecor || {})[key] || {};
+  function setShelfDecor(key, patch) {
+    const all = { ...(state.settings.shelfDecor || {}) };
+    all[key] = { ...(all[key] || {}), ...patch };
+    state.settings.shelfDecor = all; save();
+  }
+
+  // ---------------------------------------------------------------- candle sounds (made on the fly, no files)
+  let actx = null;
+  function noiseBurst(dur) {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const buf = actx.createBuffer(1, Math.ceil(actx.sampleRate * dur), actx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = actx.createBufferSource(); src.buffer = buf; return src;
+  }
+  function env(g, t0, peak, attack, decay) { g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(peak, t0 + attack); g.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + decay); }
+  /** A soft breath that puts a candle out. */
+  function soundBlow() {
+    try {
+      const src = noiseBurst(0.7), t = actx.currentTime;
+      const bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.7;
+      bp.frequency.setValueAtTime(1400, t); bp.frequency.exponentialRampToValueAtTime(380, t + 0.45);
+      const g = actx.createGain(); env(g, t, 0.5, 0.04, 0.45);
+      src.connect(bp).connect(g).connect(actx.destination); src.start(t); src.stop(t + 0.6);
+      // the little "fft" of the flame dying
+      const s2 = noiseBurst(0.2), lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 260;
+      const g2 = actx.createGain(); env(g2, t + 0.12, 0.6, 0.01, 0.12);
+      s2.connect(lp).connect(g2).connect(actx.destination); s2.start(t + 0.12); s2.stop(t + 0.3);
+    } catch (e) { /* no sound available */ }
+  }
+  /** A match strike and the wick catching. */
+  function soundLight() {
+    try {
+      const t = actx ? actx.currentTime : 0;
+      const s1 = noiseBurst(0.12), hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2500;
+      const g1 = actx.createGain(); env(g1, actx.currentTime, 0.35, 0.005, 0.09);
+      s1.connect(hp).connect(g1).connect(actx.destination); s1.start(); s1.stop(actx.currentTime + 0.12);
+      const t2 = actx.currentTime + 0.08, s2 = noiseBurst(0.5), bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 1.2;
+      bp.frequency.setValueAtTime(250, t2); bp.frequency.exponentialRampToValueAtTime(900, t2 + 0.3);
+      const g2 = actx.createGain(); env(g2, t2, 0.22, 0.06, 0.32);
+      s2.connect(bp).connect(g2).connect(actx.destination); s2.start(t2); s2.stop(t2 + 0.45);
+    } catch (e) { /* no sound available */ }
+  }
+  /** Blow out or light the candle(s) of one ornament, with smoke rising from the wick. */
+  function toggleFlame(el, out) {
+    const svg = el.querySelector("svg");
+    if (out) {
+      soundBlow();
+      el.classList.add("snuffing");
+      el.querySelectorAll(".ornFlame").forEach((f, i) => {
+        const x = +f.dataset.x, y = +f.dataset.y - 2;
+        for (let k = 0; k < 2; k++) {
+          const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          const sw = k ? -1 : 1;
+          p.setAttribute("d", `M${x} ${y} c${-5 * sw} -9 ${5 * sw} -16 0 -26 c${-5 * sw} -9 ${6 * sw} -17 ${1 * sw} -28 c${-4 * sw} -8 ${4 * sw} -15 ${-1 * sw} -24`);
+          p.setAttribute("pathLength", "1"); p.setAttribute("class", "smoke");
+          p.style.animationDelay = (0.18 + k * 0.25 + i * 0.05) + "s";
+          svg.append(p); setTimeout(() => p.remove(), 3600);
+        }
+      });
+      setTimeout(() => { el.classList.remove("lit", "snuffing"); el.classList.add("embers"); }, 420);
+      setTimeout(() => el.classList.remove("embers"), 2200);
+    } else {
+      soundLight();
+      el.classList.remove("embers", "snuffing"); el.classList.add("lit", "lighting");
+      setTimeout(() => el.classList.remove("lighting"), 700);
+    }
+  }
+
   // ---------------------------------------------------------------- lights under each shelf
   const plankWidth = () => Math.min(innerWidth, 1200);
   function addLights(root) {
-    const cfg = state.settings.lights || {};
+    const cfg = shelfDecor(root.dataset.key).noLights ? { style: "none" } : state.settings.lights || {};
     root.querySelectorAll(".lights, .pullCord").forEach((e) => e.remove());
     const el = D.lightsEl(plankWidth(), cfg);
     root.classList.toggle("hasLights", !!el);
@@ -454,12 +525,15 @@
       <div class="plank"></div>
       <div class="caption"></div></div>`);
     const scroller = root.querySelector(".scroller"), track = root.querySelector(".track"), stage = root.querySelector(".stage"), caption = root.querySelector(".caption");
+    root.dataset.key = key;
     addLights(root);
     const count = books.length + (opts.onAdd ? 1 : 0);
     let H = 246, STEP = 103, viewW = 0, PAD = 16, front = -1, raf = 0;
     const slots = [], bookNodes = [];
     // an ornament (a candlestick…) stands in the row and gets pushed along when a book turns
-    const ornCfg = { kind: "none", on: true, pos: "end", ...(state.settings.ornament || {}) };
+    const ornCfg = { kind: "none", pos: "end", ...(state.settings.ornament || {}) };
+    if (shelfDecor(key).noCandle) ornCfg.kind = "none";
+    ornCfg.on = !shelfDecor(key).out;
     let orn = null, ornW = 0, ornIdx = -1, ornX = null, ornT = 0;
 
     books.forEach((b, i) => {
@@ -496,8 +570,10 @@
         ornW = parseFloat(orn.style.width) + 10;
         ornIdx = ornCfg.pos === "start" ? 0 : ornCfg.pos === "middle" ? Math.ceil(books.length / 2) : books.length;
         orn.onclick = () => {
-          const o = { ...ornCfg, on: !ornCfg.on }; state.settings.ornament = o; save();
-          document.querySelectorAll(".ornament").forEach((x) => x.classList.toggle("lit", o.on)); ornCfg.on = o.on;
+          if (orn.classList.contains("snuffing")) return;
+          ornCfg.on = !ornCfg.on;
+          toggleFlame(orn, !ornCfg.on);
+          setShelfDecor(key, { out: !ornCfg.on });
         };
         stage.append(orn);
       }
@@ -616,6 +692,24 @@
     const section = (key, title, list, opts = {}) => {
       const sec = h(`<section><div class="sectionHead"><h2 class="sectionTitle">${esc(title)}<span class="count">${list.length}</span></h2></div></section>`);
       if (opts.more) { const m = h(`<button class="linkBtn">Only this shelf</button>`); m.onclick = opts.more; sec.firstElementChild.append(m); }
+      const hasLights = (state.settings.lights || {}).style && state.settings.lights.style !== "none";
+      const hasCandle = (state.settings.ornament || {}).kind && state.settings.ornament.kind !== "none";
+      if (hasLights || hasCandle) {
+        const dz = shelfDecor(key);
+        const btn = h(`<button class="decorBtn" aria-label="Decor on this shelf" aria-expanded="false">✦</button>`);
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          document.querySelectorAll(".decorMenu").forEach((m) => m.remove());
+          const menu = h(`<div class="decorMenu" role="menu">
+            ${hasLights ? `<label class="check"><input type="checkbox" data-k="noLights" ${dz.noLights ? "" : "checked"}> Lights on this shelf</label>` : ""}
+            ${hasCandle ? `<label class="check"><input type="checkbox" data-k="noCandle" ${dz.noCandle ? "" : "checked"}> ${esc(D.ORNAMENTS[state.settings.ornament.kind].label)} on this shelf</label>` : ""}</div>`);
+          menu.querySelectorAll("input").forEach((i) => (i.onchange = () => { setShelfDecor(key, { [i.dataset.k]: !i.checked }); render(); }));
+          menu.onclick = (ev) => ev.stopPropagation();
+          btn.after(menu);
+          setTimeout(() => document.addEventListener("click", () => menu.remove(), { once: true }), 0);
+        };
+        sec.firstElementChild.append(btn);
+      }
       sec.append(shelfEl(key, list, opts));
       main.append(sec);
     };
@@ -1122,14 +1216,12 @@
 
       // something standing on the shelf
       const ornCfg = { kind: "none", on: true, pos: "end", ...(s.ornament || {}) };
-      const og = h(`<div class="group"><h3 class="label">On the shelf</h3><p class="hint">One piece stands among your books and gets nudged along as they turn. Tap it on the shelf to light it or blow it out.</p>
+      const og = h(`<div class="group"><h3 class="label">On the shelf</h3><p class="hint">A candle stands among your books and gets nudged along as they turn. Tap it on the shelf to blow it out or light it. Use ✦ next to a shelf's name to take the candle or lights off just that shelf.</p>
         <div class="seg wrapSeg" id="o-kind">${Object.entries(D.ORNAMENTS).map(([k, o]) => `<button data-v="${k}" aria-pressed="${ornCfg.kind === k}">${o.label}</button>`).join("")}</div>
-        <div class="seg" id="o-pos">${[["start", "At the start"], ["middle", "In the middle"], ["end", "At the end"]].map(([k, l]) => `<button data-v="${k}" aria-pressed="${ornCfg.pos === k}">${l}</button>`).join("")}</div>
-        <label class="check"><input type="checkbox" id="o-on" ${ornCfg.on ? "checked" : ""}> Lit</label></div>`);
+        <div class="seg" id="o-pos">${[["start", "At the start"], ["middle", "In the middle"], ["end", "At the end"]].map(([k, l]) => `<button data-v="${k}" aria-pressed="${ornCfg.pos === k}">${l}</button>`).join("")}</div></div>`);
       og.querySelectorAll("#o-kind button").forEach((b) => (b.onclick = () => set({ ornament: { ...ornCfg, kind: b.dataset.v, on: true } })));
       og.querySelectorAll("#o-pos button").forEach((b) => (b.onclick = () => set({ ornament: { ...ornCfg, pos: b.dataset.v } })));
-      og.querySelector("#o-on").onchange = (e) => set({ ornament: { ...ornCfg, on: e.target.checked } });
-      if (ornCfg.kind === "none") { og.querySelector("#o-pos").hidden = true; og.querySelector(".check").hidden = true; }
+      if (ornCfg.kind === "none") og.querySelector("#o-pos").hidden = true;
       body.append(og);
 
       // lettering for titles

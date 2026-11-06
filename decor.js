@@ -209,26 +209,27 @@
   // Drawn in a box `vw` wide and 200 tall; `w` is its width as a share of the book height.
   const metal = (id, stops) => `<linearGradient id="${id}" x1="0" x2="1" y1="0" y2="0">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join("")}</linearGradient>`;
   const BRASS = [[0, "#5a421c"], [0.28, "#c9a65e"], [0.45, "#f3dc9a"], [0.62, "#a9843f"], [1, "#4a3616"]];
+  const BRONZE = [[0, "#33240f"], [0.28, "#87683a"], [0.45, "#c9a46a"], [0.62, "#6e5226"], [1, "#281b0b"]];
   const SILVER = [[0, "#3d4046"], [0.3, "#a9adb5"], [0.46, "#f1f3f6"], [0.62, "#8b9097"], [1, "#30333a"]];
   const taper = (x, top, bottom, wd, wax = "#efe6d2") => `<rect x="${x - wd / 2}" y="${top}" width="${wd}" height="${bottom - top}" rx="1.6" fill="${wax}"/>`
     + `<rect x="${x - wd / 2}" y="${top}" width="${wd * 0.3}" height="${bottom - top}" fill="#fff" opacity=".28"/>`
     + `<path d="M${x - wd / 2 + 0.6} ${top + 2} q-1 7 .4 12 M${x + wd / 2 - 1.2} ${top + 1} q1.4 5 .2 9 M${x} ${top + 1} q.8 4 0 6" stroke="${wax}" stroke-width="2.6" stroke-linecap="round" fill="none"/>`
     + `<line x1="${x}" y1="${top}" x2="${x}" y2="${top - 4}" stroke="#2a2420" stroke-width="1.2"/>`;
-  const flame = (x, y, s = 1) => `<g class="ornFlame" data-x="${x}" data-y="${y}"><g class="ornFlicker"><ellipse cx="${x}" cy="${y - 9 * s}" rx="${5 * s}" ry="${11 * s}" fill="#ffb347" opacity=".55"/><path d="M${x} ${y - 20 * s} C${x + 6 * s} ${y - 12 * s} ${x + 5 * s} ${y - 2 * s} ${x} ${y} C${x - 5 * s} ${y - 2 * s} ${x - 6 * s} ${y - 12 * s} ${x} ${y - 20 * s}Z" fill="#ffc861"/><path d="M${x} ${y - 13 * s} C${x + 2.6 * s} ${y - 9 * s} ${x + 2.2 * s} ${y - 3 * s} ${x} ${y - 1.5 * s} C${x - 2.2 * s} ${y - 3 * s} ${x - 2.6 * s} ${y - 9 * s} ${x} ${y - 13 * s}Z" fill="#fffbe6"/><ellipse cx="${x}" cy="${y - 1}" rx="${1.6 * s}" ry="${2.4 * s}" fill="#5a7cff" opacity=".55"/></g></g>`;
+  const flame = (x, y, s = 1) => `<circle class="ember" cx="${x}" cy="${y - 0.5}" r="${1.4 * s}" fill="#ff7a2a"/><g class="ornFlame" data-x="${x}" data-y="${y}"><g class="ornFlicker"><ellipse cx="${x}" cy="${y - 9 * s}" rx="${5 * s}" ry="${11 * s}" fill="#ffb347" opacity=".55"/><path d="M${x} ${y - 20 * s} C${x + 6 * s} ${y - 12 * s} ${x + 5 * s} ${y - 2 * s} ${x} ${y} C${x - 5 * s} ${y - 2 * s} ${x - 6 * s} ${y - 12 * s} ${x} ${y - 20 * s}Z" fill="#ffc861"/><path d="M${x} ${y - 13 * s} C${x + 2.6 * s} ${y - 9 * s} ${x + 2.2 * s} ${y - 3 * s} ${x} ${y - 1.5 * s} C${x - 2.2 * s} ${y - 3 * s} ${x - 2.6 * s} ${y - 9 * s} ${x} ${y - 13 * s}Z" fill="#fffbe6"/><ellipse cx="${x}" cy="${y - 1}" rx="${1.6 * s}" ry="${2.4 * s}" fill="#5a7cff" opacity=".55"/></g></g>`;
   const ORNAMENTS = {
     none: { label: "None" },
     candlestick: {
-      label: "Brass candlestick", w: 0.24, vw: 60,
+      label: "Brass candlestick", scale: 0.74, vw: 60,
       draw: (g) => `<defs>${metal(g, BRASS)}</defs>`
-        + `<ellipse cx="30" cy="194" rx="26" ry="5" fill="url(#${g})"/><path d="M6 194 Q8 182 22 178 L38 178 Q52 182 54 194Z" fill="url(#${g})"/>`
+        + `<path d="M4 200 L4 196 Q8 182 22 178 L38 178 Q52 182 56 196 L56 200Z" fill="url(#${g})"/><ellipse cx="30" cy="196" rx="26" ry="3" fill="url(#${g})"/>`
         + `<path d="M25 178 C20 170 22 160 27 156 C22 148 24 136 27 128 L26 96 C21 92 21 86 27 84 L33 84 C39 86 39 92 34 96 L33 128 C36 136 38 148 33 156 C38 160 40 170 35 178Z" fill="url(#${g})"/>`
         + `<ellipse cx="30" cy="84" rx="15" ry="3.5" fill="url(#${g})"/><path d="M15 84 Q30 92 45 84" fill="url(#${g})"/>`
         + taper(30, 30, 82, 11) + flame(30, 25, 1.05),
     },
     candelabra: {
-      label: "Silver candelabra", w: 0.5, vw: 140,
+      label: "Silver candelabra", scale: 0.7, vw: 140,
       draw: (g) => `<defs>${metal(g, SILVER)}</defs>`
-        + `<ellipse cx="70" cy="194" rx="34" ry="5.5" fill="url(#${g})"/><path d="M38 194 Q42 180 60 176 L80 176 Q98 180 102 194Z" fill="url(#${g})"/>`
+        + `<path d="M36 200 L36 196 Q42 180 60 176 L80 176 Q98 180 104 196 L104 200Z" fill="url(#${g})"/><ellipse cx="70" cy="196" rx="34" ry="3.2" fill="url(#${g})"/>`
         + `<path d="M66 176 C60 166 62 152 67 146 L66 112 C60 108 61 101 67 99 L73 99 C79 101 80 108 74 112 L73 146 C78 152 80 166 74 176Z" fill="url(#${g})"/>`
         + `<path d="M70 112 C46 112 22 112 20 92 M70 112 C94 112 118 112 120 92" stroke="url(#${g})" stroke-width="5" fill="none" stroke-linecap="round"/>`
         + `<path d="M70 112 C56 122 34 124 30 110 M70 112 C84 122 106 124 110 110" stroke="url(#${g})" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".8"/>`
@@ -237,10 +238,45 @@
         + taper(20, 46, 90, 9) + taper(120, 46, 90, 9) + taper(70, 22, 74, 10)
         + flame(20, 41, 0.9) + flame(120, 41, 0.9) + flame(70, 17, 1),
     },
+    twist: {
+      label: "Barley-twist brass", scale: 0.78, vw: 50,
+      draw: (g) => {
+        let twist = ""; for (let y = 122; y < 176; y += 7) twist += `<path d="M20 ${y + 6} Q25 ${y - 1} 30 ${y}" stroke="#5a421c" stroke-width="2.2" fill="none" opacity=".7"/>`;
+        return `<defs>${metal(g, BRASS)}</defs>`
+          + `<path d="M3 200 L3 196 Q6 186 17 182 Q22 178 22 174 L28 174 Q28 178 33 182 Q44 186 47 196 L47 200Z" fill="url(#${g})"/><ellipse cx="25" cy="196" rx="22" ry="2.6" fill="url(#${g})"/>`
+          + `<rect x="20" y="116" width="10" height="60" rx="3" fill="url(#${g})"/>${twist}`
+          + `<path d="M17 116 L33 116 L31 106 Q25 103 19 106Z" fill="url(#${g})"/><ellipse cx="25" cy="106" rx="9" ry="2.4" fill="url(#${g})"/>`
+          + taper(25, 18, 106, 11, "#f4f1ea") + flame(25, 14, 1);
+      },
+    },
+    chamber: {
+      label: "Chamberstick", scale: 0.5, vw: 130,
+      draw: (g) => {
+        let rays = ""; for (let a = 0; a < 18; a++) { const x = 14 + a * 5.6; rays += `<line x1="${x}" y1="190" x2="${54 + (x - 54) * 0.5}" y2="184" stroke="#2e2010" stroke-width=".8" opacity=".45"/>`; }
+        let flutes = ""; for (let x = 45; x <= 63; x += 3.6) flutes += `<line x1="${x}" y1="160" x2="${x + (54 - x) * 0.25}" y2="180" stroke="#2e2010" stroke-width=".9" opacity=".45"/>`;
+        return `<defs>${metal(g, BRONZE)}</defs>`
+          + `<path d="M4 200 L4 194 Q54 180 104 194 L104 200Z" fill="url(#${g})"/><ellipse cx="54" cy="191" rx="50" ry="7" fill="url(#${g})"/><ellipse cx="54" cy="190" rx="42" ry="5" fill="#000" opacity=".18"/>${rays}`
+          + `<path d="M46 186 Q46 180 50 178 L58 178 Q62 180 62 186Z" fill="url(#${g})"/>`
+          + `<path d="M42 158 Q44 176 50 180 L58 180 Q64 176 66 158Z" fill="url(#${g})"/>${flutes}`
+          + `<ellipse cx="54" cy="158" rx="14" ry="3.6" fill="url(#${g})"/>`
+          + `<path d="M64 172 C84 172 96 150 112 146 C126 143 128 160 118 166 C112 170 108 162 114 160" stroke="url(#${g})" stroke-width="5" fill="none" stroke-linecap="round"/>`
+          + taper(54, 64, 158, 22, "#efe4cc") + flame(54, 60, 1.25);
+      },
+    },
+    squareBrass: {
+      label: "Square-base brass", scale: 0.8, vw: 56,
+      draw: (g) => `<defs>${metal(g, BRASS)}</defs>`
+        + `<path d="M4 200 L4 188 L10 182 L46 182 L52 188 L52 200Z" fill="url(#${g})"/><rect x="4" y="186" width="48" height="2" fill="#5a421c" opacity=".5"/>`
+        + `<path d="M14 182 L18 176 L38 176 L42 182Z" fill="url(#${g})"/>`
+        + `<rect x="22" y="112" width="12" height="64" fill="url(#${g})"/>`
+        + [116, 124, 160, 168].map((y) => `<rect x="19.5" y="${y}" width="17" height="4" rx="2" fill="url(#${g})"/>`).join("")
+        + `<path d="M17 112 L39 112 L37 104 L19 104Z" fill="url(#${g})"/><ellipse cx="28" cy="104" rx="10" ry="2.4" fill="url(#${g})"/>`
+        + taper(28, 16, 104, 12, "#f4f1ea") + flame(28, 12, 1),
+    },
     oilLamp: {
-      label: "Oil lamp", w: 0.32, vw: 80,
+      label: "Oil lamp", scale: 0.62, vw: 80,
       draw: (g) => `<defs>${metal(g, BRASS)}<linearGradient id="${g}c" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".08"/><stop offset=".3" stop-color="#fff" stop-opacity=".45"/><stop offset=".5" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity=".2"/></linearGradient></defs>`
-        + `<ellipse cx="40" cy="194" rx="30" ry="5" fill="url(#${g})"/><path d="M14 194 Q18 184 32 182 L48 182 Q62 184 66 194Z" fill="url(#${g})"/>`
+        + `<path d="M10 200 L10 196 Q18 184 32 182 L48 182 Q62 184 70 196 L70 200Z" fill="url(#${g})"/><ellipse cx="40" cy="196" rx="30" ry="3" fill="url(#${g})"/>`
         + `<path d="M35 182 L33 160 L47 160 L45 182Z" fill="url(#${g})"/>`
         + `<path d="M40 160 C14 160 10 122 40 118 C70 122 66 160 40 160Z" fill="url(#${g})"/><path d="M40 156 C22 154 20 128 40 124 C60 128 58 154 40 156Z" fill="#000" opacity=".12"/>`
         + `<rect x="30" y="110" width="20" height="9" rx="2" fill="url(#${g})"/>`
@@ -248,16 +284,16 @@
         + `<line x1="40" y1="110" x2="40" y2="98" stroke="#2a2420" stroke-width="2"/>` + flame(40, 98, 0.95),
     },
     pillars: {
-      label: "Melted candles", w: 0.42, vw: 110,
-      draw: (g) => `<defs>${metal(g, BRASS)}</defs><ellipse cx="55" cy="193" rx="50" ry="6" fill="url(#${g})"/>`
-        + [[28, 120, 22], [60, 88, 26], [88, 140, 18]].map(([x, top, wd]) => `<rect x="${x - wd / 2}" y="${top}" width="${wd}" height="${190 - top}" rx="3" fill="#ece1cb"/><rect x="${x - wd / 2}" y="${top}" width="${wd * 0.3}" height="${190 - top}" fill="#fff" opacity=".3"/><path d="M${x - wd / 2} ${top + 2} Q${x - wd / 2 - 1} ${top + 18} ${x - wd / 2 + 2} ${top + 26} M${x + wd / 2 - 2} ${top + 2} Q${x + wd / 2 + 1} ${top + 12} ${x + wd / 2 - 1} ${top + 16}" stroke="#ece1cb" stroke-width="4" stroke-linecap="round" fill="none"/><ellipse cx="${x}" cy="${top + 1}" rx="${wd / 2}" ry="3" fill="#d9ccb2"/><line x1="${x}" y1="${top + 1}" x2="${x}" y2="${top - 4}" stroke="#2a2420" stroke-width="1.2"/>` + flame(x, top - 4, 0.95)).join(""),
+      label: "Melted candles", scale: 0.5, vw: 110,
+      draw: (g) => `<defs>${metal(g, BRASS)}</defs><path d="M3 200 L3 195 Q55 187 107 195 L107 200Z" fill="#2c2a2e"/><ellipse cx="55" cy="194" rx="52" ry="4" fill="#4a474d"/>`
+        + [[28, 96, 24], [60, 52, 28], [88, 120, 20]].map(([x, top, wd]) => `<rect x="${x - wd / 2}" y="${top}" width="${wd}" height="${193 - top}" rx="3" fill="#ece1cb"/><rect x="${x - wd / 2}" y="${top}" width="${wd * 0.3}" height="${193 - top}" fill="#fff" opacity=".3"/><path d="M${x - wd / 2} ${top + 2} Q${x - wd / 2 - 1} ${top + 18} ${x - wd / 2 + 2} ${top + 26} M${x + wd / 2 - 2} ${top + 2} Q${x + wd / 2 + 1} ${top + 12} ${x + wd / 2 - 1} ${top + 16}" stroke="#ece1cb" stroke-width="4" stroke-linecap="round" fill="none"/><ellipse cx="${x}" cy="${top + 1}" rx="${wd / 2}" ry="3" fill="#d9ccb2"/><line x1="${x}" y1="${top + 1}" x2="${x}" y2="${top - 4}" stroke="#2a2420" stroke-width="1.2"/>` + flame(x, top - 4, 0.95)).join(""),
     },
   };
   let ornN = 0;
   /** The ornament as an element sized for books `H` pixels tall. */
   function ornamentEl(kind, H, lit) {
     const o = ORNAMENTS[kind]; if (!o || !o.draw) return null;
-    const h = Math.round(H * 0.74), w = Math.round(h * o.vw / 200);
+    const h = Math.round(H * (o.scale || 0.7)), w = Math.round(h * o.vw / 200);
     const el = document.createElement("div");
     el.className = "ornament" + (lit ? " lit" : "");
     el.style.width = w + "px"; el.style.height = h + "px";
@@ -313,8 +349,11 @@
     academia: { label: "Dark academia", set: { theme: "cabin", accent: "#c9a25b", shelfMat: "walnut", backdrop: "leather", lights: { style: "globe", colour: "warm", on: true }, headFont: "fell" } },
     teahouse: { label: "Tea house", set: { theme: "rice", accent: "#b8402f", shelfMat: "pine", backdrop: "shoji", lights: { style: "lanterns", colour: "warm", on: true }, headFont: "cormorant" } },
   });
-  const ORN = { vampire: "candelabra", victorian: "candlestick", castle: "candelabra", bordello: "pillars", academia: "oilLamp" };
-  for (const [k, L] of Object.entries(LOOKS)) L.set.ornament = { kind: ORN[k] || "none", on: true, pos: "end" };
+  const ORN = { vampire: "candelabra", victorian: "twist", castle: "pillars", bordello: "chamber", academia: "squareBrass" };
+  for (const [k, L] of Object.entries(LOOKS)) {
+    L.set.ornament = { kind: ORN[k] || "none", pos: "end" };
+    if (ORN[k]) L.set.lights = { ...L.set.lights, style: "none" };
+  }
   MATERIALS.whitewashWood = { label: "Whitewashed", base: "#d9cfc0", tex: () => grainH(0.3, 0.2) };
 
   window.Decor = { BACKDROPS, MATERIALS, LIGHT_STYLES, LIGHT_COLOURS, HEAD_FONTS, PALETTES, LOOKS, LOOK_KEYS, ORNAMENTS, lightsEl, ornamentEl };

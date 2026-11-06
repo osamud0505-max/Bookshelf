@@ -598,3 +598,18 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .ornament::after { content: ""; position: absolute; left: 0; right: 0; bottom: -5px; height: 10px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0,0,0,.45), transparent 70%); z-index: -1; }
 .wrapSeg { flex-wrap: wrap; }
 @media (prefers-reduced-motion: reduce) { .ornament.lit .ornFlicker, .ornament.lit .ornGlow { animation: none; } }
+
+/* blowing out / lighting a candle */
+.ornament .ember { opacity: 0; }
+.ornament.embers .ember { animation: ember 1.8s ease-out forwards; }
+@keyframes ember { 0% { opacity: 1; } 100% { opacity: 0; } }
+.ornament.snuffing .ornFlicker { animation: snuff .42s ease-in forwards !important; }
+@keyframes snuff { 0% { transform: scale(1, 1); } 30% { transform: scale(.85, 1.25) skewX(6deg); } 55% { transform: scale(.7, .6) skewX(-8deg); } 100% { transform: scale(.15, 0); } }
+.ornament.snuffing .ornGlow { opacity: 0; transition: opacity .45s; animation: none; }
+.ornament.lighting .ornFlicker { animation: ignite .65s cubic-bezier(.2,1.4,.4,1) !important; }
+@keyframes ignite { 0% { transform: scale(.1, 0); } 45% { transform: scale(1.25, 1.45); } 100% { transform: scale(1, 1); } }
+.ornament .smoke { fill: none; stroke: rgba(232,228,220,.85); stroke-width: 2.8; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; filter: blur(.6px); animation: smoke 2.8s ease-out forwards; }
+@keyframes smoke { 0% { stroke-dashoffset: 1; opacity: 0; transform: translateY(0); } 12% { opacity: .75; } 55% { stroke-dashoffset: 0; opacity: .45; } 100% { stroke-dashoffset: 0; opacity: 0; transform: translateY(-16px); } }
+.sectionHead { position: relative; }
+.decorBtn { margin-left: 8px; width: 28px; height: 28px; border-radius: 999px; border: 1px solid var(--border); background: color-mix(in srgb, var(--background) 55%, transparent); color: var(--muted-fg); cursor: pointer; font-size: .8rem; }
+.decorMenu { position: absolute; right: 0; top: 100%; z-index: 20; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 14px; background: var(--popup); border: 1px solid var(--border); box-shadow: 0 14px 34px rgba(0,0,0,.45); font-size: .9rem; }
