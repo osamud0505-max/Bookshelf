@@ -823,12 +823,22 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .chips button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--surface)); box-shadow: 0 0 0 1px var(--accent); }
 
 /* bats */
-#backdrop .bat { left: 0; top: var(--y); width: calc(46px * var(--s)); animation: batFly var(--t) linear infinite; animation-delay: var(--d); opacity: .85; }
-#backdrop .bat svg { display: block; width: 100%; height: auto; fill: #07030a; stroke: #07030a; stroke-width: .6; filter: drop-shadow(0 0 2px rgba(255,80,80,.15)); transform: scaleX(var(--dir)); }
-#backdrop .bat .w { transform-box: fill-box; animation: batFlap var(--f) ease-in-out infinite alternate; }
-#backdrop .bat .w.l { transform-origin: 100% 60%; }
-#backdrop .bat .w.r { transform-origin: 0 60%; }
-@keyframes batFlap { from { transform: scaleY(1) rotate(0); } to { transform: scaleY(-.35) rotate(0); } }
+#backdrop .bat { left: 0; top: var(--y); width: calc(64px * var(--s)); animation: batFly var(--t) linear infinite; animation-delay: var(--d); opacity: .8; }
+#backdrop .bat.near { opacity: 1; filter: blur(1.2px); z-index: 2; }
+#backdrop .bat svg { display: block; width: 100%; height: auto; overflow: visible; fill: #050205; transform: scaleX(var(--dir)); filter: drop-shadow(0 0 3px rgba(160,10,30,.35)); }
+#backdrop .bat .bone { fill: none; stroke: #2a141c; stroke-width: .9; stroke-linecap: round; }
+#backdrop .bat .eye { fill: #ff2a3a; opacity: .7; }
+#backdrop .bat .flyer { animation: batBob var(--f) ease-in-out infinite alternate; }
+#backdrop .bat .w { transform-box: view-box; transform-origin: 56px 20px; animation: batFlap var(--f) ease-in-out infinite alternate; }
+#backdrop .bat .w.r { transform-origin: 64px 20px; animation-name: batFlapR; }
+/* wings sweep down and fold a little on the downstroke, the body rises against it */
+@keyframes batFlap { from { transform: rotate(-28deg) scaleY(1.05); } to { transform: rotate(34deg) scaleY(.55); } }
+@keyframes batFlapR { from { transform: rotate(28deg) scaleY(1.05); } to { transform: rotate(-34deg) scaleY(.55); } }
+@keyframes batBob { from { transform: translateY(3px); } to { transform: translateY(-3px); } }
+#backdrop .vampGloom { inset: 0; background: radial-gradient(ellipse 75% 60% at 50% 45%, transparent 35%, rgba(4,0,2,.55) 75%, rgba(0,0,0,.85)); }
+#backdrop .vampEmber { left: 0; right: 0; bottom: 0; height: 55%; background: radial-gradient(ellipse 70% 60% at 50% 100%, rgba(170,20,30,.28), transparent 70%); animation: emberBreath 7s ease-in-out infinite alternate; }
+@keyframes emberBreath { from { opacity: .55; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { #backdrop .vampEmber { animation: none; } }
 @keyframes batFly {
   0% { transform: translate(-80px, 0) rotate(-4deg); }
   25% { transform: translate(25vw, calc(var(--y2) * .5)) rotate(3deg); }
@@ -837,13 +847,13 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
   100% { transform: translate(calc(100vw + 80px), calc(var(--y2) * .2)) rotate(-2deg); }
 }
 /* rainy window in the study */
-#backdrop .fxWindow { left: 50%; top: 6vh; width: clamp(110px, 30vw, 250px); aspect-ratio: 100 / 190; transform: translateX(-50%); filter: brightness(.82) drop-shadow(0 10px 24px rgba(0,0,0,.6)); }
+#backdrop .fxWindow { left: 50%; top: 6vh; height: 65vh; width: clamp(130px, 40vw, 300px); transform: translateX(-50%); filter: brightness(.82) drop-shadow(0 10px 24px rgba(0,0,0,.6)); }
 #backdrop .fxWindow .tracery { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 #backdrop .fxWindow .pane { position: absolute; inset: 0; overflow: hidden; clip-path: url(#gothArch); background: linear-gradient(#0e1724, #1b2a3a 60%, #2a2a2e); }
 #backdrop .fxWindow .pane b { position: absolute; width: 14px; height: 14px; margin: -7px; border-radius: 50%; background: #ffc46a; filter: blur(5px); opacity: .6; }
 #backdrop .fxWindow .drop { position: absolute; top: -30px; width: 1px; height: var(--h); background: linear-gradient(rgba(200,220,255,0), rgba(200,220,255,.55)); animation: rainFall var(--t) linear infinite; animation-delay: var(--d); }
 #backdrop .fxWindow .bead { position: absolute; width: 3px; height: 4px; border-radius: 50%; background: rgba(210,225,255,.45); box-shadow: 0 0 2px rgba(255,255,255,.5); animation: beadSlide var(--t) ease-in infinite; animation-delay: var(--d); }
-@keyframes rainFall { to { transform: translateY(560px); } }
+@keyframes rainFall { to { transform: translateY(78vh); } }
 @keyframes beadSlide { 0%, 60% { transform: translateY(0); } 100% { transform: translateY(80px); opacity: 0; } }
 /* velvet drapes and swag */
 #backdrop .fxDrape { top: 0; left: 0; height: 100%; width: clamp(30px, 11vw, 200px); filter: brightness(.75) drop-shadow(6px 0 12px rgba(0,0,0,.5)); }
@@ -870,8 +880,8 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 #backdrop .tie.ribbon .bow { flex: none; width: 24px; height: 21px; margin-left: -8px; margin-top: 8px; }
 #backdrop .fxDrape.wide { width: clamp(76px, 25vw, 340px); }
 /* the antique mirror */
-#backdrop .fxMirror { left: 50%; top: 7vh; bottom: 5vh; width: clamp(220px, 74vw, 560px); transform: translateX(-50%); padding: 11px; border-radius: 999px 999px 10px 10px / 170px 170px 10px 10px;
-  background: linear-gradient(135deg, #5a3e16, #e0bc6a 28%, #7a5a24 46%, #d4ae58 70%, #3e2c10); box-shadow: inset 0 0 0 2px #3a2a10, 0 24px 60px rgba(0,0,0,.75); filter: brightness(.85); }
+#backdrop .fxMirror { --mb: .7; left: 50%; top: 7vh; bottom: 5vh; width: clamp(220px, 74vw, 560px); transform: translateX(-50%); padding: 11px; border-radius: 999px 999px 10px 10px / 170px 170px 10px 10px;
+  background: linear-gradient(135deg, #5a3e16, #e0bc6a 28%, #7a5a24 46%, #d4ae58 70%, #3e2c10); box-shadow: inset 0 0 0 2px #3a2a10, 0 24px 60px rgba(0,0,0,.75); filter: brightness(var(--mb)); }
 #backdrop .fxMirror .glass { position: relative; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: linear-gradient(160deg, #5e5a66 0%, #34303a 28%, #18141c 55%, #2a2430 78%, #120e14 100%); box-shadow: inset 0 0 0 2px #2a1e0c; }
 #backdrop .fxMirror .spots { position: absolute; inset: 0; border-radius: inherit; background:
   radial-gradient(circle at 18% 22%, rgba(120,100,70,.25) 0 2px, transparent 3px), radial-gradient(circle at 74% 64%, rgba(120,100,70,.22) 0 3px, transparent 4px),
@@ -880,6 +890,11 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 #backdrop .fxMirror .glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background:
   linear-gradient(120deg, rgba(255,255,255,.1), rgba(255,255,255,0) 30%, rgba(255,255,255,0) 62%, rgba(255,255,255,.06) 70%, rgba(255,255,255,0) 78%),
   radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.6)); }
+#backdrop .fxMirror .cracks { position: absolute; inset: 0; width: 100%; height: 100%; }
+#backdrop .fxMirror .drip { stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: bloodRun var(--t) ease-in infinite; animation-delay: var(--d); }
+/* blood creeps down from the crack, hangs, then the stain fades back and it starts again */
+@keyframes bloodRun { 0% { stroke-dashoffset: 1; opacity: 1; } 55% { stroke-dashoffset: 0; opacity: 1; } 85% { stroke-dashoffset: 0; opacity: .9; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #backdrop .fxMirror .drip { animation: none; stroke-dashoffset: 0; } }
 /* fog: wide soft banks drifting sideways at different speeds */
 #backdrop .fog { left: -50%; width: 200%; pointer-events: none; will-change: transform; }
 #backdrop .fog.f1 { bottom: -6%; height: 45%; background: radial-gradient(ellipse 30% 50% at 20% 60%, rgba(200,210,225,.20), transparent 70%), radial-gradient(ellipse 35% 45% at 65% 55%, rgba(200,210,225,.16), transparent 70%); animation: fogDrift 38s linear infinite alternate; }

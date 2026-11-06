@@ -224,6 +224,44 @@
     return SVG(`${wall}${art}${dado}<rect width="400" height="860" fill="url(#dim)"/><rect width="400" height="860" fill="url(#cl)"/>`, defs);
   });
 
+  // the mirror has been struck: shards radiate from one point, and blood seeps out of the cracks and runs down
+  function crackedGlass() {
+    const R = rng(13), cx = 58, cy = 74, rays = [];
+    const n = 11;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + (R() - 0.5) * 0.35, len = 34 + R() * 70, pts = [[cx, cy]];
+      let x = cx, y = cy, ang = a;
+      for (let k = 1; k <= 6; k++) { ang += (R() - 0.5) * 0.3; const step = len / 6; x += Math.cos(ang) * step; y += Math.sin(ang) * step; pts.push([x, y]); }
+      rays.push(pts);
+    }
+    const path = (pts) => "M" + pts.map(([x, y]) => `${f1(x)} ${f1(y)}`).join(" L");
+    // shards: wedges between neighbouring rays, each catching the light a little differently
+    let shards = "";
+    for (let i = 0; i < n; i++) {
+      const A = rays[i], B = rays[(i + 1) % n];
+      shards += `<path d="${path([...A.slice(0, 5), ...B.slice(0, 5).reverse()])}Z" fill="${i % 3 === 0 ? "rgba(255,255,255,.05)" : i % 3 === 1 ? "rgba(0,0,0,.18)" : "rgba(120,110,140,.06)"}"/>`;
+    }
+    // rings of cracks joining the rays
+    let rings = "";
+    [1, 2, 4].forEach((k) => { let d = ""; for (let i = 0; i < n; i++) { if (R() < 0.25) continue; const p1 = rays[i][k], p2 = rays[(i + 1) % n][k]; d += `M${f1(p1[0])} ${f1(p1[1])} Q${f1((p1[0] + p2[0]) / 2 + (R() - 0.5) * 6)} ${f1((p1[1] + p2[1]) / 2 + (R() - 0.5) * 6)} ${f1(p2[0])} ${f1(p2[1])} `; } rings += `<path d="${d}"/>`; });
+    const cracks = rays.map((r) => `<path d="${path(r)}"/>`).join("") + rings;
+    // blood: thick near the impact, thinning along the cracks, then drips running down
+    let blood = "", drips = "";
+    [0, 2, 3, 5, 7, 9].forEach((i, j) => {
+      const r = rays[i], upto = 2 + (j % 3);
+      blood += `<path d="${path(r.slice(0, upto + 1))}" stroke-width="${f1(1.2 - j * 0.12)}"/>`;
+      const [x, y] = r[upto], h = 18 + R() * 50;
+      drips += `<path class="drip" style="--d:${f1(j * 1.7 + R() * 2)}s;--t:${f1(14 + R() * 8)}s" d="M${f1(x)} ${f1(y)} C${f1(x + 0.6)} ${f1(y + h * 0.4)} ${f1(x - 0.8)} ${f1(y + h * 0.7)} ${f1(x)} ${f1(y + h)}" pathLength="1"/>`;
+    });
+    return `<svg class="cracks" viewBox="0 0 120 240" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><filter id="bleed" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation=".8"/></filter><radialGradient id="pool" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#5a0008"/><stop offset=".6" stop-color="#7a0612" stop-opacity=".8"/><stop offset="1" stop-color="#7a0612" stop-opacity="0"/></radialGradient></defs>`
+      + shards
+      + `<g class="dark" fill="none" stroke="rgba(0,0,0,.7)" stroke-width=".55" stroke-linejoin="round">${cracks}</g>`
+      + `<g class="lit" fill="none" stroke="rgba(235,230,245,.4)" stroke-width=".18" transform="translate(.3 -.25)">${cracks}</g>`
+      + `<g fill="none" stroke="#8a0a16" stroke-linecap="round" stroke-linejoin="round" filter="url(#bleed)" opacity=".85">${blood}</g>`
+      + `<g fill="none" stroke="#6e0410" stroke-linecap="round" stroke-linejoin="round">${blood}</g>`
+      + `<g class="drips" fill="none" stroke="#760611" stroke-width=".8" stroke-linecap="round">${drips}</g>`
+      + `<circle cx="${cx}" cy="${cy}" r="5" fill="url(#pool)"/><circle cx="${cx}" cy="${cy}" r="1.2" fill="#2a0004"/></svg>`;
+  }
   // ------------------------------------------------------------------ Vampire: a tall gilt mirror half hidden behind blood-red velvet, silver candelabra
   const drape = (x0, x1, flip, top, bottom, col, tie) => {
     // a heavy velvet curtain gathered at a tie-back: folds as alternating light and dark bands
@@ -255,9 +293,9 @@
       + `<linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a2830"/><stop offset=".5" stop-color="#14121a"/><stop offset="1" stop-color="#0a080e"/></linearGradient>`
       + `<filter id="b" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="5"/></filter>`
       + `<radialGradient id="g" cx=".5" cy=".55" r=".7"><stop offset="0" stop-color="#ff7a40" stop-opacity=".18"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>`
-      + `<linearGradient id="dim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".45"/><stop offset=".5" stop-color="#000" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity=".6"/></linearGradient>`;
+      + `<linearGradient id="dim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".62"/><stop offset=".5" stop-color="#000" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity=".72"/></linearGradient>`;
     let damask = ""; for (let y = 20, r = 0; y < 860; y += 60, r++) for (let x = r % 2 ? 0 : 30; x < 420; x += 60) damask += `<path d="M${x} ${y - 18} q10 10 0 18 q-10 8 0 18 q-10 -8 -14 -18 q4 -10 14 -18Z M${x} ${y - 18} q-10 10 0 18 q10 8 0 18 q10 -8 14 -18 q-4 -10 -14 -18Z" fill="#3a0a14" opacity=".55"/>`;
-    return SVG(`<rect width="400" height="860" fill="#1c060c"/>${damask}${lace}<rect width="400" height="860" fill="url(#g)"/><rect width="400" height="860" fill="url(#dim)"/>`, defs);
+    return SVG(`<rect width="400" height="860" fill="#110307"/>${damask}${lace}<rect width="400" height="860" fill="url(#g)"/><rect width="400" height="860" fill="url(#dim)"/>`, defs);
   });
 
   // ------------------------------------------------------------------ Dark academia: a study at night, rain on the window, a green banker's lamp
@@ -336,7 +374,7 @@
     teaNight: { label: "Tea house night", tone: "dark", fx: "petals", css: () => `${teahouse()} center / cover no-repeat, #14050a` },
     castleIvy: { label: "Ivy-covered stone", tone: "dark", fx: "fog", css: () => `${castle()} center / cover no-repeat, #1a1b20` },
     galleryWall: { label: "Gallery wall", tone: "dark", css: () => `${candlelit2()} center / cover no-repeat, #1a0c08` },
-    vampireMirror: { label: "Velvet & mirror", tone: "dark", fx: "mirror drapesVamp bats", css: () => `${vampire()} center / cover no-repeat, #12050a` },
+    vampireMirror: { label: "Velvet & mirror", tone: "dark", fx: "mirror drapesVamp fog bats vampGloom", css: () => `${vampire()} center / cover no-repeat, #12050a` },
     study: { label: "Rainy study", tone: "dark", fx: "rainWindow", css: () => `${academia()} center / cover no-repeat, #140c08` },
     cottageRoses: { label: "Rose cottage", tone: "light", fx: "curtains", css: () => `${cottage2()} center / cover no-repeat, #ecd8b8` },
     cottageDusk: { label: "Cottage evening", tone: "dark", fx: "curtains", css: () => `${cottage()} center / cover no-repeat, #3a2018` },
@@ -422,11 +460,28 @@
     // plum-blossom petals drifting down
     petals: () => { const R = rng(17); let o = ""; for (let i = 0; i < 14; i++) o += `<i class="petal" style="left:${f1(R() * 100)}%;--t:${f1(9 + R() * 9)}s;--d:-${f1(R() * 18)}s;--dx:${f1((R() - 0.5) * 160)}px;--r:${Math.floor(R() * 360)}deg"></i>`; return o; },
     // bats crossing the room, wings beating
-    bats: () => { const R = rng(8); let o = ""; for (let i = 0; i < 7; i++) { const s = 0.5 + R() * 0.8; o += `<i class="bat" style="--y:${f1(5 + R() * 55)}%;--y2:${f1(-30 + R() * 60)}vh;--s:${f1(s)};--t:${f1(9 + R() * 10)}s;--d:-${f1(R() * 18)}s;--f:${f1(0.16 + R() * 0.1)}s;--dir:${R() > 0.5 ? 1 : -1}"><svg viewBox="0 0 60 26" aria-hidden="true"><path class="w l" d="M30 12 C24 4 14 2 2 6 C8 8 9 12 7 15 C12 12 16 14 17 18 C20 14 25 14 30 16Z"/><path class="w r" d="M30 12 C36 4 46 2 58 6 C52 8 51 12 53 15 C48 12 44 14 43 18 C40 14 35 14 30 16Z"/><ellipse cx="30" cy="14" rx="3.4" ry="5"/><path d="M27.6 10 l.8 -3 1.2 2.4 M32.4 10 l-.8 -3 -1.2 2.4"/></svg></i>`; } return o; },
+    bats: () => {
+      // real bat shapes: finger bones fanning through a scalloped membrane, ears, a furry body.
+      // a few fly close (big, soft, quick), most stay far off in the dark
+      const R = rng(8); let o = "";
+      const wing = `<path d="M56 19 C48 9 32 3 12 6 C9 13 5 20 2 27 C9 26 13 29 15 35 C21 31 27 33 31 39 C36 33 42 32 46 35 C48 30 52 27 56 27Z"/>`
+        + `<path class="bone" d="M56 19 L30 7 M30 7 L12 6 M30 7 L3 26 M30 7 L15 34 M30 7 L31 38" />`;
+      for (let i = 0; i < 9; i++) {
+        const near = i < 2, s = near ? 1.7 + R() * 0.6 : 0.55 + R() * 0.75;
+        o += `<i class="bat${near ? " near" : ""}" style="--y:${f1(4 + R() * 50)}%;--y2:${f1(-25 + R() * 50)}vh;--s:${f1(s)};--t:${f1(near ? 6 + R() * 3 : 11 + R() * 10)}s;--d:-${f1(R() * 20)}s;--f:${f1(near ? 0.13 + R() * 0.04 : 0.17 + R() * 0.08)}s;--dir:${R() > 0.5 ? 1 : -1}">`
+          + `<svg viewBox="0 0 120 48" aria-hidden="true"><g class="flyer"><g class="w l">${wing}</g><g class="w r"><g transform="translate(120 0) scale(-1 1)">${wing}</g></g>`
+          + `<path d="M55 22 C55 14 65 14 65 22 C66 30 63 38 60 40 C57 38 54 30 55 22Z"/><circle cx="60" cy="15" r="4.6"/>`
+          + `<path d="M56 13 L55 5 L59 11Z M64 13 L65 5 L61 11Z"/><circle class="eye" cx="58.3" cy="15" r=".7"/><circle class="eye" cx="61.7" cy="15" r=".7"/>`
+          + `<path class="bone" d="M58 40 l-1 4 M62 40 l1 4"/></g></svg></i>`;
+      }
+      return o;
+    },
+    // the vampire room's gloom: heavy dark corners and a slow red breath of candlelight from below
+    vampGloom: () => `<i class="vampGloom"></i><i class="vampEmber"></i>`,
     // rain running down a tall study window
     rainWindow: () => {
-      const R = rng(12); let drops = ""; for (let i = 0; i < 40; i++) drops += `<i class="drop" style="left:${f1(R() * 100)}%;--t:${f1(0.7 + R() * 0.9)}s;--d:-${f1(R() * 2)}s;--h:${f1(10 + R() * 18)}px"></i>`;
-      let beads = ""; for (let i = 0; i < 26; i++) beads += `<i class="bead" style="left:${f1(R() * 96)}%;top:${f1(20 + R() * 75)}%;--t:${f1(5 + R() * 8)}s;--d:-${f1(R() * 10)}s"></i>`;
+      const R = rng(12); let drops = ""; for (let i = 0; i < 70; i++) drops += `<i class="drop" style="left:${f1(R() * 100)}%;--t:${f1(0.7 + R() * 0.9)}s;--d:-${f1(R() * 2)}s;--h:${f1(10 + R() * 18)}px"></i>`;
+      let beads = ""; for (let i = 0; i < 40; i++) beads += `<i class="bead" style="left:${f1(R() * 96)}%;top:${f1(14 + R() * 82)}%;--t:${f1(5 + R() * 8)}s;--d:-${f1(R() * 10)}s"></i>`;
       const arch = "M0 190 V70 C0 34 22 10 50 0 C78 10 100 34 100 70 V190Z";
       const stone = "#2a1d14";
       // gothic tracery: two pointed lancets under a quatrefoil, with a transom
@@ -445,7 +500,7 @@
     drapesRed: () => drapesFx(["#3a0610", "#76121f"], "#d4af5a"),
     drapesVamp: () => drapesFx(["#4a0710", "#8a1222"], "#d4af5a", "wide"),
     // a tall antique mirror: old silvered glass, dim and still
-    mirror: () => `<div class="fxMirror"><div class="glass"><i class="spots"></i></div></div>`,
+    mirror: () => `<div class="fxMirror"><div class="glass"><i class="spots"></i>${crackedGlass()}</div></div>`,
     // floral curtains tied back at both edges, always behind the text
     curtains: () => {
       const one = (flip) => `<div class="fxCurtain${flip ? " r" : ""}"><svg viewBox="0 0 100 860" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="cf${flip ? "r" : "l"}" x1="0" x2="1">${[0, 0.12, 0.24, 0.36, 0.5, 0.62, 0.76, 0.88, 1].map((o, i) => `<stop offset="${o}" stop-color="${i % 2 ? "#f0d8cc" : "#c99a94"}"/>`).join("")}</linearGradient><pattern id="cp${flip ? "r" : "l"}" width="14" height="18" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="1.8" fill="#c0606e" opacity=".7"/><circle cx="11" cy="13" r="1.5" fill="#8e9a64" opacity=".7"/></pattern></defs>`

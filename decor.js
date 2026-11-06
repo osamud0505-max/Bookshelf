@@ -409,7 +409,22 @@
     el.className = "ornament" + (lit ? " lit" : ""); el.dataset.kind = kind;
     el.style.width = w + "px"; el.style.height = h + "px";
     if (o.soft) el.classList.add("soft");
-    el.innerHTML = `<div class="ornGlow"${o.glow ? ` style="background:radial-gradient(closest-side, ${o.glow}, transparent)"` : ""}></div><svg viewBox="0 0 ${o.vw} 200" width="${w}" height="${h}" aria-hidden="true">${o.draw("orn" + ornN++)}</svg>`;
+    const id = "orn" + ornN++;
+    // every object gets the same finish: relief lighting, a darker rim and a touch more contrast.
+    // Flames stay outside it so they stay cheap to animate.
+    let body = o.draw(id), flames = "";
+    body = body.replace(/<circle class="ember"[^>]*\/><g class="ornFlame"[^>]*><g class="ornFlicker">.*?<\/g><\/g>/g, (m) => { flames += m; return ""; });
+    const fx = `<filter id="${id}fx" x="-4%" y="-4%" width="108%" height="108%" color-interpolation-filters="sRGB">`
+      // the picture's own light and dark become relief, so every fold, rim and carving catches light from the top left
+      + `<feColorMatrix in="SourceGraphic" type="luminanceToAlpha"/><feGaussianBlur stdDeviation=".7" result="hm"/>`
+      + `<feDiffuseLighting in="hm" surfaceScale="4" diffuseConstant="1.15" lighting-color="#fff"><feDistantLight azimuth="235" elevation="60"/></feDiffuseLighting>`
+      + `<feComponentTransfer result="sh"><feFuncR type="linear" slope="1"/><feFuncG type="linear" slope="1"/><feFuncB type="linear" slope="1"/></feComponentTransfer>`
+      + `<feComposite in="SourceGraphic" in2="sh" operator="arithmetic" k1="1" result="lit"/>`
+      // a darker rim where the shape turns away from you
+      + `<feGaussianBlur in="SourceAlpha" stdDeviation="2" result="bl"/><feComposite in="SourceAlpha" in2="bl" operator="out" result="rim0"/><feFlood flood-color="#000" flood-opacity=".28"/><feComposite in2="rim0" operator="in" result="rim"/>`
+      + `<feComponentTransfer in="lit" result="cr"><feFuncR type="linear" slope="1.08" intercept="-.02"/><feFuncG type="linear" slope="1.08" intercept="-.02"/><feFuncB type="linear" slope="1.08" intercept="-.02"/></feComponentTransfer>`
+      + `<feMerge><feMergeNode in="cr"/><feMergeNode in="rim"/></feMerge></filter>`;
+    el.innerHTML = `<div class="ornGlow"${o.glow ? ` style="background:radial-gradient(closest-side, ${o.glow}, transparent)"` : ""}></div><svg viewBox="0 0 ${o.vw} 200" width="${w}" height="${h}" aria-hidden="true"><defs>${fx}</defs><g filter="url(#${id}fx)">${body}</g>${flames}</svg>`;
     // where the glow sits: the highest flame
     const ys = [...o.draw("x").matchAll(/data-y="([\d.]+)"/g)].map((m) => +m[1]);
     if (ys.length) el.style.setProperty("--fy", (Math.min(...ys) / 200 * 100).toFixed(1) + "%");
@@ -465,7 +480,7 @@
     academia: { label: "Dark academia", set: { theme: "cabin", accent: "#c9a25b", shelfMat: "walnut", backdrop: "leather", lights: { style: "globe", colour: "warm", on: true }, headFont: "fell" } },
     teahouse: { label: "Tea house", set: { theme: "lacquer", accent: "#e8432f", shelfMat: "lacquer", backdrop: "lanternNight", lights: { style: "chinese", colour: "warm", on: true }, headFont: "dmserif" } },
   });
-  const ORN = { forest: "mushrooms", cottage: "pinkLamp", nook: "bracketLantern", vampire: "candelabra", victorian: "twist", castle: "pillars", bordello: "chamber", academia: "squareBrass" };
+  const ORN = { forest: "mushrooms", cottage: "pinkLamp", nook: "bracketLantern", vampire: "gothicCandelabra", victorian: "twist", castle: "pillars", bordello: "chamber", academia: "squareBrass" };
   for (const [k, L] of Object.entries(LOOKS)) {
     L.set.ornament = { kind: ORN[k] || "none", pos: "end" };
     if (ORN[k] && !["nook", "forest"].includes(k)) L.set.lights = { ...L.set.lights, style: "none" };
@@ -683,6 +698,39 @@
         + `<path d="M28 70 q-4 6 0 12 M66 66 q4 6 0 12 M34 54 q4 -4 8 -2 M50 50 q6 -2 10 2" stroke="#b5afa4" stroke-width="2" fill="none" stroke-linecap="round"/>`
         + `<path d="M56 86 L62 96 L56 98" stroke="#b5afa4" stroke-width="1.4" fill="none"/><path d="M40 82 q4 -2 8 0 M54 82 q3 -2 6 0" stroke="#a49e92" stroke-width="1.2" fill="none"/>`
         + `<path d="M22 150 C34 140 46 152 58 142 C66 136 74 146 78 160" stroke="#cfcac0" stroke-width="3" fill="none"/>`,
+    },
+    gothicCandelabra: {
+      label: "Gothic candelabra", scale: 0.98, vw: 160,
+      draw: (g) => {
+        const B = `url(#${g})`;
+        // a blood-red wax run down the side of a candle: thick at the top, a bead at the end
+        const drip = (x, y, len, w = 2.2) => `<path d="M${x - w / 2} ${y} L${x - w / 2} ${y + len} a${w / 2} ${w / 2} 0 0 0 ${w} 0 L${x + w / 2} ${y}Z" fill="#6a0a14"/><ellipse cx="${x}" cy="${y + len + 0.6}" rx="${w * 0.75}" ry="${w * 0.9}" fill="#5a0610"/>`;
+        const candle = (x, top, bottom, wd) => taper(x, top, bottom, wd, "#e8dcc2")
+          + `<path d="M${x - wd / 2} ${top + 1} Q${x} ${top + 5} ${x + wd / 2} ${top + 1} L${x + wd / 2} ${top + 4} Q${x} ${top + 8} ${x - wd / 2} ${top + 4}Z" fill="#7a0c18"/>`
+          + drip(x - wd * 0.32, top + 3, (bottom - top) * 0.55, 2) + drip(x + wd * 0.1, top + 4, (bottom - top) * 0.3, 1.8) + drip(x + wd * 0.38, top + 2, (bottom - top) * 0.8, 1.6)
+          + `<rect x="${x - wd / 2}" y="${top}" width="${wd}" height="${bottom - top}" fill="url(#${g}sh)"/>`;
+        const cup = (x, y) => `<path d="M${x - 13} ${y} C${x - 13} ${y + 8} ${x - 7} ${y + 13} ${x - 3} ${y + 15} L${x + 3} ${y + 15} C${x + 7} ${y + 13} ${x + 13} ${y + 8} ${x + 13} ${y}Z" fill="${B}"/>`
+          + `<ellipse cx="${x}" cy="${y}" rx="14" ry="3.2" fill="${B}"/><path d="M${x - 9} ${y + 5} q4 4 0 8 M${x} ${y + 4} v9 M${x + 9} ${y + 5} q-4 4 0 8" stroke="#1e1406" stroke-width=".9" fill="none" opacity=".7"/>`
+          + `<path d="M${x - 11} ${y + 1} q2 6 1 11" stroke="#6a0a14" stroke-width="2" stroke-linecap="round" fill="none"/><ellipse cx="${x - 10}" cy="${y + 13}" rx="1.4" ry="1.8" fill="#5a0610"/>`;
+        return `<defs>${metal(g, [[0, "#140d06"], [0.25, "#4a3a1e"], [0.45, "#9a8452"], [0.6, "#3e2f15"], [1, "#0e0904"]])}<linearGradient id="${g}sh" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".25"/><stop offset=".35" stop-color="#000" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".05"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient></defs>`
+          // base: domed foot on four scrolled claws
+          + `<path d="M26 200 C24 192 30 188 36 190 C40 184 48 180 56 178 L104 178 C112 180 120 184 124 190 C130 188 136 192 134 200 C126 196 120 198 116 200 L44 200 C40 198 34 196 26 200Z" fill="${B}"/>`
+          + `<path d="M50 178 C54 164 68 156 80 154 C92 156 106 164 110 178Z" fill="${B}"/>`
+          + `<path d="M58 172 q22 -14 44 0 M64 166 q16 -8 32 0" stroke="#1e1406" stroke-width="1" fill="none" opacity=".75"/><path d="M60 176 q4 -6 10 -4 M100 176 q-4 -6 -10 -4" stroke="#e0c890" stroke-width=".8" fill="none" opacity=".5"/>`
+          + [0, 1, 2, 3, 4, 5].map((k) => `<path d="M${46 + k * 14} 196 q4 -8 0 -14" stroke="#0a0602" stroke-width=".9" fill="none" opacity=".7"/><circle cx="${53 + k * 12}" cy="188" r="1.6" fill="#c9b07a" opacity=".35"/>`).join("")
+          // stem: stacked knops and an urn
+          + `<path d="M74 154 C70 146 70 140 76 136 C68 130 66 118 76 110 L74 92 L86 92 L84 110 C94 118 92 130 84 136 C90 140 90 146 86 154Z" fill="${B}"/>`
+          + `<path d="M74 122 q6 -8 12 0 q-6 8 -12 0Z" fill="#1e1406" opacity=".5"/><path d="M76 110 h8 M75 136 h10" stroke="#e0c890" stroke-width=".8" opacity=".45"/>`
+          // arms: S-scrolls out to each side, with curled ends
+          + `<path d="M76 104 C60 104 54 120 44 120 C32 120 26 112 28 102" stroke="${B}" stroke-width="5.5" fill="none" stroke-linecap="round"/><path d="M84 104 C100 104 106 120 116 120 C128 120 134 112 132 102" stroke="${B}" stroke-width="5.5" fill="none" stroke-linecap="round"/>`
+          + `<path d="M44 120 c-4 6 2 12 7 8 c3 -3 0 -7 -3 -5" stroke="${B}" stroke-width="3" fill="none"/><path d="M116 120 c4 6 -2 12 -7 8 c-3 -3 0 -7 3 -5" stroke="${B}" stroke-width="3" fill="none"/>`
+          + `<path d="M80 96 L80 82" stroke="${B}" stroke-width="8"/><path d="M72 92 h16 l-2 6 h-12Z" fill="${B}"/><ellipse cx="80" cy="88" rx="6" ry="4" fill="${B}"/>`
+          + candle(28, 42, 96, 13) + candle(132, 48, 96, 13) + candle(80, 12, 70, 15)
+          + cup(28, 96) + cup(132, 96) + cup(80, 70)
+          // cobwebs caught between the arms and the stem
+          + `<g stroke="rgba(220,220,225,.42)" stroke-width=".5" fill="none"><path d="M34 104 Q56 112 76 98 M36 110 Q58 116 76 106 M40 104 L46 116 M52 104 L58 112 M64 101 L66 110"/><path d="M126 104 Q110 118 88 112 M84 120 Q104 128 118 122 M100 114 L104 124"/><path d="M76 140 q-10 10 -14 26 M84 142 q8 12 10 24" opacity=".7"/></g>`
+          + flame(28, 37, 1) + flame(132, 43, 1) + flame(80, 7, 1.1);
+      },
     },
     // ---- second batch, from osamu's shelf photos
     bunny: {
