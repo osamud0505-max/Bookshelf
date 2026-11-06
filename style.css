@@ -1031,3 +1031,43 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 #d-paste .dot { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(127,127,127,.5); flex: none; }
 body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-events: none; transition: opacity .2s; }
 .shelf.arranging .scroller { scroll-snap-type: none !important; }
+
+/* crystal ball: when it wakes, a flash and the mist blooming out of the centre; while awake the colours drift and the mist turns;
+   when it sleeps, the mist spirals back into the centre and goes out */
+.ornament[data-kind="crystalBall"] .cbMagic { transform-box: view-box; transform-origin: 60px 84px; opacity: 0; transform: scale(.15) rotate(-160deg); transition: opacity .9s ease-in, transform 1s cubic-bezier(.5,0,.8,.4); }
+.ornament[data-kind="crystalBall"].lit .cbMagic { opacity: 1; transform: none; transition: opacity .5s ease-out, transform 1.3s cubic-bezier(.15,.8,.25,1); }
+.ornament[data-kind="crystalBall"] .cbSwirl { transform-box: view-box; transform-origin: 60px 84px; animation: cbSpin 14s linear infinite; animation-play-state: paused; }
+.ornament[data-kind="crystalBall"].lit .cbSwirl { animation-play-state: running; }
+@keyframes cbSpin { to { transform: rotate(360deg); } }
+.ornament[data-kind="crystalBall"] .cbCore { transform-box: fill-box; transform-origin: center; }
+.ornament[data-kind="crystalBall"].lit .cbCore { animation: cbBreathe 4.5s ease-in-out infinite alternate; }
+@keyframes cbBreathe { from { transform: scale(.85); opacity: .8; } to { transform: scale(1.12); opacity: 1; } }
+.ornament[data-kind="crystalBall"] .cbSpeck { opacity: 0; }
+.ornament[data-kind="crystalBall"].lit .cbSpeck { animation: cbTwinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--i) * -.37s); }
+@keyframes cbTwinkle { 0%, 100% { opacity: .1; } 50% { opacity: 1; } }
+.ornament[data-kind="crystalBall"] .cbFlash { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.ornament[data-kind="crystalBall"].lit .cbFlash { animation: cbFlash 1.1s ease-out; }
+@keyframes cbFlash { 0% { opacity: 0; transform: scale(.1); } 18% { opacity: .85; transform: scale(.6); } 100% { opacity: 0; transform: scale(1.05); } }
+.ornament[data-kind="crystalBall"].lit .ornGlow { animation: cbGlowHue 12s linear infinite, candleGlow 3s ease-in-out infinite alternate; }
+@keyframes cbGlowHue { to { filter: hue-rotate(360deg); } }
+
+/* amethyst: light climbs through the points one by one, shortest first, and sparkles rise off them; going dark it drains back down */
+.ornament[data-kind="crystal"] .amLight { opacity: 0; transition: opacity .45s ease-in; transition-delay: calc(var(--j) * .09s); }
+.ornament[data-kind="crystal"].lit .amLight { opacity: 1; transition: opacity .55s ease-out; transition-delay: calc(var(--i) * .14s); animation: amPulse 3.4s ease-in-out infinite alternate; animation-delay: calc(1s + var(--i) * -.5s); }
+@keyframes amPulse { from { opacity: .65; } to { opacity: 1; } }
+.ornament[data-kind="crystal"] .amHalo { opacity: 0; transition: opacity 1s ease-in; }
+.ornament[data-kind="crystal"].lit .amHalo { opacity: .55; transition: opacity 1.2s ease-out .3s; }
+.ornament[data-kind="crystal"] .amSpark { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.ornament[data-kind="crystal"].lit .amSpark { animation: amSpark 3s ease-out infinite; animation-delay: calc(.6s + var(--i) * .45s); }
+@keyframes amSpark { 0% { opacity: 0; transform: translateY(0) scale(.3) rotate(0); } 20% { opacity: 1; transform: translateY(-8px) scale(1) rotate(45deg); } 60% { opacity: 0; transform: translateY(-30px) scale(.4) rotate(90deg); } 100% { opacity: 0; transform: translateY(-30px) scale(.3); } }
+@media (prefers-reduced-motion: reduce) { .ornament[data-kind="crystalBall"] *, .ornament[data-kind="crystal"] * { animation: none !important; } }
+
+/* things that hang from a nail in the shelf's front edge */
+.shelf { position: relative; }
+.hangLayer { position: absolute; height: 0; z-index: 4; pointer-events: none; }
+.hangLayer .ornament { bottom: auto; top: -3px; pointer-events: auto; z-index: 1; }
+.hangLayer .ornament::after { display: none; }
+.hangLayer .ornament svg { filter: drop-shadow(2px 5px 3px rgba(0,0,0,.45)); }
+.shelf.hasHang .caption { padding-top: calc(var(--shelf-h) * .42); }
+.ornament.hanging.nudge svg { animation: ornSwing 1.4s ease-out; transform-origin: 50% 2%; }
+@keyframes ornSwing { 15% { transform: rotate(7deg); } 35% { transform: rotate(-5deg); } 55% { transform: rotate(3deg); } 75% { transform: rotate(-1.5deg); } }

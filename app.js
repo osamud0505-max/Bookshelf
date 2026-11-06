@@ -785,6 +785,8 @@
       <div class="plank"></div>
       <div class="caption"></div></div>`);
     const scroller = root.querySelector(".scroller"), track = root.querySelector(".track"), stage = root.querySelector(".stage"), caption = root.querySelector(".caption");
+    // things that hang from the shelf's front edge live outside the scroller, so they are not cut off
+    const hangLayer = h(`<div class="hangLayer"></div>`); root.append(hangLayer);
     root.dataset.key = key;
     addLights(root);
     const count = books.length + (opts.onAdd ? 1 : 0);
@@ -825,6 +827,8 @@
         slots[i].setAttribute("aria-label", b.title);
       });
       if (opts.onAdd) slots[books.length].style.height = Math.round(H * 0.86) + "px";
+      const plank = root.querySelector(".plank");
+      hangLayer.style.left = scroller.offsetLeft + "px"; hangLayer.style.top = plank.offsetTop + "px"; hangLayer.style.width = viewW + "px";
       buildOrns();
     }
 
@@ -846,7 +850,9 @@
         const kind = resolveKind(it.kind, shelfIdx);
         const el = kind && D.ornamentEl(kind, H, it.on !== false);
         if (!el) return null;
-        const o = { it, el, w: parseFloat(el.style.width) + 10, idx: idxOf(it), x: null, t: 0 };
+        const hang = !!D.ORNAMENTS[kind].hang, vis = parseFloat(el.style.width);
+        // a hanging thing takes no room in the row: it hangs at the gap between two books
+        const o = { it, el, hang, vis, w: hang ? 0 : vis + 10, idx: idxOf(it), x: null, t: 0 };
         el.onclick = (e) => {
           if (el._noClick) { el._noClick = false; return; }
           e.stopPropagation();
@@ -858,11 +864,11 @@
           saveItems();
         };
         armDrag(o);
-        stage.append(el);
+        (hang ? hangLayer : stage).append(el);
         return o;
     }
     // keep the stored order the same as the order on the shelf
-    const sortOrns = () => { orns = orns.map((o, k) => [o, k]).sort((a, b) => a[0].idx - b[0].idx || a[1] - b[1]).map((p) => p[0]); };
+    const sortOrns = () => { orns = orns.map((o, k) => [o, k]).sort((a, b) => a[0].idx - b[0].idx || a[1] - b[1]).map((p) => p[0]); root.classList.toggle("hasHang", orns.some((o) => o.hang)); };
     function saveItems() {
       items = orns.map((o) => o.it);
       setDecorItems(key, items);
@@ -918,7 +924,7 @@
     }
     function dragFrame() {
       const o = drag.o, sr = stage.getBoundingClientRect();
-      const left = drag.cx - sr.left - drag.gx, mid = left + (o.w - 10) / 2;
+      const left = drag.cx - sr.left - drag.gx, mid = left + o.vis / 2;
       drag.ghost.style.transform = `translate3d(${drag.cx - drag.gx}px,${drag.cy - drag.gy}px,0)`;
       // the gap goes before the first book whose middle is still to the right of the object
       let idx = 0;
@@ -936,7 +942,7 @@
       ghost.classList.remove("up", "binning");
       if (remove) {
         ghost.classList.add("vanish");
-        orns = orns.filter((x) => x !== o); o.el.remove();
+        orns = orns.filter((x) => x !== o); o.el.remove(); sortOrns();
         setTimeout(() => ghost.remove(), 320);
         if (navigator.vibrate) navigator.vibrate(8);
       } else {
@@ -947,8 +953,9 @@
       if (!remove) {
         // the copy glides down into its gap, then the real one takes over
         const sr = stage.getBoundingClientRect(), h = parseFloat(o.el.style.height);
+        const top = o.hang ? o.el.getBoundingClientRect().top : sr.bottom - h;
         ghost.classList.add("settle");
-        ghost.style.transform = `translate3d(${sr.left + o.x}px,${sr.bottom - h}px,0)`;
+        ghost.style.transform = `translate3d(${sr.left + o.x}px,${top}px,0)`;
         setTimeout(() => { o.el.classList.remove("placeholder"); ghost.remove(); }, 300);
       }
       setTimeout(() => root.classList.remove("arranging"), 320);
@@ -979,7 +986,7 @@
       const offset = Math.max(0, Math.min(Math.max(0, total - (viewW - PAD * 2)), openAt - viewW * 0.3));
       let x = 0, k = 0;
       const placeOrn = (o) => {
-        const left = PAD + x - offset + 5; x += o.w;
+        const left = o.hang ? PAD + x - offset - o.vis / 2 : PAD + x - offset + 5; x += o.w;
         o.el.style.transform = `translate3d(${left}px,0,0)`;
         // a flame leans away from the way it is being pushed, then settles
         if (o.x !== null && Math.abs(left - o.x) > 0.3 && !root.classList.contains("arranging")) {
