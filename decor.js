@@ -157,23 +157,28 @@
         const p = q(x0, t), c = colour(k), d = ((k * 0.73) % 3).toFixed(2);
         if (style === "globe") {
           bulbs += `<g class="bulb" style="--d:${d}s"><line x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${p.y + 9}" stroke="#2a2420" stroke-width="1.4"/><rect x="${p.x - 2.6}" y="${p.y + 8}" width="5.2" height="5" rx="1" fill="#3a332d"/>`
-            + `<circle class="halo" cx="${p.x}" cy="${p.y + 20}" r="16" fill="${c}" filter="url(#${id})"/><circle class="glass" cx="${p.x}" cy="${p.y + 20}" r="8" fill="${on ? c : "rgba(255,255,255,.2)"}" stroke="rgba(255,255,255,.45)" stroke-width=".8"/>`
-            + `<path class="filament" d="M${p.x - 2.5} ${p.y + 21} q2.5 -4 5 0" stroke="${on ? "#fff7e0" : "rgba(80,70,60,.6)"}" stroke-width="1" fill="none"/></g>`;
+            + `<circle class="halo" cx="${p.x}" cy="${p.y + 20}" r="16" fill="${c}" filter="url(#${id})"/><circle class="glassOff" cx="${p.x}" cy="${p.y + 20}" r="8" fill="rgba(255,255,255,.2)" stroke="rgba(255,255,255,.45)" stroke-width=".8"/>`
+            + `<path d="M${p.x - 2.5} ${p.y + 21} q2.5 -4 5 0" stroke="rgba(80,70,60,.6)" stroke-width="1" fill="none"/>`
+            + `<circle class="ember" cx="${p.x}" cy="${p.y + 20}" r="4" fill="#ff7a1a" filter="url(#${id}e)"/>`
+            + `<circle class="glass" cx="${p.x}" cy="${p.y + 20}" r="8" fill="${c}" stroke="rgba(255,255,255,.45)" stroke-width=".8"/>`
+            + `<path class="glass" d="M${p.x - 2.5} ${p.y + 21} q2.5 -4 5 0" stroke="#fff7e0" stroke-width="1" fill="none"/></g>`;
         } else if (style === "lanterns") {
           // round paper lantern: ribbed shade, dark cap and base, a tassel
           const cy = p.y + 24, rx = 13, ry = 15, lit = on ? c : "#d9cdbb";
           const ribs = [-0.62, -0.25, 0.25, 0.62].map((f) => `<ellipse cx="${p.x}" cy="${cy}" rx="${(rx * Math.abs(f)).toFixed(1)}" ry="${ry}" fill="none" stroke="rgba(90,40,20,.28)" stroke-width=".7"/>`).join("");
           bulbs += `<g class="bulb" style="--d:${d}s"><line x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${cy - ry}" stroke="#2a2420" stroke-width="1.1"/>`
             + `<circle class="halo" cx="${p.x}" cy="${cy}" r="24" fill="${c}" filter="url(#${id})"/>`
-            + `<ellipse class="glass" cx="${p.x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${lit}" stroke="rgba(90,40,20,.35)" stroke-width=".8"/>${ribs}`
-            + `<ellipse cx="${p.x - 4}" cy="${cy - 4}" rx="4" ry="7" fill="#fff" opacity="${on ? 0.35 : 0.15}"/>`
+            + `<ellipse class="glassOff" cx="${p.x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#d9cdbb" stroke="rgba(90,40,20,.35)" stroke-width=".8"/>`
+            + `<ellipse class="ember" cx="${p.x}" cy="${cy}" rx="${rx * 0.6}" ry="${ry * 0.6}" fill="#ff8a3a" filter="url(#${id}e)"/>`
+            + `<ellipse class="glass" cx="${p.x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" stroke="rgba(90,40,20,.35)" stroke-width=".8"/>${ribs}`
+            + `<ellipse cx="${p.x - 4}" cy="${cy - 4}" rx="4" ry="7" fill="#fff" opacity=".25"/>`
             + `<rect x="${p.x - 6}" y="${cy - ry - 2}" width="12" height="4" rx="1" fill="#2a2420"/><rect x="${p.x - 6}" y="${cy + ry - 2}" width="12" height="4" rx="1" fill="#2a2420"/>`
             + `<line x1="${p.x}" y1="${cy + ry + 2}" x2="${p.x}" y2="${cy + ry + 10}" stroke="#b33a2c" stroke-width="2"/></g>`;
         } else if (style === "stars") {
           const r = 5.5, pts = Array.from({ length: 10 }, (_, i) => { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r; return `${(p.x + rr * Math.cos(a)).toFixed(1)},${(p.y + 9 + rr * Math.sin(a)).toFixed(1)}`; }).join(" ");
-          bulbs += `<g class="bulb" style="--d:${d}s"><line x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${p.y + 4}" stroke="#2a2420" stroke-width="1"/><circle class="halo" cx="${p.x}" cy="${p.y + 9}" r="11" fill="${c}" filter="url(#${id})"/><polygon class="glass" points="${pts}" fill="${on ? c : "rgba(255,255,255,.25)"}" stroke="rgba(255,255,255,.4)" stroke-width=".6"/></g>`;
+          bulbs += `<g class="bulb" style="--d:${d}s"><line x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${p.y + 4}" stroke="#2a2420" stroke-width="1"/><circle class="halo" cx="${p.x}" cy="${p.y + 9}" r="11" fill="${c}" filter="url(#${id})"/><polygon class="glassOff" points="${pts}" fill="rgba(255,255,255,.25)" stroke="rgba(255,255,255,.4)" stroke-width=".6"/><circle class="ember" cx="${p.x}" cy="${p.y + 9}" r="3" fill="#ff7a1a" filter="url(#${id}e)"/><polygon class="glass" points="${pts}" fill="${c}" stroke="rgba(255,255,255,.4)" stroke-width=".6"/></g>`;
         } else {
-          bulbs += `<g class="bulb" style="--d:${d}s"><circle class="halo" cx="${p.x}" cy="${p.y + 3}" r="8" fill="${c}" filter="url(#${id})"/><ellipse class="glass" cx="${p.x}" cy="${p.y + 3.5}" rx="2.4" ry="3.2" fill="${on ? c : "rgba(255,255,255,.28)"}"/><circle cx="${p.x}" cy="${p.y}" r="1.3" fill="#2a2420"/></g>`;
+          bulbs += `<g class="bulb" style="--d:${d}s"><circle class="halo" cx="${p.x}" cy="${p.y + 3}" r="8" fill="${c}" filter="url(#${id})"/><ellipse class="glassOff" cx="${p.x}" cy="${p.y + 3.5}" rx="2.4" ry="3.2" fill="rgba(255,255,255,.28)"/><circle class="ember" cx="${p.x}" cy="${p.y + 3.5}" r="2" fill="#ff7a1a" filter="url(#${id}e)"/><ellipse class="glass" cx="${p.x}" cy="${p.y + 3.5}" rx="2.4" ry="3.2" fill="${c}"/><circle cx="${p.x}" cy="${p.y}" r="1.3" fill="#2a2420"/></g>`;
         }
         k++;
       }
@@ -181,7 +186,7 @@
     const glowCol = col[1] || "#ffd9a0";
     const el = document.createElement("div");
     el.className = "lights " + style + (on ? " on" : "");
-    el.innerHTML = `<div class="lightGlow" style="--glow:${glowCol}"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="${style === "globe" ? 5 : 3}"/></filter></defs><path d="${wire}" stroke="#2a2420" stroke-width="1.3" fill="none" opacity=".85"/>${bulbs}</svg>`;
+    el.innerHTML = `<div class="lightGlow" style="--glow:${glowCol}"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="${style === "globe" ? 5 : 3}"/></filter><filter id="${id}e" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.2"/></filter></defs><path d="${wire}" stroke="#2a2420" stroke-width="1.3" fill="none" opacity=".85"/>${bulbs}</svg>`;
     el.style.height = H + "px";
     return el;
   }
@@ -249,7 +254,7 @@
       let ribs = ""; for (const f of [-0.75, -0.4, 0, 0.4, 0.75]) ribs += `<ellipse cx="${x}" cy="${cy}" rx="${(rx * Math.abs(f)).toFixed(1)}" ry="${ry}" fill="none" stroke="rgba(90,10,0,.45)" stroke-width=".7"/>`;
       out += `<g class="bulb" style="--d:${((i * 0.7) % 2).toFixed(2)}s"><line x1="${x}" y1="0" x2="${x}" y2="${cord + 3}" stroke="#2a1410" stroke-width="1"/>`
         + `<circle class="halo" cx="${x}" cy="${cy}" r="34" fill="#ff4a1c" filter="url(#${id})"/>`
-        + `<ellipse class="glass" cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${on ? "url(#" + id + "f)" : "#6e1a12"}"/>${ribs}`
+        + `<ellipse class="glassOff" cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#6e1a12"/><ellipse class="ember" cx="${x}" cy="${cy}" rx="${rx * 0.55}" ry="${ry * 0.55}" fill="#ff6a2a" filter="url(#${id}e)"/><ellipse class="glass" cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#${id}f)"/>${ribs}`
         + `<path d="M${x - 6} ${cy - 3} q6 -5 12 0 q-6 5 -12 0Z" fill="#2a0a05" opacity=".45"/>`
         + `<rect x="${x - 9}" y="${cy - ry - 3}" width="18" height="5" rx="1.5" fill="#d6a73e"/><rect x="${x - 9}" y="${cy + ry - 2}" width="18" height="5" rx="1.5" fill="#d6a73e"/>`
         + Array.from({ length: 7 }, (_, k) => `<line x1="${x - 4.5 + k * 1.5}" y1="${cy + ry + 3}" x2="${x - 5 + k * 1.7}" y2="${cy + ry + 22 + (k % 2) * 3}" stroke="#e0b14d" stroke-width=".9"/>`).join("")
@@ -257,7 +262,7 @@
     }
     const el = document.createElement("div");
     el.className = "lights chinese" + (on ? " on" : "");
-    el.innerHTML = `<div class="lightGlow" style="--glow:#ff5a2a"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="9"/></filter><radialGradient id="${id}f" cx=".45" cy=".42" r=".65"><stop offset="0" stop-color="#ffb070"/><stop offset=".45" stop-color="#ff4a1f"/><stop offset="1" stop-color="#b3180c"/></radialGradient></defs>${out}</svg>`;
+    el.innerHTML = `<div class="lightGlow" style="--glow:#ff5a2a"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="9"/></filter><filter id="${id}e" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="4"/></filter><radialGradient id="${id}f" cx=".45" cy=".42" r=".65"><stop offset="0" stop-color="#ffb070"/><stop offset=".45" stop-color="#ff4a1f"/><stop offset="1" stop-color="#b3180c"/></radialGradient></defs>${out}</svg>`;
     el.style.height = H + "px";
     return el;
   }
@@ -401,7 +406,8 @@
     const el = document.createElement("div");
     el.className = "ornament" + (lit ? " lit" : "");
     el.style.width = w + "px"; el.style.height = h + "px";
-    el.innerHTML = `<div class="ornGlow"></div><svg viewBox="0 0 ${o.vw} 200" width="${w}" height="${h}" aria-hidden="true">${o.draw("orn" + ornN++)}</svg>`;
+    if (o.soft) el.classList.add("soft");
+    el.innerHTML = `<div class="ornGlow"${o.glow ? ` style="background:radial-gradient(closest-side, ${o.glow}, transparent)"` : ""}></div><svg viewBox="0 0 ${o.vw} 200" width="${w}" height="${h}" aria-hidden="true">${o.draw("orn" + ornN++)}</svg>`;
     // where the glow sits: the highest flame
     const ys = [...o.draw("x").matchAll(/data-y="([\d.]+)"/g)].map((m) => +m[1]);
     el.style.setProperty("--fy", (Math.min(...ys) / 200 * 100).toFixed(1) + "%");
@@ -456,12 +462,102 @@
     academia: { label: "Dark academia", set: { theme: "cabin", accent: "#c9a25b", shelfMat: "walnut", backdrop: "leather", lights: { style: "globe", colour: "warm", on: true }, headFont: "fell" } },
     teahouse: { label: "Tea house", set: { theme: "lacquer", accent: "#e8432f", shelfMat: "lacquer", backdrop: "lanternNight", lights: { style: "chinese", colour: "warm", on: true }, headFont: "dmserif" } },
   });
-  const ORN = { cottage: "pinkLamp", nook: "bracketLantern", vampire: "candelabra", victorian: "twist", castle: "pillars", bordello: "chamber", academia: "squareBrass" };
+  const ORN = { forest: "mushrooms", cottage: "pinkLamp", nook: "bracketLantern", vampire: "candelabra", victorian: "twist", castle: "pillars", bordello: "chamber", academia: "squareBrass" };
   for (const [k, L] of Object.entries(LOOKS)) {
     L.set.ornament = { kind: ORN[k] || "none", pos: "end" };
-    if (ORN[k] && !["nook"].includes(k)) L.set.lights = { ...L.set.lights, style: "none" };
+    if (ORN[k] && !["nook", "forest"].includes(k)) L.set.lights = { ...L.set.lights, style: "none" };
   }
+  // ------------------------------------------------------------------ enchanted forest: a moonlit glade drawn as one SVG scene
+  function enchantedScene() {
+    let rnd = 7; const R = () => (rnd = (rnd * 9301 + 49297) % 233280) / 233280;
+    const trunk = (x, w, top, col, lean = 0) => `<path d="M${x - w / 2} 860 C${x - w * 0.9} 800 ${x - w * 0.42 + lean} 700 ${x - w * 0.38 + lean} ${top} L${x + w * 0.38 + lean} ${top} C${x + w * 0.42 + lean} 700 ${x + w * 0.9} 800 ${x + w / 2} 860Z" fill="${col}"/>`;
+    const far = [30, 95, 150, 230, 290, 350, 385].map((x, i) => trunk(x, 16 + (i % 3) * 6, 0, "#1b2740", (i % 2 ? 6 : -4))).join("");
+    const mid = [[60, 46], [205, 34], [330, 52]].map(([x, w], i) => trunk(x, w, 0, "#0e1622", i % 2 ? -10 : 8)).join("");
+    // mossy roots and ground
+    const ground = `<path d="M0 720 C60 690 110 712 160 700 C220 686 260 714 320 698 C360 688 390 700 400 696 L400 860 L0 860Z" fill="#0a1712"/>`
+      + `<path d="M0 760 C80 742 140 770 210 752 C280 736 330 762 400 748 L400 860 L0 860Z" fill="#07110d"/>`
+      + `<path d="M0 722 C60 692 110 714 160 702 C220 688 260 716 320 700" stroke="#2f5a34" stroke-width="2" fill="none" opacity=".55"/>`;
+    // glowing mushrooms, clustered at the roots
+    const shroom = (x, y, r, col) => `<g><rect x="${x - r * 0.18}" y="${y - r * 1.1}" width="${r * 0.36}" height="${r * 1.1}" rx="${r * 0.15}" fill="#cfeee6" opacity=".85"/><ellipse cx="${x}" cy="${y - r * 1.1}" rx="${r * 1.6}" ry="${r * 2}" fill="${col}" opacity=".35" filter="url(#bl)"/><path d="M${x - r} ${y - r * 1.05} Q${x} ${y - r * 2.1} ${x + r} ${y - r * 1.05}Z" fill="${col}"/></g>`;
+    let shrooms = "";
+    for (const [cx, cy, n, col] of [[60, 712, 6, "#8ff7e4"], [205, 700, 4, "#a8f0ff"], [330, 704, 5, "#8ff7e4"], [130, 760, 3, "#ffd79a"], [270, 752, 4, "#b9fff0"], [380, 742, 3, "#ffc7ef"]]) {
+      for (let k = 0; k < n; k++) shrooms += shroom(cx + (R() - 0.5) * 50, cy + R() * 14, 3 + R() * 5, col);
+    }
+    let specks = ""; for (let i = 0; i < 70; i++) { const x = R() * 400, y = 120 + R() * 700, r = 0.6 + R() * 1.4; specks += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${R() > 0.35 ? "#ffe08a" : "#9ff6e8"}" opacity="${(0.35 + R() * 0.6).toFixed(2)}"/>`; }
+    // a dark canopy with moss hanging from it
+    let canopy = ""; for (let i = 0; i < 46; i++) { const x = R() * 420 - 10, y = R() * 120 - 20, r = 26 + R() * 40; canopy += `<circle cx='${x.toFixed(0)}' cy='${y.toFixed(0)}' r='${r.toFixed(0)}' fill='${i % 3 ? "#050a12" : "#0a1622"}'/>`; }
+    let moss = ""; for (let i = 0; i < 26; i++) { const x = R() * 400, y = 40 + R() * 90, l = 40 + R() * 150; moss += `<path d='M${x.toFixed(0)} ${y.toFixed(0)} q${(R() * 8 - 4).toFixed(1)} ${(l / 2).toFixed(0)} ${(R() * 6 - 3).toFixed(1)} ${l.toFixed(0)}' stroke='${R() > 0.5 ? "#21452f" : "#2f5a3a"}' stroke-width='${(0.8 + R() * 1.4).toFixed(1)}' fill='none' opacity='.75'/>`; }
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 860' preserveAspectRatio='xMidYMax slice'><defs>`
+      + `<linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#070a18'/><stop offset='.3' stop-color='#152a52'/><stop offset='.55' stop-color='#2c5274'/><stop offset='.75' stop-color='#1a4448'/><stop offset='1' stop-color='#08130f'/></linearGradient>`
+      + `<radialGradient id='dusk' cx='.5' cy='.5' r='.5'><stop offset='0' stop-color='#d3a0d8' stop-opacity='.5'/><stop offset='.5' stop-color='#7a74c0' stop-opacity='.22'/><stop offset='1' stop-color='#1a1f4a' stop-opacity='0'/></radialGradient>`
+      + `<filter id='bl' x='-100%' y='-100%' width='300%' height='300%'><feGaussianBlur stdDeviation='4'/></filter><filter id='fog' x='-20%' y='-50%' width='140%' height='200%'><feGaussianBlur stdDeviation='22'/></filter><filter id='soft'><feGaussianBlur stdDeviation='1.5'/></filter></defs>`
+      + `<rect width='400' height='860' fill='url(#sky)'/><ellipse cx='200' cy='470' rx='240' ry='220' fill='url(#dusk)'/>`
+      + `<g filter='url(#soft)' opacity='.85'>${far.replace(/#1b2740/g, "#14243e")}</g>`
+      + `<ellipse cx='200' cy='600' rx='300' ry='70' fill='#a9c6e0' opacity='.22' filter='url(#fog)'/>`
+      + `<ellipse cx='140' cy='480' rx='200' ry='45' fill='#c3b6e2' opacity='.16' filter='url(#fog)'/>`
+      + mid.replace(/#0e1622/g, "#070d16")
+      + `<path d='M0 0 L0 860 L30 860 C44 760 36 520 50 0Z' fill='#040809'/><path d='M400 0 L400 860 L370 860 C358 760 366 500 352 0Z' fill='#040809'/>`
+      + canopy + moss
+      + `<ellipse cx='200' cy='705' rx='260' ry='42' fill='#7fd9c8' opacity='.16' filter='url(#fog)'/>`
+      + ground + shrooms + specks + `</svg>`;
+    return svgUrl(svg);
+  }
+  BACKDROPS.enchanted = { label: "Enchanted glade", tone: "dark", fx: "motes", css: () => [`${enchantedScene()} center bottom / cover no-repeat`, "#0c0f22"].join(",") };
+  BACKDROPS.night.fx = "meteors";
+  MATERIALS.moss = { label: "Mossy log", base: "#2b2519", tex: () => ["linear-gradient(180deg, #5f8f45 0 2px, #426b33 3px, rgba(66,107,51,.6) 5px, transparent 8px)", ...grainH(0.6, 0.18)] };
+  PALETTES.moonwood = { label: "Moonwood", t: ["#0b1020", "#e4eef0", "#111829", "#141c2e", "#182134", "#8fa3b3", "#223047", "#1f2b40", "#2e3d57", "dark"] };
+  ORNAMENTS.mushrooms = {
+    label: "Glowing mushrooms", scale: 0.42, vw: 120, soft: true, glow: "rgba(120,255,225,.4)",
+    draw: (g) => {
+      const caps = [[34, 196, 20, 46, "#8ff7e4"], [70, 196, 26, 70, "#a8f0ff"], [98, 196, 14, 34, "#ffc7ef"], [52, 196, 10, 24, "#b9fff0"]];
+      return `<defs><filter id="${g}b" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="6"/></filter></defs><g data-y="120"></g>`
+        + `<path d="M4 200 C10 188 30 186 60 188 C90 186 110 188 116 200Z" fill="#3c6a36"/><path d="M8 196 C30 190 90 190 112 196" stroke="#6fa452" stroke-width="2" fill="none"/>`
+        + caps.map(([x, y, r, h, c]) => `<path d="M${x - r * 0.16} ${y} C${x - r * 0.2} ${y - h * 0.5} ${x - r * 0.12} ${y - h + 6} ${x} ${y - h + 4} C${x + r * 0.12} ${y - h + 6} ${x + r * 0.2} ${y - h * 0.5} ${x + r * 0.16} ${y}Z" fill="#e6f4ef"/>`
+          + `<ellipse class="litOnly" cx="${x}" cy="${y - h + 2}" rx="${r * 1.5}" ry="${r}" fill="${c}" filter="url(#${g}b)"/>`
+          + `<path d="M${x - r} ${y - h + 6} C${x - r} ${y - h - r * 0.9} ${x + r} ${y - h - r * 0.9} ${x + r} ${y - h + 6} Q${x} ${y - h + 1} ${x - r} ${y - h + 6}Z" fill="#cfe9e2"/>`
+          + `<path class="litOnly" d="M${x - r} ${y - h + 6} C${x - r} ${y - h - r * 0.9} ${x + r} ${y - h - r * 0.9} ${x + r} ${y - h + 6} Q${x} ${y - h + 1} ${x - r} ${y - h + 6}Z" fill="${c}"/>`
+          + `<circle cx="${x - r * 0.4}" cy="${y - h - r * 0.2}" r="${r * 0.12}" fill="#fff" opacity=".8"/><circle cx="${x + r * 0.3}" cy="${y - h - r * 0.35}" r="${r * 0.09}" fill="#fff" opacity=".7"/>`).join("");
+    },
+  };
+  LOOKS.forest.set = { theme: "moonwood", accent: "#8ff7e4", shelfMat: "moss", backdrop: "enchanted", lights: { style: "fireflies", colour: "warm", on: true }, headFont: "cormorant", ornament: { kind: "mushrooms", pos: "end" } };
+
+  // ------------------------------------------------------------------ bookmarks for the reader, one to suit each look
+  // Each is drawn in a 28 × 84 box; the top edge tucks under the top of the page.
+  let bmN = 0;
+  const RIB = "M7 0 H21 V80 L14 72 L7 80Z";
+  const BOOKMARKS = {
+    ribbon: { label: "Silk ribbon", draw: (g) => `<defs><linearGradient id="${g}" x1="0" x2="1"><stop offset="0" stop-color="#a82a24"/><stop offset=".45" stop-color="#e0503f"/><stop offset=".6" stop-color="#c63a31"/><stop offset="1" stop-color="#9a241f"/></linearGradient></defs><path d="${RIB}" fill="url(#${g})"/><path d="M9 0 V78" stroke="#fff" stroke-width=".6" opacity=".25"/>` },
+    velvet: { label: "Velvet & tassel", draw: (g) => `<defs><linearGradient id="${g}" x1="0" x2="1"><stop offset="0" stop-color="#3d0710"/><stop offset=".5" stop-color="#7d1224"/><stop offset="1" stop-color="#3a0610"/></linearGradient></defs><rect x="7" y="0" width="14" height="58" fill="url(#${g})"/><rect x="6" y="56" width="16" height="5" rx="1.5" fill="#d4ad5a"/><path d="M11 61 L14 66 L17 61Z" fill="#b8913f"/>${Array.from({ length: 7 }, (_, k) => `<path d="M${11.5 + k * 0.8} 65 Q${10 + k * 1.3} 75 ${8 + k * 2} 84" stroke="${k % 2 ? "#e6c271" : "#b8913f"}" stroke-width=".9" fill="none"/>`).join("")}` },
+    lace: { label: "Lace", draw: (g) => `<path d="M8 0 H20 V76 L14 70 L8 76Z" fill="#f6efe2"/>${Array.from({ length: 13 }, (_, k) => `<circle cx="7.5" cy="${3 + k * 5.6}" r="2.2" fill="#f6efe2"/><circle cx="20.5" cy="${3 + k * 5.6}" r="2.2" fill="#f6efe2"/><circle cx="14" cy="${4 + k * 5.6}" r="1.1" fill="#d9cdb8"/>`).join("")}<circle cx="14" cy="64" r="5" fill="#e7a3bd"/><circle cx="14" cy="64" r="2.4" fill="#c9708f"/><path d="M9 68 q-3 3 -4 1 M19 68 q3 3 4 1" stroke="#7d9a6a" stroke-width="1.6" fill="none"/>` },
+    leather: { label: "Leather strap", draw: (g) => `<defs><linearGradient id="${g}" x1="0" x2="1"><stop offset="0" stop-color="#5a3519"/><stop offset=".5" stop-color="#8d5a2e"/><stop offset="1" stop-color="#53301a"/></linearGradient></defs><path d="M6 0 H22 V74 L14 82 L6 74Z" fill="url(#${g})"/><path d="M8.5 0 V73 L14 78.5 L19.5 73 V0" stroke="#e4c48f" stroke-width=".8" stroke-dasharray="2.2 1.6" fill="none" opacity=".8"/><circle cx="14" cy="66" r="2" fill="#2e1a0c"/>` },
+    brass: { label: "Brass filigree", draw: (g) => `<defs>${metal(g, BRASS)}</defs><path d="M10 0 Q10 -2 14 -2 Q18 -2 18 0 V8" stroke="url(#${g})" stroke-width="2" fill="none"/><path d="M11 6 H17 V60 L14 66 L11 60Z" fill="url(#${g})"/>${[14, 26, 38, 50].map((y) => `<path d="M14 ${y} l2.4 4 l-2.4 4 l-2.4 -4Z" fill="#3a2a10" opacity=".55"/>`).join("")}<circle cx="14" cy="72" r="7" fill="url(#${g})"/><circle cx="14" cy="72" r="4.4" fill="none" stroke="#5a421c" stroke-width=".9"/><path d="M14 69 l1 2.2 2.3.2 -1.8 1.5.6 2.3 -2.1 -1.3 -2.1 1.3.6 -2.3 -1.8 -1.5 2.3 -.2Z" fill="#5a421c"/>` },
+    key: { label: "Old key", draw: (g) => `<defs>${metal(g, BRONZE)}</defs><rect x="11" y="0" width="6" height="30" fill="#1b1b22"/><path d="M11 30 L14 34 L17 30" fill="#1b1b22"/><circle cx="14" cy="42" r="7" fill="none" stroke="url(#${g})" stroke-width="3"/><circle cx="14" cy="42" r="2.4" fill="none" stroke="url(#${g})" stroke-width="1.2"/><rect x="12.6" y="48" width="2.8" height="30" fill="url(#${g})"/><path d="M15.4 70 h5 v3 h-2 v3 h3 v3 h-6Z" fill="url(#${g})"/><circle cx="14" cy="53" r="2" fill="url(#${g})"/>` },
+    star: { label: "Star charm", draw: (g) => `<defs><linearGradient id="${g}" x1="0" x2="1"><stop offset="0" stop-color="#101a3d"/><stop offset=".5" stop-color="#25367a"/><stop offset="1" stop-color="#0e1636"/></linearGradient><filter id="${g}b"><feGaussianBlur stdDeviation="1.6"/></filter></defs><rect x="8" y="0" width="12" height="58" fill="url(#${g})"/>${[[11, 8], [17, 17], [12, 29], [16, 41], [11, 51]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".8" fill="#fff" opacity=".8"/>`).join("")}<line x1="14" y1="58" x2="14" y2="63" stroke="#d9c27a" stroke-width="1"/><path d="M14 62 l2.6 5.6 6 .7 -4.5 4.1 1.3 6 -5.4 -3.1 -5.4 3.1 1.3 -6 -4.5 -4.1 6 -.7Z" fill="#ffe08a" filter="url(#${g}b)" opacity=".7"/><path d="M14 62 l2.6 5.6 6 .7 -4.5 4.1 1.3 6 -5.4 -3.1 -5.4 3.1 1.3 -6 -4.5 -4.1 6 -.7Z" fill="#f5d36b"/>` },
+    fern: { label: "Pressed fern", draw: (g) => `<defs><filter id="${g}b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2"/></filter></defs><line x1="14" y1="0" x2="14" y2="14" stroke="#cfe0c0" stroke-width=".7"/><path d="M14 14 Q15 50 13 84" stroke="#9fe0a8" stroke-width="5" fill="none" opacity=".3" filter="url(#${g}b)"/><path d="M14 14 Q15 50 13 84" stroke="#4f7d3c" stroke-width="1.1" fill="none"/>${Array.from({ length: 11 }, (_, k) => { const y = 18 + k * 5.6, L = 9 - Math.abs(k - 4) * 0.9; return `<path d="M14.3 ${y} q${L * 0.6} -3 ${L} -1 q${-L * 0.5} 2.4 ${-L} 1Z M14 ${y + 2.4} q${-L * 0.6} -3 ${-L} -1 q${L * 0.5} 2.4 ${L} 1Z" fill="${k % 2 ? "#6c9e4f" : "#5b8c43"}"/>`; }).join("")}` },
+    flower: { label: "Pressed flower", draw: (g) => `<line x1="14" y1="0" x2="14" y2="22" stroke="#d8c8a8" stroke-width=".7"/><path d="M14 22 Q13 52 15 84" stroke="#6a7d4c" stroke-width="1.1" fill="none"/><path d="M14 60 q-9 -2 -10 -10 q8 1 10 8Z M15 70 q9 -2 10 -10 q-8 1 -10 8Z" fill="#7b8f57"/>${Array.from({ length: 16 }, (_, k) => { const y = 24 + k * 2.3, r = 3.6 - k * 0.15; return `<circle cx="${(14 + Math.sin(k * 1.9) * (5 - k * 0.22)).toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="${["#c8a6d8", "#b996cf", "#d9bde5", "#a987c4"][k % 4]}"/>`; }).join("")}` },
+    tassel: { label: "Silk tassel", draw: (g) => `<defs><radialGradient id="${g}" cx=".35" cy=".35"><stop offset="0" stop-color="#c8f2d4"/><stop offset=".5" stop-color="#4fa877"/><stop offset="1" stop-color="#1f5a3c"/></radialGradient></defs><path d="M14 0 V42" stroke="#c4241a" stroke-width="2.4"/><circle cx="14" cy="48" r="5.6" fill="url(#${g})"/><path d="M11 54 h6 l-1 4 h-4Z" fill="#a51d14"/>${Array.from({ length: 9 }, (_, k) => `<path d="M${12 + k * 0.5} 58 Q${11 + k * 0.8} 70 ${9 + k * 1.25} 84" stroke="${k % 2 ? "#e0412f" : "#b5221a"}" stroke-width="1.1" fill="none"/>`).join("")}<rect x="11" y="61" width="6" height="2.4" rx="1" fill="#d6a73e"/>` },
+    seal: { label: "Wax seal", draw: (g) => `<defs><radialGradient id="${g}" cx=".38" cy=".35"><stop offset="0" stop-color="#d6463c"/><stop offset=".7" stop-color="#9c1f1a"/><stop offset="1" stop-color="#6b120f"/></radialGradient></defs><rect x="9" y="0" width="10" height="62" fill="#5a1f1a"/><rect x="10.5" y="0" width="1" height="62" fill="#fff" opacity=".15"/><path d="M14 58 m-10 0 q2 -9 10 -10 q9 1 10 9 q-1 10 -10 11 q-9 -1 -10 -10Z" fill="url(#${g})"/><circle cx="14" cy="59" r="6" fill="none" stroke="#6b120f" stroke-width="1.1"/><path d="M11.5 61.5 L14 55 L16.5 61.5 M12.3 59.5 H15.7" stroke="#6b120f" stroke-width="1.1" fill="none"/>` },
+  };
+  const bookmarkSvg = (kind, w = 28) => { const b = BOOKMARKS[kind] || BOOKMARKS.ribbon; return `<svg viewBox="0 -3 28 87" width="${w}" height="${(w * 87) / 28}" aria-hidden="true" overflow="visible">${b.draw("bm" + bmN++)}</svg>`; };
+  const BM = { minimal: "ribbon", cabin: "leather", nook: "flower", library: "seal", loft: "leather", starry: "star", cottage: "lace", candle: "seal", vampire: "velvet", victorian: "brass", castle: "key", bordello: "velvet", forest: "fern", academia: "brass", teahouse: "tassel" };
+  for (const [k, L] of Object.entries(LOOKS)) L.set.bookmark = BM[k] || "ribbon";
+
+  /** Moving pieces that live inside the backdrop layer (falling stars, floating motes). */
+  function backdropFx(kind) {
+    let out = "", r = 3; const R = () => (r = (r * 9301 + 49297) % 233280) / 233280;
+    if (kind === "meteors") {
+      for (let i = 0; i < 6; i++) out += `<i class="meteor" style="--x:${(25 + R() * 80).toFixed(1)}%;--y:${(R() * 45).toFixed(1)}%;--a:${(148 + R() * 18).toFixed(0)}deg;--t:${(9 + R() * 9).toFixed(1)}s;--d:${(i * 2.3 + R() * 2).toFixed(1)}s;--l:${(90 + R() * 110).toFixed(0)}px"></i>`;
+      for (let i = 0; i < 14; i++) out += `<i class="twinkle" style="left:${(R() * 100).toFixed(1)}%;top:${(R() * 70).toFixed(1)}%;--t:${(2.5 + R() * 4).toFixed(1)}s;--d:${(R() * 4).toFixed(1)}s"></i>`;
+    } else if (kind === "motes") {
+      for (let i = 0; i < 26; i++) {
+        const warm = R() > 0.4;
+        out += `<i class="mote" style="left:${(R() * 100).toFixed(1)}%;top:${(15 + R() * 85).toFixed(1)}%;--c:${warm ? "#ffd977" : "#8ff7e4"};--s:${(2 + R() * 3.5).toFixed(1)}px;--t:${(9 + R() * 12).toFixed(1)}s;--p:${(2 + R() * 3).toFixed(1)}s;--d:-${(R() * 20).toFixed(1)}s;--dx:${((R() - 0.5) * 90).toFixed(0)}px;--dy:${(-40 - R() * 120).toFixed(0)}px"></i>`;
+      }
+    }
+    return out;
+  }
+
   MATERIALS.whitewashWood = { label: "Whitewashed", base: "#d9cfc0", tex: () => grainH(0.3, 0.2) };
 
-  window.Decor = { BACKDROPS, MATERIALS, LIGHT_STYLES, LIGHT_COLOURS, HEAD_FONTS, PALETTES, LOOKS, LOOK_KEYS, ORNAMENTS, lightsEl, ornamentEl };
+  window.Decor = { BACKDROPS, MATERIALS, LIGHT_STYLES, LIGHT_COLOURS, HEAD_FONTS, PALETTES, LOOKS, LOOK_KEYS, ORNAMENTS, lightsEl, ornamentEl, backdropFx, BOOKMARKS, bookmarkSvg };
 })();

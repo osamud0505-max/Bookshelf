@@ -602,6 +602,9 @@
   }
   function syncBookmark() {
     const on = pageMarks().length > 0;
+    const kind = (window.Shelf.settings() || {}).bookmark || "ribbon";
+    if (ribbon.dataset.kind !== kind && window.Decor) { ribbon.dataset.kind = kind; ribbon.innerHTML = window.Decor.bookmarkSvg(kind, 28); }
+    if (on && ribbon.hidden) { ribbon.classList.remove("drop"); void ribbon.offsetWidth; ribbon.classList.add("drop"); }
     ribbon.hidden = !on;
     room.querySelector(".rdMarkBtn").classList.toggle("on", on);
   }

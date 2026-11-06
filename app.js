@@ -85,6 +85,9 @@
     const vignette = bd.tone ? ["radial-gradient(ellipse 120% 90% at 50% 40%, rgba(0,0,0,0) 55%, rgba(0,0,0,.28))"] : [];
     set("--backdrop", [...veil, ...vignette, bd.css()].join(","));
     document.documentElement.dataset.bd = bd.tone ? "1" : "";
+    // moving pieces of the backdrop (falling stars, floating lights); only rebuilt when they change, so they never restart
+    const bdEl = document.getElementById("backdrop"), fx = bd.fx || "";
+    if (bdEl && bdEl.dataset.fx !== fx) { bdEl.dataset.fx = fx; bdEl.innerHTML = fx ? D.backdropFx(fx) : ""; }
     set("--font-display", (D.HEAD_FONTS[s.headFont] || D.HEAD_FONTS.bricolage)[1]);
     r.setProperty("color-scheme", scheme);
     document.querySelector('meta[name="theme-color"]').setAttribute("content", bg);
@@ -456,6 +459,39 @@
       s2.connect(lp).connect(g2).connect(actx.destination); s2.start(t + 0.12); s2.stop(t + 0.3);
     } catch (e) { /* no sound available */ }
   }
+  /** A pull-chain light switch: the beads rattle, the switch clicks at the bottom, then a softer click as it lets go. */
+  function soundPullSwitch(on) {
+    try {
+      noiseBurst(0.01); // wakes the audio context
+      const t = actx.currentTime;
+      const click = (at, freq, peak, len) => {
+        const s = noiseBurst(len + 0.02), bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = freq; bp.Q.value = 2.5;
+        const g = actx.createGain(); env(g, at, peak, 0.002, len);
+        s.connect(bp).connect(g).connect(actx.destination); s.start(at); s.stop(at + len + 0.02);
+      };
+      // ball chain sliding through the switch housing
+      for (let k = 0; k < 7; k++) click(t + k * 0.017 + Math.random() * 0.006, 5200 + Math.random() * 1800, 0.07, 0.012);
+      // the mechanism: a sharp tick with a little body to it
+      const at = t + 0.15;
+      click(at, 3000, 0.55, 0.035);
+      const o = actx.createOscillator(), og = actx.createGain(); o.type = "sine";
+      o.frequency.setValueAtTime(on ? 210 : 170, at); o.frequency.exponentialRampToValueAtTime(90, at + 0.06);
+      env(og, at, 0.28, 0.003, 0.07); o.connect(og).connect(actx.destination); o.start(at); o.stop(at + 0.1);
+      // the chain springing back up
+      click(at + 0.13, 2400, 0.16, 0.025);
+      for (let k = 0; k < 4; k++) click(at + 0.16 + k * 0.03, 6000, 0.035, 0.01);
+    } catch (e) { /* no sound available */ }
+  }
+  /** A soft glassy shimmer, for things that glow rather than burn. */
+  function soundChime(up) {
+    try {
+      noiseBurst(0.01); const t = actx.currentTime;
+      (up ? [1318, 1568, 1976, 2637] : [2637, 1976, 1568, 1318]).forEach((f, i) => {
+        const o = actx.createOscillator(), g = actx.createGain(); o.type = "sine"; o.frequency.value = f;
+        env(g, t + i * 0.07, 0.07, 0.01, 0.9); o.connect(g).connect(actx.destination); o.start(t + i * 0.07); o.stop(t + i * 0.07 + 1);
+      });
+    } catch (e) { /* no sound available */ }
+  }
   /** A match strike and the wick catching. */
   function soundLight() {
     try {
@@ -472,6 +508,7 @@
   /** Blow out or light the candle(s) of one ornament, with smoke rising from the wick. */
   function toggleFlame(el, out) {
     const svg = el.querySelector("svg");
+    if (el.classList.contains("soft")) { soundChime(!out); el.classList.toggle("lit", !out); return; }
     if (out) {
       soundBlow();
       el.classList.add("snuffing");
@@ -509,9 +546,20 @@
     if (cfg.style === "wisteria") return;
     const cord = h(`<button class="pullCord" aria-label="Turn the lights ${cfg.on ? "off" : "on"}" aria-pressed="${!!cfg.on}"><i></i><b></b></button>`);
     cord.onclick = () => {
-      cord.classList.add("pulled"); setTimeout(() => cord.classList.remove("pulled"), 260);
-      state.settings.lights = { ...cfg, on: !cfg.on }; save();
-      setTimeout(() => document.querySelectorAll(".shelf").forEach(addLights), 120);
+      if (cord.classList.contains("yank")) return;
+      const on = !(state.settings.lights || {}).on;
+      cord.classList.add("yank"); setTimeout(() => cord.classList.remove("yank"), 1000);
+      soundPullSwitch(on);
+      state.settings.lights = { ...(state.settings.lights || {}), on }; save();
+      // the switch catches at the bottom of the pull; every string of lights on the page follows
+      setTimeout(() => {
+        document.querySelectorAll(".lights:not(.wisteria)").forEach((l) => {
+          l.classList.remove("switchOn", "switchOff"); void l.offsetWidth;
+          l.classList.toggle("on", on); l.classList.add(on ? "switchOn" : "switchOff");
+          clearTimeout(l._sw); l._sw = setTimeout(() => l.classList.remove("switchOn", "switchOff"), 1600);
+        });
+        document.querySelectorAll(".pullCord").forEach((c) => { c.setAttribute("aria-pressed", on); c.setAttribute("aria-label", `Turn the lights ${on ? "off" : "on"}`); });
+      }, 150);
     };
     plank.append(cord);
   }
@@ -592,7 +640,7 @@
         if (!b) { widths.push(30); continue; }
         const { w, d } = dims(b, H);
         const a = ((1 - open) * Math.PI) / 2;
-        widths.push(w * Math.cos(a) + d * Math.sin(a) + 4 + open * 10);
+        widths.push(w * Math.cos(a) + d * Math.sin(a) + open * 2);
       }
       // the row stays put; it only slides when it is wider than the screen
       const fl = Math.floor(f);
@@ -621,7 +669,7 @@
         const vis = left + widths[i] > -80 && left < viewW + 80;
         slot.style.visibility = vis ? "visible" : "hidden";
         if (!vis) continue;
-        slot.style.width = widths[i] - 4 + "px";
+        slot.style.width = widths[i] + "px";
         slot.style.transform = `translate3d(${left}px,0,0)`;
         if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", turns[i]);
       }
@@ -1226,6 +1274,15 @@
       if (ornCfg.kind === "none") og.querySelector("#o-pos").hidden = true;
       body.append(og);
 
+      // the bookmark that marks your page in the reader
+      const bmg = h(`<div class="group"><h3 class="label">Bookmark</h3><p class="hint">What marks your page in the reader. Each look picks one to match; choose another any time.</p><div class="bmPick"></div></div>`);
+      for (const k of Object.keys(D.BOOKMARKS)) {
+        const btn = h(`<button class="bmBtn" aria-pressed="${(s.bookmark || "ribbon") === k}"><span class="bmArt">${D.bookmarkSvg(k, 22)}</span><span class="name">${esc(D.BOOKMARKS[k].label)}</span></button>`);
+        btn.onclick = () => set({ bookmark: k });
+        bmg.lastElementChild.append(btn);
+      }
+      body.append(bmg);
+
       // lettering for titles
       const fg = h(`<div class="group"><h3 class="label">Lettering</h3><p class="hint">For the page title, shelf names and book titles.</p><div class="fonts"></div></div>`);
       for (const [k, [l, fam]] of Object.entries(D.HEAD_FONTS)) {
@@ -1301,6 +1358,6 @@
   })();
 
   // Shared helpers for music.js
-  window.Shelf = { h, esc, toast, showSheet, closeSheet, closeBtn, spineInk, byId, save, render, undo, redo, undoPair, recentRow, rememberColor };
+  window.Shelf = { settings: () => state.settings, h, esc, toast, showSheet, closeSheet, closeBtn, spineInk, byId, save, render, undo, redo, undoPair, recentRow, rememberColor };
   document.querySelector(".headerActions").prepend(undoPair("headerUndo"));
 })();

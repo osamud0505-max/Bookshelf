@@ -485,8 +485,12 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 /* highlighter pens + bookmarks */
 .rdMarkBtn.on svg path { fill: #d8453b; stroke: #d8453b; }
 .rdPenBtn[aria-pressed="true"] { background: color-mix(in srgb, var(--rd-fg) 12%, transparent); }
-.rdRibbon { position: absolute; z-index: 9; top: calc(52px + env(safe-area-inset-top)); right: max(28px, calc((100vw - 720px) / 2 + 12px)); width: 18px; height: 46px; pointer-events: none;
-  background: linear-gradient(90deg, #b8322b, #dc4a40 45%, #b8322b); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
+.rdRibbon { position: absolute; z-index: 9; top: calc(50px + env(safe-area-inset-top)); right: max(26px, calc((100vw - 720px) / 2 + 10px)); width: 28px; height: 87px; pointer-events: none; transform-origin: 50% 0; filter: drop-shadow(0 2px 2px rgba(0,0,0,.28)); }
+.rdRibbon svg { display: block; }
+/* slips down from the top of the page and swings to rest */
+.rdRibbon.drop { animation: bmDrop .7s cubic-bezier(.25,.9,.35,1.2) both; }
+@keyframes bmDrop { 0% { transform: translateY(-60px) rotate(0); opacity: 0; } 45% { transform: translateY(2px) rotate(3deg); opacity: 1; } 70% { transform: translateY(0) rotate(-2deg); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .rdRibbon.drop { animation: none; } }
 .rdRibbon[hidden] { display: none; }
 .rdPens { position: absolute; z-index: 13; left: 0; right: 0; bottom: 0; padding: 0 12px calc(8px + env(safe-area-inset-bottom)); pointer-events: none; }
 .rdPens[hidden] { display: none; }
@@ -547,11 +551,41 @@ html[data-mat="glass"] .plank { backdrop-filter: blur(6px); -webkit-backdrop-fil
 .shelf.hasLights .caption { padding-top: 34px; }
 .shelf.hasLights[data-lights="globe"] .caption { padding-top: 58px; }
 .shelf.hasLights[data-lights="stars"] .caption { padding-top: 40px; }
-.pullCord { position: absolute; right: calc(var(--gutter) + 6px); top: 100%; z-index: 2; width: 24px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer; transform-origin: 50% 0; transition: transform .2s cubic-bezier(.3,1.6,.5,1); }
-.pullCord i { position: absolute; left: 11px; top: 0; width: 1.5px; height: 18px; background: linear-gradient(#8a7d6b, #c9bba3); }
-.pullCord b { position: absolute; left: 6.5px; top: 16px; width: 11px; height: 11px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6dc, #d7b36a 45%, #8a6a2c); box-shadow: 0 2px 3px rgba(0,0,0,.4); }
-.pullCord.pulled { transform: translateY(7px); }
-.pullCord[aria-pressed="true"] b { box-shadow: 0 2px 3px rgba(0,0,0,.4), 0 0 10px rgba(255,210,130,.7); }
+/* pull switch: a brass ball chain with a turned pull at the end */
+.pullCord { position: absolute; right: calc(var(--gutter) + 6px); top: 100%; z-index: 2; width: 26px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer; transform-origin: 50% 0; -webkit-tap-highlight-color: transparent; }
+.pullCord i { position: absolute; left: 11px; top: 0; width: 4px; height: 18px; transform-origin: 50% 0;
+  background: radial-gradient(circle at 45% 40%, #fff3cf 0 .6px, #c9a45a 1.2px, #7d6232 1.9px, transparent 2.1px) 0 0 / 4px 4px repeat-y; filter: drop-shadow(0 1px 1px rgba(0,0,0,.45)); }
+.pullCord b { position: absolute; left: 7.5px; top: 17px; width: 11px; height: 14px; border-radius: 45% 45% 50% 50% / 30% 30% 70% 70%;
+  background: radial-gradient(ellipse at 35% 30%, #fff4d6, #d7b36a 40%, #8a6a2c 80%, #5a4420); box-shadow: 0 3px 4px rgba(0,0,0,.45); }
+.pullCord b::before { content: ""; position: absolute; left: 3px; right: 3px; top: -3px; height: 4px; border-radius: 2px; background: linear-gradient(#e8cf8e, #8a6a2c); }
+.pullCord[aria-pressed="true"] b { box-shadow: 0 3px 4px rgba(0,0,0,.45), 0 0 12px rgba(255,210,130,.55); }
+/* pulled down, the switch catches, it springs back and swings to rest */
+.pullCord.yank { animation: cordSwing 1s cubic-bezier(.3,.6,.4,1) both; }
+.pullCord.yank i { animation: chainStretch 1s ease both; }
+.pullCord.yank b { animation: pullDown 1s ease both; }
+@keyframes chainStretch { 0% { transform: scaleY(1); } 14% { transform: scaleY(1.42); } 20% { transform: scaleY(1.38); } 30% { transform: scaleY(.96); } 40%, 100% { transform: scaleY(1); } }
+@keyframes pullDown { 0% { transform: translateY(0); } 14% { transform: translateY(12px); } 20% { transform: translateY(10.5px); } 30% { transform: translateY(-1.5px); } 40%, 100% { transform: translateY(0); } }
+@keyframes cordSwing { 0%, 28% { transform: rotate(0); } 42% { transform: rotate(9deg); } 56% { transform: rotate(-6deg); } 70% { transform: rotate(3.5deg); } 84% { transform: rotate(-1.5deg); } 100% { transform: rotate(0); } }
+
+/* bulbs: the lit glass sits over the unlit glass, so switching never redraws the string */
+.lights .bulb .glass { opacity: 0; transition: opacity .6s ease-in; }
+.lights.on .bulb .glass { opacity: 1; transition-duration: .2s; }
+.lights .bulb .ember { opacity: 0; }
+.lights .lightGlow { transition: opacity .9s ease-in; }
+.lights.on .lightGlow { transition-duration: .35s; }
+/* turning off: a stutter as the current drops, then the filament cools through orange */
+.lights.switchOff .bulb .glass { animation: bulbDie .85s ease-in both; animation-delay: calc(var(--d) * .04); }
+.lights.lights.switchOff .bulb .halo { animation: haloDie .6s ease-in both; animation-delay: calc(var(--d) * .04); }
+.lights.switchOff .bulb .ember { animation: emberCool 1.5s ease-out both; animation-delay: calc(var(--d) * .04 + .25s); }
+@keyframes bulbDie { 0% { opacity: 1; } 7% { opacity: .3; } 12% { opacity: .95; } 19% { opacity: .5; } 25% { opacity: .8; } 100% { opacity: 0; } }
+@keyframes haloDie { 0% { opacity: .85; } 7% { opacity: .15; } 12% { opacity: .75; } 19% { opacity: .25; } 100% { opacity: 0; } }
+@keyframes emberCool { 0% { opacity: 0; } 18% { opacity: .9; } 100% { opacity: 0; } }
+/* turning on: the filament catches, flickers once and settles */
+.lights.switchOn .bulb .glass { animation: bulbWake .75s ease-out both; animation-delay: calc(var(--d) * .04); }
+.lights.lights.switchOn .bulb .halo { animation: haloWake .75s ease-out both; animation-delay: calc(var(--d) * .04); }
+@keyframes bulbWake { 0% { opacity: 0; } 10% { opacity: .45; } 16% { opacity: .1; } 28% { opacity: .95; } 36% { opacity: .65; } 100% { opacity: 1; } }
+@keyframes haloWake { 0% { opacity: 0; } 10% { opacity: .4; } 16% { opacity: .05; } 28% { opacity: .9; } 36% { opacity: .55; } 100% { opacity: .85; } }
+@media (prefers-reduced-motion: reduce) { .pullCord.yank, .pullCord.yank i, .pullCord.yank b, .lights.switchOff .bulb *, .lights.switchOn .bulb * { animation: none !important; } }
 /* customize: looks + tiles */
 .looks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .lookBtn { position: relative; display: block; padding: 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: none; cursor: pointer; text-align: left; }
@@ -578,7 +612,7 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 @keyframes candleGlow { 0% { opacity: .55; } 40% { opacity: .75; } 70% { opacity: .5; } 100% { opacity: .7; } }
 .shelf.hasLights[data-lights="candles"] .caption { padding-top: 80px; }
 .shelf.hasLights[data-lights="lanterns"] .caption { padding-top: 66px; }
-.shelf.hasLights[data-lights="fireflies"] .caption { padding-top: 12px; }
+.shelf.hasLights[data-lights="fireflies"] .caption { padding-top: 36px; }
 .lights.fireflies { top: auto; bottom: -40px; height: 280px; overflow: visible; }
 .lights.fireflies i { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--c); opacity: 0; box-shadow: 0 0 6px 2px var(--c), 0 0 14px 4px color-mix(in srgb, var(--c) 45%, transparent); }
 .lights.fireflies.on i { animation: drift var(--t) ease-in-out infinite alternate, blink calc(var(--t) * .7) ease-in-out infinite; animation-delay: var(--d); }
@@ -626,3 +660,43 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .ornament.lit .litOnly { opacity: 1; }
 .ornament.lit path.litOnly { opacity: .35; }
 @media (prefers-reduced-motion: reduce) { .lights.wisteria .strand, .lights.chinese .bulb { animation: none; } }
+/* Option rows in the menus wrap onto new lines instead of scrolling sideways */
+.sheet .seg { flex-wrap: wrap; max-width: 100%; border-radius: 18px; }
+
+/* backdrop moving pieces */
+#backdrop { overflow: hidden; }
+#backdrop i { position: absolute; display: block; pointer-events: none; }
+/* falling stars: a bright head with a tail that grows behind it, gone in about a second */
+#backdrop .meteor { left: var(--x); top: var(--y); width: var(--l); height: 2px; border-radius: 2px; opacity: 0; transform-origin: 100% 50%;
+  background: linear-gradient(90deg, rgba(190,210,255,0), rgba(200,220,255,.35) 55%, rgba(255,255,255,.95));
+  animation: meteor var(--t) linear infinite; animation-delay: var(--d); }
+#backdrop .meteor::after { content: ""; position: absolute; right: -2px; top: 50%; width: 4px; height: 4px; margin-top: -2px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px 2px rgba(200,220,255,.9), 0 0 16px 4px rgba(150,180,255,.45); }
+@keyframes meteor {
+  0% { opacity: 0; transform: rotate(var(--a)) translateX(0) scaleX(.1); }
+  1% { opacity: 1; }
+  7% { opacity: 1; transform: rotate(var(--a)) translateX(260px) scaleX(1); }
+  9.5% { opacity: 0; transform: rotate(var(--a)) translateX(330px) scaleX(.4); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateX(330px) scaleX(.4); }
+}
+#backdrop .twinkle { width: 2px; height: 2px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px 1px rgba(220,230,255,.8); animation: starTwinkle var(--t) ease-in-out infinite; animation-delay: var(--d); }
+@keyframes starTwinkle { 0%, 100% { opacity: .15; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.3); } }
+/* floating lights: slow wandering upwards, breathing in brightness */
+#backdrop .mote { width: var(--s); height: var(--s); border-radius: 50%; background: var(--c); opacity: 0;
+  box-shadow: 0 0 6px 2px var(--c), 0 0 18px 6px color-mix(in srgb, var(--c) 40%, transparent);
+  animation: moteDrift var(--t) ease-in-out infinite alternate, motePulse var(--p) ease-in-out infinite alternate; animation-delay: var(--d); }
+@keyframes moteDrift { 0% { transform: translate(0, 0); } 25% { transform: translate(calc(var(--dx) * .6), calc(var(--dy) * .3)); } 50% { transform: translate(calc(var(--dx) * -.3), calc(var(--dy) * .6)); } 75% { transform: translate(var(--dx), calc(var(--dy) * .85)); } 100% { transform: translate(0, var(--dy)); } }
+@keyframes motePulse { from { opacity: .15; } to { opacity: .95; } }
+@media (prefers-reduced-motion: reduce) { #backdrop .meteor { display: none; } #backdrop .twinkle, #backdrop .mote { animation: none; opacity: .6; } }
+/* glowing things on the shelf (mushrooms) glow softly instead of flickering */
+.ornament.soft .ornGlow { top: 30%; width: 260px; height: 160px; }
+.ornament.soft .litOnly { transition: opacity .9s ease; }
+.ornament.soft.lit .litOnly { animation: shroomPulse 3.2s ease-in-out infinite alternate; }
+.ornament.soft.lit path.litOnly { opacity: .55; }
+@keyframes shroomPulse { from { opacity: .55; } to { opacity: 1; } }
+
+/* bookmark picker */
+.bmPick { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.bmBtn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--foreground); cursor: pointer; }
+.bmBtn[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.bmBtn .bmArt { height: 72px; display: flex; align-items: flex-start; }
+.bmBtn .name { font-size: .75rem; color: var(--muted-fg); text-align: center; line-height: 1.2; }
