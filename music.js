@@ -211,7 +211,7 @@
     </div>
     <div class="tt-arm"><span class="tt-base"></span><span class="tt-rod"></span><span class="tt-head"></span></div>
     ${cls.includes("tt-inline") ? "" : `<div class="tt-controls" hidden>
-      <button data-a="prev" aria-label="Previous">⏮</button><button data-a="toggle" aria-label="Play or pause" class="tt-play">▶</button><button data-a="next" aria-label="Next">⏭</button><button data-a="hide" aria-label="Put the record player away">✕</button>
+      <button data-a="prev" aria-label="Previous">⏮</button><button data-a="toggle" aria-label="Play or pause" class="tt-play">▶</button><button data-a="next" aria-label="Next">⏭</button><button data-a="pin" class="tt-pin" aria-label="Pin it to the page" aria-pressed="false">📌</button><button data-a="hide" aria-label="Put the record player away">✕</button>
     </div>`}
   </div>`; };
   const table = h(tableMarkup("turntable"));
@@ -239,13 +239,27 @@
     const s = recordSize();
     table.style.setProperty("--s", s + "px");
     const w = s * 1.7, hgt = s * 1.02;
-    let { x, y } = m.pos || { x: (innerWidth - w) / 2, y: innerHeight - hgt - 96 };
+    let { x, y } = m.pos || { x: (innerWidth - w) / 2, y: innerHeight - hgt - 96 + (m.pinned ? scrollY : 0) };
     x = Math.max(-w * 0.4, Math.min(innerWidth - w * 0.6, x));
-    y = Math.max(-hgt * 0.3, Math.min(innerHeight - hgt * 0.6, y));
+    // pinned: it sits on the page and scrolls away with the shelves; otherwise it floats over the screen
+    table.classList.toggle("pinned", !!m.pinned);
+    const pinBtn = table.querySelector(".tt-pin"); if (pinBtn) pinBtn.setAttribute("aria-pressed", !!m.pinned);
+    const bottom = m.pinned ? Math.max(innerHeight, document.documentElement.scrollHeight) : innerHeight;
+    y = Math.max(-hgt * 0.3, Math.min(bottom - hgt * 0.6, y));
     table.style.transform = `translate(${x}px, ${y}px)`;
     return { x, y };
   }
   addEventListener("resize", place);
+  /** Pin the record player where it is on the page, or let it float over the screen again. */
+  function setPinned(on) {
+    const p = place();
+    m.pinned = !!on;
+    m.pos = { x: p.x, y: on ? p.y + scrollY : p.y - scrollY };
+    if (!on && (m.pos.y < 0 || m.pos.y > innerHeight - 80)) m.pos.y = innerHeight - recordSize() * 1.02 - 96; // bring it back into view
+    save(); place();
+    const pb = table.querySelector(".tt-pin"); if (pb) pb.setAttribute("aria-pressed", m.pinned);
+    toast(m.pinned ? "Pinned. It stays on the page as you scroll." : "Unpinned. It floats with you again.");
+  }
 
   const listeners = new Set();
   function render() {
@@ -265,7 +279,7 @@
   const startPinch = () => {
     const [a, b] = [...pts.values()];
     const p = place();
-    pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, s0: recordSize(), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, x0: p.x, y0: p.y };
+    pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, s0: recordSize(), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 + (m.pinned ? scrollY : 0), x0: p.x, y0: p.y };
     drag = null; table.classList.add("dragging");
   };
   table.addEventListener("pointerdown", (e) => {
@@ -283,7 +297,7 @@
     if (pinch && pts.size >= 2) {
       const [a, b] = [...pts.values()];
       const k = Math.max(MIN_S / pinch.s0, Math.min(MAX_S / pinch.s0, Math.hypot(a.x - b.x, a.y - b.y) / pinch.d0));
-      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2 + (m.pinned ? scrollY : 0);
       m.size = Math.round(pinch.s0 * k);
       // keep the spot between the fingers under the fingers
       m.pos = { x: mx - (pinch.mx - pinch.x0) * k, y: my - (pinch.my - pinch.y0) * k };
@@ -319,6 +333,7 @@
     const a = e.target.closest("button") && e.target.closest("button").dataset.a; if (!a) return;
     flashControls();
     if (a === "toggle") toggle(); else if (a === "next") next(); else if (a === "prev") prev();
+    else if (a === "pin") setPinned(!m.pinned);
     else if (a === "hide") { m.show = false; save(); render(); toast("Record player put away. Open Music to bring it back."); }
   });
 
@@ -472,10 +487,12 @@
       stage.append(preview); paint(preview);
       const look = h(`<div class="group">
         <label class="check"><input type="checkbox" id="m-show" ${m.show ? "checked" : ""} ${m.token ? "" : "disabled"}> Show it on my shelf</label>
+        <label class="check"><input type="checkbox" id="m-pin" ${m.pinned ? "checked" : ""}> Pin it to the page, so it stays put and scrolls away with the shelves</label>
         <p class="hint">On the shelf: drag it with one finger, pinch with two to resize. Tap the record to play or pause, tap the sleeve to open Music.</p>
         <div class="field"><span class="hint">Vinyl</span><div class="vinylDots">${VINYLS.map(([k, l]) => `<button class="vDot" data-vinyl="${k}" aria-pressed="${m.vinyl === k}" title="${l}"><span></span><em>${l}</em></button>`).join("")}</div></div>
         <div class="field"><span class="hint">Label</span><div class="colors">${LABELS.map(([c, l]) => `<button class="dot ${c === "cover" ? "custom" : ""} ${m.label === c ? "on" : ""}" data-label="${c}" title="${l}" aria-label="${l}" style="${c === "cover" ? "" : "background:" + c}"></button>`).join("")}</div></div>
       </div>`);
+      look.querySelector("#m-pin").onchange = (e) => setPinned(e.target.checked);
       look.querySelector("#m-show").onchange = (e) => { m.show = e.target.checked; save(); render(); if (m.show) poll(); };
       look.querySelectorAll(".vDot").forEach((b) => (b.onclick = () => { m.vinyl = b.dataset.vinyl; save(); render(); look.querySelectorAll(".vDot").forEach((x) => x.setAttribute("aria-pressed", x === b)); }));
       look.querySelectorAll("[data-label]").forEach((b) => (b.onclick = () => { m.label = b.dataset.label; save(); render(); look.querySelectorAll("[data-label]").forEach((x) => x.classList.toggle("on", x === b)); }));

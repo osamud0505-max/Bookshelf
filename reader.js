@@ -709,7 +709,7 @@
   const easeIO = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
   const easeSine = (x) => -(Math.cos(Math.PI * x) - 1) / 2;
   const lerp = (a, b, t) => a + (b - a) * t;
-  const LEAVES = 4, OPEN_END = 2.6; // seconds on the timeline
+  const LEAVES = 4, OPEN_END = 2.3; // seconds on the timeline
   /** The overlay with a 3D copy of the book: cover on a hinge, a few loose leaves, the page block with its edge. */
   function bookFx(b) {
     const aspect = Math.max(0.5, Math.min(0.9, b.coverAspect || 2 / 3));
@@ -736,13 +736,15 @@
     };
     /** Everything at time `p` (seconds) of the opening; closing plays the same timeline backwards. */
     const pose = (p) => {
-      const lRaw = clamp01(p / 1.0), L = easeIO(lRaw), arc = Math.sin(Math.PI * lRaw);
-      const oRaw = clamp01((p - 0.78) / 1.1), O = easeIO(oRaw);
-      const Z = easeIO(clamp01((p - 1.75) / 0.85)), B = easeSine(clamp01((p - 2.15) / 0.45));
-      const S = lerp(start.s, 1, L) * (1 + 0.1 * O) * (1 + 0.5 * Z);
+      // the book simply fades in, growing a little, in the middle of the screen; then it opens
+      const lRaw = clamp01(p / 0.55), L = easeSine(lRaw), arc = 0;
+      const oRaw = clamp01((p - 0.45) / 1.1), O = easeIO(oRaw);
+      const Z = easeIO(clamp01((p - 1.4) / 0.85)), B = easeSine(clamp01((p - 1.85) / 0.45));
+      const S = lerp(0.88, 1, L) * (1 + 0.1 * O) * (1 + 0.5 * Z);
+      book.style.opacity = L.toFixed(3);
       // centred spread while open, then the camera moves onto the right-hand page
-      const tx = lerp(start.dx, 0, L) + (S * W / 2) * O * (1 - Z), ty = lerp(start.dy, 0, L) - arc * Math.min(60, innerHeight * 0.06);
-      const ry = -14 * arc + 6 * Math.sin(Math.PI * oRaw) * (1 - Z), rx = 7 * arc;
+      const tx = (S * W / 2) * O * (1 - Z), ty = 0;
+      const ry = 4 * Math.sin(Math.PI * oRaw) * (1 - Z), rx = 0;
       book.style.transform = `translate3d(${tx.toFixed(2)}px, ${ty.toFixed(2)}px, 0) scale(${(S / SM).toFixed(5)}) rotateY(${ry.toFixed(2)}deg) rotateX(${rx.toFixed(2)}deg)`;
       book.style.setProperty("--lift", (0.35 + 0.65 * arc * (1 - O)).toFixed(3));
       const a = 179 * O;
@@ -777,20 +779,17 @@
   }
   async function openingAnim(b) {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
-    const src = bookOnScreen(b);
     const A = bookFx(b);
-    A.setHome(src); A.pose(0);
+    A.pose(0);
     // draw it once, invisibly, so the pages are ready before anything moves
     A.fx.style.opacity = "0.001";
     document.body.append(A.fx);
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     A.fx.style.opacity = "";
-    if (src) src.style.visibility = "hidden";
     await A.play(0, OPEN_END);
-    if (src) src.style.visibility = "";
     return A.fx;
   }
-  /** Leaving the book: the page fades to black, the open book comes back into view, closes, and floats back to its place. */
+  /** Leaving the book: the page fades to black, the open book comes back into view, closes and fades away. */
   async function closingAnim(b, hideReader) {
     if (!b || matchMedia("(prefers-reduced-motion: reduce)").matches) { hideReader(); return; }
     const A = bookFx(b);
@@ -805,17 +804,9 @@
     await new Promise((r) => setTimeout(r, 470));
     black.style.transition = "";
     hideReader(); room.classList.remove("leaving");
-    // the shelf may still be settling after it redraws, so keep aiming at wherever the book's place is now
-    let src = null;
-    const aim = () => {
-      const s = bookOnScreen(b);
-      if (s !== src) { if (src) src.style.visibility = ""; src = s; if (src) src.style.visibility = "hidden"; }
-      A.setHome(src);
-    };
-    aim(); A.pose(OPEN_END); A.fx.classList.remove("pre");
-    await A.play(OPEN_END, 0, 1.08, aim);
-    if (src) src.style.visibility = "";
-    A.fx.classList.add("gone"); setTimeout(() => A.fx.remove(), 200);
+    A.pose(OPEN_END); A.fx.classList.remove("pre");
+    await A.play(OPEN_END, 0, 1.05);
+    A.fx.remove();
   }
   // ------------------------------------------------------------------ handwriting for the pages: flowing pen strokes made of letter-like shapes that never spell anything
   const GLYPHS = [

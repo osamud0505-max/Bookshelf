@@ -799,32 +799,47 @@
     const shroom = (x, y, r, col) => `<rect x="${f1(x - r * 0.18)}" y="${f1(y - r * 1.1)}" width="${f1(r * 0.36)}" height="${f1(r * 1.1)}" rx="${f1(r * 0.15)}" fill="#cfeee6" opacity=".85"/><ellipse cx="${f1(x)}" cy="${f1(y - r * 1.2)}" rx="${f1(r * 1.8)}" ry="${f1(r * 1.6)}" fill="${col}" opacity=".35" filter="url(#glowBl)"/><path d="M${f1(x - r)} ${f1(y - r * 1.05)} C${f1(x - r)} ${f1(y - r * 2)} ${f1(x + r)} ${f1(y - r * 2)} ${f1(x + r)} ${f1(y - r * 1.05)}Z" fill="${col}"/>`;
     let shrooms = "";
     for (const [cx, cy, n, col] of [[66, 736, 6, "#8ff7e4"], [206, 704, 3, "#a8f0ff"], [336, 738, 5, "#8ff7e4"], [130, 770, 3, "#ffd79a"], [270, 762, 4, "#b9fff0"], [384, 752, 3, "#ffc7ef"]]) for (let k = 0; k < n; k++) shrooms += shroom(cx + (R() - 0.5) * 56, cy + R() * 12, 3 + R() * 5, col);
+    // a thick carpet of grass hiding all the ground, darkest at the back
+    const carpet = (y0, y1) => {
+      let o = "";
+      for (let y = y0; y < y1; y += 3.2) {
+        const depth = (y - 684) / 190;
+        const cols = depth < 0.35 ? ["#040b07", "#06100a", "#050d08"] : depth < 0.7 ? ["#071509", "#09190e", "#0b1d11", "#06120b"] : ["#0a1d11", "#0d2416", "#0b2013", "#102a19"];
+        for (let i = 0; i < 46; i++) {
+          const x = R() * 412 - 6, hh = 7 + depth * 22 + R() * 12, lean = (R() - 0.5) * 10 + 2, bw = 1 + depth * 1.4 + R() * 0.8;
+          o += `<path d="M${f1(x)} ${f1(y + 3)} Q${f1(x + lean * 0.3)} ${f1(y + 3 - hh * 0.6)} ${f1(x + lean)} ${f1(y + 3 - hh)} Q${f1(x + lean * 0.3 + bw * 0.7)} ${f1(y + 3 - hh * 0.5)} ${f1(x + bw)} ${f1(y + 3)}Z" fill="${cols[Math.floor(R() * cols.length)]}"/>`;
+        }
+      }
+      return o;
+    };
     let far = ""; for (const x of [20, 110, 150, 260, 300, 380]) far += `<path d="M${x - 8} 860 L${x - 5} 0 L${x + 5} 0 L${x + 8} 860Z" fill="#1a2840"/>`;
     // distant willow domes in the mist
     let domes = ""; for (const [x, y, r] of [[120, 470, 90], [270, 450, 110], [10, 430, 80], [400, 480, 90]]) domes += `<path d="M${x - r} ${y + r * 1.4} C${x - r} ${y - r * 0.4} ${x + r} ${y - r * 0.4} ${x + r} ${y + r * 1.4}Z" fill="#1d3448"/>`;
-    const defs = `<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070a18"/><stop offset=".3" stop-color="#152a52"/><stop offset=".55" stop-color="#2c5274"/><stop offset=".75" stop-color="#1a4448"/><stop offset="1" stop-color="#08130f"/></linearGradient>`
-      + `<radialGradient id="dusk" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#d3a0d8" stop-opacity=".45"/><stop offset=".5" stop-color="#7a74c0" stop-opacity=".2"/><stop offset="1" stop-color="#1a1f4a" stop-opacity="0"/></radialGradient>`
-      + `<linearGradient id="wdh" x1="0" x2="1"><stop offset="0" stop-color="#1c120a"/><stop offset=".3" stop-color="#3e2c1c"/><stop offset=".62" stop-color="#5a432e"/><stop offset=".82" stop-color="#7a6248"/><stop offset="1" stop-color="#2a1c10"/></linearGradient>`
-      + `<linearGradient id="wd" x1="0" x2="1"><stop offset="0" stop-color="#2a1c10"/><stop offset=".6" stop-color="#5a432e"/><stop offset="1" stop-color="#3a2a1a"/></linearGradient>`
+    const defs = `<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#020309"/><stop offset=".3" stop-color="#070e22"/><stop offset=".55" stop-color="#0e2036"/><stop offset=".75" stop-color="#0a1c1e"/><stop offset="1" stop-color="#030806"/></linearGradient>`
+      + `<radialGradient id="dusk" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#8a78b8" stop-opacity=".22"/><stop offset=".5" stop-color="#4a4a8a" stop-opacity=".1"/><stop offset="1" stop-color="#1a1f4a" stop-opacity="0"/></radialGradient>`
+      + `<radialGradient id="night" cx=".5" cy=".45" r=".75"><stop offset=".3" stop-color="#01020a" stop-opacity=".15"/><stop offset="1" stop-color="#01020a" stop-opacity=".7"/></radialGradient>`
+      + `<linearGradient id="wdh" x1="0" x2="1"><stop offset="0" stop-color="#0e0905"/><stop offset=".3" stop-color="#271b11"/><stop offset=".62" stop-color="#3a2b1e"/><stop offset=".82" stop-color="#55493e"/><stop offset="1" stop-color="#160e07"/></linearGradient>`
+      + `<linearGradient id="wd" x1="0" x2="1"><stop offset="0" stop-color="#160e07"/><stop offset=".6" stop-color="#3a2b1e"/><stop offset="1" stop-color="#22180e"/></linearGradient>`
       + `<linearGradient id="wdfh" x1="0" x2="1"><stop offset="0" stop-color="#22232e"/><stop offset=".6" stop-color="#3e4250"/><stop offset="1" stop-color="#262834"/></linearGradient>`
       + `<linearGradient id="wdf" x1="0" x2="1"><stop offset="0" stop-color="#262834"/><stop offset="1" stop-color="#3a3e4c"/></linearGradient>`
       + `<filter id="barkTex" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.35 0.025" numOctaves="3" seed="7" result="n"/><feColorMatrix in="n" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 2.2 -1" result="a"/><feComposite in="a" in2="SourceGraphic" operator="in"/></filter>`
       + `<filter id="glowBl" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="4"/></filter><filter id="fogF" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="22"/></filter>`
       + `<filter id="farSoft"><feGaussianBlur stdDeviation="1.4"/></filter><filter id="mistF"><feGaussianBlur stdDeviation="6"/></filter><filter id="rayF" x="-20%" y="-5%" width="140%" height="110%"><feGaussianBlur stdDeviation="8"/></filter>`;
     return SVG(`<rect width="400" height="860" fill="url(#sky)"/><ellipse cx="200" cy="470" rx="240" ry="220" fill="url(#dusk)"/>`
-      + `<g filter="url(#mistF)" opacity=".8">${far}${domes}</g>`
-      + `<ellipse cx="200" cy="600" rx="300" ry="70" fill="#a9c6e0" opacity=".2" filter="url(#fogF)"/><ellipse cx="140" cy="480" rx="200" ry="45" fill="#c3b6e2" opacity=".14" filter="url(#fogF)"/>`
-      + `<g filter="url(#rayF)"><path d="M150 0 L210 0 L300 760 L200 760Z" fill="#bfe6ff" opacity=".09"/><path d="M228 0 L256 0 L330 700 L282 700Z" fill="#d8c8ff" opacity=".07"/></g>`
+      + `<g filter="url(#mistF)" opacity=".55">${far.replace(/#1a2840/g, "#0e1828")}${domes.replace(/#1d3448/g, "#101e2c")}</g>`
+      + `<ellipse cx="200" cy="600" rx="300" ry="70" fill="#7a96b0" opacity=".12" filter="url(#fogF)"/><ellipse cx="140" cy="480" rx="200" ry="45" fill="#8a80b0" opacity=".08" filter="url(#fogF)"/>`
+      + `<g filter="url(#rayF)"><path d="M150 0 L210 0 L300 760 L200 760Z" fill="#bfe6ff" opacity=".05"/><path d="M228 0 L256 0 L330 700 L282 700Z" fill="#d8c8ff" opacity=".04"/></g>`
       + `<path d="M0 720 C60 694 110 712 160 702 C220 688 260 714 320 700 C360 690 390 702 400 698 L400 860 L0 860Z" fill="#0b1a12"/><path d="M0 762 C80 744 140 770 210 754 C280 738 330 764 400 750 L400 860 L0 860Z" fill="#07110c"/>`
       + WILLOWS.map(trunk).join("")
-      + `<ellipse cx="200" cy="712" rx="260" ry="40" fill="#7fd9c8" opacity=".14" filter="url(#fogF)"/>`
-      + shrooms + specks, defs, "xMidYMax");
+      + `<ellipse cx="200" cy="712" rx="260" ry="40" fill="#5fa898" opacity=".08" filter="url(#fogF)"/>`
+      + carpet(684, 746) + shrooms + carpet(746, 874)
+      + `<rect width="400" height="860" fill="url(#night)"/>` + specks, defs, "xMidYMax");
   });
   /** The hanging curtains of one willow, in two layers that sway a little out of step. */
   function willowCurtains(t, seed) {
     const R = rng(seed), layers = [""];
-    const cols = t.far ? ["#22383c", "#284044", "#2c4648"] : ["#1f3d2a", "#264a32", "#2d5638", "#1a3424", "#335f3f"];
-    const grads = cols.concat("#5f9a72").map((c, i) => `<linearGradient id="wf${seed}_${i}" gradientUnits="userSpaceOnUse" x1="0" y1="60" x2="0" y2="720"><stop offset="0" stop-color="${c}"/><stop offset=".55" stop-color="${c}" stop-opacity=".85"/><stop offset="1" stop-color="${c}" stop-opacity=".15"/></linearGradient>`).join("");
+    const cols = t.far ? ["#15242a", "#1a2c30", "#1c3034"] : ["#13281b", "#183221", "#1d3a27", "#102216", "#21422d"];
+    const grads = cols.concat("#3f6e54").map((c, i) => `<linearGradient id="wf${seed}_${i}" gradientUnits="userSpaceOnUse" x1="0" y1="60" x2="0" y2="720"><stop offset="0" stop-color="${c}"/><stop offset=".55" stop-color="${c}" stop-opacity=".85"/><stop offset="1" stop-color="${c}" stop-opacity=".15"/></linearGradient>`).join("");
     for (const [cx, cy] of t.crowns) {
       for (const dx of [-70, -40, -14, 14, 42, 74]) {
         const ex = cx + dx, ey = cy + 6 + R() * 18, qx = cx + dx * 0.45, qy = cy - 40;
@@ -847,19 +862,18 @@
   // rows of grass from the back of the glade to the front; each row bends in the wind, a gust travelling across
   FX.grassWind = () => {
     const R = rng(77); let o = "";
-    const rows = [740, 762, 786, 812, 838, 866];
-    rows.forEach((yb, ri) => {
-      const near = ri / (rows.length - 1), cols = near < 0.4 ? ["#0c2216", "#102a1c", "#0a1c12"] : ["#123020", "#18402a", "#1f4a2e", "#0f2a1a", "#2a5a36"];
+    const rows = [[802, ["#081a10", "#0a1e13", "#071709"]], [834, ["#0b2214", "#0e2818", "#091d11"]], [870, ["#0d2717", "#11301d", "#0b2214", "#0f2c1a"]]];
+    rows.forEach(([yb, cols], ri) => {
       for (let seg = 0; seg < 2; seg++) {
-        const x0 = seg * 200 - 6, x1 = x0 + 212;
+        const x0 = seg * 200 - 8, x1 = x0 + 216;
         let blades = "";
-        for (let i = 0; i < 115; i++) {
-          const x = x0 + R() * (x1 - x0), h = 14 + R() * 22 + near * 22, lean = (R() - 0.5) * 12, bw = 1.4 + R() * 1.8 + near;
-          const c = cols[Math.floor(R() * cols.length)];
-          blades += `<path d="M${f1(x)} ${yb} Q${f1(x + lean * 0.35)} ${f1(yb - h * 0.55)} ${f1(x + lean)} ${f1(yb - h)} Q${f1(x + lean * 0.35 + bw * 0.6)} ${f1(yb - h * 0.5)} ${f1(x + bw)} ${yb}Z" fill="${c}"/>`;
-          if (near > 0.5 && R() < 0.12) blades += `<path d="M${f1(x + lean * 0.5)} ${f1(yb - h * 0.6)} Q${f1(x + lean * 0.8)} ${f1(yb - h * 0.85)} ${f1(x + lean)} ${f1(yb - h)}" stroke="#6fd0a8" stroke-width=".6" fill="none" opacity=".5"/>`;
+        for (let i = 0; i < 170; i++) {
+          const x = x0 + R() * (x1 - x0), hh = 26 + R() * 34 + ri * 10, lean = (R() - 0.35) * 18, bw = 1.1 + R() * 1.3 + ri * 0.4;
+          const d = `M${f1(x)} ${yb + 2} C${f1(x)} ${f1(yb - hh * 0.4)} ${f1(x + lean * 0.5)} ${f1(yb - hh * 0.8)} ${f1(x + lean)} ${f1(yb - hh)} C${f1(x + lean * 0.5 + bw * 0.5)} ${f1(yb - hh * 0.75)} ${f1(x + bw)} ${f1(yb - hh * 0.35)} ${f1(x + bw)} ${yb + 2}Z`;
+          blades += `<path d="${d}" fill="${cols[Math.floor(R() * cols.length)]}"/>`;
+          if (R() < 0.14) blades += `<path d="M${f1(x + bw * 0.6)} ${f1(yb - hh * 0.3)} C${f1(x + bw * 0.6)} ${f1(yb - hh * 0.6)} ${f1(x + lean * 0.6)} ${f1(yb - hh * 0.85)} ${f1(x + lean)} ${f1(yb - hh)}" stroke="#3f7a62" stroke-width=".5" fill="none" opacity=".35"/>`;
         }
-        o += `<div class="fxGrass" style="--x0:${x0};--w:${x1 - x0};--yb:${yb};--d:-${f1(6 - seg * 0.7 - ri * 0.15)}s;--t:${f1(5.6 + (ri % 2) * 0.5)}s"><svg viewBox="${x0} ${yb - 72} ${x1 - x0} 74" preserveAspectRatio="none" aria-hidden="true">${blades}</svg></div>`;
+        o += `<div class="fxGrass" style="--x0:${x0};--w:${x1 - x0};--yb:${yb};--d:-${f1(6 - seg * 0.8 - ri * 0.3)}s;--t:${f1(5 + ri * 0.6)}s"><svg viewBox="${x0} ${yb - 100} ${x1 - x0} 104" preserveAspectRatio="none" aria-hidden="true">${blades}</svg></div>`;
       }
     });
     return o;

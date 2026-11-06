@@ -445,18 +445,22 @@
     const src = actx.createBufferSource(); src.buffer = buf; return src;
   }
   function env(g, t0, peak, attack, decay) { g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(peak, t0 + attack); g.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + decay); }
-  /** A soft breath that puts a candle out. */
+  /** Someone blowing a candle out: a long soft "fffooh" of breath, the flame fluttering in it, then quiet. */
   function soundBlow() {
     try {
-      const src = noiseBurst(0.7), t = actx.currentTime;
-      const bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.7;
-      bp.frequency.setValueAtTime(1400, t); bp.frequency.exponentialRampToValueAtTime(380, t + 0.45);
-      const g = actx.createGain(); env(g, t, 0.5, 0.04, 0.45);
-      src.connect(bp).connect(g).connect(actx.destination); src.start(t); src.stop(t + 0.6);
-      // the little "fft" of the flame dying
-      const s2 = noiseBurst(0.2), lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 260;
-      const g2 = actx.createGain(); env(g2, t + 0.12, 0.6, 0.01, 0.12);
-      s2.connect(lp).connect(g2).connect(actx.destination); s2.start(t + 0.12); s2.stop(t + 0.3);
+      const src = noiseBurst(0.95), t = actx.currentTime;
+      const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 220;
+      const lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 0.4;
+      lp.frequency.setValueAtTime(3400, t); lp.frequency.exponentialRampToValueAtTime(650, t + 0.7);
+      const g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.5, t + 0.07); g.gain.linearRampToValueAtTime(0.38, t + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
+      src.connect(hp).connect(lp).connect(g).connect(actx.destination); src.start(t); src.stop(t + 0.95);
+      // the flame flapping in the breath before it goes
+      const f = noiseBurst(0.4), bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 150; bp.Q.value = 0.8;
+      const fg = actx.createGain(); fg.gain.value = 0;
+      const lfo = actx.createOscillator(), lg = actx.createGain(); lfo.frequency.value = 17; lg.gain.value = 0.35;
+      lfo.connect(lg).connect(fg.gain);
+      const fe = actx.createGain(); fe.gain.setValueAtTime(0.0001, t); fe.gain.linearRampToValueAtTime(1, t + 0.05); fe.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+      f.connect(bp).connect(fg).connect(fe).connect(actx.destination); f.start(t); f.stop(t + 0.4); lfo.start(t); lfo.stop(t + 0.4);
     } catch (e) { /* no sound available */ }
   }
   /** A pull-chain light switch: the beads rattle, the switch clicks at the bottom, then a softer click as it lets go. */
@@ -492,19 +496,30 @@
       });
     } catch (e) { /* no sound available */ }
   }
-  /** A match strike and the wick catching. */
+  /** Striking a match: the rough scratch along the box, the head flaring with a whoosh, a few crackles as it burns. */
   function soundLight() {
     try {
-      const t = actx ? actx.currentTime : 0;
-      const s1 = noiseBurst(0.12), hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2500;
-      const g1 = actx.createGain(); env(g1, actx.currentTime, 0.35, 0.005, 0.09);
-      s1.connect(hp).connect(g1).connect(actx.destination); s1.start(); s1.stop(actx.currentTime + 0.12);
-      const t2 = actx.currentTime + 0.08, s2 = noiseBurst(0.5), bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 1.2;
-      bp.frequency.setValueAtTime(250, t2); bp.frequency.exponentialRampToValueAtTime(900, t2 + 0.3);
-      const g2 = actx.createGain(); env(g2, t2, 0.22, 0.06, 0.32);
-      s2.connect(bp).connect(g2).connect(actx.destination); s2.start(t2); s2.stop(t2 + 0.45);
+      noiseBurst(0.01); const t = actx.currentTime;
+      const burst = (at, len, type, freq, q, peak) => {
+        const sN = noiseBurst(len + 0.03), f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+        const g = actx.createGain(); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + Math.min(0.006, len / 3)); g.gain.exponentialRampToValueAtTime(0.0001, at + len);
+        sN.connect(f).connect(g).connect(actx.destination); sN.start(at); sN.stop(at + len + 0.03);
+      };
+      // the scratch: a quick run of rough grains
+      for (let k = 0; k < 7; k++) burst(t + k * 0.021 + Math.random() * 0.006, 0.018 + Math.random() * 0.012, "bandpass", 1800 + Math.random() * 1800, 1.1, 0.12 + k * 0.045);
+      // the head catching: a bright hiss that opens up and settles into a soft roar
+      const at = t + 0.17, n = noiseBurst(0.9), bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.6;
+      bp.frequency.setValueAtTime(700, at); bp.frequency.exponentialRampToValueAtTime(2600, at + 0.05); bp.frequency.exponentialRampToValueAtTime(800, at + 0.6);
+      const g = actx.createGain(); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.55, at + 0.035); g.gain.exponentialRampToValueAtTime(0.12, at + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.85);
+      n.connect(bp).connect(g).connect(actx.destination); n.start(at); n.stop(at + 0.9);
+      const o = actx.createOscillator(), og = actx.createGain(); o.type = "sine";
+      o.frequency.setValueAtTime(120, at); o.frequency.exponentialRampToValueAtTime(55, at + 0.12);
+      og.gain.setValueAtTime(0.0001, at); og.gain.exponentialRampToValueAtTime(0.22, at + 0.01); og.gain.exponentialRampToValueAtTime(0.0001, at + 0.14);
+      o.connect(og).connect(actx.destination); o.start(at); o.stop(at + 0.16);
+      for (let k = 0; k < 4; k++) burst(at + 0.18 + Math.random() * 0.45, 0.006, "highpass", 3500, 0.7, 0.08 + Math.random() * 0.06);
     } catch (e) { /* no sound available */ }
   }
+
   /** Blow out or light the candle(s) of one ornament, with smoke rising from the wick. */
   function toggleFlame(el, out) {
     const svg = el.querySelector("svg");
@@ -529,8 +544,9 @@
       setTimeout(() => el.classList.remove("embers"), 2200);
     } else {
       soundLight();
-      el.classList.remove("embers", "snuffing"); el.classList.add("lit", "lighting");
-      setTimeout(() => el.classList.remove("lighting"), 700);
+      el.classList.remove("embers", "snuffing");
+      // the flame appears when the match flares, just after the scratch
+      setTimeout(() => { el.classList.add("lit", "lighting"); setTimeout(() => el.classList.remove("lighting"), 700); }, 170);
     }
   }
 
