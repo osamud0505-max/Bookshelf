@@ -150,8 +150,8 @@
         }
         o.connect(g);
         g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.03, t + len * 0.35);
-        g.gain.linearRampToValueAtTime(0.026, t + len * 0.55);
+        g.gain.exponentialRampToValueAtTime(0.16, t + len * 0.35);
+        g.gain.linearRampToValueAtTime(0.14, t + len * 0.55);
         g.gain.exponentialRampToValueAtTime(0.0001, t + len);
         g.connect(lp).connect(dest); o.start(t); o.stop(t + len + 0.1);
       };
@@ -160,25 +160,25 @@
         lp.connect(dest);
         for (let i = 0; i < n; i++) {
           const at = t + i * rnd(0.22, 0.3), len = n > 1 ? rnd(0.14, 0.2) : rnd(0.3, 0.6);
-          R.tone(at, f, f * 0.995, len, 0.014, "square", lp, 0.02);
-          R.tone(at, f * 1.25, f * 1.245, len, 0.011, "square", lp, 0.02);
+          R.tone(at, f, f * 0.995, len, 0.06, "square", lp, 0.02);
+          R.tone(at, f * 1.25, f * 1.245, len, 0.045, "square", lp, 0.02);
         }
       };
-      R.every(9000, 22000, horn);
-      R.every(40000, 95000, siren);
+      R.every(6000, 14000, horn);
+      R.every(30000, 60000, siren);
       let first = true; // the first siren comes within half a minute, then they're rare
-      R.every(8000, 8000, (t) => { if (first) { first = false; siren(t + rnd(2, 20)); } });
+      R.every(3000, 3000, (t) => { if (first) { first = false; siren(t + rnd(1, 4)); } });
     },
     hum(R, level = 1) { R.loop("brown", [R.filter("lowpass", 140)], 0.12 * level); },
     city(R) {
       // the city behind the glass: a low rumble, cars passing now and then, a far-off horn
-      R.loop("brown", [R.filter("lowpass", 260)], 0.3);
-      R.loop("pink", [R.filter("bandpass", 600, 0.4), R.filter("lowpass", 900)], 0.03);
-      R.every(3000, 9000, (t) => {
+      R.loop("brown", [R.filter("lowpass", 160)], 0.14);
+      R.loop("pink", [R.filter("bandpass", 600, 0.4), R.filter("lowpass", 900)], 0.012);
+      R.every(6000, 14000, (t) => {
         const s = ctx.createBufferSource(); s.buffer = noise("pink");
         const f = R.filter("bandpass", 400, 0.8), g = ctx.createGain(), len = rnd(2.5, 4.5), dest = R.pan(rnd(-0.7, 0.7)) || R.out;
         f.frequency.setValueAtTime(300, t); f.frequency.linearRampToValueAtTime(rnd(700, 1100), t + len * 0.5); f.frequency.linearRampToValueAtTime(260, t + len);
-        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(rnd(0.08, 0.16), t + len * 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(rnd(0.03, 0.06), t + len * 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
         s.connect(f).connect(g).connect(dest); s.start(t, Math.random() * 4); s.stop(t + len);
       });
       R.every(20000, 50000, (t) => { const lp = R.filter("lowpass", 900); lp.connect(R.out); const f = rnd(330, 420); R.tone(t, f, f, 0.35, 0.012, "sawtooth", lp, 0.03); R.tone(t, f * 1.26, f * 1.26, 0.35, 0.01, "sawtooth", lp, 0.03); });
@@ -277,7 +277,7 @@
   const ROOMS = {
     // wind is only outdoors (forest, starry night); in the castle and the witch's tower it is faint and far off
     cabin: (R) => S.fire(R),
-    loft: (R) => { S.city(R.far(520, 0.45)); S.sirens(R.far(1600, 0.5)); },
+    loft: (R) => { S.city(R.far(520, 0.45)); S.sirens(R.far(1800, 1)); },
     academia: (R) => { S.rain(R.far(1000, 0.5), 0.8); S.clock(R, false, 0.5); },
     nook: (R) => S.birdsFar(R),
     library: (R) => { S.clock(R, false, 0.8); S.hum(R); },
