@@ -35,11 +35,14 @@
     return (bufs[kind] = buf);
   }
   /** A room: everything it makes goes into `out`; `later` schedules repeating events; stop() tears it all down. */
-  function makeRoom() {
-    const out = ctx.createGain(); out.gain.value = 0; out.connect(master);
-    const nodes = [], timers = [];
+  function makeRoom(dest = master, shared = { nodes: [], timers: [], cleanups: [] }) {
+    const out = ctx.createGain(); out.gain.value = dest === master ? 0 : 1; out.connect(dest);
+    const { nodes, timers, cleanups } = shared;
     const R = {
       out,
+      /** A part of the room heard from further away: muffled (lowpass) and quieter, e.g. through a wall or window. */
+      far(cutoff, level) { const lp = R.filter("lowpass", cutoff, 0.5), g = ctx.createGain(); g.gain.value = level; lp.connect(g).connect(out); return makeRoom(lp, shared); },
+      onStop(fn) { cleanups.push(fn); },
       loop(kind, chain, level) {
         const s = ctx.createBufferSource(); s.buffer = noise(kind); s.loop = true; s.loopStart = 0.05; s.loopEnd = 5.9;
         const g = ctx.createGain(); g.gain.value = level;
@@ -69,7 +72,7 @@
         g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + attack); g.gain.exponentialRampToValueAtTime(0.0001, at + len);
         o.connect(g).connect(dest); o.start(at); o.stop(at + len + 0.02);
       },
-      stop() { timers.forEach(clearTimeout); nodes.forEach((n) => { try { n.stop(); } catch (e) { /* already stopped */ } }); setTimeout(() => out.disconnect(), 100); },
+      stop() { cleanups.forEach((fn) => { try { fn(); } catch (e) { /* ignore */ } }); timers.forEach(clearTimeout); nodes.forEach((n) => { try { n.stop(); } catch (e) { /* already stopped */ } }); setTimeout(() => out.disconnect(), 100); },
     };
     return R;
   }
@@ -127,6 +130,7 @@
         tock = !tock;
         R.burst(t, 0.025, "bandpass", deep ? (tock ? 1400 : 1700) : (tock ? 2600 : 3200), 6, (deep ? 0.12 : 0.06) * level);
         if (deep) R.tone(t, tock ? 520 : 600, tock ? 480 : 560, 0.12, 0.03 * level);
+        else R.tone(t, tock ? 1900 : 2300, tock ? 1800 : 2200, 0.035, 0.018 * level);
       });
     },
     hum(R, level = 1) { R.loop("brown", [R.filter("lowpass", 140)], 0.12 * level); },
@@ -170,11 +174,11 @@
       const lp = R.filter("lowpass", 220); lp.connect(R.out);
       const oscs = [55, 55.4, 82.4].map((f) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sawtooth"; o.frequency.value = f; g.gain.value = 0.02; o.connect(g).connect(lp); o.start(); return o; });
       R.lfo(lp.frequency, 0.05, 80);
-      const stop = R.stop; R.stop = () => { oscs.forEach((o) => { try { o.stop(); } catch (e) { /* stopped */ } }); stop(); };
+      R.onStop(() => oscs.forEach((o) => { try { o.stop(); } catch (e) { /* stopped */ } }));
     },
     drips(R) {
       const d = ctx.createDelay(1), fb = ctx.createGain(); d.delayTime.value = 0.28; fb.gain.value = 0.35; d.connect(fb).connect(d); d.connect(R.out);
-      R.every(1800, 6000, (t) => { R.tone(t, rnd(1100, 1500), rnd(700, 900), 0.04, 0.06); R.tone(t, rnd(1100, 1500), rnd(700, 900), 0.04, 0.03, "sine", d); });
+      R.every(900, 3200, (t) => { const f = rnd(1000, 1600), f2 = f * rnd(0.6, 0.72), pk = rnd(0.06, 0.11); R.tone(t, f, f2, 0.045, pk); R.tone(t, f, f2, 0.045, pk * 0.5, "sine", d); });
     },
     /** Distant fireworks: each burst you see is heard a moment later as a soft boom, glittery ones crackle after. */
     fireworks(R) {
@@ -189,7 +193,45 @@
         if (d.kind === "glitter" || d.kind === "willow") for (let k = 0; k < 22; k++) R.burst(t + 0.5 + Math.random() * 1.3, 0.006, "highpass", 3000, 0.7, rnd(0.01, 0.035), dest);
       };
       addEventListener("shelf:firework", on);
-      const stop = R.stop; R.stop = () => { removeEventListener("shelf:firework", on); stop(); };
+      R.onStop(() => removeEventListener("shelf:firework", on));
+    },
+    /** Light, far-off birdsong: a few short tweets now and then. */
+    birdsFar(R) {
+      const F = R.far(4200, 0.55);
+      F.every(2500, 8000, (t) => {
+        const dest = F.pan(rnd(-0.8, 0.8)) || F.out, base = rnd(2600, 3800), n = 1 + Math.floor(Math.random() * 3);
+        for (let k = 0; k < n; k++) F.tone(t + k * rnd(0.11, 0.18), base * rnd(1.05, 1.25), base * rnd(0.85, 0.95), rnd(0.05, 0.08), rnd(0.015, 0.028), "sine", dest, 0.01);
+      });
+    },
+    /** A pen or quill writing on paper: little scratchy strokes in words and lines, a page settling now and then. */
+    writing(R) {
+      R.every(2500, 6500, (t) => {
+        let at = t;
+        for (let w = 0; w < 3 + Math.floor(Math.random() * 6); w++) {
+          for (let k = 0; k < 3 + Math.floor(Math.random() * 5); k++) {
+            const len = rnd(0.04, 0.13), s = ctx.createBufferSource(); s.buffer = noise("white");
+            const f = R.filter("bandpass", rnd(2800, 4600), 1.4), g = ctx.createGain(), pk = rnd(0.012, 0.03);
+            g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(pk, at + len * 0.3); g.gain.linearRampToValueAtTime(pk * 0.6, at + len * 0.7); g.gain.linearRampToValueAtTime(0.0001, at + len);
+            s.connect(f).connect(g).connect(R.out); s.start(at, Math.random() * 5); s.stop(at + len + 0.02);
+            at += len + rnd(0.02, 0.07);
+          }
+          at += rnd(0.14, 0.32);
+        }
+        if (Math.random() < 0.25) R.burst(at + 0.4, 0.3, "lowpass", 1800, 0.5, 0.025);
+      });
+    },
+    /** A witch's pot: a thick simmer, small bubbles and the occasional deep glug. */
+    cauldron(R) {
+      const sim = R.loop("brown", [R.filter("lowpass", 420)], 0.1);
+      R.lfo(sim.gain, 2.7, 0.04);
+      R.every(70, 240, (t) => { const f = rnd(180, 420); R.tone(t, f, f * rnd(1.5, 2.1), rnd(0.03, 0.06), rnd(0.02, 0.05), "sine", R.out, 0.006); });
+      R.every(500, 1600, (t) => {
+        for (let k = 0; k < 1 + Math.floor(Math.random() * 3); k++) {
+          const at = t + k * rnd(0.12, 0.25), f = rnd(80, 120);
+          R.tone(at, f, f * rnd(2, 2.6), rnd(0.1, 0.16), rnd(0.07, 0.12), "sine", R.out, 0.012);
+          R.burst(at + 0.05, 0.07, "lowpass", 700, 0.8, rnd(0.04, 0.08));
+        }
+      });
     },
     bubbles(R) {
       R.loop("brown", [R.filter("lowpass", 300)], 0.08);
@@ -197,25 +239,26 @@
     },
   };
   const ROOMS = {
+    // wind is only outdoors (forest, starry night); in the castle and the witch's tower it is faint and far off
     cabin: (R) => S.fire(R),
-    loft: (R) => S.city(R),
-    academia: (R) => { S.rain(R); S.clock(R, false, 0.7); },
-    nook: (R) => { S.birds(R); S.wind(R, 0, 0.5); },
+    loft: (R) => S.city(R.far(520, 0.45)),
+    academia: (R) => { S.rain(R.far(1000, 0.5), 0.8); S.clock(R, false, 0.5); },
+    nook: (R) => S.birdsFar(R),
     library: (R) => { S.clock(R, false, 0.8); S.hum(R); },
     starry: (R) => { S.crickets(R); S.wind(R, 0, 0.6); },
-    cottage: (R) => { S.birds(R, 0.8); S.wind(R, 0, 0.45); },
-    candle: (R) => { S.hum(R, 0.7); S.fire(R, 0.3); S.clock(R, false, 0.4); },
-    vampire: (R) => { S.wind(R, 1, 0.6); S.drone(R); },
-    victorian: (R) => { S.clock(R, true); S.fire(R, 0.45); },
-    castle: (R) => { S.wind(R, 1); S.drips(R); },
-    bordello: (R) => { S.rain(R, 0.9); S.thunder(R); },
+    cottage: (R) => S.birdsFar(R),
+    candle: (R) => S.writing(R),
+    vampire: (R) => S.drone(R),
+    victorian: (R) => S.clock(R, true, 0.8),
+    castle: (R) => { S.wind(R.far(380, 0.35), 1); S.drips(R); },
+    bordello: (R) => S.clock(R, false, 1),
     forest: (R) => { S.crickets(R, 0.8); S.owl(R); S.wind(R, 0, 0.55); S.sparkle(R); },
     teahouse: (R) => { S.water(R); S.chimes(R); S.crickets(R, 0.4); S.fireworks(R); },
-    witch: (R) => { S.bubbles(R); S.fire(R, 0.4); S.wind(R, 1, 0.35); },
+    witch: (R) => { S.cauldron(R); S.wind(R.far(420, 0.3), 1, 0.6); },
   };
 
   // evens out how loud the rooms are against each other
-  const ROOM_GAIN = { nook: 3.2, cottage: 3.4, starry: 2.8, forest: 2.8, castle: 2.4, library: 1.5, candle: 1.5, vampire: 1.5, victorian: 1.4, teahouse: 0.8 };
+  const ROOM_GAIN = { nook: 3, cottage: 3, starry: 2.8, forest: 2.8, castle: 1.6, library: 1.5, candle: 2.5, vampire: 1.5, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1.2, teahouse: 0.8 };
   // ------------------------------------------------------------------ playing the right room
   const look = () => { try { return (window.Shelf && window.Shelf.lookKey && window.Shelf.lookKey()) || ""; } catch (e) { return ""; } };
   const level = () => (pref.on ? pref.vol * (ducked ? 0.3 : 1) : 0);
