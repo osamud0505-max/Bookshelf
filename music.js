@@ -16,9 +16,10 @@
   ];
   const LABELS = [["#ecdcae", "Cream"], ["#f4f1ea", "White"], ["#151515", "Black"], ["#b8322a", "Red"], ["#2c4f7c", "Blue"], ["#d9a441", "Mustard"], ["cover", "From cover"]];
 
-  const defaults = { clientId: "", token: null, show: false, pos: null, size: 0, vinyl: "black", label: "#ecdcae", deviceId: null };
+  const defaults = { clientId: "280140e0f05746a88873caf6b5183d25", token: null, show: false, pos: null, size: 0, vinyl: "black", label: "#ecdcae", deviceId: null };
   let m = { ...defaults };
   try { m = { ...defaults, ...(JSON.parse(localStorage.getItem(KEY)) || {}) }; } catch (e) { /* first visit */ }
+  if (!m.clientId) m.clientId = defaults.clientId; // your Spotify app's Client ID (public, not a secret)
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (e) { /* storage blocked */ } };
 
   let now = { title: "", artist: "", cover: "", playing: false, color: null };
