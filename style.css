@@ -529,7 +529,8 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 .recentDot[aria-pressed="true"] { outline: 2px solid var(--foreground); outline-offset: 2px; }
 
 /* ---------- decor: backdrop, materials, hanging lights ---------- */
-#backdrop { position: fixed; inset: 0; z-index: -1; background: var(--backdrop, var(--background)); pointer-events: none; }
+/* sized to the tallest viewport so the phone's toolbar showing/hiding never stretches it; its own layer so scrolling never repaints it */
+#backdrop { position: fixed; left: 0; top: 0; width: 100%; height: 100vh; height: 100lvh; z-index: -1; background: var(--backdrop, var(--background)); pointer-events: none; transform: translateZ(0); backface-visibility: hidden; }
 html:not([data-mat="paint"]) .plank::after { display: none; }
 html[data-mat="glass"] .plank { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 10px 16px -10px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.5); }
 .lights { position: absolute; left: 0; top: 100%; width: 100%; pointer-events: none; }
@@ -613,3 +614,15 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .sectionHead { position: relative; }
 .decorBtn { margin-left: 8px; width: 28px; height: 28px; border-radius: 999px; border: 1px solid var(--border); background: color-mix(in srgb, var(--background) 55%, transparent); color: var(--muted-fg); cursor: pointer; font-size: .8rem; }
 .decorMenu { position: absolute; right: 0; top: 100%; z-index: 20; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 14px; background: var(--popup); border: 1px solid var(--border); box-shadow: 0 14px 34px rgba(0,0,0,.45); font-size: .9rem; }
+
+/* wisteria, red lanterns, lamp glass */
+.shelf.hasLights[data-lights="wisteria"] .caption { padding-top: 92px; }
+.shelf.hasLights[data-lights="chinese"] .caption { padding-top: 100px; }
+.lights.wisteria .strand { transform-box: fill-box; transform-origin: 50% 0; animation: sway 5s ease-in-out infinite alternate; animation-delay: var(--d); }
+@keyframes sway { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
+.lights.chinese .bulb { transform-box: fill-box; transform-origin: 50% 0; animation: sway 6s ease-in-out infinite alternate; animation-delay: var(--d); }
+.lights.chinese.on .halo { opacity: .55; animation: candleGlow 3s ease-in-out infinite alternate; }
+.ornament .litOnly { opacity: 0; transition: opacity .4s; }
+.ornament.lit .litOnly { opacity: 1; }
+.ornament.lit path.litOnly { opacity: .35; }
+@media (prefers-reduced-motion: reduce) { .lights.wisteria .strand, .lights.chinese .bulb { animation: none; } }

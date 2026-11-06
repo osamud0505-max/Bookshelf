@@ -506,6 +506,7 @@
     if (!el) return;
     const plank = root.querySelector(".plank");
     plank.append(el);
+    if (cfg.style === "wisteria") return;
     const cord = h(`<button class="pullCord" aria-label="Turn the lights ${cfg.on ? "off" : "on"}" aria-pressed="${!!cfg.on}"><i></i><b></b></button>`);
     cord.onclick = () => {
       cord.classList.add("pulled"); setTimeout(() => cord.classList.remove("pulled"), 260);
@@ -597,7 +598,8 @@
       const fl = Math.floor(f);
       let openAt = 0; for (let i = 0; i < fl; i++) openAt += widths[i];
       openAt += (f - fl) * (widths[fl] || 0);
-      if (orn && ornIdx <= fl) openAt += ornW;
+      // the open point passes over the ornament gradually, so the row never jumps
+      if (orn) openAt += ornW * Math.max(0, Math.min(1, f - (ornIdx - 1)));
       const total = widths.reduce((s, v) => s + v, 0) + ornW;
       const offset = Math.max(0, Math.min(Math.max(0, total - (viewW - PAD * 2)), openAt - viewW * 0.3));
       let x = 0;

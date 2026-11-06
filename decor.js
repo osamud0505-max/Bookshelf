@@ -58,6 +58,14 @@
     return svgUrl(`<svg xmlns='http://www.w3.org/2000/svg' width='180' height='120'><rect width='180' height='120' fill='#26252a'/>${r}</svg>`);
   };
 
+  /** Tiny lilac and blue flowers on thin vines, like old cottage wallpaper. */
+  const ditsyTile = () => {
+    const fl = (x, y, c, r = 2.1) => Array.from({ length: 5 }, (_, i) => { const a = i * 1.2566 - 1.57; return `<circle cx="${(x + Math.cos(a) * r).toFixed(2)}" cy="${(y + Math.sin(a) * r).toFixed(2)}" r="${(r * 0.62).toFixed(2)}" fill="${c}"/>`; }).join("") + `<circle cx="${x}" cy="${y}" r="${(r * 0.42).toFixed(2)}" fill="#e9d79a"/>`;
+    const leaf = (x, y, a) => `<ellipse cx="${x}" cy="${y}" rx="2.6" ry="1.1" fill="#9aa58e" transform="rotate(${a} ${x} ${y})"/>`;
+    const sprig = (x, y, flip) => `<path d="M${x} ${y} q${6 * flip} -6 ${2 * flip} -14 q${-4 * flip} -7 ${3 * flip} -14" stroke="#a3ab98" stroke-width=".7" fill="none"/>` + leaf(x + 3 * flip, y - 6, 30 * flip) + leaf(x + 1 * flip, y - 15, -40 * flip) + leaf(x + 5 * flip, y - 22, 20 * flip);
+    return svgUrl(`<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'>${sprig(10, 34, 1)}${fl(15, 12, "#8d98c6")}${fl(8, 30, "#b3a4cf", 1.7)}${sprig(44, 62, -1)}${fl(40, 40, "#9fb0d6")}${fl(50, 46, "#b3a4cf", 1.6)}${fl(30, 58, "#8d98c6", 1.5)}${fl(58, 18, "#a69bcb", 1.8)}</svg>`);
+  };
+
   // ------------------------------------------------------------------ backdrops
   const BACKDROPS = {
     none: { label: "Plain", tone: null, css: () => "var(--background)" },
@@ -80,6 +88,19 @@
     shoji: { label: "Paper screen", tone: "light", css: () => ["repeating-linear-gradient(90deg, rgba(107,74,46,.42) 0 3px, transparent 3px 96px)", "repeating-linear-gradient(180deg, rgba(107,74,46,.42) 0 3px, transparent 3px 132px)", `${noise({ fx: 0.5, fy: 0.08, oct: 2, a: 0.32, b: -0.14 })} 0 0 / 360px`, "radial-gradient(ellipse 120% 90% at 50% 30%, #f6efe0, #e8dcc4)"].join(",") },
     forest: { label: "Deep forest", tone: "dark", css: () => [`${noise({ fx: 0.02, fy: 0.006, oct: 4, rgb: [0.02, 0.06, 0.03], a: 1.6, b: -0.5 })} 0 0 / 360px`, "radial-gradient(ellipse 80% 50% at 50% 20%, rgba(150,200,140,.18), transparent 70%)", "linear-gradient(#0f2219, #07120d)"].join(",") },
     leather: { label: "Leather & oak", tone: "dark", css: () => ["linear-gradient(180deg, transparent 0 62%, rgba(0,0,0,.4) 62% calc(62% + 3px), transparent calc(62% + 3px))", `${noise({ fx: 0.25, fy: 0.25, oct: 3, a: 1, b: -0.42 })} 0 0 / 360px`, "radial-gradient(ellipse 120% 80% at 50% 30%, #5b3424, #2d170f)"].join(",") },
+    ditsy: { label: "Ditsy floral", tone: "light", css: () => [`${noise({ fx: 0.01, fy: 0.01, oct: 3, a: 0.5, b: -0.22 })} 0 0 / 360px`, `${ditsyTile()} 0 0 / 64px 64px`, "radial-gradient(ellipse 120% 90% at 50% 30%, #ebe4d8, #d9cfbf)"].join(",") },
+    goldenHour: {
+      label: "Golden hour", tone: "dark",
+      css: () => [
+        // late sun through a window: soft slanted panes of warm light, with the frame's shadow between them
+        "linear-gradient(118deg, transparent 0 30%, rgba(255,190,110,.16) 33%, rgba(255,200,130,.22) 39%, transparent 40.5% 42%, rgba(255,200,130,.2) 43.5%, rgba(255,190,110,.14) 50%, transparent 53%)",
+        "linear-gradient(118deg, transparent 0 58%, rgba(255,190,110,.10) 61%, rgba(255,200,130,.14) 66%, transparent 67.5% 69%, rgba(255,200,130,.12) 70.5%, transparent 76%)",
+        "radial-gradient(ellipse 70% 45% at 78% 18%, rgba(255,186,96,.22), transparent 70%)",
+        `${noise({ fx: 0.012, fy: 0.012, oct: 3, a: 0.6, b: -0.28 })} 0 0 / 360px`,
+        "linear-gradient(180deg, #4f4339, #3a3029 65%, #2c241f)",
+      ].join(","),
+    },
+    lanternNight: { label: "Lantern night", tone: "dark", css: () => ["radial-gradient(ellipse 90% 45% at 50% 0, rgba(255,70,30,.32), transparent 70%)", "radial-gradient(ellipse 60% 40% at 15% 60%, rgba(255,60,25,.12), transparent 70%)", "radial-gradient(ellipse 60% 40% at 90% 75%, rgba(255,60,25,.10), transparent 70%)", `${noise({ fx: 0.01, fy: 0.01, oct: 3, a: 0.9, b: -0.4 })} 0 0 / 360px`, "linear-gradient(#1c0706, #0b0303)"].join(",") },
     night: {
       label: "Starry night", tone: "dark",
       css: () => {
@@ -104,11 +125,14 @@
     concrete: { label: "Concrete", base: "#8b8884", tex: () => [`${noise({ fx: 0.8, fy: 0.8, oct: 2, a: 1.3, b: -0.5 })} 0 0 / 360px`] },
     steel: { label: "Black steel", base: "#2a2b2e", tex: () => [`${noise({ w: 600, h: 60, fx: 0.002, fy: 0.9, oct: 2, rgb: [1, 1, 1], a: 0.7, b: -0.32 })} 0 0 / 600px 60px`] },
     brass: { label: "Brass", base: "#b08a45", tex: () => [`${noise({ w: 600, h: 60, fx: 0.002, fy: 0.9, oct: 2, rgb: [1, 0.95, 0.8], a: 1, b: -0.4 })} 0 0 / 600px 60px`, "linear-gradient(90deg, rgba(255,255,255,.0), rgba(255,255,255,.18) 40%, rgba(255,255,255,0) 60%)"] },
+    honey: { label: "Honey oak", base: "#87562f", tex: () => grainH(0.55, 0.3) },
+    paintedWhite: { label: "Painted white", base: "#ddd5c8", tex: () => [`${noise({ w: 700, h: 160, fx: 0.003, fy: 0.2, oct: 3, a: 0.6, b: -0.28 })} 0 0 / 700px 160px`] },
+    lacquer: { label: "Black lacquer", base: "#1f0b09", tex: () => ["linear-gradient(90deg, rgba(255,255,255,0), rgba(255,220,200,.10) 35%, rgba(255,255,255,0) 55%, rgba(255,220,200,.06) 80%, rgba(255,255,255,0))", ...grainH(0.5, 0.08)] },
     glass: { label: "Glass", base: "rgba(200,230,228,.28)", tex: () => ["linear-gradient(90deg, rgba(255,255,255,.0), rgba(255,255,255,.25) 30%, rgba(255,255,255,.05) 55%, rgba(255,255,255,.2) 80%, rgba(255,255,255,0))"] },
   };
 
   // ------------------------------------------------------------------ hanging lights
-  const LIGHT_STYLES = { none: "None", fairy: "Fairy lights", globe: "Globe bulbs", stars: "Little stars", candles: "Hanging candles", lanterns: "Paper lanterns", fireflies: "Fireflies" };
+  const LIGHT_STYLES = { none: "None", fairy: "Fairy lights", globe: "Globe bulbs", stars: "Little stars", candles: "Hanging candles", lanterns: "Paper lanterns", chinese: "Red lanterns", fireflies: "Fireflies", wisteria: "Wisteria" };
   const LIGHT_COLOURS = { warm: ["Warm", "#ffc46b"], white: ["Soft white", "#fff1d6"], multi: ["Party", null], pink: ["Pink", "#ff8fc3"], blue: ["Ice blue", "#9fd6ff"], green: ["Fern", "#a9f08d"] };
   const MULTI = ["#ff6b6b", "#ffd166", "#5be3a5", "#5cc8f5", "#c792ff"];
   let lid = 0;
@@ -117,6 +141,8 @@
     const style = cfg.style || "none"; if (style === "none") return null;
     if (style === "candles") return candlesEl(w, cfg);
     if (style === "fireflies") return firefliesEl(w, cfg);
+    if (style === "wisteria") return wisteriaEl(w);
+    if (style === "chinese") return chineseEl(w, cfg);
     const on = !!cfg.on, col = LIGHT_COLOURS[cfg.colour] || LIGHT_COLOURS.warm;
     const colour = (i) => col[1] || MULTI[i % MULTI.length];
     const sag = style === "globe" ? 24 : style === "lanterns" ? 20 : 18, span = style === "globe" ? 190 : style === "lanterns" ? 200 : 130;
@@ -186,6 +212,52 @@
     const el = document.createElement("div");
     el.className = "lights candles" + (on ? " on" : "");
     el.innerHTML = `<div class="lightGlow" style="--glow:${flameC}"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="6"/></filter></defs>${out}</svg>`;
+    el.style.height = H + "px";
+    return el;
+  }
+
+  /** Strands of wisteria hanging from the shelf edge (decoration, not a light). */
+  function wisteriaEl(w) {
+    const n = Math.max(6, Math.round(w / 34)), gap = w / n;
+    let vine = `M0 3`, out = "", H = 0;
+    for (let i = 0; i <= n; i++) vine += ` Q${(i - 0.5) * gap} ${i % 2 ? 9 : 1} ${i * gap} 3`;
+    const purple = ["#c8a6d8", "#b996cf", "#d6b8e2", "#a987c4"];
+    for (let i = 0; i < n; i++) {
+      const x0 = gap * (i + 0.5) + ((i * 17) % 9) - 4, len = 34 + ((i * 41) % 6) * 11, green = i % 3 === 1;
+      H = Math.max(H, len + 10);
+      let strand = `<path d="M${x0} 4 q2 ${len / 2} -1 ${len}" stroke="#5c6b4a" stroke-width=".8" fill="none"/>`;
+      if (green) { for (let y = 8; y < len; y += 5) strand += `<ellipse cx="${x0 + (y % 10 ? 2.6 : -2.6)}" cy="${y}" rx="2.8" ry="1.3" fill="${["#55663f", "#6b7d4f", "#4a5a37"][y % 3]}" transform="rotate(${y % 10 ? 35 : -35} ${x0 + (y % 10 ? 2.6 : -2.6)} ${y})"/>`; }
+      else { for (let y = 6; y < len; y += 2.6) { const r = 3.4 * (1 - y / (len + 8)) + 0.9; strand += `<circle cx="${(x0 + Math.sin(y * 1.7) * r * 0.7).toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="${purple[Math.round(y) % 4]}"/>`; } }
+      out += `<g class="strand" style="--d:${((i * 0.53) % 2.4).toFixed(2)}s">${strand}</g>`;
+      // little leaves on the vine
+      out += `<ellipse cx="${gap * i + 10}" cy="5" rx="3.2" ry="1.4" fill="#55663f" transform="rotate(${i % 2 ? 25 : -20} ${gap * i + 10} 5)"/>`;
+    }
+    const el = document.createElement("div");
+    el.className = "lights wisteria";
+    el.innerHTML = `<svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><path d="${vine}" stroke="#4d5a3c" stroke-width="1.6" fill="none"/>${out}</svg>`;
+    el.style.height = H + "px";
+    return el;
+  }
+
+  /** Big round red lanterns with gold caps and tassels, on cords of different lengths. */
+  function chineseEl(w, cfg) {
+    const on = !!cfg.on, n = Math.max(2, Math.round(w / 120)), gap = w / n, id = "lg" + lid++;
+    let out = "", H = 0;
+    for (let i = 0; i < n; i++) {
+      const x = gap * (i + 0.5) + ((i * 23) % 13) - 6, cord = 6 + ((i * 37) % 3) * 9, rx = 20, ry = 16, cy = cord + 6 + ry;
+      H = Math.max(H, cy + ry + 30);
+      let ribs = ""; for (const f of [-0.75, -0.4, 0, 0.4, 0.75]) ribs += `<ellipse cx="${x}" cy="${cy}" rx="${(rx * Math.abs(f)).toFixed(1)}" ry="${ry}" fill="none" stroke="rgba(90,10,0,.45)" stroke-width=".7"/>`;
+      out += `<g class="bulb" style="--d:${((i * 0.7) % 2).toFixed(2)}s"><line x1="${x}" y1="0" x2="${x}" y2="${cord + 3}" stroke="#2a1410" stroke-width="1"/>`
+        + `<circle class="halo" cx="${x}" cy="${cy}" r="34" fill="#ff4a1c" filter="url(#${id})"/>`
+        + `<ellipse class="glass" cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${on ? "url(#" + id + "f)" : "#6e1a12"}"/>${ribs}`
+        + `<path d="M${x - 6} ${cy - 3} q6 -5 12 0 q-6 5 -12 0Z" fill="#2a0a05" opacity=".45"/>`
+        + `<rect x="${x - 9}" y="${cy - ry - 3}" width="18" height="5" rx="1.5" fill="#d6a73e"/><rect x="${x - 9}" y="${cy + ry - 2}" width="18" height="5" rx="1.5" fill="#d6a73e"/>`
+        + Array.from({ length: 7 }, (_, k) => `<line x1="${x - 4.5 + k * 1.5}" y1="${cy + ry + 3}" x2="${x - 5 + k * 1.7}" y2="${cy + ry + 22 + (k % 2) * 3}" stroke="#e0b14d" stroke-width=".9"/>`).join("")
+        + `<rect x="${x - 2}" y="${cy + ry + 2}" width="4" height="4" rx="1" fill="#b8402f"/></g>`;
+    }
+    const el = document.createElement("div");
+    el.className = "lights chinese" + (on ? " on" : "");
+    el.innerHTML = `<div class="lightGlow" style="--glow:#ff5a2a"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="9"/></filter><radialGradient id="${id}f" cx=".45" cy=".42" r=".65"><stop offset="0" stop-color="#ffb070"/><stop offset=".45" stop-color="#ff4a1f"/><stop offset="1" stop-color="#b3180c"/></radialGradient></defs>${out}</svg>`;
     el.style.height = H + "px";
     return el;
   }
@@ -273,6 +345,38 @@
         + `<path d="M17 112 L39 112 L37 104 L19 104Z" fill="url(#${g})"/><ellipse cx="28" cy="104" rx="10" ry="2.4" fill="url(#${g})"/>`
         + taper(28, 16, 104, 12, "#f4f1ea") + flame(28, 12, 1),
     },
+    pinkLamp: {
+      label: "Pink glass lamp", scale: 0.78, vw: 80,
+      draw: (g) => `<defs>${metal(g, BRASS)}<radialGradient id="${g}p" cx=".38" cy=".35" r=".75"><stop offset="0" stop-color="#f6c9e0"/><stop offset=".55" stop-color="#d98ab4"/><stop offset="1" stop-color="#a95a86"/></radialGradient><radialGradient id="${g}s" cx=".5" cy=".7" r=".8"><stop offset="0" stop-color="#ffe3ee"/><stop offset=".6" stop-color="#f3a6c9"/><stop offset="1" stop-color="#c96f9d"/></radialGradient></defs>`
+        + `<path d="M12 200 L12 195 Q20 186 30 184 L50 184 Q60 186 68 195 L68 200Z" fill="url(#${g})"/><ellipse cx="40" cy="195" rx="28" ry="3" fill="url(#${g})"/>`
+        + `<path d="M40 184 C18 182 14 150 30 142 L50 142 C66 150 62 182 40 184Z" fill="url(#${g}p)"/><ellipse cx="33" cy="160" rx="4" ry="10" fill="#fff" opacity=".35"/>`
+        + `<rect x="28" y="134" width="24" height="9" rx="2" fill="url(#${g})"/><path d="M24 134 q4 -8 16 -8 q12 0 16 8" stroke="url(#${g})" stroke-width="2.4" fill="none"/>`
+        + `<path d="M34 126 L34 104 Q34 98 37 96 L43 96 Q46 98 46 104 L46 126Z" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>`
+        + `<line x1="40" y1="126" x2="40" y2="118" stroke="#2a2420" stroke-width="1.6"/>` + flame(40, 118, 0.65)
+        + `<path d="M14 98 C10 60 24 40 40 40 C56 40 70 60 66 98 C58 104 22 104 14 98Z" fill="url(#${g}s)" opacity=".92"/>`
+        + `<path class="litOnly" d="M14 98 C10 60 24 40 40 40 C56 40 70 60 66 98 C58 104 22 104 14 98Z" fill="#fff2c4" opacity=".0"/>`
+        + `<ellipse cx="28" cy="66" rx="5" ry="16" fill="#fff" opacity=".28"/><path d="M14 98 C22 104 58 104 66 98" stroke="url(#${g})" stroke-width="3" fill="none"/>`,
+    },
+    bracketLantern: {
+      label: "Iron bracket lantern", scale: 0.95, vw: 110,
+      draw: (g) => {
+        const iron = "#1d1a18";
+        let chain = ""; for (let y = 52; y < 92; y += 5) chain += `<ellipse cx="32" cy="${y}" rx="${y % 10 ? 1.4 : 2.2}" ry="2.6" fill="none" stroke="${iron}" stroke-width="1.3"/>`;
+        return `<defs><linearGradient id="${g}l" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff6d8"/><stop offset=".6" stop-color="#ffd27a"/><stop offset="1" stop-color="#f0a948"/></linearGradient></defs>`
+          + `<rect x="84" y="196" width="22" height="4" rx="1" fill="${iron}"/><rect x="92" y="36" width="5" height="162" fill="${iron}"/><circle cx="94.5" cy="34" r="4" fill="${iron}"/>`
+          // the scroll arm
+          + `<path d="M94 46 L14 46" stroke="${iron}" stroke-width="4" stroke-linecap="round"/><circle cx="12" cy="46" r="3.6" fill="${iron}"/>`
+          + `<path d="M94 70 C70 70 60 50 40 48" stroke="${iron}" stroke-width="2.6" fill="none"/>`
+          + [[22, 46, 1], [44, 46, -1], [66, 46, 1], [80, 56, -1]].map(([x, y, f]) => `<path d="M${x} ${y} c${6 * f} -10 ${16 * f} -6 ${12 * f} 2 c-2 4 ${-8 * f} 3 ${-6 * f} -1" stroke="${iron}" stroke-width="1.8" fill="none"/>`).join("")
+          + `<path d="M50 46 c4 10 14 12 18 6 c2 -4 -3 -7 -6 -4" stroke="${iron}" stroke-width="1.8" fill="none"/>`
+          + chain
+          // the lantern
+          + `<path d="M20 100 L32 92 L44 100Z" fill="${iron}"/><rect x="21" y="100" width="22" height="3" fill="${iron}"/>`
+          + `<rect x="23" y="103" width="18" height="24" fill="rgba(60,50,40,.55)"/><rect class="litOnly" x="23" y="103" width="18" height="24" fill="url(#${g}l)"/>`
+          + `<line x1="32" y1="103" x2="32" y2="127" stroke="${iron}" stroke-width="1.6"/><rect x="22" y="103" width="20" height="24" fill="none" stroke="${iron}" stroke-width="2"/>`
+          + `<path d="M20 127 L44 127 L41 132 L23 132Z" fill="${iron}"/>` + flame(32, 122, 0.5);
+      },
+    },
     oilLamp: {
       label: "Oil lamp", scale: 0.62, vw: 80,
       draw: (g) => `<defs>${metal(g, BRASS)}<linearGradient id="${g}c" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".08"/><stop offset=".3" stop-color="#fff" stop-opacity=".45"/><stop offset=".5" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity=".2"/></linearGradient></defs>`
@@ -327,17 +431,20 @@
     parlour: { label: "Parlour", t: ["#1a1012", "#f0e4cf", "#24171a", "#291b1e", "#2e1f22", "#a9917c", "#3e2b2c", "#3a2829", "#4f393a", "dark"] },
     pinewood: { label: "Pinewood", t: ["#0b1510", "#e4efe2", "#121e17", "#15231b", "#18281e", "#87a08f", "#22372a", "#203327", "#2f4636", "dark"] },
     rice: { label: "Rice paper", t: ["#f3ecdf", "#2a2219", "#ebe2d1", "#faf6ee", "#e3d8c4", "#7a6c58", "#d9ccb4", "#ddd1bb", "#cdbfa5", "light"] },
+    cottage: { label: "Cottage cream", t: ["#e4dccd", "#2f2620", "#dbd1bf", "#f1ebe1", "#d3c7b2", "#74675a", "#c9bba4", "#cfc1aa", "#bfae95", "light"] },
+    golden: { label: "Golden hour", t: ["#2b231d", "#f3e7d5", "#342a22", "#3a2f26", "#3f3329", "#ad9b85", "#4c3f33", "#483b2f", "#5c4c3d", "dark"] },
+    lacquer: { label: "Lacquer", t: ["#100605", "#f6e3d0", "#1a0b09", "#1f0d0b", "#25100d", "#b0897a", "#3b1913", "#351611", "#4e221a", "dark"] },
     latte: { label: "Latte", t: ["#efe4d4", "#2b2016", "#e6d8c4", "#f8f1e6", "#dfcfb8", "#7b6853", "#d6c4ab", "#dccab0", "#cbb79c", "light"] },
   };
   const LOOK_KEYS = ["theme", "customBg", "accent", "shelf", "shelfMat", "backdrop", "lights", "headFont", "ornament"];
   const LOOKS = {
     minimal: { label: "Minimal", set: { theme: "graphite", accent: "#f2c76b", shelf: "#34343f", shelfMat: "paint", backdrop: "none", lights: { style: "none", colour: "warm", on: false }, headFont: "bricolage" } },
     cabin: { label: "Cozy cabin", set: { theme: "cabin", accent: "#f0a85a", shelfMat: "oak", backdrop: "walnutPanel", lights: { style: "fairy", colour: "warm", on: true }, headFont: "cormorant" } },
-    nook: { label: "Reading nook", set: { theme: "latte", accent: "#b8683a", shelfMat: "pine", backdrop: "plaster", lights: { style: "globe", colour: "warm", on: true }, headFont: "playfair" } },
+    nook: { label: "Reading nook", set: { theme: "golden", accent: "#e6ad5c", shelfMat: "paintedWhite", backdrop: "goldenHour", lights: { style: "wisteria", colour: "warm", on: true }, headFont: "cormorant" } },
     library: { label: "Old library", set: { theme: "moss", accent: "#d8b26a", shelfMat: "mahogany", backdrop: "greenWall", lights: { style: "none", colour: "warm", on: false }, headFont: "cinzel" } },
     loft: { label: "Brick loft", set: { theme: "graphite", accent: "#f2b35b", shelfMat: "steel", backdrop: "brick", lights: { style: "globe", colour: "warm", on: true }, headFont: "oswald" } },
     starry: { label: "Starry night", set: { theme: "midnight", accent: "#9fc4ff", shelfMat: "ebony", backdrop: "night", lights: { style: "stars", colour: "white", on: true }, headFont: "dmserif" } },
-    cottage: { label: "Cottage", set: { theme: "paper", accent: "#c4675f", shelfMat: "whitewashWood", backdrop: "stripes", lights: { style: "fairy", colour: "warm", on: true }, headFont: "caveat" } },
+    cottage: { label: "Cottage", set: { theme: "cottage", accent: "#b2738f", shelfMat: "honey", backdrop: "ditsy", lights: { style: "none", colour: "warm", on: false }, headFont: "fell" } },
     candle: { label: "Candlelit", set: { theme: "candle", accent: "#f0b45c", shelfMat: "walnut", backdrop: "candle", lights: { style: "globe", colour: "warm", on: true }, headFont: "abril" } },
   };
   Object.assign(LOOKS, {
@@ -347,12 +454,12 @@
     bordello: { label: "Gothic romance", set: { theme: "crimson", accent: "#e0b46a", shelfMat: "brass", backdrop: "damask", lights: { style: "globe", colour: "warm", on: true }, headFont: "fell" } },
     forest: { label: "Enchanted forest", set: { theme: "pinewood", accent: "#a9f08d", shelfMat: "driftwood", backdrop: "forest", lights: { style: "fireflies", colour: "green", on: true }, headFont: "cormorant" } },
     academia: { label: "Dark academia", set: { theme: "cabin", accent: "#c9a25b", shelfMat: "walnut", backdrop: "leather", lights: { style: "globe", colour: "warm", on: true }, headFont: "fell" } },
-    teahouse: { label: "Tea house", set: { theme: "rice", accent: "#b8402f", shelfMat: "pine", backdrop: "shoji", lights: { style: "lanterns", colour: "warm", on: true }, headFont: "cormorant" } },
+    teahouse: { label: "Tea house", set: { theme: "lacquer", accent: "#e8432f", shelfMat: "lacquer", backdrop: "lanternNight", lights: { style: "chinese", colour: "warm", on: true }, headFont: "dmserif" } },
   });
-  const ORN = { vampire: "candelabra", victorian: "twist", castle: "pillars", bordello: "chamber", academia: "squareBrass" };
+  const ORN = { cottage: "pinkLamp", nook: "bracketLantern", vampire: "candelabra", victorian: "twist", castle: "pillars", bordello: "chamber", academia: "squareBrass" };
   for (const [k, L] of Object.entries(LOOKS)) {
     L.set.ornament = { kind: ORN[k] || "none", pos: "end" };
-    if (ORN[k]) L.set.lights = { ...L.set.lights, style: "none" };
+    if (ORN[k] && !["nook"].includes(k)) L.set.lights = { ...L.set.lights, style: "none" };
   }
   MATERIALS.whitewashWood = { label: "Whitewashed", base: "#d9cfc0", tex: () => grainH(0.3, 0.2) };
 
