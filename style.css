@@ -1090,3 +1090,6 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
   /* rain is outside: it only shows through the glass, behind the stone tracery and mullion */
   -webkit-mask: url('bg/academia-glass.png?v=1') 0 0 / 100% 100% no-repeat; mask: url('bg/academia-glass.png?v=1') 0 0 / 100% 100% no-repeat; }
 #backdrop .fxWindow.painted .pane { clip-path: none; background: none; opacity: .75; filter: blur(.4px); }
+#backdrop .fxFireworks.painted { left: 20.8%; width: 58.4%; top: 16%; height: 59%;
+  /* fireworks are in the sky outside: only seen through the opening, behind the moon */
+  -webkit-mask: url('bg/teahouse-sky.png?v=1') 0 0 / 100% 100% no-repeat; mask: url('bg/teahouse-sky.png?v=1') 0 0 / 100% 100% no-repeat; }
