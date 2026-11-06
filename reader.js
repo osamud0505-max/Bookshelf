@@ -700,63 +700,112 @@
    *  Resolves (with the overlay) once the screen is black, so the reader can appear underneath. */
   /** The book on screen that stands for `b`: its big cover on the open book page, or its slot on the shelf. */
   function bookOnScreen(b) {
-    const front = [...document.querySelectorAll(".slot")].find((s) => s.getAttribute("aria-label") === b.title && s.classList.contains("front"))
-      || [...document.querySelectorAll(".slot")].find((s) => s.getAttribute("aria-label") === b.title);
-    return document.querySelector("#bookSheet:not([hidden]) .heroBook .book") || (front && front.querySelector(".book"));
+    const slots = [...document.querySelectorAll(".slot")].filter((s) => s.getAttribute("aria-label") === b.title);
+    const slot = slots.find((s) => s.classList.contains("front")) || slots[0];
+    return document.querySelector("#bookSheet:not([hidden]) .heroBook .book") || (slot && slot.querySelector(".book"));
   }
-  /** The overlay with a big copy of the book, centred, ready to be animated. */
+  // ------------------------------------------------------------------ the book lifting off the shelf and opening, as one continuous motion
+  const clamp01 = (x) => Math.max(0, Math.min(1, x));
+  const easeIO = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const easeSine = (x) => -(Math.cos(Math.PI * x) - 1) / 2;
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const LEAVES = 4, OPEN_END = 2.6; // seconds on the timeline
+  /** The overlay with a 3D copy of the book: cover on a hinge, a few loose leaves, the page block with its edge. */
   function bookFx(b) {
     const aspect = Math.max(0.5, Math.min(0.9, b.coverAspect || 2 / 3));
     const H = Math.min(innerHeight * 0.6, 520, (innerWidth * 0.4) / aspect), W = H * aspect;
-    const cx = innerWidth / 2 - W / 2, cy = innerHeight / 2 - H / 2;
+    const cx = innerWidth / 2 - W / 2, cy = innerHeight / 2 - H / 2, T = Math.max(8, W * 0.09);
     const cover = b.coverUrl ? `<img alt="" src="${esc(b.coverUrl)}" referrerpolicy="no-referrer">` : `<span class="ofPlain">${esc(b.title)}</span>`;
-    const fx = h(`<div class="openFx"><div class="ofDim"></div><div class="ofBook" style="left:${cx}px;top:${cy}px;width:${W}px;height:${H}px;--spine:${b.spineColor || "#334"}">
-      <div class="ofPages" style="--W:${W}px">${pageHtml(b)}</div><div class="ofCover"><div class="ofFront">${cover}</div><div class="ofInside"></div></div></div><div class="ofBlack"></div></div>`);
-    const book = fx.querySelector(".ofBook");
-    const from = (src) => {
+    const leaves = Array.from({ length: LEAVES }, (_, k) => `<div class="ofLeaf" style="--z:${(0.6 + k * 0.35).toFixed(2)}px"></div>`).join("");
+    const fx = h(`<div class="openFx"><div class="ofDim"></div><div class="ofBook" style="left:${cx}px;top:${cy}px;width:${W}px;height:${H}px;--W:${W}px;--T:${T}px;--spine:${b.spineColor || "#334"}">
+      <div class="ofEdge"></div><div class="ofPages">${pageHtml(b)}<i class="ofGutter"></i></div>${leaves}<div class="ofCover"><div class="ofFront">${cover}<i class="ofShade"></i></div><div class="ofInside"><i class="ofShade"></i></div></div></div><div class="ofBlack"></div></div>`);
+    const book = fx.querySelector(".ofBook"), coverEl = fx.querySelector(".ofCover"), leafEls = [...fx.querySelectorAll(".ofLeaf")];
+    const dim = fx.querySelector(".ofDim"), black = fx.querySelector(".ofBlack"), edge = fx.querySelector(".ofEdge"), gutter = fx.querySelector(".ofGutter");
+    const fShade = fx.querySelector(".ofFront .ofShade"), iShade = fx.querySelector(".ofInside .ofShade");
+    let start = { dx: 0, dy: 0, s: 0.25 };
+    /** Where the book starts (or ends up): over the copy on the shelf or the book page. */
+    const setHome = (src) => {
       const r = src ? src.getBoundingClientRect() : { left: innerWidth / 2 - 30, top: innerHeight / 2 - 45, width: 60, height: 90 };
-      return `translate(${r.left - cx}px, ${r.top - cy}px) scale(${r.height / H})`;
+      start = { dx: r.left + r.width / 2 - (cx + W / 2), dy: r.top + r.height / 2 - (cy + H / 2), s: r.height / H };
     };
-    return { fx, book, W, H, from };
-  }
-  function openingAnim(b) {
-    return new Promise((done) => {
-      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return done(null);
-      const src = bookOnScreen(b);
-      const { fx, book, W, from } = bookFx(b);
-      book.style.transform = from(src);
-      document.body.append(fx);
-      if (src) src.style.visibility = "hidden";
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        fx.classList.add("lift");
-        book.style.transform = "translate(0, 0) scale(1)";
-        setTimeout(() => { fx.classList.add("opened"); book.style.transform = `translate(${W / 2}px, 0) scale(1.12)`; }, 720);
-        setTimeout(() => fx.classList.add("dark"), 1500);
-        setTimeout(() => { if (src) src.style.visibility = ""; done(fx); }, 1950);
-      }));
+    /** Everything at time `p` (seconds) of the opening; closing plays the same timeline backwards. */
+    const pose = (p) => {
+      const lRaw = clamp01(p / 1.0), L = easeIO(lRaw), arc = Math.sin(Math.PI * lRaw);
+      const oRaw = clamp01((p - 0.78) / 1.1), O = easeIO(oRaw);
+      const Z = easeIO(clamp01((p - 1.75) / 0.85)), B = easeSine(clamp01((p - 2.15) / 0.45));
+      const S = lerp(start.s, 1, L) * (1 + 0.1 * O) * (1 + 1.5 * Z);
+      // centred spread while open, then the camera moves onto the right-hand page
+      const tx = lerp(start.dx, 0, L) + (S * W / 2) * O * (1 - Z), ty = lerp(start.dy, 0, L) - arc * Math.min(60, innerHeight * 0.06);
+      const ry = -14 * arc + 6 * Math.sin(Math.PI * oRaw) * (1 - Z), rx = 7 * arc;
+      book.style.transform = `translate3d(${tx.toFixed(2)}px, ${ty.toFixed(2)}px, 0) scale(${S.toFixed(4)}) rotateY(${ry.toFixed(2)}deg) rotateX(${rx.toFixed(2)}deg)`;
+      book.style.setProperty("--lift", (0.35 + 0.65 * arc * (1 - O)).toFixed(3));
+      const a = 179 * O;
+      coverEl.style.transform = `rotateY(${(-a).toFixed(2)}deg) translateZ(2px)`;
+      // a few leaves follow the cover over, each a moment later, and settle on top of each other
+      leafEls.forEach((l, k) => {
+        const d = 0.1 + k * 0.09, t = easeIO(clamp01((oRaw - d) / (1 - d)));
+        const bend = Math.sin(Math.PI * t) * 10;
+        l.style.transform = `translateZ(var(--z)) rotateY(${(-(178 - k * 0.6) * t).toFixed(2)}deg) skewY(${(bend * 0.08).toFixed(2)}deg)`;
+        l.style.setProperty("--curl", (Math.sin(Math.PI * t) * 0.35).toFixed(3));
+      });
+      // light: the cover darkens as it turns away, its inside brightens as it lands, the spine shadow fades
+      fShade.style.opacity = (0.6 * Math.sin((Math.min(a, 90) * Math.PI) / 180)).toFixed(3);
+      iShade.style.opacity = (a > 90 ? 0.6 * Math.cos(((a - 90) * Math.PI) / 180) : 0.6).toFixed(3);
+      gutter.style.opacity = (0.25 + 0.75 * O).toFixed(3);
+      edge.style.opacity = (1 - O).toFixed(3);
+      dim.style.opacity = (0.62 * L).toFixed(3);
+      black.style.opacity = B.toFixed(3);
+    };
+    /** Plays the timeline from `p0` to `p1` seconds at real speed `rate`. */
+    const play = (p0, p1, rate = 1, onFrame = null) => new Promise((done) => {
+      const t0 = performance.now(), dur = (Math.abs(p1 - p0) * 1000) / rate;
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / dur);
+        if (onFrame) onFrame();
+        pose(p0 + (p1 - p0) * k);
+        if (k < 1) requestAnimationFrame(step); else done();
+      };
+      requestAnimationFrame(step);
     });
+    return { fx, pose, play, setHome };
   }
-  /** Leaving the book: the page fades to black, the open book appears, its cover swings shut and it flies back to its place. */
-  function closingAnim(b, hideReader) {
+  async function openingAnim(b) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+    const src = bookOnScreen(b);
+    const A = bookFx(b);
+    A.setHome(src); A.pose(0);
+    document.body.append(A.fx);
+    if (src) src.style.visibility = "hidden";
+    await A.play(0, OPEN_END);
+    if (src) src.style.visibility = "";
+    return A.fx;
+  }
+  /** Leaving the book: the page fades to black, the open book comes back into view, closes, and floats back to its place. */
+  async function closingAnim(b, hideReader) {
     if (!b || matchMedia("(prefers-reduced-motion: reduce)").matches) { hideReader(); return; }
-    const { fx, book, W, from } = bookFx(b);
-    // the open book waits, hidden, while the reader fades to black over it
-    fx.classList.add("lift", "opened", "pre");
-    book.style.transform = `translate(${W / 2}px, 0) scale(1.12)`;
-    document.body.append(fx);
+    const A = bookFx(b);
+    A.pose(OPEN_END);
+    const black = A.fx.querySelector(".ofBlack");
+    black.style.transition = "opacity .45s ease"; black.style.opacity = "0";
+    A.fx.classList.add("pre");
+    document.body.append(A.fx);
     room.classList.add("leaving");
-    requestAnimationFrame(() => requestAnimationFrame(() => fx.classList.add("dark")));
-    setTimeout(() => {
-      hideReader(); room.classList.remove("leaving"); fx.classList.remove("pre");
-      requestAnimationFrame(() => requestAnimationFrame(() => fx.classList.remove("dark"))); // black lifts off the open book
-    }, 500);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    black.style.opacity = "1";
+    await new Promise((r) => setTimeout(r, 470));
+    black.style.transition = "";
+    hideReader(); room.classList.remove("leaving");
+    // the shelf may still be settling after it redraws, so keep aiming at wherever the book's place is now
     let src = null;
-    setTimeout(() => { fx.classList.remove("opened"); book.style.transform = "translate(0, 0) scale(1)"; }, 1000);
-    setTimeout(() => {
-      src = bookOnScreen(b); if (src) src.style.visibility = "hidden";
-      fx.classList.add("home"); fx.classList.remove("lift"); book.style.transform = from(src);
-    }, 1900);
-    setTimeout(() => { if (src) src.style.visibility = ""; fx.classList.add("gone"); setTimeout(() => fx.remove(), 200); }, 2650);
+    const aim = () => {
+      const s = bookOnScreen(b);
+      if (s !== src) { if (src) src.style.visibility = ""; src = s; if (src) src.style.visibility = "hidden"; }
+      A.setHome(src);
+    };
+    aim(); A.pose(OPEN_END); A.fx.classList.remove("pre");
+    await A.play(OPEN_END, 0, 1.08, aim);
+    if (src) src.style.visibility = "";
+    A.fx.classList.add("gone"); setTimeout(() => A.fx.remove(), 200);
   }
   /** A page of old copperplate handwriting: real script, but made-up words, so it looks like a letter and says nothing. */
   const SYL = ["al", "en", "mor", "ta", "lis", "ve", "ra", "quo", "dis", "mi", "ne", "ser", "tu", "ca", "lum", "pe", "ri", "ost", "an", "de", "sol", "ia", "nu", "ex", "il", "or", "um", "fa", "bel", "con", "tre", "la", "vi", "so", "gen", "mar"];

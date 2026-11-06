@@ -685,7 +685,7 @@
     draw: (g) => {
       let back = "", art = "";
       POTS.forEach((p, i) => {
-        back += `<ellipse class="litOnly potGlow" cx="${p.c[0]}" cy="${p.c[1]}" rx="${p.c[2] * 1.4}" ry="${p.c[3] * 1.3}" fill="${p.col}" filter="url(#${g}b)"/>`;
+        back += `<g class="potGlowW" style="--i:${i}"><ellipse class="potGlow" cx="${p.c[0]}" cy="${p.c[1]}" rx="${p.c[2] * 1.4}" ry="${p.c[3] * 1.3}" fill="${p.col}" filter="url(#${g}b)"/></g>`;
         let bub = ""; for (let k = 0; k < 4; k++) bub += `<circle class="potBub" cx="${p.c[0] + (k - 1.5) * p.c[2] * 0.22}" cy="196" r="${1 + (k % 2) * 0.7}" fill="#fff" style="--d:-${(k * 0.7 + i * 0.3).toFixed(1)}s;--rise:${(196 - p.level).toFixed(0)}px"/>`;
         art += `<clipPath id="${g}c${i}"><path d="${p.body}"/>${p.neck ? `<rect x="${p.neck[0]}" y="${p.neck[1]}" width="${p.neck[2]}" height="${p.neck[3]}"/>` : ""}</clipPath>`
           + `<g clip-path="url(#${g}c${i})"><rect x="0" y="0" width="150" height="200" fill="#0c0c10" opacity=".35"/>`
@@ -698,7 +698,11 @@
       });
       // the potions' spirits: one stream from each bottle, meeting above them
       const C = [74, 42];
-      const streams = POTS.map((p, i) => `<path class="potStream" pathLength="1" style="--i:${i}" d="M${p.mouth[0]} ${p.mouth[1]} C${p.mouth[0]} ${p.mouth[1] - 30} ${(p.mouth[0] + C[0]) / 2 + (i % 2 ? 18 : -18)} ${C[1] + 24} ${C[0]} ${C[1]}" stroke="${p.col}"/>`).join("");
+      const sd = (p, i) => `M${p.mouth[0]} ${p.mouth[1]} C${p.mouth[0]} ${p.mouth[1] - 30} ${(p.mouth[0] + C[0]) / 2 + (i % 2 ? 18 : -18)} ${C[1] + 24} ${C[0]} ${C[1]}`;
+      const streams = `<g opacity=".5" filter="url(#${g}b)">${POTS.map((p, i) => `<path class="potStream wide" pathLength="1" style="--i:${i}" d="${sd(p, i)}" stroke="${p.col}"/>`).join("")}</g>`
+        + POTS.map((p, i) => `<path class="potStream" pathLength="1" style="--i:${i}" d="${sd(p, i)}" stroke="${p.col}"/>`).join("");
+      const halo = `<ellipse class="potHalo" cx="${C[0]}" cy="${C[1]}" rx="34" ry="30" fill="#8dff9a" filter="url(#${g}b)"/>`;
+      const mist = [[-14, -20], [10, -26], [-4, -34], [18, -12], [-20, -8], [4, -16]].map(([mx, my], k) => `<circle class="potMist" cx="${C[0] + mx * 0.4}" cy="${C[1] + my * 0.3}" r="${7 + (k % 3) * 2}" fill="#d6ffdc" filter="url(#${g}b)" style="--mx:${mx}px;--my:${my}px;--k:${k}"/>`).join("");
       const ghost = `<g class="potGhost"><path d="${skullOutline(C[0], C[1], 46)}${skullHoles(C[0], C[1], 46)}" fill="url(#${g}s)" fill-rule="evenodd"/><path d="M${C[0] - 8} ${C[1] + 17} h16" stroke="#0a1a10" stroke-width="2.4" stroke-dasharray="1.6 1.2" opacity=".6"/></g>`;
       const blob = `<g class="potBlob"><circle cx="${C[0]}" cy="${C[1]}" r="11" fill="url(#${g}s)"/></g>`;
       const wisps = [-12, 0, 12].map((dx, k) => `<path class="potWisp" pathLength="1" style="--k:${k}" d="M${C[0] + dx} ${C[1] - 18} c-6 -8 6 -14 0 -22 c-6 -8 5 -14 1 -22" />`).join("");
@@ -706,11 +710,12 @@
         + `<linearGradient id="${g}d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>`
         + `<linearGradient id="${g}h" x1="0" x2="1"><stop offset=".08" stop-color="#fff" stop-opacity="0"/><stop offset=".2" stop-color="#fff" stop-opacity=".32"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".8" stop-color="#fff" stop-opacity="0"/><stop offset=".88" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`
         + `<radialGradient id="${g}s" cx=".45" cy=".4" r=".7"><stop offset="0" stop-color="#f2fff0"/><stop offset=".45" stop-color="#9dffa8"/><stop offset=".8" stop-color="#8a6bff" stop-opacity=".8"/><stop offset="1" stop-color="#6a4bd8" stop-opacity=".2"/></radialGradient></defs>`
-        + `<g data-y="150"></g>${back}${art}<g class="potMagic" filter="url(#${g}f)">${streams}${blob}${ghost}${wisps}</g>`;
+        + `<g data-y="150"></g>${back}${art}<g class="potMagic">${halo}<g filter="url(#${g}f)">${streams}${blob}${ghost}</g>${mist}</g>`;
     },
     /** Out: the liquid drains as streams rise from each bottle, they gather into a skull that drifts up and evaporates. In: the bottles fill and glow again. */
     toggle: (el, out) => {
       if (out) {
+        el.style.setProperty("--up", (parseFloat(el.style.height) * 0.54).toFixed(0) + "px");
         el.classList.add("witching", "snuffing"); el.classList.remove("filling");
         witchSound(true);
         setTimeout(() => el.classList.remove("lit"), 150);
