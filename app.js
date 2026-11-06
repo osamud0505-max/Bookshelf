@@ -1063,6 +1063,7 @@
       const part = design[designTab];
       const fontOpts = Object.entries(FONTS).map(([k, f]) => `<option value="${k}" ${part.font === k ? "selected" : ""} style="font-family:${f.family}">${f.label}</option>`).join("");
       const look = h(`<div class="group"><div class="row"><h3 class="label" style="flex:1">How it looks on the shelf</h3>${b.spineDesign ? `<button class="linkBtn" id="d-reset">Reset to automatic</button>` : ""}</div>
+        <div class="styleCopy"><button type="button" class="btn small" id="d-copy">Copy style</button>${state.settings.copiedStyle ? `<button type="button" class="btn small" id="d-paste"><i class="dot" style="background:${esc(state.settings.copiedStyle.spineColor || "#888")}"></i>Paste style from <em>${esc(state.settings.copiedStyle.from || "another book")}</em></button>` : `<span class="hint">Copy this spine's fonts, colours and layout to use on another book.</span>`}</div>
         <div class="lookRow"><div class="lookPreview"></div><div class="lookControls">
           <div class="field"><span class="hint">Text runs</span><div class="seg" id="d-dir">
             <button data-v="down" aria-pressed="${design.dir === "down"}">↓ Down</button><button data-v="up" aria-pressed="${design.dir === "up"}">↑ Up</button><button data-v="across" aria-pressed="${design.dir === "across"}">Across</button></div></div>
@@ -1088,6 +1089,24 @@
         fn(dsn); stage({ spineDesign: dsn }, redraw); if (!redraw) drawPreview();
       };
       const setPart = (patch, redraw) => setDesign((dsn) => Object.assign(dsn[designTab], patch), redraw);
+      // copy a spine's look (fonts, sizes, placement, colours) and put it on another book; each book keeps its own words
+      const STYLE_KEYS = ["show", "font", "size", "pos", "shift", "spacing", "tcase", "bold", "color"];
+      look.querySelector("#d-copy").onclick = () => {
+        const v = view(), dsn = v.spineDesign || autoDesign(v), parts = {};
+        for (const k of ["title", "author", "extra"]) if (dsn[k]) { parts[k] = {}; STYLE_KEYS.forEach((s) => (parts[k][s] = dsn[k][s])); }
+        state.settings.copiedStyle = { from: v.title, dir: dsn.dir, parts, spineColor: v.spineColor };
+        save(true); toast("Style copied. Open another book and tap Paste style."); draw();
+      };
+      const pasteBtn = look.querySelector("#d-paste");
+      if (pasteBtn) pasteBtn.onclick = () => {
+        const cs = state.settings.copiedStyle, v = view();
+        const dsn = JSON.parse(JSON.stringify(v.spineDesign || autoDesign(v)));
+        dsn.dir = cs.dir || dsn.dir;
+        for (const k of Object.keys(cs.parts || {})) { dsn[k] = dsn[k] || { text: "" }; Object.assign(dsn[k], cs.parts[k]); }
+        const patch = { spineDesign: dsn };
+        if (cs.spineColor) Object.assign(patch, { spineColor: cs.spineColor, spineManual: true });
+        stage(patch, true); toast("Style pasted. Tap Save to keep it.");
+      };
       const resetBtn = look.querySelector("#d-reset");
       if (resetBtn) resetBtn.onclick = () => stage({ spineDesign: null, spineText: "", spineFont: null, spineSize: null });
       look.querySelectorAll("#d-dir button").forEach((btn) => (btn.onclick = () => setDesign((dsn) => (dsn.dir = btn.dataset.v), true)));

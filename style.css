@@ -950,3 +950,9 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 #soundBtn.off .mute { display: inline; }
 #soundBtn.off .wave { display: none; }
 #soundBtn.off { opacity: .6; }
+/* copy / paste a spine's style */
+.styleCopy { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 2px 0 10px; }
+.styleCopy .hint { font-size: .75rem; }
+#d-paste { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; }
+#d-paste em { font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
+#d-paste .dot { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(127,127,127,.5); flex: none; }
