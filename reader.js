@@ -600,12 +600,17 @@
     const c = CFI();
     return (b.bookmarks || []).filter((m) => { try { return c.compare(m.cfi, loc.start.cfi) >= 0 && c.compare(m.cfi, loc.end.cfi) <= 0; } catch (e) { return false; } });
   }
-  function syncBookmark() {
+  let ribbonT = 0;
+  /** Shows the bookmark if this page has one. `animate` (only when you add or remove one) slides it
+   *  out from under the top edge of the page, or draws it back up behind it. */
+  function syncBookmark(animate) {
     const on = pageMarks().length > 0;
     const kind = (window.Shelf.settings() || {}).bookmark || "ribbon";
     if (ribbon.dataset.kind !== kind && window.Decor) { ribbon.dataset.kind = kind; ribbon.innerHTML = window.Decor.bookmarkSvg(kind, 28); }
-    if (on && ribbon.hidden) { ribbon.classList.remove("drop"); void ribbon.offsetWidth; ribbon.classList.add("drop"); }
-    ribbon.hidden = !on;
+    clearTimeout(ribbonT); ribbon.classList.remove("in", "out");
+    if (animate && on) { ribbon.hidden = false; void ribbon.offsetWidth; ribbon.classList.add("in"); }
+    else if (animate && !on && !ribbon.hidden) { ribbon.classList.add("out"); ribbonT = setTimeout(() => { ribbon.hidden = true; ribbon.classList.remove("out"); }, 380); }
+    else ribbon.hidden = !on;
     room.querySelector(".rdMarkBtn").classList.toggle("on", on);
   }
   function toggleBookmark() {
@@ -617,7 +622,7 @@
       b.bookmarks.push({ cfi: loc.start.cfi, pct: b.readPct || 0, chapter: chapterName(loc.start.href), at: Date.now() });
       toast("Page bookmarked");
     }
-    save(); syncBookmark();
+    save(); syncBookmark(true);
   }
 
   // finger / mouse on the page

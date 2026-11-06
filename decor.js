@@ -364,23 +364,24 @@
         + `<ellipse cx="28" cy="66" rx="5" ry="16" fill="#fff" opacity=".28"/><path d="M14 98 C22 104 58 104 66 98" stroke="url(#${g})" stroke-width="3" fill="none"/>`,
     },
     bracketLantern: {
-      label: "Iron bracket lantern", scale: 0.95, vw: 110,
+      // a garden-lamp post whose lantern hangs straight in front of it, glass facing you
+      label: "Iron lantern post", scale: 0.95, vw: 70,
       draw: (g) => {
         const iron = "#1d1a18";
-        let chain = ""; for (let y = 52; y < 92; y += 5) chain += `<ellipse cx="32" cy="${y}" rx="${y % 10 ? 1.4 : 2.2}" ry="2.6" fill="none" stroke="${iron}" stroke-width="1.3"/>`;
+        let chain = ""; for (let y = 50; y < 70; y += 4.5) chain += `<ellipse cx="35" cy="${y}" rx="${Math.round(y) % 9 ? 1.3 : 2}" ry="2.4" fill="none" stroke="${iron}" stroke-width="1.2"/>`;
         return `<defs><linearGradient id="${g}l" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff6d8"/><stop offset=".6" stop-color="#ffd27a"/><stop offset="1" stop-color="#f0a948"/></linearGradient></defs>`
-          + `<rect x="84" y="196" width="22" height="4" rx="1" fill="${iron}"/><rect x="92" y="36" width="5" height="162" fill="${iron}"/><circle cx="94.5" cy="34" r="4" fill="${iron}"/>`
-          // the scroll arm
-          + `<path d="M94 46 L14 46" stroke="${iron}" stroke-width="4" stroke-linecap="round"/><circle cx="12" cy="46" r="3.6" fill="${iron}"/>`
-          + `<path d="M94 70 C70 70 60 50 40 48" stroke="${iron}" stroke-width="2.6" fill="none"/>`
-          + [[22, 46, 1], [44, 46, -1], [66, 46, 1], [80, 56, -1]].map(([x, y, f]) => `<path d="M${x} ${y} c${6 * f} -10 ${16 * f} -6 ${12 * f} 2 c-2 4 ${-8 * f} 3 ${-6 * f} -1" stroke="${iron}" stroke-width="1.8" fill="none"/>`).join("")
-          + `<path d="M50 46 c4 10 14 12 18 6 c2 -4 -3 -7 -6 -4" stroke="${iron}" stroke-width="1.8" fill="none"/>`
-          + chain
-          // the lantern
-          + `<path d="M20 100 L32 92 L44 100Z" fill="${iron}"/><rect x="21" y="100" width="22" height="3" fill="${iron}"/>`
-          + `<rect x="23" y="103" width="18" height="24" fill="rgba(60,50,40,.55)"/><rect class="litOnly" x="23" y="103" width="18" height="24" fill="url(#${g}l)"/>`
-          + `<line x1="32" y1="103" x2="32" y2="127" stroke="${iron}" stroke-width="1.6"/><rect x="22" y="103" width="20" height="24" fill="none" stroke="${iron}" stroke-width="2"/>`
-          + `<path d="M20 127 L44 127 L41 132 L23 132Z" fill="${iron}"/>` + flame(32, 122, 0.5);
+          + `<path d="M22 200 L24 194 L46 194 L48 200Z" fill="${iron}"/><rect x="32.5" y="30" width="5" height="166" fill="${iron}"/><rect x="31" y="150" width="8" height="4" fill="${iron}"/>`
+          + `<circle cx="35" cy="25" r="4" fill="${iron}"/><path d="M35 21 l0 -6" stroke="${iron}" stroke-width="1.6"/>`
+          // a scroll on each side of the post and a short arm that comes towards you
+          + `<path d="M35 44 C28 44 22 40 22 34 C22 29 28 29 28 33" stroke="${iron}" stroke-width="2" fill="none"/><path d="M35 44 C42 44 48 40 48 34 C48 29 42 29 42 33" stroke="${iron}" stroke-width="2" fill="none"/>`
+          + `<ellipse cx="35" cy="46" rx="5" ry="2.6" fill="${iron}"/>` + chain
+          // the lantern, front on
+          + `<path d="M17 82 L35 68 L53 82Z" fill="${iron}"/><circle cx="35" cy="67" r="2.4" fill="${iron}"/><rect x="18" y="82" width="34" height="3.5" fill="${iron}"/>`
+          + `<rect x="21" y="85.5" width="28" height="36" fill="rgba(60,50,40,.55)"/><rect class="litOnly" x="21" y="85.5" width="28" height="36" fill="url(#${g}l)"/>`
+          + flame(35, 115, 0.62)
+          + `<rect x="21" y="85.5" width="28" height="36" fill="none" stroke="${iron}" stroke-width="2.4"/><line x1="35" y1="85.5" x2="35" y2="102" stroke="${iron}" stroke-width="1.4"/><line x1="21" y1="102" x2="49" y2="102" stroke="${iron}" stroke-width="1.2"/>`
+          + `<path d="M24 89 l3 0 0 10 -3 0Z" fill="#fff" opacity=".25"/>`
+          + `<path d="M17 121.5 L53 121.5 L49 128 L21 128Z" fill="${iron}"/><path d="M30 128 L40 128 L37 134 L33 134Z" fill="${iron}"/>`;
       },
     },
     oilLamp: {

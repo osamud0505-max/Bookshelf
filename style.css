@@ -487,10 +487,14 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 .rdPenBtn[aria-pressed="true"] { background: color-mix(in srgb, var(--rd-fg) 12%, transparent); }
 .rdRibbon { position: absolute; z-index: 9; top: calc(50px + env(safe-area-inset-top)); right: max(26px, calc((100vw - 720px) / 2 + 10px)); width: 28px; height: 87px; pointer-events: none; transform-origin: 50% 0; filter: drop-shadow(0 2px 2px rgba(0,0,0,.28)); }
 .rdRibbon svg { display: block; }
-/* slips down from the top of the page and swings to rest */
-.rdRibbon.drop { animation: bmDrop .7s cubic-bezier(.25,.9,.35,1.2) both; }
-@keyframes bmDrop { 0% { transform: translateY(-60px) rotate(0); opacity: 0; } 45% { transform: translateY(2px) rotate(3deg); opacity: 1; } 70% { transform: translateY(0) rotate(-2deg); } 100% { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .rdRibbon.drop { animation: none; } }
+/* slides out from under the top edge of the page, and is drawn back up behind it */
+.rdRibbon { overflow: hidden; }
+.rdRibbon svg { transform-origin: 50% 0; }
+.rdRibbon.in svg { animation: bmIn .6s cubic-bezier(.22,.9,.3,1) both; }
+.rdRibbon.out svg { animation: bmOut .38s cubic-bezier(.55,0,.8,.35) both; }
+@keyframes bmIn { 0% { transform: translateY(-100%); } 78% { transform: translateY(2px); } 100% { transform: translateY(0); } }
+@keyframes bmOut { 0% { transform: translateY(0); } 100% { transform: translateY(-100%); } }
+@media (prefers-reduced-motion: reduce) { .rdRibbon.in svg, .rdRibbon.out svg { animation: none; } }
 .rdRibbon[hidden] { display: none; }
 .rdPens { position: absolute; z-index: 13; left: 0; right: 0; bottom: 0; padding: 0 12px calc(8px + env(safe-area-inset-bottom)); pointer-events: none; }
 .rdPens[hidden] { display: none; }
@@ -777,3 +781,36 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 #backdrop .fxDrape svg, #backdrop .fxSwag svg { display: block; width: 100%; height: 100%; }
 #backdrop .fxSwag { top: 0; left: 0; right: 0; height: clamp(26px, 5vh, 64px); filter: brightness(.8) drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
 @media (prefers-reduced-motion: reduce) { #backdrop .bat, #backdrop .fxWindow i { display: none; } }
+/* cabin fireplace close-up */
+#backdrop .fxHearth { left: 0; right: 0; bottom: 0; height: clamp(150px, 26vh, 320px); }
+#backdrop .fxHearth svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: brightness(.78); }
+#backdrop .fxHearth .fireGlow { left: 0; right: 0; bottom: 0; height: 260%; background: radial-gradient(ellipse 60% 50% at 50% 100%, rgba(255,140,40,.45), rgba(255,100,20,.12) 55%, transparent 80%); }
+#backdrop .fxHearth .fl { transform-box: fill-box; transform-origin: 50% 100%; animation: flameDance var(--t) ease-in-out infinite alternate; animation-delay: var(--d); }
+#backdrop .fxHearth .spark { position: absolute; bottom: 12%; width: 2px; height: 2px; border-radius: 50%; background: #ffb050; box-shadow: 0 0 4px 1px #ff8a2a; opacity: 0; animation: spark var(--t) ease-out infinite; animation-delay: var(--d); }
+@media (prefers-reduced-motion: reduce) { #backdrop .fxHearth * { animation: none !important; } }
+/* curtain tie-backs: drawn on their own so they never stretch, wrapped round the gathered waist */
+#backdrop .tie { position: absolute; left: -2px; top: calc(100% * 470 / 860); display: flex; align-items: center; transform: translateY(-50%); }
+#backdrop .tie i, #backdrop .tie b { display: block; position: static; }
+#backdrop .fxDrape .tie { width: 54%; }
+#backdrop .tie.rope .band { flex: 1; height: 9px; border-radius: 5px; background: repeating-linear-gradient(115deg, #f0d48a 0 3px, #a9843f 3px 6px); box-shadow: 0 3px 4px rgba(0,0,0,.5); }
+#backdrop .tie.rope .tassel { position: relative; width: 12px; height: 12px; margin-left: -4px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff0b8, #c9a24e 50%, #6a4a1c); box-shadow: 0 2px 3px rgba(0,0,0,.5); }
+#backdrop .tie.rope .tassel b { position: absolute; left: 50%; top: 9px; width: 12px; height: 26px; margin-left: -6px; border-radius: 3px 3px 5px 5px; background: repeating-linear-gradient(90deg, #e6c271 0 1.5px, #a9843f 1.5px 3px); clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%); }
+#backdrop .fxCurtain .tie { width: 38%; }
+#backdrop .tie.ribbon .band { flex: 1; height: 7px; border-radius: 4px; background: linear-gradient(#d97a90, #b04a64); box-shadow: 0 2px 3px rgba(0,0,0,.35); }
+#backdrop .tie.ribbon .bow { flex: none; width: 24px; height: 21px; margin-left: -8px; margin-top: 8px; }
+#backdrop .fxDrape.wide { width: clamp(76px, 25vw, 340px); }
+/* the antique mirror */
+#backdrop .fxMirror { left: 50%; top: 7vh; bottom: 5vh; width: clamp(220px, 74vw, 560px); transform: translateX(-50%); padding: 11px; border-radius: 999px 999px 10px 10px / 170px 170px 10px 10px;
+  background: linear-gradient(135deg, #5a3e16, #e0bc6a 28%, #7a5a24 46%, #d4ae58 70%, #3e2c10); box-shadow: inset 0 0 0 2px #3a2a10, 0 24px 60px rgba(0,0,0,.75); filter: brightness(.85); }
+#backdrop .fxMirror .glass { position: relative; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: linear-gradient(165deg, #2e2832, #120e14 60%, #0a080c); box-shadow: inset 0 0 0 2px #2a1e0c; }
+#backdrop .fxMirror .refl { position: absolute; inset: 0; transform: scaleX(-1); background-size: 300px 340px; background-repeat: repeat; background-position: 50% calc(var(--sy, 0) * -1px + 40px); opacity: .65; filter: blur(1.1px) sepia(.35) brightness(.8); }
+#backdrop .fxMirror .glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background:
+  linear-gradient(120deg, rgba(255,255,255,.1), rgba(255,255,255,0) 30%, rgba(255,255,255,0) 62%, rgba(255,255,255,.06) 70%, rgba(255,255,255,0) 78%),
+  radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.6)); }
+/* fog: wide soft banks drifting sideways at different speeds */
+#backdrop .fog { left: -50%; width: 200%; pointer-events: none; will-change: transform; }
+#backdrop .fog.f1 { bottom: -6%; height: 45%; background: radial-gradient(ellipse 30% 50% at 20% 60%, rgba(200,210,225,.20), transparent 70%), radial-gradient(ellipse 35% 45% at 65% 55%, rgba(200,210,225,.16), transparent 70%); animation: fogDrift 38s linear infinite alternate; }
+#backdrop .fog.f2 { bottom: 18%; height: 40%; background: radial-gradient(ellipse 28% 40% at 35% 50%, rgba(190,200,220,.12), transparent 70%), radial-gradient(ellipse 30% 40% at 80% 45%, rgba(190,200,220,.10), transparent 70%); animation: fogDrift 55s linear infinite alternate-reverse; }
+#backdrop .fog.f3 { top: 20%; height: 35%; background: radial-gradient(ellipse 32% 40% at 50% 50%, rgba(180,195,215,.08), transparent 70%); animation: fogDrift 70s linear infinite alternate; }
+@keyframes fogDrift { from { transform: translateX(-12%); } to { transform: translateX(12%); } }
+@media (prefers-reduced-motion: reduce) { #backdrop .fog { animation: none; } }

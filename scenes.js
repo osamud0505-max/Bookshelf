@@ -98,10 +98,10 @@
     const defs = `<linearGradient id="log" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3e2312"/><stop offset=".35" stop-color="#74472a"/><stop offset=".6" stop-color="#673e22"/><stop offset="1" stop-color="#2c170b"/></linearGradient>`
       + `<linearGradient id="night" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c1830"/><stop offset="1" stop-color="#1e3048"/></linearGradient>`
       + `<radialGradient id="lampGlow"><stop offset="0" stop-color="#ffcf80" stop-opacity=".45"/><stop offset="1" stop-color="#ffcf80" stop-opacity="0"/></radialGradient>`
-      + `<radialGradient id="warm" cx=".85" cy=".9" r=".75"><stop offset="0" stop-color="#ff8a2a" stop-opacity=".35"/><stop offset=".6" stop-color="#a04a14" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>`
+      + `<radialGradient id="warm" cx=".5" cy="1" r=".8"><stop offset="0" stop-color="#ff8a2a" stop-opacity=".35"/><stop offset=".6" stop-color="#a04a14" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>`
       + `<linearGradient id="dim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".6"/><stop offset=".4" stop-color="#000" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity=".6"/></linearGradient>`
       + `<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2"/></filter>`;
-    return SVG(`${logs}${ceil}${win}${rug}<rect width="400" height="860" fill="url(#dim)"/>${lamp}<g filter="url(#glow)">${gl}</g>${gl}<rect width="400" height="860" fill="url(#warm)"/>`, defs);
+    return SVG(`${logs}<rect width="400" height="860" fill="url(#dim)"/><rect width="400" height="860" fill="url(#warm)"/>`, defs);
   });
 
   // ------------------------------------------------------------------ Brick loft: warm-washed brick, a steel window at dusk, Edison bulbs
@@ -131,7 +131,7 @@
       + `<linearGradient id="wash" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb060" stop-opacity=".28"/><stop offset=".3" stop-color="#ff9a40" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>`
       + `<linearGradient id="dim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".4"/><stop offset=".5" stop-color="#000" stop-opacity=".45"/><stop offset="1" stop-color="#000" stop-opacity=".62"/></linearGradient>`
       + `<filter id="blur" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7"/></filter>`;
-    return SVG(`${bricks}<rect x="178" y="90" width="222" height="770" fill="url(#wash)"/>${ceil}${win}<rect width="400" height="860" fill="url(#dim)"/>${lamp}<g filter="url(#blur)">${glow}</g>${bulbs}`, defs);
+    return SVG(`${bricks}<rect x="178" y="90" width="222" height="770" fill="url(#wash)"/>${ceil}${win}<rect width="400" height="860" fill="url(#dim)"/>${lamp}`, defs);
   });
 
   // ------------------------------------------------------------------ Candlelit: a dark panelled room, a gilt frame, warm haze
@@ -217,11 +217,10 @@
     // a heavy velvet curtain gathered at a tie-back: folds as alternating light and dark bands
     const w = x1 - x0, folds = 7; let d = "";
     for (let k = 0; k < folds; k++) {
-      const a = x0 + (w / folds) * k, b = a + w / folds, ta = flip ? x1 - (x1 - a) * 0.25 : x0 + (a - x0) * 0.25, tb = flip ? x1 - (x1 - b) * 0.25 : x0 + (b - x0) * 0.25;
+      const a = x0 + (w / folds) * k, b = a + w / folds, ta = flip ? x1 - (x1 - a) * 0.5 : x0 + (a - x0) * 0.5, tb = flip ? x1 - (x1 - b) * 0.5 : x0 + (b - x0) * 0.5;
       d += `<path d="M${f1(a)} ${top} L${f1(b)} ${top} C${f1(b)} ${tie * 0.6} ${f1(tb)} ${tie - 30} ${f1(tb)} ${tie} C${f1(tb)} ${tie + 40} ${f1(b + (flip ? -6 : 6))} ${bottom - 60} ${f1(b + (flip ? -10 : 10))} ${bottom} L${f1(a + (flip ? -10 : 10))} ${bottom} C${f1(a)} ${bottom - 60} ${f1(ta)} ${tie + 40} ${f1(ta)} ${tie} C${f1(ta)} ${tie - 30} ${f1(a)} ${tie * 0.6} ${f1(a)} ${top}Z" fill="${k % 2 ? col[0] : col[1]}"/>`;
     }
-    const tx = flip ? x1 - w * 0.2 : x0 + w * 0.2;
-    return d + `<path d="M${f1(tx - 16)} ${tie - 4} Q${f1(tx)} ${tie + 8} ${f1(tx + 16)} ${tie - 4}" stroke="#d4af5a" stroke-width="4" fill="none"/><path d="M${f1(tx)} ${tie + 4} v22" stroke="#d4af5a" stroke-width="3"/><path d="M${f1(tx - 6)} ${tie + 26} h12 l3 26 h-18Z" fill="#c9a24e"/>`;
+    return d;
   };
   const vampire = pic("vampire", () => {
     const R = rng(66), RED = ["#4a0710", "#8a1222"];
@@ -245,7 +244,8 @@
       + `<filter id="b" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="5"/></filter>`
       + `<radialGradient id="g" cx=".5" cy=".55" r=".7"><stop offset="0" stop-color="#ff7a40" stop-opacity=".18"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>`
       + `<linearGradient id="dim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".45"/><stop offset=".5" stop-color="#000" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity=".6"/></linearGradient>`;
-    return SVG(`<rect width="400" height="860" fill="#12050a"/><rect x="300" y="0" width="100" height="860" fill="#d8d0c0" opacity=".08"/>${lace}${mirror}${drape(0, 175, false, 0, 860, RED, 430)}${drape(250, 400, true, 0, 860, RED, 470)}${cand(70, 470, 1)}${cand(340, 500, 0.85)}${valance}<rect width="400" height="860" fill="url(#g)"/><rect width="400" height="860" fill="url(#dim)"/>`, defs);
+    let damask = ""; for (let y = 20, r = 0; y < 860; y += 60, r++) for (let x = r % 2 ? 0 : 30; x < 420; x += 60) damask += `<path d="M${x} ${y - 18} q10 10 0 18 q-10 8 0 18 q-10 -8 -14 -18 q4 -10 14 -18Z M${x} ${y - 18} q-10 10 0 18 q10 8 0 18 q10 -8 14 -18 q-4 -10 -14 -18Z" fill="#3a0a14" opacity=".55"/>`;
+    return SVG(`<rect width="400" height="860" fill="#1c060c"/>${damask}${lace}<rect width="400" height="860" fill="url(#g)"/><rect width="400" height="860" fill="url(#dim)"/>`, defs);
   });
 
   // ------------------------------------------------------------------ Dark academia: a study at night, rain on the window, a green banker's lamp
@@ -287,14 +287,44 @@
     return SVG(`${paper}${bead}<rect width="400" height="860" fill="url(#lamp)"/><rect width="400" height="860" fill="url(#vig)"/>`, defs);
   });
 
+  // ------------------------------------------------------------------ Haunted castle: old stone blocks with moss in the joints and ivy hanging down
+  const castle = pic("castle", () => {
+    const R = rng(77);
+    let stones = "", moss = "";
+    for (let y = 0, r = 0; y < 860; y += 38, r++) {
+      for (let x = r % 2 ? -30 : 0; x < 420;) {
+        const w = 52 + Math.floor(R() * 34);
+        const c = ["#4a4c54", "#3e4048", "#545660", "#44464e", "#3a3c42"][Math.floor(R() * 5)];
+        stones += `<rect x="${x + 2}" y="${y + 2}" width="${w - 4}" height="34" rx="5" fill="${c}"/><rect x="${x + 4}" y="${y + 3}" width="${w - 10}" height="3" rx="1.5" fill="#fff" opacity=".05"/>`;
+        // moss creeping along the joints
+        if (R() < 0.55) { const mx = x + R() * w, len = 10 + R() * 34; moss += `<path d="M${f1(mx)} ${y + 36.5} q${f1(len / 2)} ${f1(-3 - R() * 4)} ${f1(len)} 0" stroke="${["#3f5f2c", "#4c7034", "#355024"][Math.floor(R() * 3)]}" stroke-width="${f1(3 + R() * 3)}" stroke-linecap="round" fill="none"/>`; for (let k = 0; k < 4; k++) moss += `<circle cx="${f1(mx + R() * len)}" cy="${f1(y + 34 + R() * 4)}" r="${f1(1 + R() * 2)}" fill="#5e8a3e"/>`; }
+        if (R() < 0.25) moss += `<path d="M${x + 1} ${f1(y + 4 + R() * 20)} q${f1(-2 + R() * 4)} ${f1(8 + R() * 10)} 0 ${f1(16 + R() * 10)}" stroke="#3f5f2c" stroke-width="3.5" stroke-linecap="round" fill="none"/>`;
+        x += w;
+      }
+    }
+    // ivy trailing down from the top
+    let ivy = "";
+    for (const [x0, len] of [[18, 520], [62, 300], [118, 160], [300, 220], [348, 600], [384, 380]]) {
+      let d = `M${x0} -10`, x = x0, leaves = "";
+      for (let y = 0; y < len; y += 22) { const nx = x0 + Math.sin(y / 40 + x0) * 10; d += ` Q${f1(x + (R() - 0.5) * 14)} ${y + 11} ${f1(nx)} ${y + 22}`; x = nx;
+        for (const side of [-1, 1]) if (R() < 0.85) { const lx = nx + side * (5 + R() * 4), ly = y + 18 + R() * 6, sz = 4 + R() * 3.5; leaves += `<path d="M${f1(lx)} ${f1(ly)} c${f1(-sz)} ${f1(-sz * 0.4)} ${f1(-sz * 0.6)} ${f1(-sz * 1.5)} 0 ${f1(-sz * 1.6)} c${f1(sz * 0.6)} ${f1(sz * 0.1)} ${f1(sz)} ${f1(sz * 1.2)} 0 ${f1(sz * 1.6)}Z" fill="${["#2f5a26", "#3e7030", "#264a20", "#4a7e38"][Math.floor(R() * 4)]}" transform="rotate(${f1(side * (20 + R() * 40))} ${f1(lx)} ${f1(ly)})"/>`; }
+      }
+      ivy += `<path d="${d}" stroke="#2a3a1e" stroke-width="1.6" fill="none"/>${leaves}`;
+    }
+    const defs = `<radialGradient id="moon" cx=".75" cy=".15" r=".8"><stop offset="0" stop-color="#9ab0d8" stop-opacity=".22"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>`
+      + `<linearGradient id="dim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05060a" stop-opacity=".55"/><stop offset=".5" stop-color="#05060a" stop-opacity=".5"/><stop offset="1" stop-color="#05060a" stop-opacity=".7"/></linearGradient>`;
+    return SVG(`<rect width="400" height="860" fill="#1a1b20"/>${stones}${moss}<rect width="400" height="860" fill="url(#dim)"/><rect width="400" height="860" fill="url(#moon)"/>${ivy}`, defs);
+  });
+
   Object.assign(D.BACKDROPS, {
     libraryStacks: { label: "Library stacks", tone: "dark", fx: "dust", css: () => `${library()} center / cover no-repeat, #0d0705` },
-    cabinNight: { label: "Log cabin", tone: "dark", fx: "fire", css: () => `${cabin()} center / cover no-repeat, #1e1008` },
-    loftDusk: { label: "Loft at dusk", tone: "dark", css: () => `${loft()} center / cover no-repeat, #1a120e` },
+    cabinNight: { label: "Log cabin", tone: "dark", fx: "hearth", css: () => `${cabin()} center / cover no-repeat, #1e1008` },
+    loftDusk: { label: "Loft at dusk", tone: "dark", fx: "glowmotes", css: () => `${loft()} center / cover no-repeat, #1a120e` },
     candleRoom: { label: "Candlelit room", tone: "dark", fx: "candles", css: () => `${candlelit()} center bottom / cover no-repeat, #140b07` },
     teaNight: { label: "Tea house night", tone: "dark", fx: "lanterns petals", css: () => `${teahouse()} center / cover no-repeat, #14050a` },
+    castleIvy: { label: "Ivy-covered stone", tone: "dark", fx: "fog", css: () => `${castle()} center / cover no-repeat, #1a1b20` },
     galleryWall: { label: "Gallery wall", tone: "dark", css: () => `${candlelit2()} center / cover no-repeat, #1a0c08` },
-    vampireMirror: { label: "Velvet & mirror", tone: "dark", fx: "bats", css: () => `${vampire()} center / cover no-repeat, #12050a` },
+    vampireMirror: { label: "Velvet & mirror", tone: "dark", fx: "mirror drapesVamp bats", css: () => `${vampire()} center / cover no-repeat, #12050a` },
     study: { label: "Rainy study", tone: "dark", fx: "rainWindow", css: () => `${academia()} center / cover no-repeat, #140c08` },
     cottageRoses: { label: "Rose cottage", tone: "light", fx: "curtains", css: () => `${cottage2()} center / cover no-repeat, #ecd8b8` },
     cottageDusk: { label: "Cottage evening", tone: "dark", fx: "curtains", css: () => `${cottage()} center / cover no-repeat, #3a2018` },
@@ -312,14 +342,17 @@
   D.PALETTES.cottageWarm = { label: "Butter cream", t: ["#ecd8b8", "#3a2618", "#e4ccaa", "#f6ead6", "#dcc29c", "#7a5e46", "#d2b68e", "#d8be98", "#c4a47a", "light"] };
   Object.assign(L.cottage.set, { theme: "cottageWarm", accent: "#c9707f", shelfMat: "paintedWhite", backdrop: "cottageRoses", headFont: "fell" });
   Object.assign(L.candle.set, { backdrop: "galleryWall" });
+  Object.assign(L.castle.set, { backdrop: "castleIvy" });
+  D.BACKDROPS.enchanted.fx = "motes fog";
   Object.assign(L.vampire.set, { backdrop: "vampireMirror", lights: { style: "none", colour: "warm", on: false } });
   Object.assign(L.academia.set, { theme: "library", accent: "#c9a25b", shelfMat: "walnut", backdrop: "study", headFont: "fell", lights: { style: "none", colour: "warm", on: false } });
   D.BACKDROPS.greenDamask.fx = "drapesGreen";
   D.BACKDROPS.damask.fx = "drapesRed";
 
   /** Heavy velvet curtains with a fringed swag across the top, tied back at both edges. */
-  function drapesFx(col, gold) {
-    const side = (flip) => `<div class="fxDrape${flip ? " r" : ""}"><svg viewBox="0 0 120 860" preserveAspectRatio="none" aria-hidden="true">${drape(0, 120, false, 0, 860, col, 470).replace(/#d4af5a/g, gold)}</svg></div>`;
+  const ROPE_TIE = `<div class="tie rope"><i class="band"></i><i class="tassel"><b></b></i></div>`;
+  function drapesFx(col, gold, cls = "") {
+    const side = (flip) => `<div class="fxDrape${flip ? " r" : ""} ${cls}"><svg viewBox="0 0 120 860" preserveAspectRatio="none" aria-hidden="true">${drape(0, 120, false, 0, 860, col, 470)}</svg>${ROPE_TIE}</div>`;
     const swag = `<div class="fxSwag"><svg viewBox="0 0 400 60" preserveAspectRatio="none" aria-hidden="true">${Array.from({ length: 5 }, (_, i) => `<path d="M${i * 80 - 4} 0 h88 v14 Q${i * 80 + 40} 58 ${i * 80 - 4} 14Z" fill="${i % 2 ? col[1] : col[0]}"/><path d="M${i * 80 - 4} 14 Q${i * 80 + 40} 58 ${i * 80 + 84} 14" stroke="${gold}" stroke-width="2.4" fill="none"/>`).join("")}<rect x="0" y="0" width="400" height="5" fill="${gold}"/></svg></div>`;
     return side(false) + side(true) + swag;
   }
@@ -335,6 +368,23 @@
       const flames = [[50, 1, "#ff7a1a"], [38, 0.75, "#ff5a10"], [62, 0.8, "#ff6a14"], [50, 0.62, "#ffd36a"], [44, 0.45, "#fff0b0"]].map(([x, s, c], i) => `<path class="fl" style="--d:-${(i * 0.37).toFixed(2)}s" d="M${x} 150 C${x - 18 * s} 140 ${x - 14 * s} ${150 - 60 * s} ${x} ${150 - 90 * s} C${x + 4 * s} ${150 - 60 * s} ${x + 20 * s} ${150 - 40 * s} ${x + 14 * s} 150Z" fill="${c}"/>`).join("");
       return `<div class="fxFire"><div class="fireGlow"></div><svg viewBox="0 0 100 190" aria-hidden="true"><path d="M0 190 V40 H100 V190Z" fill="#3a2a22"/>${Array.from({ length: 10 }, (_, r) => Array.from({ length: 4 }, (_, k) => `<rect x="${(r % 2 ? -12 : 0) + k * 25 + 1}" y="${40 + r * 15 + 1}" width="23" height="13" fill="${["#6a3a28", "#7a4630", "#5a3020"][(r + k) % 3]}"/>`).join("")).join("")}<path d="M16 190 V92 Q50 70 84 92 V190Z" fill="#0c0604"/><rect x="-4" y="30" width="108" height="12" fill="#2a170c"/><g class="flames">${flames}</g><rect x="24" y="148" width="52" height="8" rx="3" fill="#2a140a"/><rect x="30" y="144" width="40" height="6" rx="3" fill="#3a1c0c" transform="rotate(-8 50 147)"/></svg>${sparks}</div>`;
     },
+    // a close-up of a stone fireplace filling the bottom of the screen, fire dancing inside
+    hearth: () => {
+      const R = rng(19);
+      let stones = "";
+      for (let y = 0, r = 0; y < 200; y += 26, r++) for (let x = r % 2 ? -24 : 0; x < 420; x += 44 + Math.floor(R() * 10)) stones += `<rect x="${x + 1.5}" y="${y + 1.5}" width="${40 + Math.floor(R() * 8)}" height="23" rx="6" fill="${["#5a4a40", "#4a3c34", "#665446", "#3e322c"][Math.floor(R() * 4)]}"/>`;
+      const flames = [[200, 1.25, "#ff6a10"], [160, 0.95, "#ff5a0c"], [240, 1, "#ff6a14"], [128, 0.7, "#ff7a1a"], [272, 0.72, "#ff7a1a"], [200, 0.85, "#ffb030"], [178, 0.6, "#ffd36a"], [222, 0.62, "#ffd36a"], [200, 0.42, "#fff0b0"]]
+        .map(([x, sc, c], i) => `<path class="fl" style="--d:-${(i * 0.23).toFixed(2)}s;--t:${(0.9 + (i % 3) * 0.25).toFixed(2)}s" d="M${x - 30 * sc} 196 C${x - 40 * sc} ${196 - 50 * sc} ${x - 12 * sc} ${196 - 80 * sc} ${x} ${196 - 120 * sc} C${x + 6 * sc} ${196 - 80 * sc} ${x + 40 * sc} ${196 - 60 * sc} ${x + 30 * sc} 196Z" fill="${c}"/>`).join("");
+      let sparks = ""; for (let i = 0; i < 12; i++) sparks += `<i class="spark" style="left:${f1(35 + R() * 30)}%;--t:${f1(2 + R() * 2.4)}s;--d:-${f1(R() * 4)}s;--dx:${f1((R() - 0.5) * 60)}px"></i>`;
+      return `<div class="fxHearth"><div class="fireGlow"></div><svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><radialGradient id="hb" cx=".5" cy="1" r=".8"><stop offset="0" stop-color="#3a1404"/><stop offset="1" stop-color="#080302"/></radialGradient></defs>`
+        + `<rect width="400" height="200" fill="#2e2620"/>${stones}<rect x="0" y="0" width="400" height="16" fill="#3a2010"/><rect x="0" y="14" width="400" height="3" fill="#1a0d06"/>`
+        + `<path d="M84 200 V86 Q200 40 316 86 V200Z" fill="url(#hb)"/><path d="M84 200 V86 Q200 40 316 86 V200" stroke="#2a201a" stroke-width="6" fill="none"/>`
+        + `<g class="flames">${flames}</g><rect x="120" y="184" width="160" height="12" rx="6" fill="#2a1408"/><rect x="132" y="176" width="136" height="11" rx="5" fill="#3a1c0c" transform="rotate(-5 200 182)"/><rect x="110" y="194" width="180" height="6" fill="#ff7a1a" opacity=".55"/></svg>${sparks}</div>`;
+    },
+    // low drifting fog in three layers
+    fog: () => `<i class="fog f1"></i><i class="fog f2"></i><i class="fog f3"></i>`,
+    // warm specks of light floating in the air
+    glowmotes: () => { const R = rng(31); let o = ""; for (let i = 0; i < 22; i++) o += `<i class="mote" style="left:${f1(R() * 100)}%;top:${f1(10 + R() * 85)}%;--c:${R() > 0.25 ? "#ffcf7a" : "#ffe8b8"};--s:${f1(2 + R() * 3)}px;--t:${f1(10 + R() * 12)}s;--p:${f1(2 + R() * 3)}s;--d:-${f1(R() * 20)}s;--dx:${f1((R() - 0.5) * 90)}px;--dy:${f1(-40 - R() * 110)}px"></i>`; return o; },
     // a cluster of church candles on the mantel
     candles: () => {
       const C = [[18, 60, 9], [36, 92, 11], [56, 72, 10], [76, 110, 12], [98, 66, 9], [116, 84, 10], [134, 54, 8]];
@@ -355,13 +405,24 @@
     rainWindow: () => { const R = rng(12); let drops = ""; for (let i = 0; i < 40; i++) drops += `<i class="drop" style="left:${f1(R() * 100)}%;--t:${f1(0.7 + R() * 0.9)}s;--d:-${f1(R() * 2)}s;--h:${f1(10 + R() * 18)}px"></i>`; let beads = ""; for (let i = 0; i < 26; i++) beads += `<i class="bead" style="left:${f1(R() * 96)}%;top:${f1(R() * 90)}%;--t:${f1(5 + R() * 8)}s;--d:-${f1(R() * 10)}s"></i>`; return `<div class="fxWindow"><div class="pane">${[[20, 70], [62, 40], [80, 78], [35, 30], [50, 85]].map(([x, y]) => `<b style="left:${x}%;top:${y}%"></b>`).join("")}${drops}${beads}</div></div>`; },
     drapesGreen: () => drapesFx(["#0e2a1c", "#1e4a32"], "#d4af5a"),
     drapesRed: () => drapesFx(["#3a0610", "#76121f"], "#d4af5a"),
+    drapesVamp: () => drapesFx(["#4a0710", "#8a1222"], "#d4af5a", "wide"),
+    // a tall antique mirror; it reflects your shelves and the reflection moves as you scroll
+    mirror: () => {
+      const books = (window.Shelf && window.Shelf.books ? window.Shelf.books() : []).map((b) => b.spineColor).filter(Boolean);
+      const cols = books.length ? books : ["#5a1a14", "#2b3550", "#3d5c4a", "#7a4a22", "#c9a6c6", "#e8dcc5"];
+      const R = rng(3); let row = "", x = 14, k = 0;
+      while (x < 290) { const w = 12 + R() * 20, h = 150 + R() * 70; row += `<rect x="${f1(x)}" y="${f1(296 - h)}" width="${f1(w - 1)}" height="${f1(h)}" fill="${cols[k++ % cols.length]}"/>`; x += w; }
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="340" viewBox="0 0 300 340">${row}<rect x="0" y="296" width="300" height="12" fill="#3a2414"/><rect x="0" y="308" width="300" height="20" fill="#000" opacity=".4"/></svg>`;
+      let url = ""; try { url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" })); } catch (e) { /* no reflection */ }
+      return `<div class="fxMirror"><div class="glass"><div class="refl" style="background-image:url('${url}')"></div></div></div>`;
+    },
     // floral curtains tied back at both edges, always behind the text
     curtains: () => {
       const one = (flip) => `<div class="fxCurtain${flip ? " r" : ""}"><svg viewBox="0 0 100 860" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="cf${flip ? "r" : "l"}" x1="0" x2="1">${[0, 0.12, 0.24, 0.36, 0.5, 0.62, 0.76, 0.88, 1].map((o, i) => `<stop offset="${o}" stop-color="${i % 2 ? "#f0d8cc" : "#c99a94"}"/>`).join("")}</linearGradient><pattern id="cp${flip ? "r" : "l"}" width="14" height="18" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="1.8" fill="#c0606e" opacity=".7"/><circle cx="11" cy="13" r="1.5" fill="#8e9a64" opacity=".7"/></pattern></defs>`
         + `<path d="M0 0 H100 C96 220 60 420 34 470 C60 560 80 720 74 860 H0Z" fill="url(#cf${flip ? "r" : "l"})"/><path d="M0 0 H100 C96 220 60 420 34 470 C60 560 80 720 74 860 H0Z" fill="url(#cp${flip ? "r" : "l"})"/>`
         + `<path d="M100 0 C96 220 60 420 34 470 C60 560 80 720 74 860" stroke="#fff4ea" stroke-width="3" fill="none" stroke-dasharray="2 3" opacity=".8"/>`
-        + `<path d="M0 462 Q22 452 40 466 Q22 480 0 474Z" fill="#9a4a5a"/><circle cx="40" cy="468" r="5" fill="#b85a6c"/><path d="M40 468 q8 10 4 22 M40 468 q-4 12 2 22" stroke="#9a4a5a" stroke-width="2.6" fill="none"/>`
-        + `<rect x="0" y="0" width="100" height="5" fill="#a9843f"/></svg></div>`;
+
+        + `<rect x="0" y="0" width="100" height="5" fill="#a9843f"/></svg><div class="tie ribbon"><i class="band"></i><svg class="bow" viewBox="0 0 30 26" aria-hidden="true"><path d="M15 10 C8 0 0 2 2 10 C3 16 10 14 15 12Z M15 10 C22 0 30 2 28 10 C27 16 20 14 15 12Z" fill="#c25a72"/><path d="M14 12 l-5 13 4 -2 2 3Z M16 12 l5 13 -4 -2 -2 3Z" fill="#a8465e"/><circle cx="15" cy="11" r="3" fill="#d97a90"/></svg></div></div>`;
       return one(false) + one(true);
     },
   };
