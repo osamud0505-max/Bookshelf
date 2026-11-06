@@ -87,9 +87,11 @@
 
   const room = h(`<div class="reader" hidden role="dialog" aria-label="Reader">
     <header class="rdTop"><button class="rdBtn" data-a="close" aria-label="Close the book">✕</button><div class="rdTitle"></div>
-      <button class="rdBtn rdMusicBtn" data-a="music" aria-label="Music"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></button><button class="rdBtn" data-a="toc" aria-label="Chapters">☰</button><button class="rdBtn" data-a="aa" aria-label="Text settings">Aa</button></header>
+      <button class="rdBtn rdMusicBtn" data-a="music" aria-label="Music"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></button><button class="rdBtn rdPenBtn" data-a="pen" aria-label="Highlighter"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m14.5 4.5 5 5-8.5 8.5H6v-5z"/><path d="M6 13l5 5"/><path d="M3.5 21h7" class="rdPenInk"/></svg></button><button class="rdBtn rdMarkBtn" data-a="bookmark" aria-label="Bookmark this page"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/></svg></button><button class="rdBtn" data-a="toc" aria-label="Chapters, bookmarks and highlights">☰</button><button class="rdBtn" data-a="aa" aria-label="Text settings">Aa</button></header>
     <div class="rdView"></div>
     <footer class="rdBottom"><input type="range" class="rdScrub" min="0" max="100" step="0.1" value="0" aria-label="Jump to a place in the book" disabled><div class="rdInfo"><span class="rdChapter"></span><span class="rdPct">…</span></div></footer>
+    <div class="rdPens" hidden></div>
+    <div class="rdRibbon" hidden></div>
     <div class="rdPanel" data-p="aa" hidden></div>
     <div class="rdPanel rdTocPanel" data-p="toc" hidden></div>
     <div class="rdPanel rdMusic" data-p="music" hidden></div>
@@ -119,6 +121,7 @@
       img: { "max-width": "100% !important" },
     });
     r.themes.fontSize(pref.size + "%");
+    setTimeout(paintAll, 350);
   }
 
   // ------------------------------------------------------------------ music remote
@@ -173,10 +176,40 @@
     p.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => { pref.theme = b.dataset.t; savePref(); applyLook(); drawAa(); }));
   }
 
+  let tocTab = "chapters";
   function drawToc() {
     const p = room.querySelector('[data-p="toc"]');
+    const b = book_() || {};
+    const tabs = h(`<div class="rdTabs">${[["chapters", "Chapters"], ["bookmarks", "Bookmarks"], ["highlights", "Highlights"]].map(([k, l]) => `<button class="rdChip" data-tab="${k}" aria-pressed="${tocTab === k}">${l}</button>`).join("")}</div>`);
+    tabs.querySelectorAll("[data-tab]").forEach((x) => (x.onclick = () => { tocTab = x.dataset.tab; drawToc(); }));
+    const go = (cfi) => { hidePanels(); cur.rendition.display(cfi); };
+    if (tocTab === "bookmarks") {
+      const list = h(`<div class="rdToc"></div>`);
+      const bm = [...(b.bookmarks || [])].sort((x, y) => (x.pct || 0) - (y.pct || 0));
+      bm.forEach((m) => {
+        const row = h(`<div class="rdMarkRow"><button class="rdTocItem"><b>${esc(m.chapter || "Page")}</b><span>${Math.round((m.pct || 0) * 100)}% · ${new Date(m.at).toLocaleDateString()}</span></button><button class="rdBtn" aria-label="Remove bookmark">✕</button></div>`);
+        row.firstElementChild.onclick = () => go(m.cfi);
+        row.lastElementChild.onclick = () => { b.bookmarks = b.bookmarks.filter((x) => x !== m); save(); syncBookmark(); drawToc(); };
+        list.append(row);
+      });
+      if (!bm.length) list.append(h(`<p class="rdHint">No bookmarks yet. Tap the ribbon at the top to mark the page you're on.</p>`));
+      return p.replaceChildren(tabs, list);
+    }
+    if (tocTab === "highlights") {
+      const list = h(`<div class="rdToc"></div>`);
+      const hs = [...(b.highlights || [])];
+      try { const c = CFI(); hs.sort((x, y) => c.compare(x.cfi, y.cfi)); } catch (e) { /* keep order */ }
+      hs.forEach((hl) => {
+        const row = h(`<div class="rdMarkRow"><button class="rdTocItem rdQuote"><span class="rdSwatch" style="background:${penColour(hl.colour)}"></span><q>${esc(hl.text || "")}</q></button><button class="rdBtn" aria-label="Remove highlight">✕</button></div>`);
+        row.firstElementChild.onclick = () => go(hl.cfi);
+        row.lastElementChild.onclick = () => { b.highlights = b.highlights.filter((x) => x !== hl); save(); paintAll(); drawToc(); };
+        list.append(row);
+      });
+      if (!hs.length) list.append(h(`<p class="rdHint">No highlights yet. Tap the highlighter at the top, pick a colour and run your finger over the words.</p>`));
+      return p.replaceChildren(tabs, list);
+    }
     const toc = (cur && cur.book.navigation && cur.book.navigation.toc) || [];
-    const list = h(`<div class="rdToc"><h3>Chapters</h3></div>`);
+    const list = h(`<div class="rdToc"></div>`);
     const add = (items, depth) => items.forEach((it) => {
       const b = h(`<button class="rdTocItem" style="padding-left:${12 + depth * 14}px">${esc((it.label || "").trim() || "Untitled")}</button>`);
       b.onclick = () => { hidePanels(); cur.rendition.display(it.href); };
@@ -185,7 +218,7 @@
     });
     add(toc, 0);
     if (!toc.length) list.append(h(`<p class="rdHint">This book has no chapter list.</p>`));
-    p.replaceChildren(list);
+    p.replaceChildren(tabs, list);
   }
 
   const chapterName = (href) => {
@@ -364,15 +397,192 @@
     turn = null;
   }
 
+  // ------------------------------------------------------------------ highlighter pens and bookmarks
+  // Highlights are stored as CFI ranges on the book (b.highlights) and painted as marker strokes inside the
+  // page itself, so they move with the text, show in the page-curl copy, and survive font changes.
+  const PENS = [["yellow", "#ffe24a"], ["pink", "#ff86c3"], ["green", "#7ff07a"], ["blue", "#74ccff"], ["orange", "#ffad55"], ["purple", "#c49cff"]];
+  const penColour = (k) => (PENS.find((p) => p[0] === k) || PENS[0])[1];
+  const pen = { on: false, colour: (pref.pen || "yellow"), erase: false, stroke: null };
+  const pensEl = room.querySelector(".rdPens"), ribbon = room.querySelector(".rdRibbon");
+  const CFI = () => new window.ePub.CFI();
+  const book_ = () => cur && byId(cur.id);
+
+  function contentsFor(doc) { return cur && cur.rendition.getContents().find((c) => c.document === doc); }
+  function caretAt(doc, x, y) {
+    if (doc.caretRangeFromPoint) return doc.caretRangeFromPoint(x, y);
+    const p = doc.caretPositionFromPoint && doc.caretPositionFromPoint(x, y);
+    if (!p) return null; const r = doc.createRange(); r.setStart(p.offsetNode, p.offset); return r;
+  }
+  // grow a caret out to the edges of the word it sits in
+  const isWord = (ch) => !!ch && /[\p{L}\p{N}'’\-]/u.test(ch);
+  function wordEdge(node, off, dir) {
+    if (!node || node.nodeType !== 3) return [node, off];
+    const t = node.data;
+    if (dir < 0) { while (off > 0 && isWord(t[off - 1])) off--; } else { while (off < t.length && isWord(t[off])) off++; }
+    return [node, off];
+  }
+  function strokeRange(doc, a, b) {
+    if (!a || !b) return null;
+    const r = doc.createRange();
+    let s = [a.startContainer, a.startOffset], e = [b.startContainer, b.startOffset];
+    const before = a.compareBoundaryPoints(Range.START_TO_START, b) > 0;
+    if (before) [s, e] = [e, s];
+    s = wordEdge(s[0], s[1], -1); e = wordEdge(e[0], e[1], 1);
+    try { r.setStart(s[0], s[1]); r.setEnd(e[0], e[1]); } catch (err) { return null; }
+    return r.collapsed ? null : r;
+  }
+  // one marker stroke per line of text
+  function lineRects(range) {
+    const rs = [...range.getClientRects()].filter((r) => r.width > 1 && r.height > 1).sort((a, b) => a.top - b.top || a.left - b.left);
+    const lines = [];
+    rs.forEach((r) => {
+      const l = lines.find((x) => Math.abs((x.top + x.bottom) / 2 - (r.top + r.bottom) / 2) < Math.min(x.bottom - x.top, r.height) * 0.5 && r.left < x.right + 40 && r.right > x.left - 40);
+      if (l) { l.left = Math.min(l.left, r.left); l.right = Math.max(l.right, r.right); l.top = Math.min(l.top, r.top); l.bottom = Math.max(l.bottom, r.bottom); }
+      else lines.push({ left: r.left, right: r.right, top: r.top, bottom: r.bottom });
+    });
+    return lines;
+  }
+  function overlay(doc) {
+    let o = doc.getElementById("shelf-ink");
+    if (!o) {
+      o = doc.createElement("div"); o.id = "shelf-ink";
+      o.setAttribute("style", "position:absolute;left:0;top:0;width:0;height:0;overflow:visible;pointer-events:none;z-index:2147483000");
+      doc.documentElement.append(o);
+    }
+    // the whole layer blends with the page so the ink darkens paper but never the words
+    o.style.mixBlendMode = room.dataset.dark === "1" ? "screen" : "multiply";
+    return o;
+  }
+  const seed = (str, i) => { let x = i * 9301 + 49297; for (let k = 0; k < str.length; k += 7) x = (x * 31 + str.charCodeAt(k)) % 233280; return x / 233280; };
+  function strokeEls(doc, range, colour, key, live) {
+    const dark = room.dataset.dark === "1";
+    const hr = doc.documentElement.getBoundingClientRect();
+    return lineRects(range).map((l, i) => {
+      const d = doc.createElement("div");
+      const hgt = l.bottom - l.top, rnd = seed(key, i);
+      const top = l.top - hr.top + hgt * 0.1, height = hgt * 0.84;
+      const tilt = (rnd - 0.5) * 0.9, lift = (rnd - 0.5) * hgt * 0.08;
+      const ink = colour;
+      d.setAttribute("style", [
+        "position:absolute", `left:${(l.left - hr.left - 3).toFixed(1)}px`, `top:${(top + lift).toFixed(1)}px`,
+        `width:${(l.right - l.left + 6).toFixed(1)}px`, `height:${height.toFixed(1)}px`,
+        // ink pools where the pen lands and lifts, and the chisel tip leaves soft, uneven ends
+        `background:linear-gradient(90deg, ${ink}f2 0, ${ink}c4 7px, ${ink}b0 45%, ${ink}bd 85%, ${ink}ee 100%)`,
+        `border-radius:${2 + rnd * 3}px ${5 + rnd * 4}px ${3 + rnd * 2}px ${6 - rnd * 3}px / ${45 + rnd * 20}% ${30 + rnd * 25}% ${55 - rnd * 15}% ${40 + rnd * 20}%`,
+        `transform:rotate(${tilt.toFixed(2)}deg) skewX(-8deg)`,
+        `opacity:${dark ? 0.5 : live ? 0.8 : 0.9}`,
+        "box-shadow:0 0 0.6px " + ink,
+      ].join(";"));
+      return d;
+    });
+  }
+  function paintMarks(contents) {
+    const b = book_(); if (!b || !contents || !contents.document) return;
+    const doc = contents.document, o = overlay(doc);
+    o.replaceChildren();
+    (b.highlights || []).forEach((hl) => {
+      let r = null; try { r = contents.range(hl.cfi); } catch (e) { r = null; }
+      if (!r || r.collapsed) return;
+      strokeEls(doc, r, penColour(hl.colour), hl.cfi, false).forEach((el) => { el.dataset.hl = hl.cfi; o.append(el); });
+    });
+  }
+  const paintAll = () => { if (cur) cur.rendition.getContents().forEach(paintMarks); };
+
+  // the pen tray: real highlighters lying side by side
+  function drawPens() {
+    pensEl.replaceChildren(h(`<div class="rdPenRow">
+      ${PENS.map(([k, c]) => `<button class="rdPen" data-pen="${k}" aria-label="${k} highlighter" aria-pressed="${!pen.erase && pen.colour === k}" style="--ink:${c}">
+        <svg viewBox="0 0 30 96" width="30" height="96"><path class="tip" d="M9 14 L15 2 L21 9 L21 18 L9 18Z"/><rect class="collar" x="7" y="17" width="16" height="9" rx="2"/><rect class="body" x="5" y="25" width="20" height="70" rx="5"/><rect class="shine" x="8" y="30" width="3.5" height="58" rx="1.75"/><rect class="clip" x="12" y="40" width="6" height="34" rx="3"/></svg></button>`).join("")}
+      <button class="rdPen rdEraser" data-pen="erase" aria-label="Eraser" aria-pressed="${pen.erase}">
+        <svg viewBox="0 0 30 96" width="30" height="96"><rect x="5" y="8" width="20" height="26" rx="4" fill="#f2b8b0"/><rect x="5" y="30" width="20" height="65" rx="4" fill="#3d6fd1"/><rect x="8" y="36" width="3.5" height="52" rx="1.75" fill="#fff" opacity=".35"/></svg></button>
+      <button class="rdPenDone">Done</button></div>`));
+    pensEl.querySelectorAll("[data-pen]").forEach((b) => (b.onclick = () => {
+      if (b.dataset.pen === "erase") pen.erase = !pen.erase;
+      else { pen.erase = false; pen.colour = b.dataset.pen; pref.pen = pen.colour; savePref(); }
+      drawPens();
+    }));
+    pensEl.querySelector(".rdPenDone").onclick = () => setPen(false);
+  }
+  function setPen(on) {
+    pen.on = on; hidePanels();
+    room.classList.toggle("penOn", on);
+    pensEl.hidden = !on; if (on) { room.classList.remove("bare"); drawPens(); }
+    room.querySelector(".rdPenBtn").setAttribute("aria-pressed", on);
+  }
+
+  function penDown(e) {
+    const frame = pageFrame(); if (!frame || !frame.contentDocument) return;
+    const doc = frame.contentDocument, fr = frame.getBoundingClientRect();
+    const x = e.clientX - fr.left, y = e.clientY - fr.top;
+    if (pen.erase) return eraseAt(doc, x, y);
+    pen.stroke = { doc, fr, a: caretAt(doc, x, y), els: [] };
+    try { gesture.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  }
+  function penMove(e) {
+    const st = pen.stroke; if (!st) return;
+    const r = strokeRange(st.doc, st.a, caretAt(st.doc, e.clientX - st.fr.left, e.clientY - st.fr.top));
+    st.els.forEach((el) => el.remove()); st.els = []; st.range = r;
+    if (!r) return;
+    const o = overlay(st.doc);
+    st.els = strokeEls(st.doc, r, penColour(pen.colour), "live", true); st.els.forEach((el) => o.append(el));
+  }
+  function penUp() {
+    const st = pen.stroke; pen.stroke = null; if (!st) return;
+    st.els.forEach((el) => el.remove());
+    const b = book_(), c = contentsFor(st.doc);
+    if (!st.range || !b || !c) return;
+    let cfi = null; try { cfi = c.cfiFromRange(st.range); } catch (err) { cfi = null; }
+    if (!cfi) return;
+    b.highlights = b.highlights || [];
+    b.highlights.push({ cfi, colour: pen.colour, text: st.range.toString().replace(/\s+/g, " ").trim().slice(0, 400), at: Date.now() });
+    save(); paintMarks(c);
+  }
+  function eraseAt(doc, x, y) {
+    const b = book_(); if (!b || !b.highlights) return;
+    const hr = doc.documentElement.getBoundingClientRect();
+    const hit = [...overlay(doc).children].find((el) => {
+      const r = el.getBoundingClientRect();
+      return x >= r.left - 4 && x <= r.right + 4 && y >= r.top - 4 && y <= r.bottom + 4;
+    });
+    if (!hit) return toast("Tap right on a highlight to rub it out");
+    b.highlights = b.highlights.filter((hl) => hl.cfi !== hit.dataset.hl);
+    save(); paintMarks(contentsFor(doc));
+  }
+
+  // bookmarks: the ribbon button marks the page you are on
+  function pageMarks() {
+    const b = book_(), loc = cur && cur.loc; if (!b || !loc || !loc.start) return [];
+    const c = CFI();
+    return (b.bookmarks || []).filter((m) => { try { return c.compare(m.cfi, loc.start.cfi) >= 0 && c.compare(m.cfi, loc.end.cfi) <= 0; } catch (e) { return false; } });
+  }
+  function syncBookmark() {
+    const on = pageMarks().length > 0;
+    ribbon.hidden = !on;
+    room.querySelector(".rdMarkBtn").classList.toggle("on", on);
+  }
+  function toggleBookmark() {
+    const b = book_(), loc = cur && cur.loc; if (!b || !loc || !loc.start) return;
+    const here = pageMarks();
+    if (here.length) { b.bookmarks = b.bookmarks.filter((m) => !here.includes(m)); toast("Bookmark removed"); }
+    else {
+      b.bookmarks = b.bookmarks || [];
+      b.bookmarks.push({ cfi: loc.start.cfi, pct: b.readPct || 0, chapter: chapterName(loc.start.href), at: Date.now() });
+      toast("Page bookmarked");
+    }
+    save(); syncBookmark();
+  }
+
   // finger / mouse on the page
   let g = null;
   gesture.addEventListener("pointerdown", (e) => {
     if (turn || !cur) return;
+    if (pen.on) return penDown(e);
     const r = gesture.getBoundingClientRect();
     g = { id: e.pointerId, x0: e.clientX - r.left, y0: e.clientY - r.top, cx: e.clientX, cy: e.clientY, t: performance.now(), v: 0, lastX: e.clientX, lastT: performance.now(), mode: null };
     try { gesture.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
   });
   gesture.addEventListener("pointermove", (e) => {
+    if (pen.on) return penMove(e);
     if (!g || e.pointerId !== g.id) return;
     const r = gesture.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
     const now = performance.now(); g.v = (e.clientX - g.lastX) / Math.max(1, now - g.lastT); g.lastX = e.clientX; g.lastT = now;
@@ -395,6 +605,7 @@
     drawTurn(turn.f, turn.fy);
   }
   const release = async (e) => {
+    if (pen.on) return penUp();
     if (!g || e.pointerId !== g.id) return;
     const gg = g; g = null;
     if (performance.now() - gg.lastT > 90) gg.v = 0; // a finger that stopped before letting go isn't a flick
@@ -448,12 +659,14 @@
       const rendition = book.renderTo(view, { width: "100%", height: "100%", spread: "none", flow: "paginated", allowScriptedContent: false });
       cur = { id, book, rendition };
       applyLook();
+      rendition.on("rendered", (section, v) => { if (v && v.contents) paintMarks(v.contents); });
       rendition.hooks.content.register((contents) => {
         const doc = contents.document;
         doc.addEventListener("keydown", keys);
       });
       rendition.on("relocated", (loc) => {
         const bk = byId(id); if (!bk || !loc || !loc.start) return;
+        cur.loc = loc; syncBookmark(); paintAll();
         bk.readCfi = loc.start.cfi;
         if (book.locations && book.locations.length()) bk.readPct = book.locations.percentageFromCfi(loc.start.cfi) || 0;
         bk.readAt = Date.now();
@@ -490,6 +703,7 @@
   function close() {
     if (turn) { turn.layers.forEach((l) => l.remove()); view.style.clipPath = ""; view.style.zIndex = ""; turn = null; }
     if (cur) { try { cur.book.destroy(); } catch (e) { /* ignore */ } }
+    setPen(false); ribbon.hidden = true;
     cur = null; view.replaceChildren(); room.hidden = true; document.body.style.overflow = "";
     room.querySelector(".rdLoading").textContent = "Opening…";
     room.querySelector(".rdScrub").disabled = true;
@@ -507,6 +721,8 @@
     if (a === "close") close();
     else if (a === "aa") { drawAa(); showPanel("aa"); }
     else if (a === "toc") { drawToc(); showPanel("toc"); }
+    else if (a === "pen") setPen(!pen.on);
+    else if (a === "bookmark") toggleBookmark();
     else if (a === "music") { drawMusic(); showPanel("music"); if (window.ShelfMusic) window.ShelfMusic.refresh(); }
   });
   room.querySelector(".rdScrub").onchange = (e) => {
