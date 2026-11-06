@@ -207,20 +207,9 @@
   }
   const candlelit2 = pic("candlelit2", () => {
     const R = rng(13);
-    // a salon hang of famous paintings, each frame cut to the painting's real proportions (width / height);
-    // every column is spread evenly between the same top and bottom lines
-    const COLS = [
-      { x: 18, w: 98, fw: 7, items: [[0.88, "portrait"], [0.79, "landscape"], [0.79, "still"], [1.0, "portrait"]] },          // Pearl Earring, Wanderer, Sunflowers, The Kiss
-      { x: 130, w: 140, fw: 8, items: [[1.25, "landscape"], [0.69, "portrait"], [1.62, "sea"], [1.47, "sea"]] },               // Starry Night, Mona Lisa, Birth of Venus, Great Wave
-      { x: 284, w: 98, fw: 7, items: [[0.81, "portrait"], [0.88, "still"], [1.3, "landscape"], [0.81, "portrait"]] },          // The Scream, The Milkmaid, Impression Sunrise, Van Gogh self-portrait
-    ];
-    const TOP = 36, BOTTOM = 600, frames = [];
-    for (const c of COLS) {
-      const iw = c.w - c.fw * 2, hs = c.items.map(([r]) => Math.round(iw / r) + c.fw * 2);
-      const gap = (BOTTOM - TOP - hs.reduce((a, b) => a + b, 0)) / (hs.length - 1);
-      let y = TOP;
-      c.items.forEach(([, k], i) => { frames.push([c.x, Math.round(y), c.w, hs[i], k, c.fw]); y += hs[i] + gap; });
-    }
+    // one painting, the Mona Lisa, centred on the wall in a large frame at its real proportions (0.69 : 1)
+    const FW = 13, IW = 190, IH = Math.round(IW / 0.69), W = IW + FW * 2, H = IH + FW * 2;
+    const frames = [[Math.round((400 - W) / 2), Math.round((640 - H) / 2), W, H, "portrait", FW]];
     let wall = `<rect width="400" height="860" fill="#2a1410"/>`;
     for (let x = 0; x < 400; x += 16) wall += `<rect x="${x}" y="0" width="8" height="640" fill="#331a14" opacity=".55"/>`;
     const art = frames.map(([x, y, w, h, k, fw]) => `<rect x="${x + 3}" y="${y + 5}" width="${w}" height="${h}" fill="#000" opacity=".45" filter="url(#sh)"/>` + painting(R, x, y, w, h, k, fw)).join("");
