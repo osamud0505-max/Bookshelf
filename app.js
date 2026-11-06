@@ -535,7 +535,10 @@
   // ---------------------------------------------------------------- lights under each shelf
   const plankWidth = () => Math.min(innerWidth, 1200);
   function addLights(root) {
-    const cfg = shelfDecor(root.dataset.key).noLights ? { style: "none" } : state.settings.lights || {};
+    const key = root.dataset.key, sd = shelfDecor(key);
+    const base = state.settings.lights || {};
+    // each shelf has its own switch; until it is pulled it follows the "Lights on" setting
+    const cfg = sd.noLights ? { style: "none" } : { ...base, on: sd.lightsOn !== undefined ? sd.lightsOn : !!base.on };
     root.querySelectorAll(".lights, .pullCord").forEach((e) => e.remove());
     const el = D.lightsEl(plankWidth(), cfg);
     root.classList.toggle("hasLights", !!el);
@@ -544,21 +547,22 @@
     const plank = root.querySelector(".plank");
     plank.append(el);
     if (cfg.style === "wisteria") return;
-    const cord = h(`<button class="pullCord" aria-label="Turn the lights ${cfg.on ? "off" : "on"}" aria-pressed="${!!cfg.on}"><i></i><b></b></button>`);
+    const cord = h(`<button class="pullCord" aria-label="Turn this shelf's lights ${cfg.on ? "off" : "on"}" aria-pressed="${!!cfg.on}"><i></i><b></b></button>`);
     cord.onclick = () => {
       if (cord.classList.contains("yank")) return;
-      const on = !(state.settings.lights || {}).on;
+      const on = cord.getAttribute("aria-pressed") !== "true";
       cord.classList.add("yank"); setTimeout(() => cord.classList.remove("yank"), 1000);
       soundPullSwitch(on);
-      state.settings.lights = { ...(state.settings.lights || {}), on }; save();
-      // the switch catches at the bottom of the pull; every string of lights on the page follows
+      setShelfDecor(key, { lightsOn: on });
+      // the switch catches at the bottom of the pull; only this shelf's string follows
       setTimeout(() => {
-        document.querySelectorAll(".lights:not(.wisteria)").forEach((l) => {
+        const l = root.querySelector(".lights");
+        if (l) {
           l.classList.remove("switchOn", "switchOff"); void l.offsetWidth;
           l.classList.toggle("on", on); l.classList.add(on ? "switchOn" : "switchOff");
           clearTimeout(l._sw); l._sw = setTimeout(() => l.classList.remove("switchOn", "switchOff"), 1600);
-        });
-        document.querySelectorAll(".pullCord").forEach((c) => { c.setAttribute("aria-pressed", on); c.setAttribute("aria-label", `Turn the lights ${on ? "off" : "on"}`); });
+        }
+        cord.setAttribute("aria-pressed", on); cord.setAttribute("aria-label", `Turn this shelf's lights ${on ? "off" : "on"}`);
       }, 150);
     };
     plank.append(cord);
@@ -1165,6 +1169,8 @@
       const body = h(`<div class="sheetBody padded"><div><h2 class="sheetTitle">Customize</h2><p class="hint">Changes show on your shelf straight away.</p></div></div>`);
       const set = (patch) => { Object.assign(state.settings, patch); save(); render(); draw(); };
 
+      // drop each shelf's own light switch, so the shelves follow the main setting again
+      const clearShelfSwitches = () => Object.fromEntries(Object.entries(s.shelfDecor || {}).map(([k, v]) => { const { lightsOn, ...rest } = v; return [k, rest]; }));
       const lookOf = () => Object.fromEntries(D.LOOK_KEYS.filter((k) => s[k] !== undefined).map((k) => [k, JSON.parse(JSON.stringify(s[k]))]));
       const lights = { style: "none", colour: "warm", on: false, ...(s.lights || {}) };
       const tile = (bg, label, on, extra = "") => h(`<button class="themeBtn" aria-pressed="${on}"><span class="swatch" style="background:${bg};${extra}"></span>${esc(label)}</button>`);
@@ -1178,17 +1184,17 @@
       };
 
       // ready-made looks and your own
-      const looks = h(`<div class="group"><h3 class="label">Looks</h3><p class="hint">A whole style in one tap: colours, wall, shelf, lights and lettering. Change anything after.</p><div class="looks"></div></div>`);
+      const looks = h(`<div class="group"><h3 class="label">Looks</h3><p class="hint">A whole room in one tap: colours, wall, shelf, lights and lettering. You can still change anything afterwards.</p><div class="looks"></div></div>`);
       const lookWrap = looks.querySelector(".looks");
       for (const [k, L] of Object.entries(D.LOOKS)) {
         const btn = h(`<button class="lookBtn"></button>`); btn.append(lookTile(L.label, { ...DEFAULT_SETTINGS, ...L.set }));
-        btn.onclick = () => set(JSON.parse(JSON.stringify(L.set)));
+        btn.onclick = () => { set({ ...JSON.parse(JSON.stringify(L.set)), shelfDecor: clearShelfSwitches() }); closeSheet(); };
         lookWrap.append(btn);
       }
       (s.looks || []).forEach((L) => {
         const btn = h(`<div class="lookBtn mine"><button class="lookApply"></button><button class="lookDel" aria-label="Delete ${esc(L.name)}">✕</button></div>`);
         btn.firstElementChild.append(lookTile(L.name, { ...DEFAULT_SETTINGS, ...L.set }));
-        btn.firstElementChild.onclick = () => set(JSON.parse(JSON.stringify(L.set)));
+        btn.firstElementChild.onclick = () => { set({ ...JSON.parse(JSON.stringify(L.set)), shelfDecor: clearShelfSwitches() }); closeSheet(); };
         btn.lastElementChild.onclick = () => set({ looks: s.looks.filter((x) => x !== L) });
         lookWrap.append(btn);
       });
@@ -1254,24 +1260,25 @@
       if ((s.shelfMat || "paint") === "paint") body.append(colorRow("Paint colour", "", s.shelf, SHELVES, (shelf) => set({ shelf }), "c-shelf", true));
 
       // hanging lights
-      const lg = h(`<div class="group"><h3 class="label">Lights</h3><p class="hint">Strings of lights hang under each shelf. Tap the little pull cord at the end of a shelf to switch them on and off.</p>
-        <div class="seg" id="l-style">${Object.entries(D.LIGHT_STYLES).map(([k, l]) => `<button data-v="${k}" aria-pressed="${lights.style === k}">${l}</button>`).join("")}</div>
-        <div class="colors" id="l-col">${Object.entries(D.LIGHT_COLOURS).map(([k, [l, c]]) => `<button class="colorItem" data-v="${k}" aria-pressed="${lights.colour === k}"><span class="dot ${lights.colour === k ? "on" : ""}" style="background:${c || "conic-gradient(#ff6b6b,#ffd166,#5be3a5,#5cc8f5,#c792ff,#ff6b6b)"};box-shadow:0 0 12px ${c || "#ffd166"}88"></span>${l}</button>`).join("")}</div>
-        <label class="check"><input type="checkbox" id="l-on" ${lights.on ? "checked" : ""}> Lights on</label></div>`);
+      const lg = h(`<div class="group"><h3 class="label">Lights</h3><p class="hint">Hang a string of lights under every shelf. Pull the little cord under a shelf to switch just that shelf on or off.</p>
+        <div class="field"><span class="subLabel">Style</span><div class="chips" id="l-style">${Object.entries(D.LIGHT_STYLES).map(([k, l]) => `<button data-v="${k}" aria-pressed="${lights.style === k}">${l}</button>`).join("")}</div></div>
+        <div class="field" id="l-colF"><span class="subLabel">Colour</span><div class="colors" id="l-col">${Object.entries(D.LIGHT_COLOURS).map(([k, [l, c]]) => `<button class="colorItem" data-v="${k}" aria-pressed="${lights.colour === k}"><span class="dot ${lights.colour === k ? "on" : ""}" style="background:${c || "conic-gradient(#ff6b6b,#ffd166,#5be3a5,#5cc8f5,#c792ff,#ff6b6b)"};box-shadow:0 0 12px ${c || "#ffd166"}88"></span>${l}</button>`).join("")}</div></div>
+        <div class="field" id="l-onF"><span class="subLabel">All shelves</span><label class="check"><input type="checkbox" id="l-on" ${lights.on ? "checked" : ""}> Lights on</label></div></div>`);
       lg.querySelectorAll("#l-style button").forEach((b) => (b.onclick = () => set({ lights: { ...lights, style: b.dataset.v, on: b.dataset.v === "none" ? lights.on : true } })));
       lg.querySelectorAll("#l-col button").forEach((b) => (b.onclick = () => set({ lights: { ...lights, colour: b.dataset.v, on: true } })));
-      lg.querySelector("#l-on").onchange = (e) => set({ lights: { ...lights, on: e.target.checked } });
-      if (lights.style === "none") { lg.querySelector("#l-col").hidden = true; lg.querySelector(".check").hidden = true; }
+      lg.querySelector("#l-on").onchange = (e) => set({ lights: { ...lights, on: e.target.checked }, shelfDecor: clearShelfSwitches() });
+      if (lights.style === "none") { lg.querySelector("#l-colF").hidden = true; lg.querySelector("#l-onF").hidden = true; }
       body.append(lg);
 
       // something standing on the shelf
       const ornCfg = { kind: "none", on: true, pos: "end", ...(s.ornament || {}) };
-      const og = h(`<div class="group"><h3 class="label">On the shelf</h3><p class="hint">A candle stands among your books and gets nudged along as they turn. Tap it on the shelf to blow it out or light it. Use ✦ next to a shelf's name to take the candle or lights off just that shelf.</p>
-        <div class="seg wrapSeg" id="o-kind">${Object.entries(D.ORNAMENTS).map(([k, o]) => `<button data-v="${k}" aria-pressed="${ornCfg.kind === k}">${o.label}</button>`).join("")}</div>
-        <div class="seg" id="o-pos">${[["start", "At the start"], ["middle", "In the middle"], ["end", "At the end"]].map(([k, l]) => `<button data-v="${k}" aria-pressed="${ornCfg.pos === k}">${l}</button>`).join("")}</div></div>`);
+      const og = h(`<div class="group"><h3 class="label">On the shelf</h3><p class="hint">Something that stands among your books and gets nudged along as they turn. Tap it on the shelf to light it or put it out.</p>
+        <div class="field"><span class="subLabel">What stands there</span><div class="chips" id="o-kind">${Object.entries(D.ORNAMENTS).map(([k, o]) => `<button data-v="${k}" aria-pressed="${ornCfg.kind === k}">${o.label}</button>`).join("")}</div></div>
+        <div class="field" id="o-posF"><span class="subLabel">Where</span><div class="chips" id="o-pos">${[["start", "At the start"], ["middle", "In the middle"], ["end", "At the end"]].map(([k, l]) => `<button data-v="${k}" aria-pressed="${ornCfg.pos === k}">${l}</button>`).join("")}</div></div>
+        <p class="hint small">Tip: use ✦ next to a shelf's name to remove the lights or the candle from just that shelf.</p></div>`);
       og.querySelectorAll("#o-kind button").forEach((b) => (b.onclick = () => set({ ornament: { ...ornCfg, kind: b.dataset.v, on: true } })));
       og.querySelectorAll("#o-pos button").forEach((b) => (b.onclick = () => set({ ornament: { ...ornCfg, pos: b.dataset.v } })));
-      if (ornCfg.kind === "none") og.querySelector("#o-pos").hidden = true;
+      if (ornCfg.kind === "none") og.querySelector("#o-posF").hidden = true;
       body.append(og);
 
       // the bookmark that marks your page in the reader

@@ -224,22 +224,23 @@
   /** Strands of wisteria hanging from the shelf edge (decoration, not a light). */
   function wisteriaEl(w) {
     const n = Math.max(6, Math.round(w / 34)), gap = w / n;
-    let vine = `M0 3`, out = "", H = 0;
+    let vine = `M0 3`, leaves = "", strands = "", H = 0;
     for (let i = 0; i <= n; i++) vine += ` Q${(i - 0.5) * gap} ${i % 2 ? 9 : 1} ${i * gap} 3`;
     const purple = ["#c8a6d8", "#b996cf", "#d6b8e2", "#a987c4"];
     for (let i = 0; i < n; i++) {
       const x0 = gap * (i + 0.5) + ((i * 17) % 9) - 4, len = 34 + ((i * 41) % 6) * 11, green = i % 3 === 1;
       H = Math.max(H, len + 10);
-      let strand = `<path d="M${x0} 4 q2 ${len / 2} -1 ${len}" stroke="#5c6b4a" stroke-width=".8" fill="none"/>`;
-      if (green) { for (let y = 8; y < len; y += 5) strand += `<ellipse cx="${x0 + (y % 10 ? 2.6 : -2.6)}" cy="${y}" rx="2.8" ry="1.3" fill="${["#55663f", "#6b7d4f", "#4a5a37"][y % 3]}" transform="rotate(${y % 10 ? 35 : -35} ${x0 + (y % 10 ? 2.6 : -2.6)} ${y})"/>`; }
-      else { for (let y = 6; y < len; y += 2.6) { const r = 3.4 * (1 - y / (len + 8)) + 0.9; strand += `<circle cx="${(x0 + Math.sin(y * 1.7) * r * 0.7).toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="${purple[Math.round(y) % 4]}"/>`; } }
-      out += `<g class="strand" style="--d:${((i * 0.53) % 2.4).toFixed(2)}s">${strand}</g>`;
-      // little leaves on the vine
-      out += `<ellipse cx="${gap * i + 10}" cy="5" rx="3.2" ry="1.4" fill="#55663f" transform="rotate(${i % 2 ? 25 : -20} ${gap * i + 10} 5)"/>`;
+      // each strand is its own little picture, so the swaying runs on the graphics card and stays smooth
+      const c = 10; // centre of the strand's box
+      let st = `<path d="M${c} 0 q2 ${len / 2} -1 ${len}" stroke="#5c6b4a" stroke-width=".8" fill="none"/>`;
+      if (green) { for (let y = 4; y < len; y += 5) st += `<ellipse cx="${c + (y % 10 ? 2.6 : -2.6)}" cy="${y}" rx="2.8" ry="1.3" fill="${["#55663f", "#6b7d4f", "#4a5a37"][y % 3]}" transform="rotate(${y % 10 ? 35 : -35} ${c + (y % 10 ? 2.6 : -2.6)} ${y})"/>`; }
+      else { for (let y = 2; y < len; y += 2.6) { const r = 3.4 * (1 - y / (len + 8)) + 0.9; st += `<circle cx="${(c + Math.sin(y * 1.7) * r * 0.7).toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="${purple[Math.round(y) % 4]}"/>`; } }
+      strands += `<svg class="strand" width="20" height="${len + 6}" viewBox="0 0 20 ${len + 6}" style="left:${(x0 - c).toFixed(1)}px;--d:-${((i * 0.53) % 2.4).toFixed(2)}s;--t:${(4.6 + (i % 4) * 0.7).toFixed(1)}s" aria-hidden="true">${st}</svg>`;
+      leaves += `<ellipse cx="${gap * i + 10}" cy="5" rx="3.2" ry="1.4" fill="#55663f" transform="rotate(${i % 2 ? 25 : -20} ${gap * i + 10} 5)"/>`;
     }
     const el = document.createElement("div");
     el.className = "lights wisteria";
-    el.innerHTML = `<svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><path d="${vine}" stroke="#4d5a3c" stroke-width="1.6" fill="none"/>${out}</svg>`;
+    el.innerHTML = `${strands}<svg class="vine" width="${w}" height="12" viewBox="0 0 ${w} 12" aria-hidden="true"><path d="${vine}" stroke="#4d5a3c" stroke-width="1.6" fill="none"/>${leaves}</svg>`;
     el.style.height = H + "px";
     return el;
   }
