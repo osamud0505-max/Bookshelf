@@ -450,7 +450,7 @@
       t.onclick = () => { state.shelf = k; render(); };
       return t;
     }));
-    const addTab = h(`<button type="button" class="tab addShelfTab" aria-label="Add or edit shelves">+ Shelf</button>`);
+    const addTab = h(`<button type="button" class="tab addShelfTab" aria-label="Add or edit shelves">+ New shelf</button>`);
     addTab.onclick = () => openShelves();
     tabs.append(addTab);
 
@@ -869,6 +869,10 @@
       };
       body.append(colorRow("Accent colour", "Stars, buttons and highlights.", s.accent, ACCENTS.map((c) => [c, c]), (accent) => set({ accent }), "c-accent", false));
       body.append(colorRow("Shelf colour", "", s.shelf, SHELVES, (shelf) => set({ shelf }), "c-shelf", true));
+
+      const shelfG = h(`<div class="group"><h3 class="label">Shelves</h3><p class="hint">Add your own shelves, rename them or remove them.</p><button class="btn small" style="align-self:flex-start">Edit shelves</button></div>`);
+      shelfG.querySelector("button").onclick = () => openShelves();
+      body.append(shelfG);
 
       const backup = h(`<div class="group"><h3 class="label">Backup</h3>
         <p class="hint">Your books live only in this browser. Save a backup now and then, and before clearing browser data or switching phones.</p>
