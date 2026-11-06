@@ -1024,11 +1024,21 @@
     return box(`<div class="fxWindow painted"><div class="pane">${drops}</div></div>`);
   };
   FX.paintedFireworks = () => { setTimeout(startFireworks, 0); return box(`<canvas class="fxFireworks painted" aria-hidden="true"></canvas>`); };
-  // red eyes in the vampire's mirror: now and then a pair glows up in the dark glass, blinks once and fades away
-  FX.mirrorEyes = () => box([[50, 57, 41, 6], [60, 30, 53, 27], [38, 73, 47, 44]].map(([x, y, t, d]) =>
-    `<i class="mEyes" style="left:${x}%;top:${y}%;--t:${t}s;--d:${d}s"><b></b><b></b></i>`).join(""));
+  // red eyes in the vampire's mirror: now and then a face leans close behind the glass. The eyes open, look about,
+  // blink naturally a couple of times, then close and sink back into the dark.
+  const eye = (cx, flip) => `<g class="eye" style="transform-origin:${cx}px 20px"><path d="M${cx - 17 * flip} 17 Q${cx - 2 * flip} 5 ${cx + 17 * flip} 21 Q${cx + 1 * flip} 30 ${cx - 17 * flip} 17Z" fill="url(#mEyeG)"/>`
+    + `<g class="pupil"><ellipse cx="${cx + flip}" cy="18.5" rx="2.1" ry="6.4" fill="#2a0003"/><circle cx="${cx + 4 * flip}" cy="14.5" r="1.3" fill="#ffe6d0" opacity=".8"/></g></g>`;
+  FX.mirrorEyes = () => box([[50, 56, 41, 6], [60, 30, 53, 27], [38, 72, 47, 44]].map(([x, y, t, d]) =>
+    `<i class="mEyes" style="left:${x}%;top:${y}%;--t:${t}s;--d:${d}s"><svg viewBox="0 0 120 40" aria-hidden="true"><defs><radialGradient id="mEyeG" cx=".5" cy=".55" r=".6"><stop offset="0" stop-color="#ffd6a0"/><stop offset=".3" stop-color="#ff3b1c"/><stop offset=".75" stop-color="#b0040c"/><stop offset="1" stop-color="#4a0005"/></radialGradient></defs>${eye(32, 1)}${eye(88, -1)}</svg></i>`).join(""));
+  // the loft's city: now and then a window across the street switches off and another switches on, and a far plane crosses the sky
+  const LOFT_WINDOWS = [["off", 38.12, 60.479, 1.026, 0.58, "#1d121e"], ["off", 79.658, 62.219, 1.111, 0.653, "#170d16"], ["off", 58.462, 62.219, 1.111, 0.58, "#1d1321"], ["off", 29.231, 60.479, 1.111, 0.616, "#1d1322"], ["off", 17.179, 61.131, 0.94, 0.653, "#22161d"], ["off", 23.504, 61.168, 1.026, 0.58, "#1e1119"], ["off", 54.615, 60.406, 1.026, 0.435, "#211827"], ["on", 51.197, 60.406, 1.026, 0.435, "#211827"], ["on", 77.863, 63.452, 1.026, 0.58, "#1b101b"], ["on", 74.359, 63.416, 1.197, 0.653, "#160d16"], ["on", 26.923, 61.168, 1.026, 0.58, "#1e1119"], ["on", 18.718, 61.131, 1.111, 0.653, "#150c16"], ["on", 60.171, 62.219, 1.111, 0.58, "#1d1321"]];
+  FX.loftLife = () => {
+    const R = rng(23);
+    const wins = LOFT_WINDOWS.map(([k, x, y, w, h, c]) => `<i class="lw ${k}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%;--c:${c};--t:${f1(40 + R() * 50)}s;--d:-${f1(R() * 90)}s"></i>`).join("");
+    return box(`${wins}<div class="loftSky"><i class="plane"><b class="nav"></b><b class="beacon"></b><b class="strobe"></b></i></div>`);
+  };
   const PAINTED = {
-    libraryStacks: ["library", "dust", 0.4619], cabinNight: ["cabin", "paintedFire"], loftDusk: ["loft", "glowmotes"], galleryWall: ["candle", ""],
+    libraryStacks: ["library", "dust", 0.4619], cabinNight: ["cabin", "paintedFire"], loftDusk: ["loft", "glowmotes loftLife"], galleryWall: ["candle", ""],
     teaNight: ["teahouse", "petals paintedFireworks"], castleIvy: ["castle", "fog"], vampireMirror: ["vampire", "fog mirrorEyes vampGloom"], study: ["academia", "paintedRain"],
     cottageRoses: ["cottage", ""], greenDamask: ["victorian", ""], damask: ["bordello", ""], enchanted: ["forest", "motes fogThick"],
     witchTower: ["witch", "witchMotes"], goldenHour: ["nook", ""],

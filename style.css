@@ -1124,11 +1124,30 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 @media (prefers-reduced-motion: reduce) { .soundPanel, .spSwitch, .spSwitch i { transition: none; } }
 
 /* red eyes in the vampire mirror */
-#backdrop .mEyes { position: absolute; width: 4.6%; height: .8%; margin-left: -2.3%; display: flex; justify-content: space-between; opacity: 0; filter: blur(.3px); animation: mEyes var(--t) ease-in-out var(--d) infinite; }
-#backdrop .mEyes::before { content: ""; position: absolute; inset: -260% -40%; background: radial-gradient(ellipse at center, rgba(160,0,10,.32), transparent 70%); }
-#backdrop .mEyes b { position: relative; width: 34%; height: 100%; border-radius: 50% 50% 45% 45% / 70% 70% 30% 30%; background: radial-gradient(ellipse at 50% 55%, #ffd0b0 0 12%, #ff3a2a 35%, #b0000c 75%); box-shadow: 0 0 5px 1px rgba(255,30,20,.85), 0 0 16px 4px rgba(200,0,10,.4); animation: mBlink var(--t) linear var(--d) infinite; }
-#backdrop .mEyes b:first-child { transform: rotate(9deg); }
-#backdrop .mEyes b:last-child { transform: rotate(-9deg) scaleX(-1); }
-@keyframes mEyes { 0%, 3% { opacity: 0; } 7%, 13% { opacity: 1; } 17%, 100% { opacity: 0; } }
-@keyframes mBlink { 0%, 9.4% { scale: 1 1; } 9.9% { scale: 1 .08; } 10.4%, 100% { scale: 1 1; } }
-@media (prefers-reduced-motion: reduce) { #backdrop .mEyes { animation: none; } }
+#backdrop .mEyes { position: absolute; width: 16%; aspect-ratio: 3; margin-left: -8%; opacity: 0; animation: mEyes var(--t) ease-in-out var(--d) infinite; }
+#backdrop .mEyes::before { content: ""; position: absolute; inset: -70% -25%; background: radial-gradient(ellipse at center, rgba(150,0,12,.28), transparent 68%); }
+#backdrop .mEyes svg { position: relative; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 3px rgba(255,40,20,.75)) drop-shadow(0 0 10px rgba(190,0,10,.45)); }
+#backdrop .mEyes .eye { animation: mLids var(--t) linear var(--d) infinite; }
+#backdrop .mEyes .pupil { animation: mLook var(--t) ease-in-out var(--d) infinite; }
+/* the face comes close, the eyes open slowly, look, blink twice (quick close, slower open), close and fade */
+@keyframes mEyes { 0%, 2.5% { opacity: 0; } 5%, 15.5% { opacity: 1; } 18%, 100% { opacity: 0; } }
+@keyframes mLids { 0%, 3% { transform: scaleY(.08); } 6% { transform: scaleY(1); } 8.6% { transform: scaleY(1); } 8.8% { transform: scaleY(.06); } 9.25% { transform: scaleY(1); }
+  12.8% { transform: scaleY(1); } 13% { transform: scaleY(.06); } 13.45% { transform: scaleY(1); } 15% { transform: scaleY(1); } 17%, 100% { transform: scaleY(.06); } }
+@keyframes mLook { 0%, 7% { transform: translateX(0); } 8% { transform: translateX(-3px); } 10.5% { transform: translateX(-3px); } 11.5%, 100% { transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) { #backdrop .mEyes, #backdrop .mEyes .eye, #backdrop .mEyes .pupil { animation: none; } }
+/* loft: windows across the street switching off and on */
+#backdrop .lw { position: absolute; opacity: 0; border-radius: 1px; animation: lwSwitch var(--t) linear var(--d) infinite; }
+#backdrop .lw.off { background: var(--c); box-shadow: 0 0 2px 1.5px var(--c); }
+#backdrop .lw.on { background: radial-gradient(ellipse at center, rgb(214,160,136) 0 30%, rgba(176,122,108,.8) 60%, rgba(150,100,95,0) 80%); filter: blur(.5px); }
+@keyframes lwSwitch { 0%, 55% { opacity: 0; } 55.5%, 84% { opacity: 1; } 84.5%, 100% { opacity: 0; } }
+/* loft: a plane far off, crossing the sky behind the window bars */
+#backdrop .loftSky { position: absolute; left: 15.812%; top: 22.299%; width: 68.376%; height: 22.661%; -webkit-mask: url('bg/loft-sky.png') 0 0 / 100% 100% no-repeat; mask: url('bg/loft-sky.png') 0 0 / 100% 100% no-repeat; }
+#backdrop .plane { position: absolute; width: 0; height: 0; animation: plane 110s linear -8s infinite alternate; }
+#backdrop .plane b { position: absolute; border-radius: 50%; }
+#backdrop .plane .nav { width: 2px; height: 2px; left: -1px; top: -1px; background: #fff6e0; box-shadow: 0 0 3px 1px rgba(255,240,210,.55); opacity: .75; }
+#backdrop .plane .beacon { width: 2.4px; height: 2.4px; left: 2px; top: -2.4px; background: #ff2a1a; box-shadow: 0 0 5px 2px rgba(255,30,20,.7); animation: beacon 1.2s steps(1) infinite; }
+#backdrop .plane .strobe { width: 2px; height: 2px; left: -4px; top: 0; background: #fff; box-shadow: 0 0 6px 2px rgba(255,255,255,.85); opacity: 0; animation: strobe 1.6s linear infinite; }
+@keyframes plane { 0% { left: -3%; top: 46%; } 42% { left: 103%; top: 30%; } 100% { left: 103%; top: 30%; } }
+@keyframes beacon { 0% { opacity: 1; } 18% { opacity: 0; } }
+@keyframes strobe { 0%, 4% { opacity: 1; } 5%, 12% { opacity: 0; } 13%, 16% { opacity: .9; } 17%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #backdrop .lw, #backdrop .plane { animation: none; } #backdrop .plane { display: none; } }
