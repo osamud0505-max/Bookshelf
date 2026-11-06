@@ -725,9 +725,9 @@
     const dim = fx.querySelector(".ofDim"), black = fx.querySelector(".ofBlack"), edge = fx.querySelector(".ofEdge"), gutter = fx.querySelector(".ofGutter");
     const fShade = fx.querySelector(".ofFront .ofShade"), iShade = fx.querySelector(".ofInside .ofShade");
     // handwriting on every page you see, front and back
-    const ar = (H2 * 0.976) / W2, sd = 11 + (b.id || 0) * 7;
-    fx.querySelector(".ofPages").style.backgroundImage = scriptPage(sd, ar);
-    leafEls.forEach((l, k) => { l.querySelector(".lf").style.backgroundImage = scriptPage(sd + 100 + k * 2, ar); l.querySelector(".lb").style.backgroundImage = scriptPage(sd + 101 + k * 2, ar); });
+    const ar = pageAR((H2 * 0.976) / W2), sd = 11;
+    fx.querySelector(".ofPages").style.backgroundImage = pagePic(sd, ar);
+    leafEls.forEach((l, k) => { l.querySelector(".lf").style.backgroundImage = pagePic(sd + 100 + k * 2, ar); l.querySelector(".lb").style.backgroundImage = pagePic(sd + 101 + k * 2, ar); });
     let start = { dx: 0, dy: 0, s: 0.25 };
     /** Where the book starts (or ends up): over the copy on the shelf or the book page. */
     const setHome = (src) => {
@@ -783,6 +783,7 @@
     A.pose(0);
     // draw it once, invisibly, so the pages are ready before anything moves
     A.fx.style.opacity = "0.001";
+    holdBackdrop(true);
     document.body.append(A.fx);
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     A.fx.style.opacity = "";
@@ -797,6 +798,7 @@
     const black = A.fx.querySelector(".ofBlack");
     black.style.transition = "opacity .45s ease"; black.style.opacity = "0";
     A.fx.classList.add("pre");
+    holdBackdrop(true);
     document.body.append(A.fx);
     room.classList.add("leaving");
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -806,7 +808,7 @@
     hideReader(); room.classList.remove("leaving");
     A.pose(OPEN_END); A.fx.classList.remove("pre");
     await A.play(OPEN_END, 0, 1.05);
-    A.fx.remove();
+    A.fx.remove(); holdBackdrop(false);
   }
   // ------------------------------------------------------------------ handwriting for the pages: flowing pen strokes made of letter-like shapes that never spell anything
   const GLYPHS = [
@@ -823,6 +825,26 @@
     [[0, -0.5], [0.3, -1], [0.5, -0.6], [0.48, 0], [0.52, -1.3], [0.56, -2.1], [0.6, -0.4], [0.74, 0]], // d
   ];
   const pageArt = {};
+  // the page pictures are the same for every book (stretched to fit), so they're made once, ahead of time
+  const pageAR = (ar) => Math.round(ar * 10) / 10;
+  // they're turned into plain pictures once, because drawing the handwriting from scratch is slow on a phone
+  const pageRaster = {};
+  async function rasterPage(seed, ar) {
+    const key = seed + ":" + ar.toFixed(2);
+    if (pageRaster[key]) return;
+    pageRaster[key] = "pending";
+    try {
+      const src = scriptPage(seed, ar).slice(5, -2), im = new Image();
+      im.src = src; await im.decode();
+      const w = 760, hgt = Math.round(w * ar), c = document.createElement("canvas"); c.width = w; c.height = hgt;
+      c.getContext("2d").drawImage(im, 0, 0, w, hgt);
+      const blob = await new Promise((r) => c.toBlob(r, "image/png"));
+      pageRaster[key] = blob ? `url("${URL.createObjectURL(blob)}")` : "";
+    } catch (e) { pageRaster[key] = ""; }
+  }
+  const pagePic = (seed, ar) => { const r = pageRaster[seed + ":" + ar.toFixed(2)]; if (r && r !== "pending") return r; rasterPage(seed, ar); return scriptPage(seed, ar); };
+  const warmPages = async (ar = pageAR(0.976 * 1.5)) => { const seeds = [11]; for (let k = 0; k < LEAVES; k++) seeds.push(111 + k * 2, 112 + k * 2); for (const sd of seeds) { await rasterPage(sd, ar); await new Promise((r) => setTimeout(r, 30)); } };
+  (window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(() => warmPages(), { timeout: 4000 });
   /** One page of handwriting as an SVG picture (`seed` picks the words, `ar` is height / width). */
   function scriptPage(seed, ar) {
     const key = seed + ":" + ar.toFixed(2);
@@ -866,8 +888,18 @@
     pageArt[key] = `url("data:image/svg+xml,${encodeURIComponent(svg).replace(/'/g, "%27").replace(/\(/g, "%28").replace(/\)/g, "%29")}")`;
     return pageArt[key];
   }
+  /** Pauses the room's moving pieces while the book animates (they'd steal frames), without restyling the page. */
+  let held = [];
+  function holdBackdrop(on) {
+    held.forEach((a) => { try { a.play(); } catch (e) { /* gone */ } }); held = [];
+    if (!on) return;
+    const bd = document.getElementById("backdrop");
+    if (bd && bd.getAnimations) held = bd.getAnimations({ subtree: true }).filter((a) => a.playState === "running");
+    held.forEach((a) => a.pause());
+  }
   function endOpening(fx) {
     if (!fx || fx._ended) return; fx._ended = true;
+    holdBackdrop(false);
     fx.classList.add("reveal"); setTimeout(() => fx.remove(), 650);
   }
 
@@ -875,6 +907,7 @@
     const b = byId(id); if (!b) return;
     const file = await getFile(id).catch(() => null);
     if (!file) { toast("The EPUB for this book isn't on this device. Add it again from the book's page."); return; }
+    dispatchEvent(new CustomEvent("shelf:reading", { detail: true })); // the room goes quiet while you read
     const fx = await openingAnim(b);
     if (fx) setTimeout(() => endOpening(fx), 3500); // never leave the screen black
     room.hidden = false; room.classList.remove("bare"); hidePanels();
@@ -942,6 +975,7 @@
   function close() {
     if (room.hidden || room.classList.contains("leaving")) return;
     const b = cur && byId(cur.id);
+    dispatchEvent(new CustomEvent("shelf:reading", { detail: false }));
     closingAnim(b, () => {
       if (turn) { turn.layers.forEach((l) => l.remove()); view.style.clipPath = ""; view.style.zIndex = ""; turn = null; }
       if (cur) { try { cur.book.destroy(); } catch (e) { /* ignore */ } }

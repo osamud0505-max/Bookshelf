@@ -8,7 +8,7 @@
   try { pref = { ...pref, ...(JSON.parse(localStorage.getItem(KEY)) || {}) }; } catch (e) { /* first visit */ }
   const savePref = () => { try { localStorage.setItem(KEY, JSON.stringify(pref)); } catch (e) { /* private mode */ } };
 
-  let ctx = null, master = null, room = null, roomKey = "", ducked = false;
+  let ctx = null, master = null, room = null, roomKey = "", ducked = false, reading = false;
   const rnd = (a, b) => a + Math.random() * (b - a);
 
   // ------------------------------------------------------------------ building blocks
@@ -134,10 +134,19 @@
       });
     },
     sirens(R) {
-      // far-off emergency vehicles and car horns, heard over the rooftops
+      // far-off emergency vehicles and car horns, heard over the rooftops: quiet, muffled,
+      // and mostly heard as echoes bouncing between buildings
+      const echo = ctx.createGain(); echo.gain.value = 1;
+      [[0.17, 0.5, 620], [0.29, 0.4, 520], [0.47, 0.3, 450]].forEach(([dt, fbv, cut]) => {
+        const d = ctx.createDelay(1), fb = ctx.createGain(), lp = R.filter("lowpass", cut), w = ctx.createGain();
+        d.delayTime.value = dt; fb.gain.value = fbv; w.gain.value = 0.5;
+        echo.connect(d); d.connect(lp); lp.connect(fb).connect(d); lp.connect(w).connect(R.out);
+        R.onStop(() => setTimeout(() => [d, lp, fb, w].forEach((n) => n.disconnect()), 3000));
+      });
+      const voice = (src, panTo) => { const dry = ctx.createGain(); dry.gain.value = 0.45; src.connect(dry).connect(R.pan(panTo) || R.out); src.connect(echo); };
       const siren = (t) => {
         const police = Math.random() < 0.5, len = rnd(9, 14), o = ctx.createOscillator();
-        const g = ctx.createGain(), lp = R.filter("lowpass", 1500), dest = R.pan(rnd(-0.8, 0.8)) || R.out;
+        const g = ctx.createGain(), lp = R.filter("lowpass", 950);
         o.type = "triangle";
         const lo = police ? 700 : 600, hi = police ? 1500 : 1350, per = police ? rnd(0.28, 0.36) : rnd(3, 4.2);
         const shift = rnd(0.93, 0.97); // pitch drops a little as it drives away
@@ -150,18 +159,18 @@
         }
         o.connect(g);
         g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.16, t + len * 0.35);
-        g.gain.linearRampToValueAtTime(0.14, t + len * 0.55);
+        g.gain.exponentialRampToValueAtTime(0.05, t + len * 0.35);
+        g.gain.linearRampToValueAtTime(0.045, t + len * 0.55);
         g.gain.exponentialRampToValueAtTime(0.0001, t + len);
-        g.connect(lp).connect(dest); o.start(t); o.stop(t + len + 0.1);
+        g.connect(lp); voice(lp, rnd(-0.8, 0.8)); o.start(t); o.stop(t + len + 0.1);
       };
       const horn = (t) => {
-        const f = rnd(340, 470), n = Math.random() < 0.35 ? 2 : 1, lp = R.filter("lowpass", 1100), dest = R.pan(rnd(-0.8, 0.8)) || R.out;
-        lp.connect(dest);
+        const f = rnd(340, 470), n = Math.random() < 0.35 ? 2 : 1, lp = R.filter("lowpass", 800);
+        voice(lp, rnd(-0.8, 0.8));
         for (let i = 0; i < n; i++) {
           const at = t + i * rnd(0.22, 0.3), len = n > 1 ? rnd(0.14, 0.2) : rnd(0.3, 0.6);
-          R.tone(at, f, f * 0.995, len, 0.06, "square", lp, 0.02);
-          R.tone(at, f * 1.25, f * 1.245, len, 0.045, "square", lp, 0.02);
+          R.tone(at, f, f * 0.995, len, 0.022, "square", lp, 0.03);
+          R.tone(at, f * 1.25, f * 1.245, len, 0.016, "square", lp, 0.03);
         }
       };
       R.every(6000, 14000, horn);
@@ -277,7 +286,7 @@
   const ROOMS = {
     // wind is only outdoors (forest, starry night); in the castle and the witch's tower it is faint and far off
     cabin: (R) => S.fire(R),
-    loft: (R) => { S.city(R.far(520, 0.45)); S.sirens(R.far(1800, 1)); },
+    loft: (R) => { S.city(R.far(520, 0.45)); S.sirens(R.far(1100, 0.7)); },
     academia: (R) => { S.rain(R.far(1000, 0.5), 0.8); S.clock(R, false, 0.5); },
     nook: (R) => S.birdsFar(R),
     library: (R) => { S.clock(R, false, 0.8); S.hum(R); },
@@ -297,7 +306,7 @@
   const ROOM_GAIN = { nook: 3, cottage: 3, starry: 2.8, forest: 2.8, castle: 1.6, library: 1.5, candle: 2.5, vampire: 1.5, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1.2, teahouse: 0.8 };
   // ------------------------------------------------------------------ playing the right room
   const look = () => { try { return (window.Shelf && window.Shelf.lookKey && window.Shelf.lookKey()) || ""; } catch (e) { return ""; } };
-  const level = () => (pref.on ? pref.vol * (ducked ? 0.3 : 1) : 0);
+  const level = () => (pref.on && !reading ? pref.vol * (ducked ? 0.3 : 1) : 0);
   function setLevel(sec = 1.2) { if (!master) return; const t = ctx.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t); master.gain.linearRampToValueAtTime(level(), t + sec); }
   function update() {
     paintBtn();
@@ -329,6 +338,8 @@
   // softer while your music plays
   const watchMusic = () => { if (!window.ShelfMusic) return; window.ShelfMusic.listen((now) => { const d = !!(now && now.playing); if (d !== ducked) { ducked = d; setLevel(1.5); } }); };
   if (window.ShelfMusic) watchMusic(); else addEventListener("load", watchMusic);
+  // the room dies down while a book is open, and comes back when you close it
+  addEventListener("shelf:reading", (e) => { reading = !!e.detail; setLevel(reading ? 2.5 : 2); });
 
   function setOn(on) { pref.on = !!on; savePref(); if (on) start(); else { setLevel(0.6); setTimeout(() => { if (!pref.on) update(); }, 700); } paintBtn(); }
   const btn = document.getElementById("soundBtn");
