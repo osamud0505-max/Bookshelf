@@ -18,7 +18,15 @@
   ];
   const FONTS = {
     classic: { cw: 0.5, label: "Classic serif", family: "'Playfair Display', Georgia, serif", weight: 600, upper: false },
+    garamond: { cw: 0.45, label: "Garamond", family: "'Cormorant Garamond', Georgia, serif", weight: 600, upper: false },
+    baskerville: { cw: 0.56, label: "Baskerville", family: "'Libre Baskerville', Georgia, serif", weight: 400, upper: false },
+    display: { cw: 0.5, label: "Display serif", family: "'DM Serif Display', Georgia, serif", weight: 400, upper: false },
+    fat: { cw: 0.56, label: "Fat serif", family: "'Abril Fatface', Georgia, serif", weight: 400, upper: false },
+    roman: { cw: 0.66, label: "Roman capitals", family: "'Cinzel', Georgia, serif", weight: 600, upper: false },
     modern: { cw: 0.52, label: "Modern sans", family: "'Bricolage Grotesque', 'Inter Tight', sans-serif", weight: 600, upper: false },
+    sans: { cw: 0.52, label: "Clean sans", family: "'Inter Tight', system-ui, sans-serif", weight: 500, upper: false },
+    geometric: { cw: 0.56, label: "Geometric", family: "'Space Grotesk', system-ui, sans-serif", weight: 500, upper: false },
+    condensed: { cw: 0.42, label: "Condensed", family: "'Oswald', 'Inter Tight', sans-serif", weight: 500, upper: false },
     bold: { cw: 0.42, label: "Tall capitals", family: "'Bebas Neue', 'Inter Tight', sans-serif", weight: 400, upper: true },
     script: { cw: 0.4, label: "Handwritten", family: "'Caveat', cursive", weight: 600, upper: false },
     typewriter: { cw: 0.6, label: "Typewriter", family: "'Courier Prime', 'Courier New', monospace", weight: 700, upper: false },
@@ -212,17 +220,48 @@
     return { h: hh, w, d };
   }
 
-  function bookEl(b, base, turn) {
-    const { h: hh, w, d } = dims(b, base);
-    const font = FONTS[b.spineFont || state.settings.spineFont] || FONTS.classic;
+  /** The automatic spine layout, written as a design so the designer starts from exactly what you see.
+   *  Sizes are in "units": pixels on a book 230px tall; they scale with the book. */
+  function autoDesign(b) {
+    const { h: hh, d } = dims(b, 230);
+    const k = 230 / hh;
+    const fontKey = FONTS[b.spineFont] ? b.spineFont : FONTS[state.settings.spineFont] ? state.settings.spineFont : "classic";
+    const font = FONTS[fontKey];
     const custom = (b.spineText || "").trim();
     const words = custom || b.title;
     const surname = (b.author.split(",")[0].trim().split(" ").pop()) || "";
-    // Fit the title like a printed spine: limited by the spine's width and by the title's length.
     const longest = Math.max(...words.split("\n").map((l) => l.trim().length), 1);
     const lines = custom ? words.split("\n").length : 1;
-    const fit = Math.min((d * 0.5) / lines, (hh * (surname && !custom ? 0.6 : 0.78)) / (longest * font.cw));
+    const withAuthor = !!surname && d >= 18 && !custom;
+    const fit = Math.min((d * 0.5) / lines, (hh * (withAuthor ? 0.6 : 0.78)) / (longest * font.cw));
     const size = b.spineSize || Math.round(Math.max(7.5, Math.min(14, fit)) * 2) / 2;
+    const aSize = Math.max(6, Math.min(9, size * 0.62, d * 0.3, (hh * 0.17) / (Math.max(surname.length, 1) * 0.95)));
+    return {
+      dir: "down",
+      title: { show: true, text: words, font: fontKey, size: +(size * k).toFixed(1), pos: withAuthor ? 44 : 50, shift: 0, spacing: font.upper ? 8 : 1, tcase: font.upper ? "upper" : "none", bold: false, color: null },
+      author: { show: withAuthor, text: surname, font: "sans", size: +(aSize * k).toFixed(1), pos: 88, shift: 0, spacing: 16, tcase: "upper", bold: false, color: null, soft: true },
+      extra: { show: false, text: "", font: "sans", size: 7, pos: 8, shift: 0, spacing: 20, tcase: "upper", bold: false, color: null, soft: true },
+    };
+  }
+
+  function spineTextEl(part, dir, scale) {
+    const f = FONTS[part.font] || FONTS.classic;
+    const el = document.createElement("span");
+    el.className = "sTxt" + (dir === "across" ? " across" : "") + (part.soft ? " soft" : "");
+    el.textContent = part.tcase === "upper" ? part.text.toUpperCase() : part.tcase === "lower" ? part.text.toLowerCase() : part.text;
+    const rot = dir === "up" ? " rotate(180deg)" : "";
+    Object.assign(el.style, {
+      fontFamily: f.family, fontWeight: part.bold ? 800 : f.weight, fontSize: (part.size * scale).toFixed(2) + "px",
+      letterSpacing: (part.spacing / 100) + "em", top: part.pos + "%", left: `calc(50% + ${part.shift}%)`,
+      transform: `translate(-50%, -50%)${rot}`,
+    });
+    if (part.color) el.style.color = part.color;
+    return el;
+  }
+
+  function bookEl(b, base, turn) {
+    const { h: hh, w, d } = dims(b, base);
+    const design = b.spineDesign || autoDesign(b);
     const el = h(`<div class="book ${b.finish === "glossy" ? "glossy" : "matte"}">
       <div class="body">
         <div class="face front">
@@ -230,21 +269,15 @@
           <div class="plain" ${b.coverUrl ? "hidden" : ""}><span class="plainRule"></span><span class="plainTitle">${esc(b.title)}</span><span class="plainAuthor">${esc(b.author)}</span></div>
           <span class="grain"></span><span class="hinge"></span><span class="sheen"></span><span class="fShade"></span>
         </div>
-        <div class="face spine">
-          <span class="sForm"></span>
-          <span class="spineTitle">${esc(words)}</span>
-          ${surname && d >= 18 && !custom ? `<span class="spineAuthor" style="font-size:${Math.max(6, Math.min(9, size * 0.62, d * 0.3, (hh * 0.17) / (surname.length * 0.95)))}px">${esc(surname)}</span>` : ""}
-          <span class="grain"></span><span class="sShade"></span>
-        </div>
+        <div class="face spine"><span class="sForm"></span><span class="grain"></span><span class="sShade"></span></div>
         <div class="face pages"></div><div class="face back"></div>
       </div></div>`);
     el.style.cssText = `--w:${w}px;--h:${hh}px;--d:${d}px;--spine:${b.spineColor};--ink:${spineInk(b.spineColor)}` + (turn !== undefined ? `;--turn:${turn}` : "");
-    const st = el.querySelector(".spineTitle");
-    Object.assign(st.style, {
-      fontFamily: font.family, fontWeight: font.weight, fontSize: size + "px",
-      textTransform: font.upper ? "uppercase" : "", letterSpacing: font.upper ? "0.08em" : "0.01em",
-      whiteSpace: custom ? "pre" : "",
-    });
+    const spine = el.querySelector(".spine"), form = spine.querySelector(".sForm");
+    for (const key of ["title", "author", "extra"]) {
+      const part = design[key];
+      if (part && part.show && part.text && part.text.trim()) form.after(spineTextEl(part, design.dir, hh / 230));
+    }
     const img = el.querySelector(".art");
     if (img) img.onerror = () => { img.remove(); el.querySelector(".plain").hidden = false; };
     return el;
@@ -488,6 +521,7 @@
   function openBook(id) {
     const sheet = document.getElementById("bookSheet");
     let draft = {};
+    let designTab = "title";
     const dirty = () => Object.keys(draft).length > 0;
     const view = () => { const b = byId(id); return b ? { ...b, ...draft } : null; };
     let bar = null;
@@ -561,28 +595,54 @@
       ta.oninput = () => stage({ review: ta.value }, false);
       body.append(rev);
 
-      // look
-      const look = h(`<div class="group"><h3 class="label">How it looks on the shelf</h3>
+      // look: the spine designer
+      const design = b.spineDesign || autoDesign(b);
+      const part = design[designTab];
+      const fontOpts = Object.entries(FONTS).map(([k, f]) => `<option value="${k}" ${part.font === k ? "selected" : ""} style="font-family:${f.family}">${f.label}</option>`).join("");
+      const look = h(`<div class="group"><div class="row"><h3 class="label" style="flex:1">How it looks on the shelf</h3>${b.spineDesign ? `<button class="linkBtn" id="d-reset">Reset to automatic</button>` : ""}</div>
         <div class="lookRow"><div class="lookPreview"></div><div class="lookControls">
-          <label class="field"><span class="hint">Spine wording (a new line makes a second column)</span><textarea class="input" rows="2" id="f-spinetext" placeholder="${esc(b.title)}"></textarea></label>
-          <label class="field"><span class="hint">Spine font</span><select class="input" id="f-font"><option value="">Library default (${FONTS[state.settings.spineFont].label})</option>${Object.entries(FONTS).map(([k, f]) => `<option value="${k}" ${b.spineFont === k ? "selected" : ""}>${f.label}</option>`).join("")}</select></label>
-          <div class="field"><span class="hint">Spine text size: <b id="sizeVal">${b.spineSize ? b.spineSize + "px" : "Auto"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-size" min="7" max="26" step="1" value="${b.spineSize || 11}"><button class="btn small" id="f-auto">Auto</button></div></div>
+          <div class="field"><span class="hint">Text runs</span><div class="seg" id="d-dir">
+            <button data-v="down" aria-pressed="${design.dir === "down"}">↓ Down</button><button data-v="up" aria-pressed="${design.dir === "up"}">↑ Up</button><button data-v="across" aria-pressed="${design.dir === "across"}">Across</button></div></div>
+          <div class="seg tabsSeg" id="d-tab">
+            <button data-v="title" aria-pressed="${designTab === "title"}">Title</button><button data-v="author" aria-pressed="${designTab === "author"}">Author</button><button data-v="extra" aria-pressed="${designTab === "extra"}">Extra line</button></div>
+          <label class="check"><input type="checkbox" id="d-show" ${part.show ? "checked" : ""}> Show the ${designTab === "extra" ? "extra line" : designTab}</label>
+          <label class="field"><span class="hint">Words (a new line starts a new column)</span><textarea class="input" rows="2" id="d-text"></textarea></label>
+          <label class="field"><span class="hint">Font</span><select class="input" id="d-font">${fontOpts}</select></label>
+          <div class="field"><span class="hint">Style</span><div class="row" style="flex-wrap:nowrap;gap:6px"><div class="seg" id="d-case">
+            <button data-v="none" aria-pressed="${part.tcase === "none"}">Aa</button><button data-v="upper" aria-pressed="${part.tcase === "upper"}">AA</button><button data-v="lower" aria-pressed="${part.tcase === "lower"}">aa</button></div>
+            <button class="btn small" id="d-bold" aria-pressed="${!!part.bold}" style="font-weight:800">B</button></div></div>
+          ${["size|Size|4|40|0.5|", "spacing|Letter spacing|-6|60|1|", "pos|Position along the spine|0|100|1|%", "shift|Move sideways|-40|40|1|"].map((r) => { const [k, l, mn, mx, st] = r.split("|"); return `<div class="field"><span class="hint">${l}: <b data-out="${k}">${part[k]}</b></span><input type="range" data-k="${k}" min="${mn}" max="${mx}" step="${st}" value="${part[k]}"></div>`; }).join("")}
+          <div class="field"><span class="hint">Colour</span><div class="row" style="flex-wrap:nowrap"><button class="btn small" id="d-autoColor" aria-pressed="${!part.color}">Automatic</button><input class="input" type="color" id="d-color" value="${part.color || spineInk(b.spineColor)}" style="padding:4px;width:64px"></div></div>
           <div class="field"><span class="hint">Thickness: <b id="thickVal">${b.thickness ? b.thickness + "%" : "Auto (from page count)"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-thick" min="40" max="180" step="5" value="${b.thickness || 100}"><button class="btn small" id="f-thickAuto">Auto</button></div></div>
-          <div class="field"><span class="hint">Book size</span><div class="seg">${Object.entries(SIZES).map(([k, [l]]) => `<button data-v="${k}" aria-pressed="${(b.size || "regular") === k}">${l}</button>`).join("")}</div></div>
+          <div class="field"><span class="hint">Book size</span><div class="seg" id="f-bsize">${Object.entries(SIZES).map(([k, [l]]) => `<button data-v="${k}" aria-pressed="${(b.size || "regular") === k}">${l}</button>`).join("")}</div></div>
         </div></div></div>`);
       const preview = look.querySelector(".lookPreview");
-      const drawPreview = () => preview.replaceChildren(bookEl(view(), 200, 1));
+      const drawPreview = () => preview.replaceChildren(bookEl(view(), innerWidth < 560 ? 330 : 380, 1));
       drawPreview();
-      const spineText = look.querySelector("#f-spinetext"); spineText.value = b.spineText || "";
-      spineText.oninput = () => { stage({ spineText: spineText.value }, false); drawPreview(); };
-      look.querySelector("#f-font").onchange = (e) => stage({ spineFont: e.target.value || null });
-      const range = look.querySelector("#f-size");
-      range.oninput = () => { look.querySelector("#sizeVal").textContent = range.value + "px"; stage({ spineSize: +range.value }, false); drawPreview(); };
-      look.querySelector("#f-auto").onclick = () => stage({ spineSize: null });
+      /** Change the spine design; the first change copies the automatic layout so nothing jumps. */
+      const setDesign = (fn, redraw) => {
+        const dsn = JSON.parse(JSON.stringify(view().spineDesign || autoDesign(view())));
+        fn(dsn); stage({ spineDesign: dsn }, redraw); if (!redraw) drawPreview();
+      };
+      const setPart = (patch, redraw) => setDesign((dsn) => Object.assign(dsn[designTab], patch), redraw);
+      const resetBtn = look.querySelector("#d-reset");
+      if (resetBtn) resetBtn.onclick = () => stage({ spineDesign: null, spineText: "", spineFont: null, spineSize: null });
+      look.querySelectorAll("#d-dir button").forEach((btn) => (btn.onclick = () => setDesign((dsn) => (dsn.dir = btn.dataset.v), true)));
+      look.querySelectorAll("#d-tab button").forEach((btn) => (btn.onclick = () => { designTab = btn.dataset.v; draw(); }));
+      look.querySelector("#d-show").onchange = (e) => setPart({ show: e.target.checked }, true);
+      const dText = look.querySelector("#d-text"); dText.value = part.text;
+      dText.oninput = () => { const show = part.show || !!dText.value.trim(); look.querySelector("#d-show").checked = show; setPart({ text: dText.value, show }, false); };
+      look.querySelector("#d-font").onchange = (e) => setPart({ font: e.target.value }, true);
+      look.querySelectorAll("#d-case button").forEach((btn) => (btn.onclick = () => setPart({ tcase: btn.dataset.v }, true)));
+      look.querySelector("#d-bold").onclick = () => setPart({ bold: !part.bold }, true);
+      look.querySelectorAll("input[type=range][data-k]").forEach((r) => (r.oninput = () => { look.querySelector(`[data-out="${r.dataset.k}"]`).textContent = r.value; setPart({ [r.dataset.k]: +r.value }, false); }));
+      look.querySelector("#d-autoColor").onclick = () => setPart({ color: null }, true);
+      look.querySelector("#d-color").oninput = (e) => setPart({ color: e.target.value }, false);
+      look.querySelector("#d-color").onchange = () => draw();
       const thick = look.querySelector("#f-thick");
       thick.oninput = () => { look.querySelector("#thickVal").textContent = thick.value + "%"; stage({ thickness: +thick.value }, false); drawPreview(); };
       look.querySelector("#f-thickAuto").onclick = () => stage({ thickness: null });
-      look.querySelectorAll(".seg button").forEach((btn) => (btn.onclick = () => stage({ size: btn.dataset.v })));
+      look.querySelectorAll("#f-bsize button").forEach((btn) => (btn.onclick = () => stage({ size: btn.dataset.v })));
       body.append(look);
 
       // details
@@ -755,7 +815,7 @@
         b.onclick = () => set({ spineFont: k });
         fonts.querySelector(".fonts").append(b);
       }
-      fonts.querySelector("#allFonts").onclick = () => { state.books.forEach((b) => (b.spineFont = null)); save(); render(); toast("Every spine now uses this font"); };
+      fonts.querySelector("#allFonts").onclick = () => { state.books.forEach((b) => { b.spineFont = null; if (b.spineDesign) b.spineDesign.title.font = s.spineFont; }); save(); render(); toast("Every spine title now uses this font"); };
       body.append(fonts);
 
       const backup = h(`<div class="group"><h3 class="label">Backup</h3>

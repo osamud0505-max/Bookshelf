@@ -196,8 +196,6 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   color: var(--ink);
   background: var(--spine);
 }
-.spineTitle { position: relative; z-index: 1; writing-mode: vertical-rl; line-height: 1.1; max-width: 72%; max-height: 74%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: auto 0; color: color-mix(in srgb, var(--ink) 92%, var(--spine)); text-rendering: geometricPrecision; -webkit-font-smoothing: antialiased; }
-.spineAuthor { position: relative; z-index: 1; writing-mode: vertical-rl; letter-spacing: .16em; text-transform: uppercase; font-family: "Inter Tight", sans-serif; font-weight: 500; color: color-mix(in srgb, var(--ink) 78%, var(--spine)); white-space: nowrap; -webkit-font-smoothing: antialiased; }
 /* Physical shape, no lines: a rounded back that turns away from the light at both edges, softly darker head and tail. */
 .sForm { background:
   linear-gradient(180deg, rgba(0,0,0,.22) 0, transparent 3%, transparent 96%, rgba(0,0,0,.28) 100%),
@@ -254,8 +252,8 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .summary { margin: 0; font-family: var(--font-reading); font-size: 1.05rem; line-height: 1.6; white-space: pre-line; color: color-mix(in srgb, var(--foreground) 88%, transparent); }
 .summary.clamp { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
 .review { font-family: var(--font-reading); font-size: 1.05rem; }
-.lookRow { display: flex; gap: 18px; align-items: flex-end; }
-.lookPreview { flex: none; width: 70px; display: flex; justify-content: center; padding-bottom: 4px; }
+.lookRow { display: flex; gap: 16px; align-items: flex-start; }
+.lookPreview { flex: none; width: 76px; display: flex; justify-content: center; padding: 8px 0; position: sticky; top: 8px; align-self: flex-start; }
 .lookControls { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 input[type=range] { width: 100%; accent-color: var(--primary); }
 
@@ -308,3 +306,12 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 .saveBar.asking { animation: nudge .35s ease; }
 .saveBar.asking .saveMsg { color: var(--foreground); font-weight: 600; }
 @keyframes nudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+/* Spine lettering: each line is placed by the spine designer */
+.sTxt { position: absolute; z-index: 1; writing-mode: vertical-rl; white-space: pre; line-height: 1.1; color: color-mix(in srgb, var(--ink) 92%, var(--spine)); text-rendering: geometricPrecision; -webkit-font-smoothing: antialiased; pointer-events: none; }
+.sTxt.soft { color: color-mix(in srgb, var(--ink) 78%, var(--spine)); }
+.sTxt.across { writing-mode: horizontal-tb; white-space: pre-wrap; text-align: center; width: 88%; overflow-wrap: anywhere; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--foreground); }
+.check input { width: 18px; height: 18px; accent-color: var(--primary); }
+.tabsSeg button { flex: 1; }
+#d-bold[aria-pressed="true"] { background: var(--foreground); color: var(--popup); }
