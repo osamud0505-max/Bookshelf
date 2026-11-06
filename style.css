@@ -404,3 +404,9 @@ input[type=range] { width: 100%; accent-color: var(--primary); }
 .mHeader img, .mNoImg.big { width: 104px; height: 104px; border-radius: 6px; object-fit: cover; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
 .mHeader b { display: block; font-size: 1.15rem; line-height: 1.2; }
 .mHeader > div { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+
+.addShelfTab { border-style: dashed; color: var(--muted-fg); }
+.shelfList { display: flex; flex-direction: column; gap: 10px; }
+.shelfRow { display: flex; align-items: center; gap: 10px; }
+.shelfRow .input { flex: 1; min-width: 0; }
+.shelfRow .hint { flex: none; }

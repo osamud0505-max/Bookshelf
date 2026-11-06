@@ -32,8 +32,13 @@
     typewriter: { cw: 0.6, label: "Typewriter", family: "'Courier Prime', 'Courier New', monospace", weight: 700, upper: false },
   };
   const SIZES = { small: ["Small", 0.86], regular: ["Regular", 1], large: ["Large", 1.1] };
-  const STATUS = [["reading", "Reading"], ["to_read", "To read"], ["read", "Read"], ["did_not_finish", "Did not finish"]];
-  const statusLabel = Object.fromEntries(STATUS);
+  const BUILTIN_SHELVES = [["reading", "Reading"], ["to_read", "To read"], ["read", "Read"], ["did_not_finish", "Did not finish"]];
+  /** Built-in shelves (they drive started/finished dates) plus the ones you make. Any shelf can be renamed. */
+  const shelves = () => [
+    ...BUILTIN_SHELVES.map(([k, l]) => [k, (state.settings.shelfNames || {})[k] || l]),
+    ...(state.settings.customShelves || []),
+  ];
+  const shelfLabel = (k) => (shelves().find((x) => x[0] === k) || [k, "Shelf"])[1];
 
   const hexRe = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i;
   const lum = (hex) => {
@@ -435,11 +440,14 @@
     const q = state.filter.trim().toLowerCase();
     const tabs = document.getElementById("tabs");
     tabs.hidden = !!q;
-    tabs.replaceChildren(...[["all", "All", books.length], ...STATUS.map(([k, l]) => [k, l, books.filter((b) => b.status === k).length])].map(([k, l, n]) => {
+    tabs.replaceChildren(...[["all", "All", books.length], ...shelves().map(([k, l]) => [k, l, books.filter((b) => b.status === k).length])].map(([k, l, n]) => {
       const t = h(`<button type="button" class="tab" aria-pressed="${state.shelf === k}">${esc(l)}<span class="count">${n}</span></button>`);
       t.onclick = () => { state.shelf = k; render(); };
       return t;
     }));
+    const addTab = h(`<button type="button" class="tab addShelfTab" aria-label="Add or edit shelves">+ Shelf</button>`);
+    addTab.onclick = () => openShelves();
+    tabs.append(addTab);
 
     main.querySelectorAll(".shelf").forEach((s) => s._dispose && s._dispose());
     main.replaceChildren();
@@ -466,12 +474,13 @@
       return;
     }
     if (state.shelf === "all") {
-      for (const [k, l] of STATUS) {
+      for (const [k, l] of shelves()) {
         const list = books.filter((b) => b.status === k);
         if (list.length) section(k, l, list, { more: () => { state.shelf = k; render(); } });
       }
     } else {
-      section(state.shelf, statusLabel[state.shelf], books.filter((b) => b.status === state.shelf), { onAdd: () => openAdd(""), empty: "Nothing here yet." });
+      if (!shelves().some((x) => x[0] === state.shelf)) state.shelf = "all";
+      section(state.shelf, shelfLabel(state.shelf), books.filter((b) => b.status === state.shelf), { onAdd: () => openAdd(""), empty: "Nothing here yet." });
     }
   }
 
@@ -562,7 +571,7 @@
 
       // shelf + finish
       const quick = h(`<div class="grid2">
-        <label class="field"><span class="label">Shelf</span><select class="input" id="f-status">${STATUS.map(([k, l]) => `<option value="${k}" ${b.status === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+        <label class="field"><span class="label">Shelf</span><select class="input" id="f-status">${shelves().map(([k, l]) => `<option value="${k}" ${b.status === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
         <div class="field"><span class="label">Cover</span><div class="seg"><button data-v="matte" aria-pressed="${b.finish !== "glossy"}">Matte</button><button data-v="glossy" aria-pressed="${b.finish === "glossy"}">Glossy</button></div></div></div>`);
       quick.querySelector("#f-status").onchange = (e) => stage({ status: e.target.value });
       quick.querySelectorAll(".seg button").forEach((btn) => (btn.onclick = () => stage({ finish: btn.dataset.v })));
@@ -713,11 +722,11 @@
   function openAdd(initial) {
     const sheet = document.getElementById("addSheet");
     sheet.replaceChildren(closeBtn());
-    const defStatus = STATUS.some(([k]) => k === state.shelf) ? state.shelf : "to_read";
+    const defStatus = shelves().some(([k]) => k === state.shelf) ? state.shelf : "to_read";
     const body = h(`<div class="sheetBody padded">
       <div><h2 class="sheetTitle">Add a book</h2><p class="hint">Search by title or author. The cover and summary come with it.</p></div>
       <div class="row" style="flex-wrap:nowrap"><input class="input pill" id="q" type="search" placeholder="e.g. The Bell Jar" autocomplete="off"><span class="spinner" hidden></span></div>
-      <label class="field"><span class="label">Put it on</span><select class="input" id="addStatus">${STATUS.map(([k, l]) => `<option value="${k}" ${k === defStatus ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+      <label class="field"><span class="label">Put it on</span><select class="input" id="addStatus">${shelves().map(([k, l]) => `<option value="${k}" ${k === defStatus ? "selected" : ""}>${l}</option>`).join("")}</select></label>
       <div class="results"></div>
       <details><summary class="hint" style="cursor:pointer">Can't find it? Add it by hand</summary>
         <div class="field" style="margin-top:10px"><input class="input" id="mTitle" placeholder="Title"><input class="input" id="mAuthor" placeholder="Author"><button class="btn primary" id="mAdd" style="align-self:flex-end">Add to shelf</button></div>
@@ -765,6 +774,48 @@
     }
     showSheet(sheet);
     setTimeout(() => input.focus(), 50);
+  }
+
+  function openShelves() {
+    const sheet = document.getElementById("customizeSheet");
+    const draw = () => {
+      sheet.replaceChildren(closeBtn());
+      const body = h(`<div class="sheetBody padded"><div><h2 class="sheetTitle">Shelves</h2><p class="hint">Make your own shelves, rename any of them, or remove ones you made.</p></div>
+        <div class="group"><h3 class="label">New shelf</h3><div class="row" style="flex-wrap:nowrap"><input class="input" id="sh-new" placeholder="e.g. Favourites, Fantasy, Book club" maxlength="40"><button class="btn primary" id="sh-add">Add</button></div></div>
+        <div class="group"><h3 class="label">Your shelves</h3><div class="shelfList"></div></div></div>`);
+      const list = body.querySelector(".shelfList");
+      for (const [k, l] of shelves()) {
+        const custom = !BUILTIN_SHELVES.some(([b]) => b === k);
+        const n = state.books.filter((b) => b.status === k).length;
+        const row = h(`<div class="shelfRow"><input class="input" value="${esc(l)}" maxlength="40" aria-label="Shelf name"><span class="hint">${n} ${n === 1 ? "book" : "books"}</span>${custom ? `<button class="btn small danger">Remove</button>` : `<span class="hint" title="Built-in shelf">●</span>`}</div>`);
+        row.querySelector("input").onchange = (e) => {
+          const name = e.target.value.trim(); if (!name) { e.target.value = l; return; }
+          if (custom) state.settings.customShelves = state.settings.customShelves.map(([id, nm]) => [id, id === k ? name : nm]);
+          else state.settings.shelfNames = { ...(state.settings.shelfNames || {}), [k]: name };
+          save(); render(); toast("Renamed");
+        };
+        const del = row.querySelector(".danger");
+        if (del) del.onclick = () => {
+          if (!del.dataset.armed) { del.dataset.armed = "1"; del.textContent = n ? `Move ${n} to To read & remove` : "Tap again"; return; }
+          state.books.forEach((b) => { if (b.status === k) b.status = "to_read"; });
+          state.settings.customShelves = state.settings.customShelves.filter(([id]) => id !== k);
+          if (state.shelf === k) state.shelf = "all";
+          save(); render(); draw();
+        };
+        list.append(row);
+      }
+      const add = () => {
+        const name = body.querySelector("#sh-new").value.trim(); if (!name) return;
+        const id = "shelf_" + Date.now().toString(36);
+        state.settings.customShelves = [...(state.settings.customShelves || []), [id, name]];
+        state.shelf = id; save(); render(); draw(); toast(`Added “${name}”`);
+      };
+      body.querySelector("#sh-add").onclick = add;
+      body.querySelector("#sh-new").onkeydown = (e) => { if (e.key === "Enter") add(); };
+      sheet.append(body);
+    };
+    draw();
+    showSheet(sheet);
   }
 
   function openCustomize() {
