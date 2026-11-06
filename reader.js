@@ -495,7 +495,8 @@
         <svg viewBox="0 0 30 96" width="30" height="96"><path class="tip" d="M9 14 L15 2 L21 9 L21 18 L9 18Z"/><rect class="collar" x="7" y="17" width="16" height="9" rx="2"/><rect class="body" x="5" y="25" width="20" height="70" rx="5"/><rect class="shine" x="8" y="30" width="3.5" height="58" rx="1.75"/><rect class="clip" x="12" y="40" width="6" height="34" rx="3"/></svg></button>`).join("")}
       <button class="rdPen rdEraser" data-pen="erase" aria-label="Eraser" aria-pressed="${pen.erase}">
         <svg viewBox="0 0 30 96" width="30" height="96"><rect x="5" y="8" width="20" height="26" rx="4" fill="#f2b8b0"/><rect x="5" y="30" width="20" height="65" rx="4" fill="#3d6fd1"/><rect x="8" y="36" width="3.5" height="52" rx="1.75" fill="#fff" opacity=".35"/></svg></button>
-      <button class="rdPenDone">Done</button></div>`));
+      <span class="rdPenUndo"></span><button class="rdPenDone">Done</button></div>`));
+    pensEl.querySelector(".rdPenUndo").replaceWith(window.Shelf.undoPair("penUndo"));
     pensEl.querySelectorAll("[data-pen]").forEach((b) => (b.onclick = () => {
       if (b.dataset.pen === "erase") pen.erase = !pen.erase;
       else { pen.erase = false; pen.colour = b.dataset.pen; pref.pen = pen.colour; savePref(); }
@@ -548,6 +549,9 @@
     b.highlights = b.highlights.filter((hl) => hl.cfi !== hit.dataset.hl);
     save(); paintMarks(contentsFor(doc));
   }
+
+  // undo / redo from anywhere: redraw the ink and the ribbon
+  window.addEventListener("shelf:restored", () => { if (cur) { paintAll(); syncBookmark(); } });
 
   // bookmarks: the ribbon button marks the page you are on
   function pageMarks() {
@@ -676,8 +680,8 @@
           if (!bk.finishedOn) bk.finishedOn = new Date().toISOString().slice(0, 10);
           render();
           toast("Finished! Moved to Read");
-        }
-        save();
+          save();
+        } else save(true);
         room.querySelector(".rdPct").textContent = book.locations && book.locations.length() ? Math.round(bk.readPct * 100) + "%" : "";
         room.querySelector(".rdScrub").value = (bk.readPct || 0) * 100;
         room.querySelector(".rdChapter").textContent = chapterName(loc.start.href);

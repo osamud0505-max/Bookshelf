@@ -108,9 +108,94 @@
     state.books = SEED.map((b, i) => newBook({ ...b, id: i + 1 }));
     save();
   }
-  function save() {
+  // ---------------------------------------------------------------- undo / redo
+  // Every save remembers how things were just before, so any change (a rating, a spine colour, a deleted
+  // book, a highlight) can be stepped back. Saves made by the app itself (reading position, cover
+  // measuring) pass quiet=true and don't count as steps. Reading position is never rolled back.
+  const undoStack = [], redoStack = [];
+  let lastSnap = null;
+  const snapOf = () => JSON.stringify({ books: state.books, settings: state.settings });
+  const KEEP = ["readCfi", "readPct", "readAt"];
+  let localUndo = null; // an open book page offers its own unsaved-edit history first
+  let redrawOpen = null; // redraws the open sheet after an undo
+  function restore(snap) {
+    const d = JSON.parse(snap), now = new Map(state.books.map((b) => [b.id, b]));
+    d.books.forEach((b) => { const c = now.get(b.id); if (c) KEEP.forEach((k) => { if (k in c) b[k] = c[k]; }); });
+    state.books = d.books;
+    state.settings = { ...d.settings, recentColors: state.settings.recentColors };
+    lastSnap = snapOf();
+    write(); render();
+    if (redrawOpen) redrawOpen();
+    window.dispatchEvent(new Event("shelf:restored"));
+  }
+  function undo() {
+    if (localUndo && localUndo.canUndo()) { localUndo.undo(); return refreshUndo(); }
+    if (!undoStack.length) return toast("Nothing to undo");
+    redoStack.push(snapOf()); restore(undoStack.pop()); toast("Undone"); refreshUndo();
+  }
+  function redo() {
+    if (localUndo && localUndo.canRedo()) { localUndo.redo(); return refreshUndo(); }
+    if (!redoStack.length) return toast("Nothing to redo");
+    undoStack.push(snapOf()); restore(redoStack.pop()); toast("Redone"); refreshUndo();
+  }
+  const canUndo = () => !!((localUndo && localUndo.canUndo()) || undoStack.length);
+  const canRedo = () => !!((localUndo && localUndo.canRedo()) || redoStack.length);
+  const undoPairs = new Set();
+  function refreshUndo() {
+    undoPairs.forEach((p) => {
+      if (!p.isConnected) return undoPairs.delete(p);
+      p.querySelector("[data-u=undo]").disabled = !canUndo();
+      p.querySelector("[data-u=redo]").disabled = !canRedo();
+    });
+  }
+  const UNDO_SVG = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>`;
+  /** A pair of undo / redo buttons that stay in step with the history. */
+  function undoPair(cls = "") {
+    const p = h(`<div class="undoPair ${cls}"><button class="iconBtn" data-u="undo" aria-label="Undo">${UNDO_SVG}</button><button class="iconBtn" data-u="redo" aria-label="Redo" style="transform:scaleX(-1)">${UNDO_SVG}</button></div>`);
+    p.querySelector("[data-u=undo]").onclick = undo;
+    p.querySelector("[data-u=redo]").onclick = redo;
+    undoPairs.add(p); setTimeout(refreshUndo, 0);
+    return p;
+  }
+  document.addEventListener("keydown", (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "z" && e.key.toLowerCase() !== "y") return;
+    const t = e.target; if (t && (t.tagName === "INPUT" && t.type !== "range" && t.type !== "color" || t.tagName === "TEXTAREA")) return;
+    e.preventDefault();
+    if (e.key.toLowerCase() === "y" || e.shiftKey) redo(); else undo();
+  });
+
+  function write() {
     try { localStorage.setItem(KEY, JSON.stringify({ version: 1, books: state.books, settings: state.settings })); }
     catch (e) { toast("Couldn't save. Your browser storage may be full or blocked."); }
+  }
+  function save(quiet) {
+    const snap = snapOf();
+    if (quiet !== true && lastSnap && snap !== lastSnap) {
+      undoStack.push(lastSnap); if (undoStack.length > 60) undoStack.shift();
+      redoStack.length = 0;
+    }
+    lastSnap = snap;
+    write(); refreshUndo();
+  }
+
+  // ---------------------------------------------------------------- recent colours
+  function rememberColor(c) {
+    if (!/^#[0-9a-f]{6}$/i.test(c || "")) return;
+    c = c.toLowerCase();
+    const list = (state.settings.recentColors || []).filter((x) => x !== c);
+    state.settings.recentColors = [c, ...list].slice(0, 10);
+    save(true);
+  }
+  /** A row of the colours picked most recently; tapping one uses it again. */
+  function recentRow(onPick, current) {
+    const list = state.settings.recentColors || [];
+    const row = h(`<div class="recentColors"${list.length ? "" : " hidden"}><span class="hint">Recent</span></div>`);
+    list.forEach((c) => {
+      const b = h(`<button type="button" class="recentDot" aria-label="Use ${c}" aria-pressed="${(current || "").toLowerCase() === c}" style="background:${c}"></button>`);
+      b.onclick = () => { rememberColor(c); onPick(c); };
+      row.append(b);
+    });
+    return row;
   }
   const byId = (id) => state.books.find((b) => b.id === id);
   function updateBook(id, patch) {
@@ -491,6 +576,8 @@
   let openSheet = null;
   function showSheet(el) {
     if (openSheet && openSheet !== el) { openSheet.hidden = true; sheetGuard = null; }
+    if (el.id !== "bookSheet") localUndo = null;
+    if (el.id !== "bookSheet" && el.id !== "customizeSheet") redrawOpen = null;
     openSheet = el; el.hidden = false; scrim.hidden = false; el.scrollTop = 0;
     document.body.style.overflow = "hidden";
   }
@@ -498,7 +585,7 @@
   function closeSheet(force) {
     if (!openSheet) return;
     if (force !== true && sheetGuard && !sheetGuard()) return;
-    sheetGuard = null;
+    sheetGuard = null; localUndo = null; redrawOpen = null; setTimeout(refreshUndo, 0);
     openSheet.hidden = true; openSheet.replaceChildren(); openSheet = null; scrim.hidden = true;
     document.body.style.overflow = "";
   }
@@ -543,10 +630,24 @@
       bar.querySelector(".saveMsg").textContent = asking ? "Save your changes before closing?" : "You have unsaved changes";
     };
     /** Keep a change in the draft; redraw unless the person is typing. */
-    const stage = (patch, redraw = true) => { Object.assign(draft, patch); if (redraw) draw(); else showBar(); };
+    const past = [], future = []; let lastPush = 0, lastKeys = "";
+    const stage = (patch, redraw = true) => {
+      // typing and slider drags are grouped so one undo steps back a whole edit, not one letter
+      const keys = Object.keys(patch).sort().join(), t = Date.now();
+      if (redraw || keys !== lastKeys || t - lastPush > 900) { past.push(JSON.stringify(draft)); if (past.length > 80) past.shift(); }
+      lastPush = t; lastKeys = keys; future.length = 0;
+      Object.assign(draft, patch); if (redraw) draw(); else showBar();
+      refreshUndo();
+    };
+    localUndo = {
+      canUndo: () => past.length > 0, canRedo: () => future.length > 0,
+      undo: () => { future.push(JSON.stringify(draft)); draft = JSON.parse(past.pop()); lastKeys = ""; draw(); },
+      redo: () => { past.push(JSON.stringify(draft)); draft = JSON.parse(future.pop()); lastKeys = ""; draw(); },
+    };
+
     const saveDraft = () => {
       if (!dirty()) return;
-      const p = draft; draft = {};
+      const p = draft; draft = {}; past.length = 0; future.length = 0;
       if (p.status === "reading" && !p.startedOn && !byId(id).startedOn) p.startedOn = today();
       if (p.status === "read" && !p.finishedOn && !byId(id).finishedOn) p.finishedOn = today();
       updateBook(id, p); toast("Saved"); draw();
@@ -556,7 +657,7 @@
     const draw = () => {
       const b = view(); if (!b) return closeSheet(true);
       const scroll = sheet.scrollTop;
-      sheet.replaceChildren(closeBtn());
+      sheet.replaceChildren(closeBtn(), undoPair("sheetUndo"));
       const body = h(`<div class="sheetBody"></div>`);
       const hero = h(`<header class="hero" style="--spine:${b.spineColor}">${b.coverUrl ? `<img class="backdrop" alt="" referrerpolicy="no-referrer" src="${esc(b.coverUrl)}">` : ""}<div class="heroBook"></div><div class="heading">
         <h2 class="bookTitle">${esc(b.title)}</h2><p class="bookAuthor">${esc(b.author)}</p>
@@ -654,7 +755,8 @@
       look.querySelectorAll("input[type=range][data-k]").forEach((r) => (r.oninput = () => { look.querySelector(`[data-out="${r.dataset.k}"]`).textContent = r.value; setPart({ [r.dataset.k]: +r.value }, false); }));
       look.querySelector("#d-autoColor").onclick = () => setPart({ color: null }, true);
       look.querySelector("#d-color").oninput = (e) => setPart({ color: e.target.value }, false);
-      look.querySelector("#d-color").onchange = () => draw();
+      look.querySelector("#d-color").onchange = (e) => { rememberColor(e.target.value); draw(); };
+      look.querySelector("#d-color").closest(".field").append(recentRow((c) => setPart({ color: c }, true), part.color));
       const thick = look.querySelector("#f-thick");
       thick.oninput = () => { look.querySelector("#thickVal").textContent = thick.value + "%"; stage({ thickness: +thick.value }, false); drawPreview(); };
       look.querySelector("#f-thickAuto").onclick = () => stage({ thickness: null });
@@ -676,7 +778,8 @@
       det.querySelector("#f-end").onchange = (e) => stage({ finishedOn: e.target.value || null }, false);
       det.querySelector("#f-pages").oninput = (e) => stage({ pageCount: parseInt(e.target.value, 10) || null }, false);
       det.querySelector("#f-color").oninput = (e) => stage({ spineColor: e.target.value, spineManual: true }, false);
-      det.querySelector("#f-color").onchange = () => draw();
+      det.querySelector("#f-color").onchange = (e) => { rememberColor(e.target.value); draw(); };
+      det.querySelector("#f-color").closest(".field").after(Object.assign(recentRow((c) => stage({ spineColor: c, spineManual: true }), b.spineColor), { style: "grid-column:1/-1" }));
       const coverMsg = det.querySelector("#coverMsg");
       const useCover = async (src, fromPhoto) => {
         coverMsg.textContent = "Loading the cover…";
@@ -717,11 +820,12 @@
 
       bar = h(`<div class="saveBar" hidden><span class="saveMsg"></span><button class="btn small" id="discard">Discard</button><button class="btn small primary" id="saveBtn">Save</button></div>`);
       bar.querySelector("#saveBtn").onclick = () => { const wasAsking = bar.classList.contains("asking"); saveDraft(); if (wasAsking) closeSheet(true); };
-      bar.querySelector("#discard").onclick = () => { const wasAsking = bar.classList.contains("asking"); draft = {}; if (wasAsking) closeSheet(true); else draw(); };
+      bar.querySelector("#discard").onclick = () => { const wasAsking = bar.classList.contains("asking"); draft = {}; past.length = 0; future.length = 0; if (wasAsking) closeSheet(true); else draw(); };
       sheet.append(body, bar);
       showBar();
       sheet.scrollTop = scroll;
     };
+    redrawOpen = draw;
     draw();
     showSheet(sheet);
   }
@@ -838,7 +942,7 @@
     const draw = () => {
       const s = state.settings;
       const scroll = sheet.scrollTop;
-      sheet.replaceChildren(closeBtn());
+      sheet.replaceChildren(closeBtn(), undoPair("sheetUndo"));
       const body = h(`<div class="sheetBody padded"><div><h2 class="sheetTitle">Customize</h2><p class="hint">Changes show on your shelf straight away.</p></div></div>`);
       const set = (patch) => { Object.assign(state.settings, patch); save(); render(); draw(); };
 
@@ -860,8 +964,9 @@
           b.onclick = () => onPick(c); wrap.append(b);
         }
         const custom = h(`<label class="colorItem" for="${id}"><span class="dot custom ${!isPreset ? "on" : ""}" ${!isPreset ? `style="background:${value}"` : ""}><input type="color" id="${id}" value="${value}"></span>${labels ? "Custom" : ""}</label>`);
-        custom.querySelector("input").onchange = (e) => onPick(e.target.value);
+        custom.querySelector("input").onchange = (e) => { rememberColor(e.target.value); onPick(e.target.value); };
         wrap.append(custom);
+        g.append(recentRow(onPick, value));
         return g;
       };
       body.append(colorRow("Accent colour", "Stars, buttons and highlights.", s.accent, ACCENTS.map((c) => [c, c]), (accent) => set({ accent }), "c-accent", false));
@@ -893,6 +998,7 @@
       sheet.append(body);
       sheet.scrollTop = scroll;
     };
+    redrawOpen = draw;
     draw();
     showSheet(sheet);
   }
@@ -908,6 +1014,7 @@
   filter.oninput = () => { clearTimeout(ft); ft = setTimeout(() => { state.filter = filter.value; render(); }, 150); };
 
   load();
+  lastSnap = snapOf();
   render();
 
   // Fill in summaries for seeded/older books that don't have one yet,
@@ -920,16 +1027,17 @@
       if (m.inset != null) b.edgeInset = m.inset;
       if (m.color && !b.spineManual) b.spineColor = m.color;
       render();
-      save();
+      save(true);
     }
     for (const b of state.books.filter((x) => !x.summary && !x.summaryTried)) {
       const s = await findSummary(b);
       b.summaryTried = true;
       if (s) b.summary = s;
-      save();
+      save(true);
     }
   })();
 
   // Shared helpers for music.js
-  window.Shelf = { h, esc, toast, showSheet, closeSheet, closeBtn, spineInk, byId, save, render };
+  window.Shelf = { h, esc, toast, showSheet, closeSheet, closeBtn, spineInk, byId, save, render, undo, redo, undoPair, recentRow, rememberColor };
+  document.querySelector(".headerActions").prepend(undoPair("headerUndo"));
 })();
