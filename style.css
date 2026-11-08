@@ -1332,7 +1332,3 @@ html { touch-action: pan-x pan-y; }
 @keyframes sakuraTumble { 0% { transform: perspective(80px) rotateZ(var(--r)) rotateX(0deg) rotateY(0deg); } 50% { transform: perspective(80px) rotateZ(calc(var(--r) + 50deg)) rotateX(180deg) rotateY(55deg); } 100% { transform: perspective(80px) rotateZ(calc(var(--r) + 100deg)) rotateX(360deg) rotateY(0deg); } }
 @media (prefers-reduced-motion: reduce) { #backdrop .sakura { display: none; } }
 #backdrop .catShadow { position: absolute; display: block; opacity: 0; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(8,6,14,.55), rgba(8,6,14,.25) 45%, transparent 70%); }
-/* the room's dark corners below the sill: the cat comes up out of the shadow and drops back into it */
-#backdrop .loftCat::after { content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(ellipse 55% 60% at 0% 100%, rgba(6,3,5,.72), rgba(6,3,5,.34) 45%, transparent 78%),
-              radial-gradient(ellipse 45% 50% at 100% 100%, rgba(6,3,5,.5), transparent 75%); }
