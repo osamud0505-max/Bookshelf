@@ -793,54 +793,84 @@
     const svg = el.querySelector("svg"), caps = D.ORNAMENTS.mushrooms.caps;
     if (!svg) { el.classList.toggle("lit", !out); return; }
     if (el._fairy) el._fairy();
-    const anims = [], dots = [], timers = [];
-    let done = false;
+    const NS = "http://www.w3.org/2000/svg";
+    const lit = [...svg.querySelectorAll(".litOnly")]; // a glow and a cap colour for each mushroom, in order
+    const glow = el.querySelector(".ornGlow"), pool = el.querySelector(".ornPool");
+    // read what is showing now, then hand every light over to this animation: CSS fades and pulses wait until it ends
+    const from = new Map([...lit, glow, pool].filter(Boolean).map((p) => [p, +getComputedStyle(p).opacity]));
+    el.classList.add("fairyRun");
+    el.classList.toggle("lit", !out);
+    const anims = [], dots = [];
+    let done = false, endT = 0;
     const finish = () => {
       if (done) return; done = true;
-      timers.forEach(clearTimeout); dots.forEach((d) => d.remove());
-      el.classList.toggle("lit", !out);
+      clearTimeout(timer);
+      dots.forEach((d) => d.remove());
       anims.forEach((a) => { try { a.cancel(); } catch (e) { /* gone */ } });
+      el.classList.remove("fairyRun");
       el._fairy = null;
     };
     el._fairy = finish;
-    const lit = [...svg.querySelectorAll(".litOnly")]; // a glow and a cap colour for each mushroom, in order
+    // a soft dot of light for each colour, drawn with a gradient (cheaper and smoother than a blur filter on each dot)
+    let defs = svg.querySelector("defs.fairy");
+    if (!defs) {
+      defs = document.createElementNS(NS, "defs"); defs.setAttribute("class", "fairy");
+      defs.innerHTML = [...new Set(caps.map((c) => c[4]))].map((c, i) => `<radialGradient id="fd${i}"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="${c}"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`).join("");
+      svg.prepend(defs);
+    }
+    const gid = (c) => "fd" + [...new Set(caps.map((q) => q[4]))].indexOf(c);
     const order = caps.map((_, i) => i).sort(() => Math.random() - 0.5);
-    const NS = "http://www.w3.org/2000/svg", gap = 230, life = 1100;
+    const gap = 260;
     order.forEach((ci, n) => {
       const [x, y, r, h, c] = caps[ci], delay = n * gap;
       const parts = lit.slice(ci * 2, ci * 2 + 2);
+      // going out: the cap brightens a breath, then its light drains away as the dust lifts off it.
+      // coming on: the dust drifts down first; the cap blooms as it lands, then settles to its glow.
+      const bloomAt = delay + 1150;
       parts.forEach((p) => {
-        const now = +getComputedStyle(p).opacity;
-        anims.push(p.animate(out
-          ? [{ opacity: now }, { opacity: Math.min(1, now + 0.4), offset: 0.22 }, { opacity: now * 0.5, offset: 0.45 }, { opacity: 0 }]
-          : [{ opacity: 0 }, { opacity: 0, offset: 0.35 }, { opacity: 1, offset: 0.62 }, { opacity: 0.55 }],
-        { duration: out ? life : life + 300, delay: out ? delay + 120 : delay, easing: "ease-in-out", fill: "both" }));
+        const a = from.get(p);
+        const kf = out
+          ? [{ opacity: a }, { opacity: Math.min(1, a + 0.25), offset: 0.18, easing: "ease-in" }, { opacity: 0, easing: "ease-out" }]
+          : [{ opacity: a }, { opacity: 1, offset: 0.4, easing: "ease-in-out" }, { opacity: 0.55 }];
+        const dur = out ? 1150 : 1400, dl = out ? delay : bloomAt;
+        anims.push(p.animate(kf, { duration: dur, delay: dl, easing: out ? "ease-out" : "cubic-bezier(.4,0,.2,1)", fill: "both" }));
+        endT = Math.max(endT, dl + dur);
       });
-      // the dust: a little swirl of tiny lights
-      const k = 9 + Math.round(r / 4);
+      const k = 8 + Math.round(r / 4);
       for (let j = 0; j < k; j++) {
-        const d = document.createElementNS(NS, "circle"), core = Math.random() < 0.45;
-        d.setAttribute("cx", (x + (Math.random() - 0.5) * r * 1.4).toFixed(1)); d.setAttribute("cy", (y - h + (Math.random() - 0.3) * r * 0.5).toFixed(1));
-        d.setAttribute("r", (core ? 1.8 + Math.random() * 1 : 2.6 + Math.random() * 2.4).toFixed(1));
-        d.setAttribute("fill", core ? "#fff" : c);
-        d.style.filter = `drop-shadow(0 0 4px ${c}) drop-shadow(0 0 1px #fff)`; d.style.transformBox = "fill-box"; d.style.transformOrigin = "center";
+        const d = document.createElementNS(NS, "circle"), big = Math.random() < 0.55;
+        d.setAttribute("cx", (x + (Math.random() - 0.5) * r * 1.3).toFixed(1)); d.setAttribute("cy", (y - h + (Math.random() - 0.3) * r * 0.5).toFixed(1));
+        d.setAttribute("r", (big ? 4 + Math.random() * 3 : 2.4 + Math.random() * 1.6).toFixed(1));
+        d.setAttribute("fill", `url(#${gid(c)})`);
+        d.style.transformBox = "fill-box"; d.style.transformOrigin = "center"; d.style.opacity = "0";
         svg.append(d); dots.push(d);
-        const rise = 70 + Math.random() * 70, sway = (Math.random() < 0.5 ? -1 : 1) * (8 + Math.random() * 16);
-        const path = [0, 0.25, 0.5, 0.75, 1].map((f) => `translate(${(Math.sin(f * Math.PI * (1.5 + Math.random())) * sway).toFixed(1)}px, ${(-rise * f).toFixed(1)}px) scale(${(1 - f * 0.6).toFixed(2)})`);
-        const tw = [0, 1, 0.35, 0.95, 0.25, 0.8, 0];
-        const kf = path.map((tr, i) => ({ transform: tr }));
-        const steps = out ? kf : [...kf].reverse();
-        const dur = 1300 + Math.random() * 900, dl = delay + Math.random() * (out ? 380 : 260);
-        anims.push(d.animate(steps, { duration: dur, delay: dl, easing: out ? "cubic-bezier(.3,.6,.4,1)" : "cubic-bezier(.5,0,.6,.5)", fill: "both" }));
-        anims.push(d.animate(tw.map((o) => ({ opacity: o })), { duration: dur, delay: dl, easing: "ease-in-out", fill: "both" }));
+        const rise = 60 + Math.random() * 60, sway = (Math.random() < 0.5 ? -1 : 1) * (6 + Math.random() * 12), wav = 1.2 + Math.random() * 0.8;
+        const F = [0, 0.2, 0.45, 0.7, 1];
+        const at = (f) => `translate(${(Math.sin(f * Math.PI * wav) * sway).toFixed(1)}px, ${(-rise * f).toFixed(1)}px) scale(${(1 - f * 0.55).toFixed(2)})`;
+        // rising: bright as it leaves the cap, twinkling, fading as it goes. Falling: the same trip backwards.
+        const op = [0, 1, 0.55, 0.85, 0];
+        const kf = F.map((f, i) => ({ transform: at(f), opacity: op[i], offset: f }));
+        const steps = out ? kf : kf.map((q, i) => ({ transform: kf[kf.length - 1 - i].transform, opacity: [0, 0.8, 0.5, 1, 0][i], offset: F[i] }));
+        const dur = 1500 + Math.random() * 600, dl = out ? delay + 80 + Math.random() * 300 : bloomAt + 250 - dur + (Math.random() - 0.5) * 200;
+        const a = d.animate(steps, { duration: dur, delay: Math.max(0, dl), easing: out ? "cubic-bezier(.25,.6,.35,1)" : "cubic-bezier(.55,0,.75,.45)", fill: "both" });
+        a.onfinish = () => d.remove();
+        anims.push(a);
+        endT = Math.max(endT, Math.max(0, dl) + dur);
       }
     });
-    // the soft light around them follows
-    const glow = el.querySelector(".ornGlow");
-    if (glow) { const now = +getComputedStyle(glow).opacity; anims.push(glow.animate(out ? [{ opacity: now }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 0, offset: 0.3 }, { opacity: 1 }], { duration: caps.length * gap + life, easing: "ease-in-out", fill: "both" })); }
+    // the soft light around them, and the light they cast on the shelf, follow the caps
+    const total = (caps.length - 1) * gap;
+    for (const p of [glow, pool]) {
+      if (!p) continue;
+      const a = from.get(p), to = out ? 0 : p === glow ? 0.55 : 0.9;
+      const kf = out ? [{ opacity: a }, { opacity: 0 }] : [{ opacity: a }, { opacity: a, offset: 0.3 }, { opacity: to }];
+      anims.push(p.animate(kf, { duration: total + (out ? 1150 : 2550), easing: "ease-in-out", fill: "both" }));
+    }
+    endT = Math.max(endT, total + 2550);
     fairySound(out);
-    timers.push(setTimeout(finish, caps.length * gap + life + 1700));
+    const timer = setTimeout(finish, endT + 60);
   };
+
   let fctx = null;
   /** A soft run of tiny bells: falling as the lights go out, rising as they come on. */
   function fairySound(out) {

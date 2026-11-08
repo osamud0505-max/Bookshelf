@@ -1283,3 +1283,5 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 /* the spider is drawn on its own small canvas that travels over the picture */
 #backdrop .spider { width: 112px; height: 112px; filter: none; }
 .web canvas { display: block; }
+/* while the mushrooms' fairy dust plays, it drives their light; the usual fades and pulse wait */
+.ornament.fairyRun .litOnly, .ornament.fairyRun .ornGlow, .ornament.fairyRun .ornPool { transition: none !important; animation: none !important; }
