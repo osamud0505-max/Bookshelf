@@ -1317,3 +1317,6 @@ html { touch-action: pan-x pan-y; }
 @keyframes shadeBreath { from { opacity: .7; } to { opacity: 0; } }
 @keyframes shadeTwinkle { 0%, 100% { opacity: .1; } 18% { opacity: .75; } 24% { opacity: 0; } 32% { opacity: .45; } 60% { opacity: .05; } }
 @media (prefers-reduced-motion: reduce) { #backdrop .cabinShade i { animation: none; opacity: 0; } }
+
+/* v105: the shelf is seen straight on, so a pile shows no top face (it read as a slab); objects stand right on the top book */
+.pileTop { display: none; }

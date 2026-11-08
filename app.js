@@ -875,6 +875,7 @@
         const a = books[i], b = books[i + 1], ha = dims(a, H).h, hb = dims(b, H).h, diff = Math.abs(ha - hb);
         const flip = ha < hb; // the web sits on the shorter book, its corner against the taller one
         const on = flip ? i : i + 1;
+        if (lyingAt(i) || lyingAt(i + 1)) continue; // a pile has no corner a spider would build in
         if (diff < 14 || used.has(on) || hash(a.id * 7 + b.id) % 3 === 2) continue;
         used.add(on);
         const span = dims(books[on], H).d + 1;
@@ -882,10 +883,10 @@
         const el = W.make(`${key}:${a.id}-${b.id}`, "corner", w, hh, flip);
         if (el) { stage.append(el); webs.push({ el, i, w, flip, bottom: Math.min(ha, hb), rest: null }); }
       }
-      const last = books.length - 1, endEl = W.make(`${key}:end:${books[last].id}`, "corner", 50, 46, false);
+      const last = books.length - 1, endEl = lyingAt(last) ? null : W.make(`${key}:end:${books[last].id}`, "corner", 50, 46, false);
       if (endEl) { stage.append(endEl); webs.push({ el: endEl, i: last, w: 50, end: true, bottom: 0, rest: null }); }
       const dr = W.make(`${key}:drape`, "drape", 84, 26, false);
-      if (dr) { dr.style.left = Math.round(viewW * (0.22 + (hash(key.length * 13) % 40) / 100)) + "px"; hangLayer.append(dr); webs.push({ el: dr, hang: true }); }
+      if (dr) { dr.style.left = Math.round(viewW * (0.22 + (hash(key.length * 13) % 40) / 100)) + "px"; dr.style.top = Math.max(0, (root.querySelector(".plank") || {}).offsetHeight - 1 || 0) + "px"; hangLayer.append(dr); webs.push({ el: dr, hang: true }); }
       clearTimeout(websArmed); websArmed = setTimeout(() => webs.forEach((w) => (w.rest = w.rel)), 900);
     }
     function placeWebs() {
@@ -1175,7 +1176,7 @@
         if (!p) continue;
         const tw = list.reduce((s, o) => s + o.vis + 4, -4);
         let cx = Math.max(p.x, Math.min(p.x + p.w - tw, p.cx - tw / 2));
-        for (const o of list) { placeOrn(o, p.top + TOPF * 0.15, cx + o.vis / 2); cx += o.vis + 4; }
+        for (const o of list) { placeOrn(o, p.top, cx + o.vis / 2); cx += o.vis + 4; }
       }
       pileSpans = groups.map((g) => ({ s: g.start, e: g.end, L: g.L, R: g.L + g.S }));
       if (webs.length) placeWebs();

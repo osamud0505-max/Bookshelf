@@ -54,25 +54,36 @@
 
   /** A drape: a tattered sheet hanging from the underside of the shelf edge, stuck along the top. */
   function drapeNet(w, h, R) {
-    const N = net(), cols = 6 + Math.floor(R() * 2), rows = 5, grid = [];
-    for (let c = 0; c <= cols; c++) {
-      const x0 = (c / cols) * w + (R() - 0.5) * 4, col = [];
-      for (let r = 0; r <= rows; r++) {
-        // deeper in the middle, shallower at the ends, a little ragged
-        const depth = h * (0.35 + 0.65 * Math.sin((c / cols) * Math.PI)) * (0.85 + R() * 0.3);
-        col.push(node(N, x0 + (R() - 0.5) * 2, (r / rows) * depth, r === 0));
-      }
-      grid.push(col);
+    // under a shelf a cobweb is a tangle, not a net: loose threads sag between points stuck along the underside,
+    // a few threads run between those, and wisps hang from the lowest ones
+    const N = net(), na = 6 + Math.floor(R() * 3), anchors = [];
+    for (let k = 0; k < na; k++) anchors.push(node(N, (k / (na - 1)) * w * (0.92 + R() * 0.08) + (R() - 0.5) * 6, 0, true));
+    const chains = [];
+    const chain = (a, b, sag) => {
+      const A = N.n[a], B = N.n[b], span = Math.hypot(B.x - A.x, B.y - A.y), n = Math.max(6, Math.round(span / 4)), pts = [a];
+      for (let q = 1; q < n; q++) { const t = q / n; pts.push(node(N, A.x + (B.x - A.x) * t, A.y + (B.y - A.y) * t + Math.sin(t * Math.PI) * sag)); }
+      pts.push(b);
+      for (let q = 1; q < pts.length; q++) seg(N, pts[q - 1], pts[q], "frame", 1.0);
+      chains.push(pts); return pts;
+    };
+    // sagging threads between near and far anchors
+    for (let k = 0; k < na - 1; k++) chain(anchors[k], anchors[k + 1], h * (0.25 + R() * 0.35));
+    for (let q = 0; q < 3; q++) { const a = Math.floor(R() * (na - 2)), b = Math.min(na - 1, a + 2 + Math.floor(R() * 2)); chain(anchors[a], anchors[b], h * (0.55 + R() * 0.45)); }
+    // threads tying the sagging ones together
+    for (let q = 0; q < 9; q++) {
+      const c1 = chains[Math.floor(R() * chains.length)], c2 = chains[Math.floor(R() * chains.length)];
+      if (c1 === c2) continue;
+      const p1 = c1[1 + Math.floor(R() * (c1.length - 2))], p2 = c2[1 + Math.floor(R() * (c2.length - 2))];
+      const A = N.n[p1], B = N.n[p2]; if (Math.hypot(A.x - B.x, A.y - B.y) > w * 0.35) continue;
+      seg(N, p1, p2, "ring", 1.1 + R() * 0.12);
     }
-    for (let c = 0; c <= cols; c++) for (let r = 1; r <= rows; r++) seg(N, grid[c][r - 1], grid[c][r], "spoke", 1.0);
-    for (let r = 1; r <= rows; r++) for (let c = 0; c < cols; c++) { if (R() < 0.08 * r) continue; seg(N, grid[c][r], grid[c + 1][r], r % 2 ? "ring" : "frame", 1.04); }
-    for (let c = 0; c < cols; c++) if (R() < 0.5) { const r = 1 + Math.floor(R() * (rows - 1)); seg(N, grid[c][r], grid[c + 1][r + 1] ?? grid[c + 1][r], "ring", 1.03); }
-    // strands dangling from the bottom edge, free to swing
-    for (let q = 0; q < 4; q++) {
-      const c = 1 + Math.floor(R() * (cols - 1)), base = grid[c][rows], P = N.n[base], L = 3 + R() * 3, n = 3 + Math.floor(R() * 4);
-      let prev = base; for (let k = 1; k <= n; k++) { const m = node(N, P.x, P.y + k * L, false, true); seg(N, prev, m, "strand"); prev = m; }
+    // wisps hanging from the lowest points
+    const low = chains.slice(-3);
+    for (const c of low) {
+      const base = c[Math.floor(c.length / 2)], P = N.n[base], L = 2.5 + R() * 2.5, n = 3 + Math.floor(R() * 4);
+      let prev = base; for (let k = 1; k <= n; k++) { const m = node(N, P.x + (R() - 0.5), P.y + k * L, false, true); seg(N, prev, m, "strand"); prev = m; }
     }
-    N.speck = grid[2][2];
+    N.speck = chains[chains.length - 1][2];
     return N;
   }
 
@@ -106,16 +117,16 @@
       const fy = wind * 0.6 * Math.sin(t * 1.3 + p.x * 0.05 + 1.7);
       p.x += vx + fx; p.y += vy + fy + grav + (p.hang && !W.tearing ? 0.03 : 0);
       // a corner web cannot pass through the book or shelf it is stuck to
-      if (W.corner && !W.tearing) { if (p.y > W.h) p.y = W.h; if (p.x < 0) p.x = 0; }
+      if (W.corner) { if (p.y > W.h) p.y = W.h; if (p.x < 0 && !W.tearing) p.x = 0; }
     }
     if (W.tearing) {
       W.age++;
       // the torn web gathers into a wad: every thread slowly shortens
-      if (W.age > W.hold) for (const S of N.s) S.len *= 0.975;
+      if (W.age > W.hold) for (const S of N.s) S.len *= W.quick ? 0.94 : 0.965;
       // the finger lets go
       if (W.age === W.hold) for (const p of N.n) p.gx = null;
       if (W.finger && W.age < W.hold) { const f = Math.min(1, W.age / W.hold), e = f * f * (3 - 2 * f); for (const p of N.n) if (p.gx != null) { p.gx = p.ox + W.pull[0] * e; p.gy = p.oy + W.pull[1] * e; } }
-      if (W.age > W.hold + 70) W.done = true;
+      if (W.age > W.hold + W.life) W.done = true;
     }
     for (let it = 0; it < 4; it++) {
       for (let i = N.s.length - 1; i >= 0; i--) {
@@ -141,7 +152,7 @@
     c.clearRect(0, 0, W.cw, W.ch);
     c.translate(PAD, PAD);
     if (W.flip) { c.translate(W.w, 0); c.scale(-1, 1); }
-    const fade = W.tearing ? Math.max(0, Math.min(1, (W.hold + 70 - W.age) / 30)) : 1;
+    const fade = W.tearing ? Math.max(0, Math.min(1, (W.hold + W.life - W.age) / (W.life * 0.6))) : 1;
     c.lineCap = "round";
     // the light: a band of sheen that drifts across the web and catches threads at the right angle
     const sx = Math.cos(t * 0.23) * 0.5 + 0.5;
@@ -151,7 +162,7 @@
       const catchA = Math.pow(Math.max(0, Math.cos(ang * 2 - t * 0.35 + W.ph)), 14);
       const near = Math.max(0, 1 - Math.abs(mx - sx) * 3);
       const glint = calm ? 0 : catchA * near;
-      const base = S.kind === "ring" ? 0.24 : S.kind === "strand" ? 0.3 : 0.4;
+      const base = (S.kind === "ring" ? 0.24 : S.kind === "strand" ? 0.3 : 0.4) * (W.corner ? 1 : 0.7);
       c.strokeStyle = `rgba(${228 + glint * 27},${230 + glint * 25},${238 + glint * 17},${((base + glint * 0.55) * fade).toFixed(3)})`;
       c.lineWidth = (S.kind === "ring" ? 0.45 : 0.6) + glint * 0.25;
       c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.stroke();
@@ -175,7 +186,7 @@
     cv.style.cssText = `position:absolute;left:${-PAD}px;top:${-PAD}px;width:${cw}px;height:${ch}px;pointer-events:none`;
     el.append(cv);
     const g1 = 0.7 + R() * 0.6, g2 = 1.7 + R();
-    const W = { el, N, w, h, flip, corner: kind !== "drape", cw, ch, ctx: cv.getContext("2d"), ph: R() * 50, tearing: false, age: 0, hold: 22,
+    const W = { el, N, w, h, flip, corner: kind !== "drape", cw, ch, ctx: cv.getContext("2d"), ph: R() * 50, tearing: false, age: 0, hold: 22, life: 45,
       // gusts come and go: mostly still, now and then a breath of air
       gust: (t) => 0.25 + 0.75 * Math.pow(Math.max(0, Math.sin(t * 0.21 * g1) * Math.sin(t * 0.13 * g2 + 1)), 2) * 3 };
     el._web = W;
@@ -206,7 +217,7 @@
       if (!any) { let best = null, bd = 1e9; for (const p of W.N.n) { const d = Math.hypot(p.x - lx, p.y - ly); if (d < bd && !p.pin) { bd = d; best = p; } } if (best) { best.gx = best.x; best.gy = best.y; best.ox = best.x; best.oy = best.y; } }
     } else {
       // a book slid against it: the side stuck to that book comes away and the web collapses and drops
-      W.hold = 6;
+      W.hold = 4; W.life = 28; W.quick = true;
       for (const p of W.N.n) { if (p.pin && (drp || p.x < 1.5)) p.pin = false; p.px = p.x - (drp ? 0 : 0.8 + Math.random() * 0.6); }
     }
     kick();
