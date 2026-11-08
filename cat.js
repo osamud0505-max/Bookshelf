@@ -1,16 +1,16 @@
-/* The loft's cat: osamu's Savannah cat, filmed (Gemini Veo) on a green screen. Now and then it leaps onto the
-   windowsill from the left, lies down, dozes off, wakes and gets up. bg/loft-cat.mp4 holds the cat already cut out
+/* The loft's cat: osamu's Savannah cat, filmed (Gemini Veo) in one take on a green screen. Now and then it jumps up
+   onto the windowsill from the left, lies down, dozes off, gets up, stretches and leaps off to the right. Its
+   shadow on the sill is baked into the film. bg/loft-cat.mp4 holds the cat already cut out
    and graded to the loft's dusk: the top half of each frame is the colour, the bottom half how solid it is (white =
    cat, black = nothing). A small WebGL pass puts the two together, so it works on every phone (iPhones cannot play
    video that is see-through by itself). */
 (() => {
   "use strict";
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const SRC = "bg/loft-cat.mp4?v=1";
-  // where the film sits in the loft picture (fractions of the picture): its left edge on the picture's left edge,
-  // its paw line on the sill's top
-  const LEFT = 0.05, WIDTH = 0.44, ASPECT = 632 / 720, PAW = 621 / 632, SILL = 0.8125, TOP = 0.55;
-  const LAND = 1.55; // seconds in: the cat is on the sill (its shadow shows from here)
+  const SRC = "bg/loft-cat.mp4?v=2";
+  // where the film sits in the loft picture (fractions of the picture): a little wider than the picture, so the cat
+  // comes in and goes out past its edges, with its paw line on the sill's top
+  const LEFT = -0.02, WIDTH = 1.04, ASPECT = 552 / 720, PAW = 533 / 980, SILL = 0.8125, TOP = 0.55;
   let timer = 0, running = false, first = true, video = null;
   const host = () => document.querySelector("#backdrop .loftCat");
   const rnd = (a, b) => a + Math.random() * (b - a);
@@ -58,21 +58,16 @@
     const cv = document.createElement("canvas"), dpr = Math.min(2, devicePixelRatio || 1);
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
     cv.style.cssText = `position:absolute;left:${left}px;top:${top}px;width:${w}px;height:${h}px`;
-    const shadow = document.createElement("i"); shadow.className = "catShadow";
-    shadow.style.cssText = `left:${left + w * 0.12}px;top:${top + PAW * h - w * 0.03}px;width:${w * 0.72}px;height:${w * 0.07}px`;
     const G = gl(cv); if (!G) { schedule(); return; }
-    box.append(shadow, cv); running = true;
-    const done = () => { cv.remove(); shadow.remove(); running = false; try { vid.pause(); } catch (e) { /* fine */ } schedule(); };
+    box.append(cv); running = true;
+    const done = () => { cv.remove(); running = false; try { vid.pause(); } catch (e) { /* fine */ } schedule(); };
     const go = () => {
       vid.currentTime = 0;
       const pr = vid.play(); if (pr && pr.catch) pr.catch(() => done());
       const frame = () => {
         if (!cv.isConnected) { done(); return; }
         if (vid.ended || (vid.duration && vid.currentTime >= vid.duration - 0.03)) { done(); return; }
-        const t = vid.currentTime, d = vid.duration || 24;
         if (vid.readyState >= 2) G.draw(vid, 1);
-        // the shadow comes with the landing and goes as the cat fades
-        shadow.style.opacity = String(Math.max(0, Math.min(1, (t - LAND) / 0.15, (d - 0.1 - t) / 0.6)));
         requestAnimationFrame(frame);
       };
       requestAnimationFrame(frame);
