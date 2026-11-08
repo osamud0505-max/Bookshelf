@@ -242,7 +242,7 @@
       });
     },
     /** Recorded lines spoken now and then, one at a time, with long quiet stretches between them; never the same twice running. */
-    voices(R, urls, level, minGap, maxGap) {
+    voices(R, urls, level, minGap, maxGap, spread = 0.35) {
       let dead = false, last = -1; R.onStop(() => (dead = true));
       urls.forEach(loadFile); // fetch them ahead so each line starts on time
       const next = (ms) => R.shared.timers.push(setTimeout(say, ms));
@@ -254,7 +254,7 @@
           if (dead) return;
           if (!buf) { next(minGap); return; }
           const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = buf; g.gain.value = level;
-          const p = R.pan(rnd(-0.35, 0.35)); // from somewhere in the dark, a little to one side
+          const p = R.pan(rnd(-spread, spread)); // from somewhere in the dark, a little to one side
           s.connect(g).connect(p || R.out);
           s.start(ctx.currentTime + 0.05); R.shared.nodes.push(s);
           next(buf.duration * 1000 + rnd(minGap, maxGap));
@@ -368,7 +368,10 @@
   const ROOMS = {
     // wind is only outdoors (forest, starry night); in the castle and the witch's tower it is faint and far off
     cabin: [["fire", "Fireplace", (R) => S.fire(R)]],
-    loft: [["city", "City traffic", (R) => S.city(R.far(520, 0.45))], ["sirens", "Distant sirens", (R) => S.sirens(R.far(1100, 0.7))]],
+    // two street recordings of different lengths play together, so the mix never repeats the same way
+    loft: [["bed", "Background", (R) => { S.bed(R, "sounds/loft/bgA.mp3", 0.6); S.bed(R, "sounds/loft/bgB.mp3", 0.45); }],
+      ["voice", "Voices", (R) => S.voices(R, Array.from({ length: 8 }, (_, i) => `sounds/loft/v${i + 1}.mp3`), 0.7, 18000, 45000, 0.65)],
+      ["jazz", "Jazz", (R) => S.bed(R, "sounds/loft/jazz.mp3", 0.3)]],
     academia: [["rain", "Rain", (R) => S.rain(R.far(1000, 0.5), 0.8)], ["clock", "Clock", (R) => S.clock(R, false, 0.5)], ["quill", "Quill on paper", (R) => S.quill(R)]],
     library: [["clock", "Clock", (R) => S.clock(R, false, 0.8)], ["hum", "Room hum", (R) => S.hum(R)]],
     starry: [["crickets", "Crickets", (R) => S.crickets(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.6)]],
@@ -392,7 +395,7 @@
   }
 
   // evens out how loud the rooms are against each other
-  const ROOM_GAIN = { nook: 3, cottage: 3, starry: 2.8, forest: 2.8, castle: 1.6, library: 1.5, candle: 2.5, vampire: 1, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1.2, teahouse: 0.8 };
+  const ROOM_GAIN = { nook: 3, cottage: 3, starry: 2.8, forest: 2.8, castle: 1.6, library: 1.5, candle: 2.5, vampire: 1, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1, teahouse: 0.8 };
   // ------------------------------------------------------------------ playing the right room
   const look = () => { try { return (window.Shelf && window.Shelf.lookKey && window.Shelf.lookKey()) || ""; } catch (e) { return ""; } };
   const level = () => (pref.on && !reading ? pref.vol * (ducked ? 0.3 : 1) : 0);
