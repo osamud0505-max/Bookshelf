@@ -765,7 +765,12 @@
         + `<linearGradient id="${g}d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>`
         + `<linearGradient id="${g}h" x1="0" x2="1"><stop offset=".08" stop-color="#fff" stop-opacity="0"/><stop offset=".2" stop-color="#fff" stop-opacity=".32"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".8" stop-color="#fff" stop-opacity="0"/><stop offset=".88" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`
         + `<radialGradient id="${g}s" cx=".45" cy=".4" r=".7"><stop offset="0" stop-color="#f2fff0"/><stop offset=".45" stop-color="#9dffa8"/><stop offset=".8" stop-color="#8a6bff" stop-opacity=".8"/><stop offset="1" stop-color="#6a4bd8" stop-opacity=".2"/></radialGradient></defs>`
-        + `<g data-y="150"></g>${back}${art}<g class="potMagic">${halo}<g filter="url(#${g}f)">${streams}${blob}${ghost}</g>${mist}</g>`;
+        + `<linearGradient id="${g}mg" gradientUnits="userSpaceOnUse" x1="0" y1="176" x2="0" y2="199"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="${g}m" maskUnits="userSpaceOnUse" x="-200" y="-300" width="550" height="520"><rect x="-200" y="-300" width="550" height="520" fill="url(#${g}mg)"/></mask>`
+        + `<filter id="${g}p" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="2.4"/></filter>`
+        + `<g data-y="150"></g><g mask="url(#${g}m)">${back}</g>`
+        // each bottle's light pooled on the surface right under it
+        + POTS.map((p, i) => `<g class="potGlowW" style="--i:${i}"><ellipse cx="${p.c[0]}" cy="199" rx="${(p.c[2] * 1.5).toFixed(1)}" ry="3.6" fill="${p.col}" opacity=".75" filter="url(#${g}p)"/></g>`).join("")
+        + `${art}<g class="potMagic">${halo}<g filter="url(#${g}f)">${streams}${blob}${ghost}</g>${mist}</g>`;
     },
     /** Out: the liquid drains as streams rise from each bottle, they gather into a skull that drifts up and evaporates. In: the bottles fill and glow again. */
     toggle: (el, out) => {

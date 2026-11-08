@@ -964,6 +964,10 @@
           ghost.classList.add("ornGhost"); ghost.onclick = null;
           ghost.style.transform = `translate3d(${r.left}px,${r.top}px,0)`;
           document.body.append(ghost);
+          try {
+            const oa = el.getAnimations({ subtree: true }), ga = ghost.getAnimations({ subtree: true });
+            if (oa.length === ga.length) ga.forEach((a, k) => { if (oa[k].currentTime != null) a.currentTime = oa[k].currentTime; });
+          } catch {}
           requestAnimationFrame(() => ghost.classList.add("up"));
           drag = { o, id, ghost, gx: sx - r.left, gy: sy - r.top, cx: sx, cy: sy, raf: 0, over: false };
           root.classList.add("arranging"); el.classList.add("placeholder");
@@ -1028,10 +1032,10 @@
       if (!remove) {
         // the copy glides down into its gap, then the real one takes over
         const sr = stage.getBoundingClientRect(), h = parseFloat(o.el.style.height);
-        const top = o.hang ? o.el.getBoundingClientRect().top : sr.bottom - h;
+        const top = o.hang ? o.el.getBoundingClientRect().top : sr.bottom - h - (o.lift || 0);
         ghost.classList.add("settle");
         ghost.style.transform = `translate3d(${sr.left + o.x}px,${top}px,0)`;
-        setTimeout(() => { o.el.classList.remove("placeholder"); ghost.remove(); }, 300);
+        setTimeout(() => { o.el.classList.remove("placeholder"); ghost.remove(); o.el.classList.add("landed"); setTimeout(() => o.el.classList.remove("landed"), 360); }, 300);
       }
       setTimeout(() => root.classList.remove("arranging"), 320);
     }
@@ -1104,7 +1108,7 @@
       const placeOrn = (o, lift = 0, cx = null) => {
         const left = cx != null ? cx - o.vis / 2 : o.hang ? PAD + x - offset - o.vis / 2 : PAD + x - offset + 5;
         if (cx == null) x += o.w;
-        o.el.style.transform = `translate3d(${left.toFixed(1)}px,${(-lift).toFixed(1)}px,0)`;
+        o.el.style.transform = `translate3d(${left.toFixed(1)}px,${(-lift).toFixed(1)}px,0)`; o.lift = lift;
         o.el.classList.toggle("onPile", cx != null);
         // a flame leans away from the way it is being pushed, then settles
         if (o.x !== null && Math.abs(left - o.x) > 0.3 && !root.classList.contains("arranging")) {
