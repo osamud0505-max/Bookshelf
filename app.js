@@ -813,6 +813,12 @@
     // one step of empty scroll before the first book and after the last: swiping past either end turns that book back, spine out
     // panX: how far two fingers have slid the row by hand, without turning any book
     let panX = 0, curOffset = 0, twoF = null, panEase = 0;
+    const lyingAt = (i) => !!(books[i] && books[i].pose === "lie");
+    // the nearest upright book from i, looking in direction dir first (lying books are skipped)
+    function uprightNear(i, dir = 1) {
+      for (let k = 0; k < count; k++) for (const j of [i + dir * k, i - dir * k]) if (j >= 0 && j < count && !lyingAt(j)) return j;
+      return -1;
+    }
     const slots = [], bookNodes = [];
     // decorations stand in the row between books and get pushed along when a book turns.
     // hold one to lift it and move it anywhere on the shelf, or onto the bin to take it away.
@@ -824,7 +830,8 @@
     let userMoved = false; // books only make a sound when you move them, not when the page lays out
     books.forEach((b, i) => {
       const slot = h(`<button type="button" class="slot" tabindex="-1"></button>`);
-      slot.onclick = () => (i === front ? openBook(b.id) : goTo(i));
+      // a lying book is never picked by swiping; a tap just opens it
+      slot.onclick = () => (i === front || b.pose === "lie" ? openBook(b.id) : goTo(i));
       stage.append(slot); slots.push(slot);
     });
     if (opts.onAdd) {
@@ -841,7 +848,7 @@
       track.style.width = (count + 1) * STEP + viewW + "px";
       stage.style.width = viewW + "px";
       track.querySelectorAll(".snap").forEach((n) => n.remove());
-      for (let i = 0; i <= count + 1; i++) { const s = h(`<span class="snap"></span>`); s.style.left = i * STEP + "px"; track.prepend(s); }
+      for (let i = 0; i <= count + 1; i++) { if (lyingAt(i - 1)) continue; const s = h(`<span class="snap"></span>`); s.style.left = i * STEP + "px"; track.prepend(s); }
       books.forEach((b, i) => {
         const node = bookEl(b, H); bookNodes[i] = node;
         slots[i].replaceChildren(node);
@@ -1141,6 +1148,7 @@
       }
       if (webs.length) placeWebs();
       let n = Math.round(g); if (n < 0 || n > count - 1) n = -1; n = Math.min(n, books.length - 1);
+      if (n >= 0 && lyingAt(n)) n = front; // passing over a lying book picks nothing and makes no sound
       if (n !== front) { if (front >= 0 && !drag && userMoved) soundBookSlide(); front = n; if (n >= 0) scrollMemory.set(key, n); slots.forEach((s, i) => s.classList.toggle("front", i === n)); drawCaption(); }
     }
 
@@ -1163,12 +1171,14 @@
           <button class="navBtn" aria-label="Previous book" ${front === 0 ? "disabled" : ""}>‹</button>
           <button class="navBtn" aria-label="Next book" ${front >= count - 1 ? "disabled" : ""}>›</button></div>`);
         const [prev, next] = nav.querySelectorAll(".navBtn");
-        prev.onclick = () => goTo(front - 1); next.onclick = () => goTo(front + 1);
+        prev.onclick = () => goTo(front - 1, false, -1); next.onclick = () => goTo(front + 1, false, 1);
         caption.append(nav);
       }
     }
 
-    function goTo(i, instant) {
+    function goTo(i, instant, dir = 1) {
+      if (i >= 0 && i < count && lyingAt(i)) { let j = i; while (j >= 0 && j < count && lyingAt(j)) j += dir; i = j >= 0 && j < count ? j : uprightNear(i, -dir); }
+      if (i < 0 || (i >= count && !count)) { scroller.scrollTo({ left: 0, behavior: instant ? "auto" : "smooth" }); return; }
       const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (!instant) { userMoved = true; easePanHome(); }
       scroller.scrollTo({ left: (Math.max(0, Math.min(count - 1, i)) + 1) * STEP, behavior: instant || reduce ? "auto" : "smooth" });
@@ -1213,8 +1223,8 @@
     scroller.addEventListener("wheel", () => { if (panX) easePanHome(); }, { passive: true });
     scroller.addEventListener("keydown", (e) => {
       const at = front >= 0 ? front : scroller.scrollLeft < STEP / 2 ? -1 : count;
-      if (e.key === "ArrowRight") { e.preventDefault(); goTo(at + 1); }
-      else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(at - 1); }
+      if (e.key === "ArrowRight") { e.preventDefault(); goTo(at + 1, false, 1); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(at - 1, false, -1); }
       else if (e.key === "Enter" && books[front]) openBook(books[front].id);
     });
     const ro = new ResizeObserver(() => { const keep = front < 0 ? scrollMemory.get(key) || 0 : front; build(); front = -1; goTo(keep, true); layout(); });
