@@ -1253,3 +1253,13 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 .matte .sheen { opacity: .6; }
 /* in a pile, a book's turned-away cover would cover the book beneath it: only the spine you see takes the tap */
 .slot.lying > * { pointer-events: none; }
+/* the top cover of a pile: a narrow plane leaning away, lit from above, darker at the back */
+.pileTop { position: absolute; left: 0; bottom: 0; z-index: 1; pointer-events: none;
+  margin-bottom: -1px; border-radius: 2px 2px 0 0;
+  clip-path: polygon(2.5% 0, 97.5% 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.12) 55%, rgba(255,255,255,.14) 92%, rgba(0,0,0,.25)), var(--c, #333); }
+/* objects get a firmer contact shadow: dark right under the base, softer around it */
+.ornament::after { bottom: -4px; height: 9px; left: 4%; right: 4%;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.62) 0, rgba(0,0,0,.3) 45%, transparent 72%); }
+.ornament.onPile::after { bottom: -3px; height: 7px; left: 2%; right: 2%;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.7) 0, rgba(0,0,0,.35) 45%, transparent 75%); }

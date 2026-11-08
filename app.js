@@ -827,7 +827,7 @@
     let orns = []; // { it, el, w, idx, x, t }
     let bookPos = []; // left edge of each slot as last laid out
     let drag = null;
-    let pileSpans = []; // where each pile of lying books is, as last laid out
+    let pileSpans = [], pileTops = []; // where each pile of lying books is, as last laid out
     let userMoved = false; // books only make a sound when you move them, not when the page lays out
     books.forEach((b, i) => {
       const slot = h(`<button type="button" class="slot" tabindex="-1"></button>`);
@@ -1139,7 +1139,7 @@
           slot.style.transformOrigin = "50% 50%";
           slot.style.transform = `translate3d(${(cx - W / 2).toFixed(1)}px,${(h_ / 2 - cy).toFixed(1)}px,0) rotate(${(-90 * (1 - open)).toFixed(2)}deg)`;
           slot.classList.add("lying");
-          if (i === g.end) pileAt.set(g, { cx: g.L + g.S / 2, top: g.y });
+          if (i === g.end) pileAt.set(g, { cx: lyX + h_ / 2, top: g.y, x: lyX, w: h_, c: books[i].spineColor });
         } else if (pose === "lean") {
           // resting on its bottom corner with its top against the neighbour; it straightens up as it turns to you
           const p = LEAN * (1 - open), W = base[i], h_ = dm[i].h, toLeft = i > 0;
@@ -1154,13 +1154,24 @@
         if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", 1 - open);
       }
       while (k < orns.length) { const o = orns[k++]; if (!onPile.has(o)) placeOrn(o); }
-      // objects on a pile sit on its top book, side by side if there are several
+      // the top cover of each pile, seen a little from above, so things have a surface to stand on
+      const TOPF = Math.max(6, Math.round(H * 0.036));
+      groups.forEach((g, n) => {
+        const p = pileAt.get(g);
+        let el = pileTops[n];
+        if (!el) { el = h(`<span class="pileTop"></span>`); stage.append(el); pileTops[n] = el; }
+        if (!p) { el.hidden = true; return; }
+        el.hidden = false;
+        el.style.cssText = `width:${p.w.toFixed(1)}px;height:${TOPF}px;--c:${p.c};transform:translate3d(${p.x.toFixed(1)}px,${(-p.top).toFixed(1)}px,0)`;
+      });
+      pileTops.splice(groups.length).forEach((el) => el.remove());
+      // objects on a pile stand on its top cover, side by side if there are several, and never past its edges
       for (const g of groups) {
         const p = pileAt.get(g), list = pileOrns.get(g) || [];
         if (!p) continue;
         const tw = list.reduce((s, o) => s + o.vis + 4, -4);
-        let cx = p.cx - tw / 2;
-        for (const o of list) { placeOrn(o, p.top, cx + o.vis / 2); cx += o.vis + 4; }
+        let cx = Math.max(p.x, Math.min(p.x + p.w - tw, p.cx - tw / 2));
+        for (const o of list) { placeOrn(o, p.top + TOPF * 0.15, cx + o.vis / 2); cx += o.vis + 4; }
       }
       pileSpans = groups.map((g) => ({ s: g.start, e: g.end, L: g.L, R: g.L + g.S }));
       if (webs.length) placeWebs();
