@@ -17,6 +17,7 @@
   };
   const rng = (seed) => () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
   const f1 = (n) => Math.round(n * 10) / 10;
+  const f2 = (n) => Math.round(n * 100) / 100;
   const SVG = (body, defs = "", align = "xMidYMid") => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 860" preserveAspectRatio="${align} slice"><defs>${defs}</defs>${body}</svg>`;
 
   // ------------------------------------------------------------------ old leather books on a shelf
@@ -1045,21 +1046,18 @@
   // ------------------------------------------------------------------ painted rooms: osamu's illustrations are the rooms now.
   // The picture carries everything that stands still; only moving parts stay as fx. Pieces that must sit on a spot in the
   // picture go in a .paintBox, a box with the picture's own shape, scaled and centred exactly like the cover background.
-  const box = (inner, r = 0.4242) => `<div class="paintBox" style="--r:${r}">${inner}</div>`;
+  const box = (inner, r = 0.4242, cls = "") => `<div class="paintBox ${cls}" style="--r:${r}">${inner}</div>`;
   FX.paintedFire = () => {
-    const R = rng(19);
-    const flames = [[200, 1.25, "#ff6a10"], [160, 0.95, "#ff5a0c"], [240, 1, "#ff6a14"], [128, 0.7, "#ff7a1a"], [272, 0.72, "#ff7a1a"], [200, 0.85, "#ffb030"], [178, 0.6, "#ffd36a"], [222, 0.62, "#ffd36a"], [200, 0.42, "#fff0b0"]]
-      .map(([x, sc, c], i) => `<path class="fl" style="--d:-${(i * 0.23).toFixed(2)}s;--t:${(0.9 + (i % 3) * 0.25).toFixed(2)}s" d="M${x - 30 * sc} 196 C${x - 40 * sc} ${196 - 50 * sc} ${x - 12 * sc} ${196 - 80 * sc} ${x} ${196 - 120 * sc} C${x + 6 * sc} ${196 - 80 * sc} ${x + 40 * sc} ${196 - 60 * sc} ${x + 30 * sc} 196Z" fill="${c}"/>`).join("");
-    let sparks = ""; for (let i = 0; i < 10; i++) sparks += `<i class="spark" style="left:${f1(35 + R() * 30)}%;--t:${f1(2 + R() * 2.4)}s;--d:-${f1(R() * 4)}s;--dx:${f1((R() - 0.5) * 50)}px"></i>`;
-    return box(`<div class="fxHearth painted"><div class="fireGlow"></div><svg viewBox="80 70 240 130" preserveAspectRatio="none" aria-hidden="true"><g class="flames">${flames}</g></svg>${sparks}</div>`);
+    // many small soft tongues with a hot base and a fading tip, rising between the logs; all kept inside the firebox
+    const R = rng(19); let flames = "";
+    for (let i = 0; i < 17; i++) {
+      const x = 75 + R() * 150, mid = 1 - Math.abs(x - 150) / 95, h = 26 + mid * 50 + R() * 20, w = 9 + R() * 8 + mid * 5, y0 = 78 + R() * 14 - mid * 8;
+      flames += `<path class="fl" style="--d:-${f1(R() * 2)}s;--t:${f2(0.45 + R() * 0.5)}s" d="M${f1(x - w)} ${f1(y0)} C${f1(x - w * 1.1)} ${f1(y0 - h * 0.45)} ${f1(x - w * 0.25)} ${f1(y0 - h * 0.7)} ${f1(x + (R() - 0.5) * 8)} ${f1(y0 - h)} C${f1(x + w * 0.3)} ${f1(y0 - h * 0.65)} ${f1(x + w * 1.1)} ${f1(y0 - h * 0.45)} ${f1(x + w)} ${f1(y0)}Z" fill="url(#pfG${i % 3})" opacity="${f2(0.55 + R() * 0.4)}"/>`;
+    }
+    const grad = (id, a, b) => `<linearGradient id="${id}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff2c0" stop-opacity="0"/><stop offset=".12" stop-color="#fff2c0" stop-opacity=".85"/><stop offset=".3" stop-color="${a}"/><stop offset=".6" stop-color="${b}" stop-opacity=".75"/><stop offset="1" stop-color="#c02800" stop-opacity="0"/></linearGradient>`;
+    let sparks = ""; for (let i = 0; i < 8; i++) sparks += `<i class="spark" style="left:${f1(38 + R() * 24)}%;--t:${f1(1.6 + R() * 1.8)}s;--d:-${f1(R() * 4)}s;--dx:${f1((R() - 0.5) * 30)}px"></i>`;
+    return box(`<div class="fxHearth painted"><div class="fireGlow"></div><svg viewBox="0 0 300 140" preserveAspectRatio="none" aria-hidden="true"><defs>${grad("pfG0", "#ffc04a", "#ff6a10")}${grad("pfG1", "#ffd36a", "#ff7a1a")}${grad("pfG2", "#ffb030", "#ff5a0c")}</defs><g class="flames">${flames}</g></svg>${sparks}</div>`, 0.4242, "bottom");
   };
-  FX.paintedRain = () => {
-    const R = rng(12); let drops = ""; for (let i = 0; i < 90; i++) drops += `<i class="drop" style="left:${f1(R() * 100)}%;--t:${f1(0.7 + R() * 0.9)}s;--d:-${f1(R() * 2)}s;--h:${f1(10 + R() * 18)}px"></i>`;
-    let beads = ""; for (let i = 0; i < 34; i++) beads += `<i class="bead" style="left:${f1(R() * 96)}%;top:${f1(4 + R() * 90)}%;--t:${f1(5 + R() * 8)}s;--d:-${f1(R() * 10)}s"></i>`;
-    return box(`<div class="fxWindow painted"><div class="pane">${drops}</div></div>`);
-  };
-  // a spider that now and then crosses the witch's tower wall (webs.js walks it)
-  FX.wallSpider = () => { setTimeout(() => window.ShelfSpider && window.ShelfSpider.start(), 0); return box(`<div class="wallSpider" aria-hidden="true"></div>`); };
   FX.paintedFireworks = () => { setTimeout(startFireworks, 0); return box(`<canvas class="fxFireworks painted" aria-hidden="true"></canvas>`); };
   // red eyes in the vampire's mirror: now and then a face leans close behind the glass. The eyes open, look about,
   // blink naturally a couple of times, then close and sink back into the dark.
@@ -1075,12 +1073,12 @@
     return box(`${wins}<div class="loftSky"><i class="plane"><b class="nav"></b><b class="beacon"></b><b class="strobe"></b></i></div>`);
   };
   const PAINTED = {
-    libraryStacks: ["library", "dust", 0.4619], cabinNight: ["cabin", "paintedFire"], loftDusk: ["loft", "glowmotes loftLife"], galleryWall: ["candle", ""],
+    libraryStacks: ["library", "dust", 0.4619], cabinNight: ["cabin2", "paintedFire", 0, "bottom"], loftDusk: ["loft", "glowmotes loftLife"], galleryWall: ["candle", ""],
     teaNight: ["teahouse", "petals paintedFireworks"], castleIvy: ["castle", "fog"], vampireMirror: ["vampire", "fog mirrorEyes vampGloom"], study: ["academia", "paintedRain"],
     cottageRoses: ["cottage", ""], greenDamask: ["victorian", ""], damask: ["bordello", ""], enchanted: ["forest", "motes fogThick"],
     witchTower: ["witch", "witchMotes wallSpider"], goldenHour: ["nook", ""],
   };
-  for (const [key, [file, fx]] of Object.entries(PAINTED)) if (D.BACKDROPS[key]) Object.assign(D.BACKDROPS[key], { fx, css: () => `url('bg/${file}.jpg?v=1') center / cover no-repeat, #120a08` });
+  for (const [key, [file, fx, , pos]] of Object.entries(PAINTED)) if (D.BACKDROPS[key]) Object.assign(D.BACKDROPS[key], { fx, css: () => `url('bg/${file}.jpg?v=1') center ${pos || "center"} / cover no-repeat, #120a08` });
   const baseFx = D.backdropFx;
   D.backdropFx = (kinds) => String(kinds).split(" ").map((k) => (FX[k] ? FX[k]() : baseFx(k))).join("");
 })();
