@@ -810,6 +810,9 @@
     addLights(root);
     const count = books.length + (opts.onAdd ? 1 : 0);
     let H = 246, STEP = 103, viewW = 0, PAD = 16, front = -1, raf = 0;
+    // one step of empty scroll before the first book and after the last: swiping past either end turns that book back, spine out
+    // panX: how far two fingers have slid the row by hand, without turning any book
+    let panX = 0, curOffset = 0, twoF = null, panEase = 0;
     const slots = [], bookNodes = [];
     // decorations stand in the row between books and get pushed along when a book turns.
     // hold one to lift it and move it anywhere on the shelf, or onto the bin to take it away.
@@ -835,10 +838,10 @@
       H = viewW < 560 ? 196 : 246;
       STEP = Math.round(H * 0.42);
       root.style.setProperty("--shelf-h", H + "px");
-      track.style.width = (count - 1) * STEP + viewW + "px";
+      track.style.width = (count + 1) * STEP + viewW + "px";
       stage.style.width = viewW + "px";
       track.querySelectorAll(".snap").forEach((n) => n.remove());
-      for (let i = 0; i < count; i++) { const s = h(`<span class="snap"></span>`); s.style.left = i * STEP + "px"; track.prepend(s); }
+      for (let i = 0; i <= count + 1; i++) { const s = h(`<span class="snap"></span>`); s.style.left = i * STEP + "px"; track.prepend(s); }
       books.forEach((b, i) => {
         const node = bookEl(b, H); bookNodes[i] = node;
         slots[i].replaceChildren(node);
@@ -875,17 +878,17 @@
       if (endEl) { stage.append(endEl); webs.push({ el: endEl, i: last, w: 50, end: true, bottom: 0, rest: null }); }
       const dr = W.make(`${key}:drape`, "drape", 84, 26, false);
       if (dr) { dr.style.left = Math.round(viewW * (0.22 + (hash(key.length * 13) % 40) / 100)) + "px"; hangLayer.append(dr); webs.push({ el: dr, hang: true }); }
-      clearTimeout(websArmed); websArmed = setTimeout(() => webs.forEach((w) => (w.rest = w.x)), 900);
+      clearTimeout(websArmed); websArmed = setTimeout(() => webs.forEach((w) => (w.rest = w.rel)), 900);
     }
     function placeWebs() {
       for (const w of webs) {
         if (w.hang || w.el._torn || !bookPos[w.i]) continue;
         const p = bookPos[w.i], right = p.c * 2 - p.l;
         const x = w.end ? right : w.flip ? (bookPos[w.i + 1] ? bookPos[w.i + 1].l : right) - w.w : right;
-        w.x = x;
+        w.x = x; w.rel = x + curOffset;
         w.el.style.bottom = w.bottom + "px";
         w.el.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`;
-        if (w.rest != null && Math.abs(x - w.rest) > 2) window.ShelfWebs.tear(w.el);
+        if (w.rest != null && Math.abs(w.rel - w.rest) > 2) window.ShelfWebs.tear(w.el);
       }
     }
 
@@ -1020,12 +1023,13 @@
 
     function layout() {
       if (!viewW) return;
-      const f = Math.max(0, Math.min(count - 1, scroller.scrollLeft / STEP));
+      const g = Math.max(-1, Math.min(count, scroller.scrollLeft / STEP - 1)); // -1 and count: every book spine out
+      const f = Math.max(0, Math.min(count - 1, g));
       // each book: how open it is (0 spine out, 1 turned to show its cover), its width as seen, and its pose
       const opens = [], base = [], poses = [], dm = [];
       for (let i = 0; i < count; i++) {
         const b = books[i];
-        const o = Math.max(0, Math.min(1, 1 - Math.abs(i - f)));
+        const o = Math.max(0, Math.min(1, 1 - Math.abs(i - g)));
         const open = o * o * (3 - 2 * o);
         opens.push(open);
         if (!b) { base.push(30); poses.push("stand"); dm.push(null); continue; }
@@ -1069,7 +1073,9 @@
       let ornTotal = 0;
       for (const o of orns) { openAt += ornW(o) * Math.max(0, Math.min(1, f - (o.idx - 1))); ornTotal += ornW(o); }
       const total = widths.reduce((s, v) => s + v, 0) + ornTotal;
-      const offset = Math.max(0, Math.min(Math.max(0, total - (viewW - PAD * 2)), openAt - viewW * 0.3));
+      const maxOff = Math.max(0, total - (viewW - PAD * 2)), off0 = Math.max(0, Math.min(maxOff, openAt - viewW * 0.3));
+      const offset = Math.max(0, Math.min(maxOff, off0 + panX));
+      panX = offset - off0; curOffset = offset;
       let x = 0, k = 0;
       const placeOrn = (o, lift = 0, cx = null) => {
         const left = cx != null ? cx - o.vis / 2 : o.hang ? PAD + x - offset - o.vis / 2 : PAD + x - offset + 5;
@@ -1133,13 +1139,14 @@
         for (const o of list) { placeOrn(o, p.top, cx + o.vis / 2); cx += o.vis + 4; }
       }
       if (webs.length) placeWebs();
-      const n = Math.min(Math.round(f), books.length - 1);
-      if (n !== front) { if (front >= 0 && !drag && userMoved) soundBookSlide(); front = n; scrollMemory.set(key, n); slots.forEach((s, i) => s.classList.toggle("front", i === n)); drawCaption(); }
+      let n = Math.round(g); if (n < 0 || n > count - 1) n = -1; n = Math.min(n, books.length - 1);
+      if (n !== front) { if (front >= 0 && !drag && userMoved) soundBookSlide(); front = n; if (n >= 0) scrollMemory.set(key, n); slots.forEach((s, i) => s.classList.toggle("front", i === n)); drawCaption(); }
     }
 
     function drawCaption() {
       const b = books[front];
       caption.replaceChildren();
+      if (!b && books.length) { caption.append(h(`<span class="hint">Swipe to pick a book</span>`)); return; }
       if (!b) { caption.append(h(`<span class="hint">${esc(opts.empty || "Add a book to start this shelf.")}</span>`)); return; }
       const main = h(`<button type="button" class="capMain"><span class="capTitle">${esc(b.title)}</span><span class="capMeta"><span>${esc(b.author)}</span></span></button>`);
       if (b.rating) main.querySelector(".capMeta").append(starsEl(b.rating, null, 12));
@@ -1162,15 +1169,51 @@
 
     function goTo(i, instant) {
       const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (!instant) userMoved = true;
-      scroller.scrollTo({ left: Math.max(0, Math.min(count - 1, i)) * STEP, behavior: instant || reduce ? "auto" : "smooth" });
+      if (!instant) { userMoved = true; easePanHome(); }
+      scroller.scrollTo({ left: (Math.max(0, Math.min(count - 1, i)) + 1) * STEP, behavior: instant || reduce ? "auto" : "smooth" });
     }
 
     ["pointerdown", "wheel", "keydown"].forEach((ev) => scroller.addEventListener(ev, () => (userMoved = true), { passive: true }));
     scroller.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(layout); }, { passive: true });
+    // two fingers slide the row to look along it; the books stay as they are. One finger turns them again.
+    function easePanHome() {
+      if (!panX || panEase) return;
+      const from = panX, t0 = performance.now();
+      const step = (t) => {
+        const k = Math.min(1, (t - t0) / 380), e = 1 - Math.pow(1 - k, 3);
+        panX = from * (1 - e); layout();
+        panEase = k < 1 ? requestAnimationFrame(step) : 0;
+      };
+      panEase = requestAnimationFrame(step);
+    }
+    const avgX = (e) => (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    scroller.addEventListener("touchstart", (e) => {
+      if (e.touches.length < 2 || drag) return;
+      cancelAnimationFrame(panEase); panEase = 0;
+      twoF = { x: avgX(e), p: panX, sl: scroller.scrollLeft };
+      scroller.style.overflowX = "hidden"; // stop the scroll the first finger may have started
+    }, { passive: false });
+    scroller.addEventListener("touchmove", (e) => {
+      if (twoF) {
+        if (e.cancelable) e.preventDefault();
+        if (e.touches.length >= 2) { panX = twoF.p - (avgX(e) - twoF.x); cancelAnimationFrame(raf); raf = requestAnimationFrame(layout); }
+        return;
+      }
+      if (e.touches.length === 1 && panX) easePanHome();
+    }, { passive: false });
+    const twoEnd = (e) => {
+      if (!twoF || e.touches.length) return;
+      const sl = twoF.sl; twoF = null;
+      scroller.style.overflowX = "";
+      scroller.scrollLeft = Math.round(sl / STEP) * STEP;
+    };
+    scroller.addEventListener("touchend", twoEnd);
+    scroller.addEventListener("touchcancel", twoEnd);
+    scroller.addEventListener("wheel", () => { if (panX) easePanHome(); }, { passive: true });
     scroller.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowRight") { e.preventDefault(); goTo(front + 1); }
-      else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(front - 1); }
+      const at = front >= 0 ? front : scroller.scrollLeft < STEP / 2 ? -1 : count;
+      if (e.key === "ArrowRight") { e.preventDefault(); goTo(at + 1); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(at - 1); }
       else if (e.key === "Enter" && books[front]) openBook(books[front].id);
     });
     const ro = new ResizeObserver(() => { const keep = front < 0 ? scrollMemory.get(key) || 0 : front; build(); front = -1; goTo(keep, true); layout(); });
