@@ -262,6 +262,27 @@
       };
       next(rnd(2500, 5000));
     },
+    /** One whole recording once, then only a chosen part of it now and then, far apart (the tea: blow and sip). */
+    ritual(R, firstUrl, againUrl, level, firstAt, minGap, maxGap) {
+      let dead = false, done = false; R.onStop(() => (dead = true));
+      [firstUrl, againUrl].forEach(loadFile);
+      const next = (ms) => R.shared.timers.push(setTimeout(play, ms));
+      const play = () => {
+        if (dead) return;
+        if (ctx.state !== "running" || document.hidden) { next(4000); return; }
+        const url = done ? againUrl : firstUrl; done = true;
+        loadFile(url).then((buf) => {
+          if (dead) return;
+          if (!buf) { next(minGap); return; }
+          const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = buf; g.gain.value = level;
+          const p = R.pan(rnd(-0.15, 0.15));
+          s.connect(g).connect(p || R.out);
+          s.start(ctx.currentTime + 0.05); R.shared.nodes.push(s);
+          next(buf.duration * 1000 + rnd(minGap, maxGap));
+        });
+      };
+      next(firstAt);
+    },
     drone(R) {
       const lp = R.filter("lowpass", 220); lp.connect(R.out);
       const oscs = [55, 55.4, 82.4].map((f) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sawtooth"; o.frequency.value = f; g.gain.value = 0.02; o.connect(g).connect(lp); o.start(); return o; });
@@ -383,7 +404,10 @@
     castle: [["wind", "Wind", (R) => S.bed(R, "sounds/castle/wind.mp3", 0.6)], ["crackle", "Crackling", (R) => S.bed(R, "sounds/castle/crackle.mp3", 0.55)], ["music", "Music", (R) => S.bed(R, "sounds/castle/music.mp3", 0.36)]],
     bordello: [["bed", "Room", (R) => S.bed(R, "sounds/bordello/room.mp3", 0.6)], ["music", "Music", (R) => S.bed(R, "sounds/bordello/music.mp3", 0.38)]],
     forest: [["bed", "Night", (R) => S.bed(R, "sounds/forest/night.mp3", 0.6)], ["music", "Music", (R) => S.bed(R, "sounds/forest/music.mp3", 0.35)], ["sparkle", "Magic", (R) => S.bed(R, "sounds/forest/magic.mp3", 0.7)]],
-    teahouse: [["water", "Stream", (R) => S.water(R)], ["chimes", "Wind chimes", (R) => S.chimes(R)], ["crickets", "Crickets", (R) => S.crickets(R, 0.4)], ["fireworks", "Fireworks", (R) => S.fireworks(R)]],
+    // osamu's tea: the whole cup once, then only the blow and the sip, now and then
+    teahouse: [["bed", "Night", (R) => S.bed(R, "sounds/teahouse/night.mp3", 0.75)], ["music", "Music", (R) => S.bed(R, "sounds/teahouse/music.mp3", 0.45)],
+      ["tea", "Tea", (R) => S.ritual(R, "sounds/teahouse/tea_full.mp3", "sounds/teahouse/tea_bs.mp3", 0.8, rnd(6000, 12000), 70000, 150000)],
+      ["fireworks", "Fireworks", (R) => S.fireworks(R)]],
     // a quiet room, and music playing somewhere further off: muffled, with the room's echo on it
     candle: [["bed", "Room", (R) => S.bed(R, "sounds/candle/room.mp3", 0.7)], ["music", "Music", (R) => S.bed(R, "sounds/candle/music.mp3", 0.42)]],
     witch: [["pot", "Bubbling pot", (R) => S.bed(R, "sounds/witch/pot.mp3", 0.6)], ["music", "Music", (R) => S.bed(R, "sounds/witch/music.mp3", 0.3)],
