@@ -550,7 +550,7 @@
   }
   function setDecorItems(key, items) {
     const dz = shelfDecor(key), byLook = { ...(dz.byLook || {}) };
-    byLook[lookId()] = items.map(({ id, kind, after, on }) => ({ id, kind, after, on }));
+    byLook[lookId()] = items.map(({ id, kind, after, on, top }) => (top === undefined ? { id, kind, after, on } : { id, kind, after, on, top }));
     setShelfDecor(key, { byLook, items: undefined });
   }
   function resolveKind(kind, idx) {
@@ -827,6 +827,7 @@
     let orns = []; // { it, el, w, idx, x, t }
     let bookPos = []; // left edge of each slot as last laid out
     let drag = null;
+    let pileSpans = []; // where each pile of lying books is, as last laid out
     let userMoved = false; // books only make a sound when you move them, not when the page lays out
     books.forEach((b, i) => {
       const slot = h(`<button type="button" class="slot" tabindex="-1"></button>`);
@@ -994,9 +995,16 @@
       const left = drag.cx - sr.left - drag.gx, mid = left + o.vis / 2;
       drag.ghost.style.transform = `translate3d(${drag.cx - drag.gx}px,${drag.cy - drag.gy}px,0)`;
       // the gap goes before the first book whose middle is still to the right of the object
-      let idx = 0;
-      for (let i = 0; i < books.length; i++) if (bookPos[i] != null && bookPos[i].c < mid) idx = i + 1;
-      if (idx !== o.idx) { o.idx = idx; sortOrns(); }
+      let idx = 0, top = false;
+      // held over a pile it goes on top; beside a pile it stands on the shelf
+      const pile = o.hang ? null : pileSpans.find((p) => p.L != null && mid > p.L + 3 && mid < p.R - 3);
+      if (pile) { idx = pile.e + 1; top = true; }
+      else {
+        for (let i = 0; i < books.length; i++) if (bookPos[i] != null && bookPos[i].c < mid) idx = i + 1;
+        const p = pileSpans.find((p) => idx > p.s && idx <= p.e);
+        if (p) idx = mid < (p.L + p.R) / 2 ? p.s : p.e + 1;
+      }
+      if (idx !== o.idx || top !== o.it.top) { o.idx = idx; o.it.top = top; sortOrns(); }
       drag.over = binHit(drag.cx, drag.cy);
       bin.classList.toggle("over", drag.over);
       drag.ghost.classList.toggle("binning", drag.over);
@@ -1047,18 +1055,26 @@
         poses.push(b.pose === "lean" || b.pose === "lie" ? b.pose : "stand");
       }
       // an object right after a lying book sits on top of that pile instead of taking room in the row
-      const ornAfter = new Map(); // book index -> objects placed right after it
-      for (const o of orns) { if (!o.hang && o.idx > 0) { const arr = ornAfter.get(o.idx - 1) || []; arr.push(o); ornAfter.set(o.idx - 1, arr); } }
-      // lying books next to each other make a pile; a pile ends where an object sits on it
+      // lying books next to each other make one pile; objects never split it
       const groups = []; // {start, end} of piles
       for (let i = 0; i < books.length; i++) {
         if (poses[i] !== "lie") continue;
         const g = groups[groups.length - 1];
-        if (g && g.end === i - 1 && poses[i - 1] === "lie" && !ornAfter.has(i - 1)) g.end = i; else groups.push({ start: i, end: i });
+        if (g && g.end === i - 1) g.end = i; else groups.push({ start: i, end: i });
       }
       const groupOf = new Map(); groups.forEach((g) => { for (let i = g.start; i <= g.end; i++) groupOf.set(i, g); });
-      const onPile = new Set(); // objects resting on a pile
-      for (const g of groups) for (const o of ornAfter.get(g.end) || []) onPile.add(o);
+      // an object sits on top of a pile when it was put there (it.top); one placed after a lying book before
+      // this choice existed stays on top too. Anything else stands on the shelf beside the pile.
+      const onPile = new Set(), pileOrns = new Map(); // group -> objects on it
+      for (const o of orns) {
+        if (o.hang || o.idx < 1) continue;
+        const g = groupOf.get(o.idx - 1);
+        if (!g) continue;
+        const inside = o.idx - 1 < g.end; // between two books of the pile: it can only be on top
+        if (inside || o.it.top === true || (o.it.top === undefined && o.idx - 1 === g.end)) {
+          onPile.add(o); if (!pileOrns.has(g)) pileOrns.set(g, []); pileOrns.get(g).push(o);
+        }
+      }
       const LEAN = (16 * Math.PI) / 180;
       // how much room each book takes in the row
       const widths = [];
@@ -1140,12 +1156,13 @@
       while (k < orns.length) { const o = orns[k++]; if (!onPile.has(o)) placeOrn(o); }
       // objects on a pile sit on its top book, side by side if there are several
       for (const g of groups) {
-        const p = pileAt.get(g), list = ornAfter.get(g.end) || [];
+        const p = pileAt.get(g), list = pileOrns.get(g) || [];
         if (!p) continue;
         const tw = list.reduce((s, o) => s + o.vis + 4, -4);
         let cx = p.cx - tw / 2;
         for (const o of list) { placeOrn(o, p.top, cx + o.vis / 2); cx += o.vis + 4; }
       }
+      pileSpans = groups.map((g) => ({ s: g.start, e: g.end, L: g.L, R: g.L + g.S }));
       if (webs.length) placeWebs();
       let n = Math.round(g); if (n < 0 || n > count - 1) n = -1; n = Math.min(n, books.length - 1);
       if (n >= 0 && lyingAt(n)) n = front; // passing over a lying book picks nothing and makes no sound
