@@ -847,6 +847,44 @@
       const plank = root.querySelector(".plank");
       hangLayer.style.left = scroller.offsetLeft + "px"; hangLayer.style.top = plank.offsetTop + "px"; hangLayer.style.width = viewW + "px";
       buildOrns();
+      buildWebs();
+    }
+
+    // the witch's tower gathers cobwebs: in corners between a short book and a taller one, against the last book,
+    // and draped under the shelf edge. A book moving tears the webs touching it; a tap brushes one away.
+    let webs = [], websArmed = 0;
+    function buildWebs() {
+      webs.forEach((w) => w.el.remove()); webs = [];
+      if (lookId() !== "witch" || !window.ShelfWebs || !books.length) return;
+      const W = window.ShelfWebs;
+      const used = new Set();
+      for (let i = 0; i < books.length - 1; i++) {
+        const a = books[i], b = books[i + 1], ha = dims(a, H).h, hb = dims(b, H).h, diff = Math.abs(ha - hb);
+        const flip = ha < hb; // the web sits on the shorter book, its corner against the taller one
+        const on = flip ? i : i + 1;
+        if (diff < 14 || used.has(on) || hash(a.id * 7 + b.id) % 3 === 2) continue;
+        used.add(on);
+        const span = dims(books[on], H).d + 1;
+        const w = Math.round(Math.min(span, 58, 26 + diff * 0.7 + (hash(a.id) % 14))), hh = Math.round(Math.min(diff - 2, w * 0.95));
+        const el = W.make(`${key}:${a.id}-${b.id}`, "corner", w, hh, flip);
+        if (el) { stage.append(el); webs.push({ el, i, w, flip, bottom: Math.min(ha, hb), rest: null }); }
+      }
+      const last = books.length - 1, endEl = W.make(`${key}:end:${books[last].id}`, "corner", 50, 46, false);
+      if (endEl) { stage.append(endEl); webs.push({ el: endEl, i: last, w: 50, end: true, bottom: 0, rest: null }); }
+      const dr = W.make(`${key}:drape`, "drape", 84, 26, false);
+      if (dr) { dr.style.left = Math.round(viewW * (0.22 + (hash(key.length * 13) % 40) / 100)) + "px"; hangLayer.append(dr); webs.push({ el: dr, hang: true }); }
+      clearTimeout(websArmed); websArmed = setTimeout(() => webs.forEach((w) => (w.rest = w.x)), 900);
+    }
+    function placeWebs() {
+      for (const w of webs) {
+        if (w.hang || w.el._torn || !bookPos[w.i]) continue;
+        const p = bookPos[w.i], right = p.c * 2 - p.l;
+        const x = w.end ? right : w.flip ? (bookPos[w.i + 1] ? bookPos[w.i + 1].l : right) - w.w : right;
+        w.x = x;
+        w.el.style.bottom = w.bottom + "px";
+        w.el.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`;
+        if (w.rest != null && Math.abs(x - w.rest) > 2) window.ShelfWebs.tear(w.el);
+      }
     }
 
     function idxOf(it) {
@@ -1026,6 +1064,7 @@
         if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", turns[i]);
       }
       while (k < orns.length) placeOrn(orns[k++]);
+      if (webs.length) placeWebs();
       const n = Math.min(Math.round(f), books.length - 1);
       if (n !== front) { if (front >= 0 && !drag && userMoved) soundBookSlide(); front = n; scrollMemory.set(key, n); slots.forEach((s, i) => s.classList.toggle("front", i === n)); drawCaption(); }
     }

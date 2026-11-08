@@ -1185,3 +1185,29 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 .ornament.dipNow .qRipple { animation: qRipple 2.8s ease-out; }
 @keyframes qRipple { 0%, 87% { opacity: 0; transform: scale(.4); } 89% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(3.6); } }
 @media (prefers-reduced-motion: reduce) { .ornament[data-kind="quillInk"] .qFloat { animation: none; } }
+/* cobwebs (witch's tower) */
+.web { position: absolute; left: 0; z-index: 4; pointer-events: auto; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.stage .web { bottom: 0; }
+.web svg { display: block; overflow: visible; filter: drop-shadow(0 0 1px rgba(0,0,0,.6)); }
+.web.flip svg { transform: scaleX(-1); }
+.web .wSway { transform-box: view-box; animation: webSway var(--t) ease-in-out infinite alternate; }
+.web.corner .wSway { transform-origin: 0 100%; }
+.web.drape .wSway { transform-origin: 50% 0; animation-name: drapeSway; }
+@keyframes webSway { from { transform: skew(-1.2deg, .6deg) scale(1); } to { transform: skew(1.4deg, -.8deg) scale(1.015, .99); } }
+@keyframes drapeSway { from { transform: rotate(-1.6deg) scaleY(1); } to { transform: rotate(1.8deg) scaleY(1.04); } }
+.web .dangle { transform-box: fill-box; transform-origin: 50% 0; animation: dangle 3.4s ease-in-out infinite alternate; animation-delay: var(--d); }
+@keyframes dangle { from { transform: rotate(-6deg); } to { transform: rotate(7deg); } }
+.web .glint { opacity: 0; animation: webGlint 7s ease-in-out infinite; }
+@keyframes webGlint { 0%, 78%, 100% { opacity: 0; } 86% { opacity: .55; } }
+.hangLayer .web { top: 0; }
+.web.tearing { pointer-events: none; }
+.web.tearing .wSway { animation: none; }
+@media (prefers-reduced-motion: reduce) { .web .wSway, .web .dangle, .web .glint { animation: none; } }
+/* the spider on the witch's tower wall */
+#backdrop .wallSpider { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+#backdrop .spider { position: absolute; left: 0; top: 0; width: 34px; height: 34px; will-change: transform; filter: drop-shadow(1px 2px 1.5px rgba(0,0,0,.55)); }
+#backdrop .spider svg { display: block; }
+#backdrop .spider .legsA, #backdrop .spider .legsB { transform-box: view-box; transform-origin: 0 0; }
+#backdrop .spider.walking .legsA { animation: legs .2s ease-in-out infinite alternate; }
+#backdrop .spider.walking .legsB { animation: legs .2s ease-in-out infinite alternate-reverse; }
+@keyframes legs { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }

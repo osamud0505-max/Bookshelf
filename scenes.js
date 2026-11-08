@@ -1023,6 +1023,8 @@
     let beads = ""; for (let i = 0; i < 34; i++) beads += `<i class="bead" style="left:${f1(R() * 96)}%;top:${f1(4 + R() * 90)}%;--t:${f1(5 + R() * 8)}s;--d:-${f1(R() * 10)}s"></i>`;
     return box(`<div class="fxWindow painted"><div class="pane">${drops}</div></div>`);
   };
+  // a spider that now and then crosses the witch's tower wall (webs.js walks it)
+  FX.wallSpider = () => { setTimeout(() => window.ShelfSpider && window.ShelfSpider.start(), 0); return `<div class="wallSpider" aria-hidden="true"></div>`; };
   FX.paintedFireworks = () => { setTimeout(startFireworks, 0); return box(`<canvas class="fxFireworks painted" aria-hidden="true"></canvas>`); };
   // red eyes in the vampire's mirror: now and then a face leans close behind the glass. The eyes open, look about,
   // blink naturally a couple of times, then close and sink back into the dark.
@@ -1041,7 +1043,7 @@
     libraryStacks: ["library", "dust", 0.4619], cabinNight: ["cabin", "paintedFire"], loftDusk: ["loft", "glowmotes loftLife"], galleryWall: ["candle", ""],
     teaNight: ["teahouse", "petals paintedFireworks"], castleIvy: ["castle", "fog"], vampireMirror: ["vampire", "fog mirrorEyes vampGloom"], study: ["academia", "paintedRain"],
     cottageRoses: ["cottage", ""], greenDamask: ["victorian", ""], damask: ["bordello", ""], enchanted: ["forest", "motes fogThick"],
-    witchTower: ["witch", "witchMotes"], goldenHour: ["nook", ""],
+    witchTower: ["witch", "witchMotes wallSpider"], goldenHour: ["nook", ""],
   };
   for (const [key, [file, fx]] of Object.entries(PAINTED)) if (D.BACKDROPS[key]) Object.assign(D.BACKDROPS[key], { fx, css: () => `url('bg/${file}.jpg?v=1') center / cover no-repeat, #120a08` });
   const baseFx = D.backdropFx;
