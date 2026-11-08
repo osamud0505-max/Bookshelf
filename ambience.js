@@ -262,20 +262,22 @@
       };
       next(rnd(2500, 5000));
     },
-    /** One whole recording once, then only a chosen part of it now and then, far apart (the tea: blow and sip). */
-    ritual(R, firstUrl, againUrl, level, firstAt, minGap, maxGap) {
-      let dead = false, done = false; R.onStop(() => (dead = true));
-      [firstUrl, againUrl].forEach(loadFile);
+    /** One whole recording once, then the shorter takes in turn (never the same twice running), always well apart. */
+    ritual(R, firstUrl, againUrls, level, firstAt, minGap, maxGap) {
+      let dead = false, done = false, last = -1; R.onStop(() => (dead = true));
+      [firstUrl, ...againUrls].forEach(loadFile);
       const next = (ms) => R.shared.timers.push(setTimeout(play, ms));
       const play = () => {
         if (dead) return;
         if (ctx.state !== "running" || document.hidden) { next(4000); return; }
-        const url = done ? againUrl : firstUrl; done = true;
+        let url = firstUrl;
+        if (done) { let i = Math.floor(Math.random() * againUrls.length); if (againUrls.length > 1 && i === last) i = (i + 1) % againUrls.length; last = i; url = againUrls[i]; }
+        done = true;
         loadFile(url).then((buf) => {
           if (dead) return;
           if (!buf) { next(minGap); return; }
           const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = buf; g.gain.value = level;
-          const p = R.pan(rnd(-0.15, 0.15));
+          const p = R.pan(rnd(-0.2, 0.2));
           s.connect(g).connect(p || R.out);
           s.start(ctx.currentTime + 0.05); R.shared.nodes.push(s);
           next(buf.duration * 1000 + rnd(minGap, maxGap));
@@ -293,20 +295,39 @@
       const d = ctx.createDelay(1), fb = ctx.createGain(); d.delayTime.value = 0.28; fb.gain.value = 0.35; d.connect(fb).connect(d); d.connect(R.out);
       R.every(900, 3200, (t) => { const f = rnd(1000, 1600), f2 = f * rnd(0.6, 0.72), pk = rnd(0.06, 0.11); R.tone(t, f, f2, 0.045, pk); R.tone(t, f, f2, 0.045, pk * 0.5, "sine", d); });
     },
-    /** Distant fireworks: each burst you see is heard a moment later as a soft boom, glittery ones crackle after. */
+    /** Fireworks heard as they are seen: each burst a boom, a close one loud, deep and almost at once, a far one soft,
+     *  muffled, a moment late and rolling back off the hills. Glitter and willows crackle as they twinkle; close shells thump as they go up. */
     fireworks(R) {
+      const echo = ctx.createDelay(1.5), fb = ctx.createGain(), elp = R.filter("lowpass", 500);
+      echo.delayTime.value = 0.42; fb.gain.value = 0.32; echo.connect(elp).connect(fb).connect(echo); elp.connect(R.out);
       const on = (e) => {
         if (!ctx || ctx.state !== "running" || document.hidden) return;
-        const t = ctx.currentTime + rnd(0.35, 0.7), d = e.detail || {}, dest = R.pan(((d.x || 0.5) - 0.5) * 0.8) || R.out;
+        const d = e.detail || {}, z = d.z == null ? 0.5 : d.z, near = 1 - z;
+        const t = ctx.currentTime + 0.04 + z * 0.55, dest = R.pan(((d.x || 0.5) - 0.5) * 0.9) || R.out;
+        // the boom: low noise, brighter and harder when close
         const s = ctx.createBufferSource(); s.buffer = noise("brown");
-        const f = R.filter("lowpass", 180), g = ctx.createGain();
-        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(rnd(0.35, 0.55), t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
-        s.connect(f).connect(g).connect(dest); s.start(t, Math.random() * 4); s.stop(t + 1.5);
-        R.tone(t, 70, 38, 0.5, 0.12, "sine", dest, 0.01);
-        if (d.kind === "glitter" || d.kind === "willow") for (let k = 0; k < 22; k++) R.burst(t + 0.5 + Math.random() * 1.3, 0.006, "highpass", 3000, 0.7, rnd(0.01, 0.035), dest);
+        const f = R.filter("lowpass", 140 + near * near * 420), g = ctx.createGain(), peak = 0.14 + near * near * 0.85, len = 1.3 + z * 1.4;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.008 + z * 0.06); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+        s.connect(f).connect(g); g.connect(dest); if (z > 0.3) { const eg = ctx.createGain(); eg.gain.value = 0.5 * z; g.connect(eg).connect(echo); }
+        s.start(t, Math.random() * 4); s.stop(t + len + 0.1);
+        R.tone(t, 64 - z * 20, 30, 0.6 + z * 0.4, 0.06 + near * near * 0.22, "sine", dest, 0.006 + z * 0.04);
+        // the crack of the shell breaking, only heard up close
+        if (near > 0.45) R.burst(t, 0.02, "bandpass", 1600, 0.8, 0.1 * (near - 0.45) * 2, dest);
+        // crackle as the stars twinkle
+        if (d.crackle) {
+          const n = Math.round(10 + 26 * d.crackle * (0.4 + near)), at = t + (d.crackleAt || 1), dur = d.crackleDur || 1;
+          for (let k = 0; k < n; k++) R.burst(at + Math.random() * dur, 0.004 + Math.random() * 0.006, "highpass", 2400 + near * 1800, 0.7, rnd(0.008, 0.03) * (0.25 + near), dest);
+        }
       };
-      addEventListener("shelf:firework", on);
-      R.onStop(() => removeEventListener("shelf:firework", on));
+      // a close shell leaving its mortar: a dull thump
+      const up = (e) => {
+        if (!ctx || ctx.state !== "running" || document.hidden) return;
+        const d = e.detail || {}, near = 1 - (d.z || 0), t = ctx.currentTime + 0.02, dest = R.pan(((d.x || 0.5) - 0.5) * 0.9) || R.out;
+        R.tone(t, 90, 45, 0.25, 0.08 * near, "sine", dest, 0.004);
+        R.burst(t, 0.06, "lowpass", 300, 0.7, 0.12 * near, dest);
+      };
+      addEventListener("shelf:firework", on); addEventListener("shelf:firework-launch", up);
+      R.onStop(() => { removeEventListener("shelf:firework", on); removeEventListener("shelf:firework-launch", up); });
     },
     /** Light, far-off birdsong: a few short tweets now and then. */
     birdsFar(R) {
@@ -404,9 +425,9 @@
     castle: [["wind", "Wind", (R) => S.bed(R, "sounds/castle/wind.mp3", 0.6)], ["crackle", "Crackling", (R) => S.bed(R, "sounds/castle/crackle.mp3", 0.55)], ["music", "Music", (R) => S.bed(R, "sounds/castle/music.mp3", 0.36)]],
     bordello: [["bed", "Room", (R) => S.bed(R, "sounds/bordello/room.mp3", 0.6)], ["music", "Music", (R) => S.bed(R, "sounds/bordello/music.mp3", 0.38)]],
     forest: [["bed", "Night", (R) => S.bed(R, "sounds/forest/night.mp3", 0.6)], ["music", "Music", (R) => S.bed(R, "sounds/forest/music.mp3", 0.35)], ["sparkle", "Magic", (R) => S.bed(R, "sounds/forest/magic.mp3", 0.7)]],
-    // osamu's tea: the whole cup once, then only the blow and the sip, now and then
+    // osamu's tea, a little way off: the whole cup once, then blow-and-sip or drink-and-set-down in turn, far apart
     teahouse: [["bed", "Night", (R) => S.bed(R, "sounds/teahouse/night.mp3", 0.75)], ["music", "Music", (R) => S.bed(R, "sounds/teahouse/music.mp3", 0.45)],
-      ["tea", "Tea", (R) => S.ritual(R, "sounds/teahouse/tea_full.mp3", "sounds/teahouse/tea_bs.mp3", 0.8, rnd(6000, 12000), 70000, 150000)],
+      ["tea", "Tea", (R) => S.ritual(R, "sounds/teahouse/tea_full.mp3?f=2", ["sounds/teahouse/tea_bs.mp3?f=2", "sounds/teahouse/tea_dc.mp3"], 0.6, rnd(6000, 12000), 80000, 160000)],
       ["fireworks", "Fireworks", (R) => S.fireworks(R)]],
     // a quiet room, and music playing somewhere further off: muffled, with the room's echo on it
     candle: [["bed", "Room", (R) => S.bed(R, "sounds/candle/room.mp3", 0.7)], ["music", "Music", (R) => S.bed(R, "sounds/candle/music.mp3", 0.42)]],

@@ -456,8 +456,16 @@
     },
     // red lanterns hanging at different depths, swaying
     lanterns: () => [[6, 210, 0.4, 0], [84, 130, 0.42, 0.6], [62, 340, 0.3, 1.2], [26, 470, 0.27, 1.8]].map(([x, top, s, d]) => `<div class="fxLantern" style="left:${x}%;--s:${s};--top:${top}px;--d:-${d}s"><svg viewBox="0 0 60 150" aria-hidden="true"><line x1="30" y1="0" x2="30" y2="40" stroke="#1a0806" stroke-width="1.4"/><rect x="20" y="38" width="20" height="6" rx="2" fill="#d6a73e"/><ellipse cx="30" cy="72" rx="28" ry="30" fill="url(#lf)"/>${[0.35, 0.7, 1].map((f) => `<ellipse cx="30" cy="72" rx="${28 * f}" ry="30" fill="none" stroke="rgba(90,10,0,.45)" stroke-width=".8"/>`).join("")}<rect x="20" y="100" width="20" height="6" rx="2" fill="#d6a73e"/>${Array.from({ length: 7 }, (_, k) => `<line x1="${26 + k * 1.3}" y1="106" x2="${24 + k * 2}" y2="${136 + (k % 2) * 4}" stroke="#e0b14d" stroke-width="1"/>`).join("")}<defs><radialGradient id="lf" cx=".45" cy=".42" r=".65"><stop offset="0" stop-color="#ffc080"/><stop offset=".45" stop-color="#ff4a1f"/><stop offset="1" stop-color="#9a140a"/></radialGradient></defs></svg></div>`).join(""),
-    // plum-blossom petals drifting down
-    petals: () => { const R = rng(17); let o = ""; for (let i = 0; i < 14; i++) o += `<i class="petal" style="left:${f1(R() * 100)}%;--t:${f1(9 + R() * 9)}s;--d:-${f1(R() * 18)}s;--dx:${f1((R() - 0.5) * 160)}px;--r:${Math.floor(R() * 360)}deg"></i>`; return o; },
+    // sakura petals: each one tumbles as it falls (edge-on, then flat), swaying from side to side; far ones small and soft
+    petals: () => {
+      const R = rng(17), P = `<svg viewBox="0 0 20 24" aria-hidden="true"><defs><radialGradient id="skG" cx="50%" cy="92%" r="95%"><stop offset="0" stop-color="#e98aa6"/><stop offset=".45" stop-color="#f6bccd"/><stop offset="1" stop-color="#fde8ef"/></radialGradient></defs><path d="M10 23 C4.2 19.2 1.2 12.4 2.4 6.8 C3.3 3.1 5.9 1.4 8 2.4 L10 5.2 L12 2.4 C14.1 1.4 16.7 3.1 17.6 6.8 C18.8 12.4 15.8 19.2 10 23Z" fill="url(#skG)" fill-opacity=".93"/><path d="M10 22 C9.6 16 9.8 10 10 6" stroke="#e48aa3" stroke-width=".35" fill="none" opacity=".5"/></svg>`;
+      let o = "";
+      for (let i = 0; i < 16; i++) {
+        const z = R(), s = 1.15 - z * 0.6;
+        o += `<i class="sakura" style="left:${f1(R() * 100)}%;--s:${f2(s)};--o:${f2(0.95 - z * 0.4)};--b:${f2(z > 0.6 ? (z - 0.6) * 2 : 0)}px;--t:${f1((11 + R() * 7) / s)}s;--d:-${f1(R() * 22)}s;--dx:${f1((R() - 0.3) * 140)}px;--sw:${f1(2.2 + R() * 1.6)}s;--a:${f1(10 + R() * 18)}px;--d2:-${f1(R() * 3)}s;--f:${f1(2.4 + R() * 2.6)}s;--d3:-${f1(R() * 4)}s;--r:${Math.floor(R() * 360)}deg"><b>${P}</b></i>`;
+      }
+      return o;
+    },
     // bats crossing the room, wings beating
     bats: () => {
       // real bat shapes: finger bones fanning through a scalloped membrane, ears, a furry body.
@@ -522,63 +530,122 @@
     let W = 0, H = 0;
     const size = () => { W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
     size(); addEventListener("resize", size);
-    const COLS = [["#ffd27a", "#fff3d6"], ["#ff8fb4", "#ffe0ea"], ["#9ff2e2", "#effffb"], ["#c9a6ff", "#f2e8ff"], ["#ff6a52", "#ffd9a8"], ["#fff1dc", "#ffffff"]];
-    const shells = [], sparks = [];
-    let next = 900, last = performance.now(), quiet = 0;
+    const rand = (a, b) => a + Math.random() * (b - a), pick = (a) => a[Math.floor(Math.random() * a.length)];
+    const send = (name, detail) => { try { dispatchEvent(new CustomEvent(name, { detail })); } catch (e) { /* old browser */ } };
+    // star colours as real firework salts burn: [the star, its hot centre]
+    const PAL = { red: ["#ff4636", "#ffc2a8"], orange: ["#ff8a26", "#ffdcaa"], gold: ["#ffbe55", "#fff0c4"], green: ["#5cf08c", "#dcffe6"], blue: ["#4d86ff", "#d8e6ff"],
+      purple: ["#b46bff", "#efdcff"], pink: ["#ff79b4", "#ffe0ee"], silver: ["#e6ecff", "#ffffff"], cyan: ["#5aeef0", "#e4ffff"] };
+    const NAMES = Object.keys(PAL);
+    const KINDS = ["peony", "peony", "chrys", "chrys", "willow", "ring", "palm", "crossette", "glitter", "dahlia", "kamuro", "strobe", "change"];
+    const shells = [], stars = [];
+    let next = 1200, last = performance.now(), quiet = 0;
+
+    // z: 0 = close to us, 1 = far away. Close ones burst high and wide and bright; far ones low, small and hazy.
     const launch = () => {
-      const x = W * (0.12 + Math.random() * 0.33), ty = H * (0.3 + Math.random() * 0.22);
-      const g = 120, vy = -Math.sqrt(2 * g * (H - ty));
-      shells.push({ x, y: H + 4, vx: (Math.random() - 0.5) * 8, vy, g, kind: ["peony", "peony", "ring", "willow", "glitter"][Math.floor(Math.random() * 5)], col: COLS[Math.floor(Math.random() * COLS.length)] });
+      const z = Math.pow(Math.random(), 0.9), sc = 1.15 - 0.8 * z;
+      const kind = pick(KINDS);
+      const c1 = kind === "willow" || kind === "kamuro" || kind === "palm" ? "gold" : pick(NAMES);
+      let c2 = pick(NAMES); if (c2 === c1) c2 = "silver";
+      const x = W * rand(0.22, 0.78), ty = H * (0.16 + z * 0.42 + rand(-0.05, 0.06));
+      const y0 = H * (1.02 - z * 0.12), g = 160 * sc, vy = -Math.sqrt(2 * g * (y0 - ty));
+      shells.push({ x, y: y0, vx: rand(-6, 6) * sc, vy, g, z, sc, kind, c1, c2 });
+      if (z < 0.45) send("shelf:firework-launch", { x: x / W, z });
     };
+    const star = (s, vx, vy, o = {}) => stars.push(Object.assign({ x: s.x, y: s.y, px: s.x, py: s.y, vx, vy, age: 0, life: 1.8, drag: 2, g: 30 * s.sc,
+      col: PAL[s.c1][0], hot: PAL[s.c1][1], w: 2.1 * s.sc, dim: 1 - 0.55 * s.z, sc: s.sc }, o));
     const burst = (s) => {
-      const r = W * (0.2 + Math.random() * 0.08), n = s.kind === "ring" ? 60 : s.kind === "willow" ? 90 : 110;
-      const life = s.kind === "willow" ? 2.8 : 2;
-      for (let i = 0; i < n; i++) {
-        let a, sp;
-        if (s.kind === "ring") { a = (i / n) * Math.PI * 2; sp = r * 2.6; }
-        else { a = Math.random() * Math.PI * 2; const u = Math.random() * 2 - 1; sp = r * 2.9 * Math.sqrt(1 - u * u) * (0.92 + Math.random() * 0.12); }
-        const inner = s.kind !== "ring" && i % 4 === 0;
-        sparks.push({ x: s.x, y: s.y, px: s.x, py: s.y, vx: Math.cos(a) * sp * (inner ? 0.45 : 1), vy: Math.sin(a) * sp * (inner ? 0.45 : 1), age: 0, life: life * (0.8 + Math.random() * 0.35), col: inner ? s.col[1] : s.col[0], drag: s.kind === "willow" ? 2.4 : 1.7, g: s.kind === "willow" ? 55 : 34, glit: s.kind === "glitter" || s.kind === "willow", w: inner ? 1.5 : 2.1 });
+      const r = W * 0.36 * s.sc * rand(0.85, 1.1); // how far the stars fly
+      const sphere = (n, k = 1, o = {}) => {
+        for (let i = 0; i < n; i++) {
+          const a = Math.random() * Math.PI * 2, u = Math.random() * 2 - 1, v = r * (o.drag || 2) * Math.sqrt(1 - u * u) * rand(0.92, 1.05) * k;
+          star(s, Math.cos(a) * v, Math.sin(a) * v, o);
+        }
+      };
+      let crackle = 0, crackleAt = 0;
+      switch (s.kind) {
+        case "peony": sphere(95); sphere(18, 0.4, { col: PAL[s.c2][0], hot: PAL[s.c2][1] }); break;
+        case "change": sphere(90, 1, { change: PAL[s.c2], life: 2.1 }); break;
+        case "chrys": sphere(85, 1, { trail: 0.5, life: 1.9 }); break;
+        case "dahlia": {
+          for (let i = 0; i < 64; i++) { const a = (i / 64) * Math.PI * 2 + rand(-0.04, 0.04), v = r * 2 * rand(0.95, 1.05), c = i % 2 ? s.c1 : s.c2;
+            star(s, Math.cos(a) * v, Math.sin(a) * v, { col: PAL[c][0], hot: PAL[c][1], w: 2.8 * s.sc, life: 1.7 }); }
+          break;
+        }
+        case "willow": sphere(70, 0.85, { drag: 2.4, g: 46 * s.sc, life: 3.4, trail: 0.9, col: "#ffb347", hot: "#ffe6b0", w: 1.6 * s.sc }); crackle = 0.5; crackleAt = 2.2; break;
+        case "kamuro": sphere(80, 0.9, { drag: 2.3, g: 40 * s.sc, life: 3, trail: 1, col: "#ffe0a0", hot: "#ffffff", glitter: true, w: 1.8 * s.sc }); crackle = 1; crackleAt = 1.4; break;
+        case "ring": {
+          const tilt = rand(0.25, 0.75), spin = rand(0, Math.PI);
+          for (let i = 0; i < 60; i++) { const a = (i / 60) * Math.PI * 2, px = Math.cos(a), py = Math.sin(a) * tilt;
+            const v = r * 2, rx = px * Math.cos(spin) - py * Math.sin(spin), ry = px * Math.sin(spin) + py * Math.cos(spin);
+            star(s, rx * v, ry * v, { life: 1.7 }); }
+          sphere(20, 0.35, { col: PAL[s.c2][0], hot: PAL[s.c2][1] });
+          break;
+        }
+        case "palm": for (let i = 0; i < 9; i++) { const a = (i / 9) * Math.PI * 2 + rand(-0.15, 0.15), v = r * 1.6 * rand(0.9, 1.05);
+          star(s, Math.cos(a) * v, Math.sin(a) * v - r * 0.3, { drag: 1.6, g: 42 * s.sc, life: 2.4, trail: 1.6, w: 3.2 * s.sc, col: "#ffc35e", hot: "#fff4d0" }); } break;
+        case "crossette": for (let i = 0; i < 14; i++) { const a = (i / 14) * Math.PI * 2, v = r * 1.4;
+          star(s, Math.cos(a) * v, Math.sin(a) * v, { life: 0.75, split: true, trail: 0.4, w: 2.6 * s.sc }); } crackle = 0.4; crackleAt = 0.7; break;
+        case "glitter": sphere(85, 1, { glitter: true, life: 2.2 }); crackle = 1; crackleAt = 1.1; break;
+        case "strobe": sphere(70, 0.9, { strobe: rand(0, 1), life: 2.6, col: "#f2f4ff", hot: "#ffffff", drag: 2.2, g: 22 * s.sc }); crackle = 0.6; crackleAt = 1.2; break;
       }
-      sparks.push({ flash: true, x: s.x, y: s.y, r: r * 1.6, age: 0, life: 0.35, col: s.col[1] });
-      // let the room sound hear it (a distant boom, a moment later)
-      try { dispatchEvent(new CustomEvent("shelf:firework", { detail: { kind: s.kind, x: s.x / W } })); } catch (e) { /* old browser */ }
+      stars.push({ flash: true, x: s.x, y: s.y, r: r * 1.15, age: 0, life: 0.4, dim: 1 - 0.55 * s.z });
+      send("shelf:firework", { kind: s.kind, x: s.x / W, z: s.z, crackle, crackleAt, crackleDur: s.kind === "kamuro" || s.kind === "willow" ? 1.3 : 0.9 });
     };
     const frame = (now) => {
       if (!cv.isConnected) { cv._running = false; removeEventListener("resize", size); return; }
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
       next -= dt * 1000;
-      if (next <= 0) { launch(); if (Math.random() < 0.22) setTimeout(launch, 380); next = 1600 + Math.random() * 1900; }
+      if (next <= 0) {
+        launch();
+        const r = Math.random();
+        if (r < 0.18) { setTimeout(launch, rand(250, 500)); setTimeout(launch, rand(600, 1000)); }
+        else if (r < 0.4) setTimeout(launch, rand(300, 700));
+        next = Math.random() < 0.12 ? rand(6000, 9500) : rand(1500, 3600);
+      }
       // old light fades away, leaving short trails
       ctx.globalCompositeOperation = "destination-out";
-      ctx.fillStyle = "rgba(0,0,0,.2)"; ctx.fillRect(0, 0, W, H);
-      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = "rgba(0,0,0,.24)"; ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "lighter"; ctx.lineCap = "round";
       for (let i = shells.length - 1; i >= 0; i--) {
         const s = shells[i]; const ox = s.x, oy = s.y;
         s.vy += s.g * dt; s.x += s.vx * dt; s.y += s.vy * dt;
-        ctx.strokeStyle = "rgba(255,214,150,.55)"; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(s.x, s.y); ctx.stroke();
-        if (Math.random() < 0.5) sparks.push({ x: s.x, y: s.y, px: s.x, py: s.y, vx: (Math.random() - 0.5) * 10, vy: 10 + Math.random() * 10, age: 0, life: 0.5, col: "#ffcf8a", drag: 2, g: 20, w: 0.8 });
-        if (s.vy > -12) { burst(s); shells.splice(i, 1); }
+        ctx.globalAlpha = 0.7 * (1 - 0.6 * s.z); ctx.strokeStyle = "#ffd9a0"; ctx.lineWidth = 1.4 * s.sc;
+        ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(s.x, s.y); ctx.stroke();
+        if (Math.random() < 0.6) stars.push({ x: s.x, y: s.y, px: s.x, py: s.y, vx: rand(-8, 8) * s.sc, vy: rand(6, 22) * s.sc, age: 0, life: rand(0.3, 0.6), col: "#ffc77a", hot: "#ffc77a", drag: 2, g: 20, w: 0.9 * s.sc, dim: 1 - 0.6 * s.z, ember: true });
+        if (s.vy > -14) { burst(s); shells.splice(i, 1); }
       }
-      for (let i = sparks.length - 1; i >= 0; i--) {
-        const p = sparks[i]; p.age += dt;
-        const t = p.age / p.life; if (t >= 1) { sparks.splice(i, 1); continue; }
+      for (let i = stars.length - 1; i >= 0; i--) {
+        const p = stars[i]; p.age += dt;
+        const t = p.age / p.life; if (t >= 1) {
+          // a crossette star breaks into four that fly apart crosswise
+          if (p.split) { const a0 = Math.random() * Math.PI, v = Math.hypot(p.vx, p.vy) * 0 + 60 * p.sc; for (let k = 0; k < 4; k++) { const a = a0 + (k * Math.PI) / 2;
+            stars.push({ x: p.x, y: p.y, px: p.x, py: p.y, vx: Math.cos(a) * v * 2, vy: Math.sin(a) * v * 2, age: 0, life: 0.9, drag: 2.2, g: p.g, col: p.col, hot: p.hot, w: p.w * 0.8, dim: p.dim, sc: p.sc, trail: 0.3 }); } }
+          stars.splice(i, 1); continue;
+        }
         if (p.flash) {
           const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
-          g.addColorStop(0, `rgba(255,240,220,${(0.12 * (1 - t)).toFixed(3)})`); g.addColorStop(1, "rgba(255,240,220,0)");
-          ctx.fillStyle = g; ctx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2); continue;
+          g.addColorStop(0, `rgba(255,240,220,${(0.1 * p.dim * (1 - t)).toFixed(3)})`); g.addColorStop(1, "rgba(255,240,220,0)");
+          ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2); continue;
         }
         const k = Math.exp(-p.drag * dt);
         p.vx *= k; p.vy = p.vy * k + p.g * dt;
         p.px = p.x; p.py = p.y; p.x += p.vx * dt; p.y += p.vy * dt;
-        let a = Math.pow(1 - t, 1.4);
-        if (p.glit && t > 0.55 && Math.random() < 0.45) a *= 0.15;
-        ctx.globalAlpha = a; ctx.strokeStyle = p.col; ctx.lineWidth = p.w; ctx.lineCap = "round";
+        let a = Math.pow(1 - t, 1.3) * p.dim;
+        if (p.glitter && t > 0.45) a *= Math.random() < 0.5 ? 1.2 : 0.1;
+        if (p.strobe != null && t > 0.35) a *= Math.sin((p.age + p.strobe) * 46) > 0.2 ? 1.3 : 0;
+        let col = p.col;
+        if (p.change && t > 0.5) col = p.change[0];
+        // a burning star is white-hot in its first moments
+        if (t < 0.12 && !p.ember) col = p.hot;
+        ctx.globalAlpha = Math.min(1, a); ctx.strokeStyle = col; ctx.lineWidth = p.w * (p.ember ? 1 : 1 - t * 0.4);
         ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(p.x, p.y); ctx.stroke();
+        if (!p.ember && a > 0.2) { ctx.globalAlpha = a * 0.12; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p.x, p.y, p.w * 1.8, 0, 7); ctx.fill(); }
+        // trailing stars shed embers that hang and fall
+        if (p.trail && Math.random() < p.trail * 0.6 && t < 0.85) stars.push({ x: p.x, y: p.y, px: p.x, py: p.y, vx: p.vx * 0.05, vy: p.vy * 0.05, age: 0, life: rand(0.4, 0.9), col: "#ffb860", hot: "#ffb860", drag: 3, g: 26 * (p.sc || 1), w: 0.9 * (p.sc || 1), dim: p.dim * 0.8, ember: true, glitter: p.glitter });
       }
       ctx.globalAlpha = 1;
       // nothing in the sky: wipe it clean so no haze builds up
-      if (!sparks.length && !shells.length) { if ((quiet += dt) > 1) { ctx.clearRect(0, 0, W, H); quiet = 0; } } else quiet = 0;
+      if (!stars.length && !shells.length) { if ((quiet += dt) > 1) { ctx.clearRect(0, 0, W, H); quiet = 0; } } else quiet = 0;
       requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
