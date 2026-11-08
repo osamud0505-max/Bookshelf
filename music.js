@@ -290,6 +290,14 @@
     clearTimeout(hideCtl); controls.hidden = false; requestAnimationFrame(() => controls.classList.add("show"));
     hideCtl = setTimeout(hideControls, 4000);
   };
+  // a tap that starts on the record player must never land on the shelf under it: on phones the browser sends a
+  // follow-up click to whatever is under the finger, which turned the shelf's lights or potions off
+  let ttTouch = 0;
+  table.addEventListener("pointerdown", () => { ttTouch = Date.now(); }, true);
+  table.addEventListener("touchend", (e) => { if (e.cancelable && !e.target.closest(".tt-controls")) e.preventDefault(); });
+  document.addEventListener("click", (e) => {
+    if (Date.now() - ttTouch < 700 && !table.contains(e.target)) { e.stopPropagation(); e.preventDefault(); }
+  }, true);
   // a touch anywhere else puts the controls away
   document.addEventListener("pointerdown", (e) => { if (!controls.hidden && !table.contains(e.target)) hideControls(); }, true);
   const startPinch = () => {
