@@ -471,12 +471,14 @@
         <div class="face front">
           ${b.coverUrl ? `<img class="art" alt="" draggable="false" loading="lazy" referrerpolicy="no-referrer" src="${esc(b.coverUrl)}">` : ""}
           <div class="plain" ${b.coverUrl ? "hidden" : ""}><span class="plainRule"></span><span class="plainTitle">${esc(b.title)}</span><span class="plainAuthor">${esc(b.author)}</span></div>
-          <span class="grain"></span><span class="hinge"></span><span class="sheen"></span><span class="fShade"></span>
+          <span class="grain"></span><span class="wear"></span><span class="rub"></span><span class="hinge"></span><span class="sheen"></span><span class="fShade"></span>
         </div>
-        <div class="face spine"><span class="sForm"></span><span class="grain"></span><span class="sShade"></span></div>
+        <div class="face spine"><span class="sForm"></span><span class="grain"></span><span class="wear"></span><span class="rub"></span><span class="sShade"></span></div>
         <div class="face pages"></div><div class="face back"></div>
       </div></div>`);
-    el.style.cssText = `--w:${w}px;--h:${hh}px;--d:${d}px;--spine:${b.spineColor};--ink:${spineInk(b.spineColor)}` + (turn !== undefined ? `;--turn:${turn}` : "");
+    el.style.cssText = `--w:${w}px;--h:${hh}px;--d:${d}px;--spine:${b.spineColor};--ink:${spineInk(b.spineColor)}` + (turn !== undefined ? `;--turn:${turn}` : "")
+      // every book is worn in its own way: stains, rubbed corners and scratches sit in different places
+      + (() => { const r = hash((+b.id || 7) * 31 + 11); return `;--wx:${r % 173}px;--wy:${(r >> 3) % 211}px;--sx:${(r >> 6) % 97}px;--age:${(0.75 + ((r >> 9) % 6) * 0.07).toFixed(2)}`; })();
     const spine = el.querySelector(".spine"), form = spine.querySelector(".sForm");
     for (const key of ["title", "author", "extra"]) {
       const part = design[key];

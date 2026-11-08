@@ -1216,3 +1216,38 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 .slot.lying { z-index: 1; }
 .slot.lying.front { z-index: 2; }
 .ornament.onPile { z-index: 3; }
+
+/* ---------- worn, moody books ---------- */
+/* stains and age: low mottling, darker towards the edges, a little dirt where hands hold it */
+.wear, .rub { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.wear { mix-blend-mode: multiply; opacity: var(--age, .85);
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, rgba(20,12,6,.55) 100%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='300'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='0.018 0.026' numOctaves='4' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.30  0 0 0 0 0.22  0 0 0 0 0.14  0 0 0 2 -1.1'/></filter><rect width='100%' height='100%' filter='url(%23s)'/></svg>"),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='c'><feTurbulence type='turbulence' baseFrequency='0.55 0.08' numOctaves='2' seed='9' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.25  0 0 0 0 0.2  0 0 0 0 0.15  0 0 0 0.9 -0.3'/></filter><rect width='100%' height='100%' filter='url(%23c)'/></svg>"),
+    linear-gradient(180deg, rgba(25,15,8,.28), transparent 18%, transparent 80%, rgba(25,15,8,.34));
+  background-position: 0 0, var(--wx, 0) var(--wy, 0), var(--sx, 0) var(--wx, 0), 0 0; }
+/* rubbed edges and corners where the cloth has worn thin, plus fine scratches */
+.rub { mix-blend-mode: screen; opacity: calc(var(--age, .85) * .8);
+  background:
+    radial-gradient(circle at 100% 0, rgba(200,180,150,.32), transparent 9%),
+    radial-gradient(circle at 100% 100%, rgba(200,180,150,.38), transparent 10%),
+    radial-gradient(circle at 0 100%, rgba(200,180,150,.18), transparent 7%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='170' height='230'><g stroke='%23c8b89a' stroke-linecap='round' fill='none' opacity='.5'><path d='M14 40 l38 -9' stroke-width='.5'/><path d='M96 128 l26 14' stroke-width='.4'/><path d='M40 182 q20 -6 44 -3' stroke-width='.5'/><path d='M130 60 l-18 30' stroke-width='.35'/><path d='M22 120 l12 2' stroke-width='.6'/></g></svg>"),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='e'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.78  0 0 0 0 0.72  0 0 0 0 0.62  0 0 0 3 -2.2'/></filter><rect width='100%' height='100%' filter='url(%23e)'/></svg>");
+  background-position: 0 0, 0 0, 0 0, var(--wy, 0) var(--sx, 0), var(--wx, 0) 0;
+  -webkit-mask: linear-gradient(90deg, #000 0, transparent 9%, transparent 91%, #000 100%), linear-gradient(180deg, #000 0, transparent 7%, transparent 93%, #000 100%), radial-gradient(#0008, #0008);
+  mask: linear-gradient(90deg, #000 0, transparent 9%, transparent 91%, #000 100%), linear-gradient(180deg, #000 0, transparent 7%, transparent 93%, #000 100%), radial-gradient(#0008, #0008); }
+/* the spine takes the most handling: rubbed head and tail, frayed edges */
+.spine .wear, .spine .rub { z-index: 2; }
+.spine .wear { background-size: auto, 260px 300px, 60px 120px, auto; }
+.spine .rub { -webkit-mask: linear-gradient(180deg, #000 0, transparent 6%, transparent 94%, #000 100%), linear-gradient(90deg, #000 0, transparent 14%, transparent 86%, #000 100%), radial-gradient(#0006, #0006);
+  mask: linear-gradient(180deg, #000 0, transparent 6%, transparent 94%, #000 100%), linear-gradient(90deg, #000 0, transparent 14%, transparent 86%, #000 100%), radial-gradient(#0006, #0006); }
+/* a quieter, older palette: covers lose their shine and colours dim */
+.matte .art { filter: saturate(.72) contrast(.96) brightness(.84) sepia(.14); }
+.glossy .art { filter: saturate(.95) contrast(1.02) brightness(.9) sepia(.06); }
+.glossy .wear { opacity: calc(var(--age, .85) * .7); }
+.glossy .rub { opacity: calc(var(--age, .85) * .45); }
+.matte .front, .matte .spine { box-shadow: inset 0 0 0 .5px rgba(0,0,0,.4); }
+.matte .grain { opacity: .75; }
+.matte .sheen { opacity: .6; }
