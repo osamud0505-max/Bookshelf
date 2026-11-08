@@ -1251,3 +1251,5 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 .matte .front, .matte .spine { box-shadow: inset 0 0 0 .5px rgba(0,0,0,.4); }
 .matte .grain { opacity: .75; }
 .matte .sheen { opacity: .6; }
+/* in a pile, a book's turned-away cover would cover the book beneath it: only the spine you see takes the tap */
+.slot.lying > * { pointer-events: none; }
