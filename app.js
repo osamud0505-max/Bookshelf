@@ -1218,7 +1218,6 @@
 
     ["pointerdown", "wheel", "keydown"].forEach((ev) => scroller.addEventListener(ev, () => (userMoved = true), { passive: true }));
     scroller.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(layout); }, { passive: true });
-    // two fingers slide the row to look along it; the books stay as they are. One finger turns them again.
     function easePanHome() {
       if (!panX || panEase) return;
       const from = panX, t0 = performance.now();
@@ -1229,29 +1228,6 @@
       };
       panEase = requestAnimationFrame(step);
     }
-    const avgX = (e) => (e.touches[0].clientX + e.touches[1].clientX) / 2;
-    scroller.addEventListener("touchstart", (e) => {
-      if (e.touches.length < 2 || drag) return;
-      cancelAnimationFrame(panEase); panEase = 0;
-      twoF = { x: avgX(e), p: panX, sl: scroller.scrollLeft };
-      scroller.style.overflowX = "hidden"; // stop the scroll the first finger may have started
-    }, { passive: false });
-    scroller.addEventListener("touchmove", (e) => {
-      if (twoF) {
-        if (e.cancelable) e.preventDefault();
-        if (e.touches.length >= 2) { panX = twoF.p - (avgX(e) - twoF.x); cancelAnimationFrame(raf); raf = requestAnimationFrame(layout); }
-        return;
-      }
-      if (e.touches.length === 1 && panX) easePanHome();
-    }, { passive: false });
-    const twoEnd = (e) => {
-      if (!twoF || e.touches.length) return;
-      const sl = twoF.sl; twoF = null;
-      scroller.style.overflowX = "";
-      scroller.scrollLeft = Math.round(sl / STEP) * STEP;
-    };
-    scroller.addEventListener("touchend", twoEnd);
-    scroller.addEventListener("touchcancel", twoEnd);
     scroller.addEventListener("wheel", () => { if (panX) easePanHome(); }, { passive: true });
     scroller.addEventListener("keydown", (e) => {
       const at = front >= 0 ? front : scroller.scrollLeft < STEP / 2 ? -1 : count;
