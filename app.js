@@ -1030,7 +1030,8 @@
       for (let i = 0; i < count; i++) {
         const b = books[i];
         const o = Math.max(0, Math.min(1, 1 - Math.abs(i - g)));
-        const open = o * o * (3 - 2 * o);
+        // a book lying in a pile stays lying when it is picked; only upright books turn to show their cover
+        const open = b && b.pose === "lie" ? 0 : o * o * (3 - 2 * o);
         opens.push(open);
         if (!b) { base.push(30); poses.push("stand"); dm.push(null); continue; }
         const D_ = dims(b, H), a = ((1 - open) * Math.PI) / 2;
