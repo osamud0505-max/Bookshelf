@@ -227,15 +227,20 @@
     let vine = `M0 3`, leaves = "", strands = "", H = 0;
     for (let i = 0; i <= n; i++) vine += ` Q${(i - 0.5) * gap} ${i % 2 ? 9 : 1} ${i * gap} 3`;
     // deeper violet at the top of each cluster, paler lilac toward the tip
-    const shade = (f, k) => [["#8f6db8", "#9a78c2", "#a684c9"], ["#ad8fd0", "#b89bd6", "#c3a8dc"], ["#cdb5e3", "#d8c4ea", "#e4d6f0"]][Math.min(2, Math.floor(f * 3))][k % 3];
-    const glow = (cfg.colour === "white" ? "#fff6e6" : cfg.colour === "pink" ? "#ffd2ea" : "#ffe7b8");
+    // in the moonlit forest the blossoms are cool blue-violet fading to pale aqua, with glints like the glowing mushrooms
+    const moon = cfg.room === "forest";
+    const SH = moon ? [["#3f4f9a", "#4a59a6", "#5463ae"], ["#6a7cc0", "#7689c8", "#8296ce"], ["#9fb8e0", "#afcbe6", "#bfe0ea"]]
+      : [["#8f6db8", "#9a78c2", "#a684c9"], ["#ad8fd0", "#b89bd6", "#c3a8dc"], ["#cdb5e3", "#d8c4ea", "#e4d6f0"]];
+    const shade = (f, k) => SH[Math.min(2, Math.floor(f * 3))][k % 3];
+    const glow = moon ? "#a8fff0" : (cfg.colour === "white" ? "#fff6e6" : cfg.colour === "pink" ? "#ffd2ea" : "#ffe7b8");
+    const stem = moon ? "#2f5a52" : "#5c6b4a", leafC = moon ? ["#2c5e52", "#367064", "#244e45"] : ["#55663f", "#6b7d4f", "#4a5a37"], vineC = moon ? "#264a42" : "#4d5a3c";
     for (let i = 0; i < n; i++) {
       const x0 = gap * (i + 0.5) + ((i * 17) % 9) - 4, len = 58 + ((i * 41) % 7) * 9, green = i % 4 === 2;
       H = Math.max(H, len + 10);
       // each strand is its own little picture, so the swaying runs on the graphics card and stays smooth
       const c = 12;
-      let st = `<path d="M${c} 0 q2 ${len / 2} -1 ${len}" stroke="#5c6b4a" stroke-width=".8" fill="none"/>`;
-      if (green) { for (let y = 4; y < len * 0.8; y += 5) st += `<ellipse cx="${c + (y % 10 ? 2.8 : -2.8)}" cy="${y}" rx="3" ry="1.4" fill="${["#55663f", "#6b7d4f", "#4a5a37"][y % 3]}" transform="rotate(${y % 10 ? 35 : -35} ${c + (y % 10 ? 2.8 : -2.8)} ${y})"/>`; }
+      let st = `<path d="M${c} 0 q2 ${len / 2} -1 ${len}" stroke="${stem}" stroke-width=".8" fill="none"/>`;
+      if (green) { for (let y = 4; y < len * 0.8; y += 5) st += `<ellipse cx="${c + (y % 10 ? 2.8 : -2.8)}" cy="${y}" rx="3" ry="1.4" fill="${leafC[y % 3]}" transform="rotate(${y % 10 ? 35 : -35} ${c + (y % 10 ? 2.8 : -2.8)} ${y})"/>`; }
       else {
         for (let y = 2, k = 0; y < len; y += 2.2, k++) {
           const f = y / len, r = 4.6 * (1 - f * 0.78) + 0.7;
@@ -248,11 +253,11 @@
         }
       }
       strands += `<svg class="strand" width="24" height="${len + 8}" viewBox="0 0 24 ${len + 8}" style="left:${(x0 - c).toFixed(1)}px;--d:-${((i * 0.53) % 2.4).toFixed(2)}s;--t:${(4.6 + (i % 4) * 0.7).toFixed(1)}s" aria-hidden="true">${st}</svg>`;
-      leaves += `<ellipse cx="${gap * i + 10}" cy="5" rx="3.4" ry="1.5" fill="#55663f" transform="rotate(${i % 2 ? 25 : -20} ${gap * i + 10} 5)"/>`;
+      leaves += `<ellipse cx="${gap * i + 10}" cy="5" rx="3.4" ry="1.5" fill="${leafC[0]}" transform="rotate(${i % 2 ? 25 : -20} ${gap * i + 10} 5)"/>`;
     }
     const el = document.createElement("div");
     el.className = "lights wisteria" + (cfg.on ? " on" : "");
-    el.innerHTML = `${strands}<svg class="vine" width="${w}" height="12" viewBox="0 0 ${w} 12" aria-hidden="true"><path d="${vine}" stroke="#4d5a3c" stroke-width="1.6" fill="none"/>${leaves}</svg>`;
+    el.innerHTML = `${strands}<svg class="vine" width="${w}" height="12" viewBox="0 0 ${w} 12" aria-hidden="true"><path d="${vine}" stroke="${vineC}" stroke-width="1.6" fill="none"/>${leaves}</svg>`;
     el.style.height = H + "px";
     return el;
   }
@@ -477,7 +482,6 @@
   const LOOKS = {
     minimal: { label: "Minimal", set: { theme: "graphite", accent: "#f2c76b", shelf: "#34343f", shelfMat: "paint", backdrop: "none", lights: { style: "none", colour: "warm", on: false }, headFont: "bricolage" } },
     cabin: { label: "Cozy cabin", set: { theme: "cabin", accent: "#f0a85a", shelfMat: "oak", backdrop: "walnutPanel", lights: { style: "fairy", colour: "warm", on: true }, headFont: "cormorant" } },
-    nook: { label: "Reading nook", set: { theme: "golden", accent: "#e6ad5c", shelfMat: "paintedWhite", backdrop: "goldenHour", lights: { style: "wisteria", colour: "warm", on: true }, headFont: "cormorant" } },
     library: { label: "Old library", set: { theme: "moss", accent: "#d8b26a", shelfMat: "mahogany", backdrop: "greenWall", lights: { style: "none", colour: "warm", on: false }, headFont: "cinzel" } },
     loft: { label: "Brick loft", set: { theme: "graphite", accent: "#f2b35b", shelfMat: "steel", backdrop: "brick", lights: { style: "globe", colour: "warm", on: true }, headFont: "oswald" } },
     starry: { label: "Starry night", set: { theme: "midnight", accent: "#9fc4ff", shelfMat: "ebony", backdrop: "night", lights: { style: "stars", colour: "white", on: true }, headFont: "dmserif" } },
@@ -496,7 +500,7 @@
   const ORN = { forest: "mushrooms", cottage: "pinkLamp", nook: "bracketLantern", vampire: "gothicCandelabra", victorian: "twist", castle: "pillars", bordello: "chamber", academia: "squareBrass" };
   for (const [k, L] of Object.entries(LOOKS)) {
     L.set.ornament = { kind: ORN[k] || "none", pos: "end" };
-    if (ORN[k] && !["nook", "forest"].includes(k)) L.set.lights = { ...L.set.lights, style: "none" };
+    if (ORN[k] && k !== "forest") L.set.lights = { ...L.set.lights, style: "none" };
   }
   // ------------------------------------------------------------------ enchanted forest: a moonlit glade drawn as one SVG scene
   function enchantedScene() {
@@ -994,7 +998,7 @@
       },
     },
   });
-  LOOKS.forest.set = { theme: "moonwood", accent: "#8ff7e4", shelfMat: "moss", backdrop: "enchanted", lights: { style: "fireflies", colour: "warm", on: true }, headFont: "cormorant", ornament: { kind: "mushrooms", pos: "end" } };
+  LOOKS.forest.set = { theme: "moonwood", accent: "#8ff7e4", shelfMat: "moss", backdrop: "enchanted", lights: { style: "wisteria", styles: ["wisteria", "fireflies"], colour: "warm", on: true }, headFont: "cormorant", ornament: { kind: "mushrooms", pos: "end" } };
 
   // ------------------------------------------------------------------ bookmarks for the reader, one to suit each look
   // Each is drawn in a 28 × 84 box; the top edge tucks under the top of the page.

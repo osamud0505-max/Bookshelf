@@ -1151,3 +1151,9 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 @keyframes beacon { 0% { opacity: 1; } 18% { opacity: 0; } }
 @keyframes strobe { 0%, 4% { opacity: 1; } 5%, 12% { opacity: 0; } 13%, 16% { opacity: .9; } 17%, 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { #backdrop .lw, #backdrop .plane { animation: none; } #backdrop .plane { display: none; } }
+/* the ✦ menu's lights pickers, compact */
+.decorMenu .chips.small { display: flex; flex-wrap: wrap; gap: 6px; }
+.decorMenu .chips.small button { padding: 6px 10px; font-size: .8rem; }
+.decorMenu .colors.small { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.decorMenu .colors.small .colorItem { font-size: .74rem; }
+.decorMenu .colors.small .dot { width: 18px; height: 18px; }

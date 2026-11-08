@@ -257,6 +257,28 @@
       });
     },
     /** A pen or quill writing on paper: little scratchy strokes in words and lines, a page settling now and then. */
+    /** A quill on paper: fine scratchy strokes from the split nib (brighter and grainier than a pen), short pauses between
+        words, and now and then the nib goes back to the ink bottle: a tiny tap on the glass rim, then writing again. */
+    quill(R) {
+      R.every(3000, 7000, (t) => {
+        let at = t;
+        const words = 3 + Math.floor(Math.random() * 5);
+        for (let w = 0; w < words; w++) {
+          for (let k = 0; k < 2 + Math.floor(Math.random() * 4); k++) {
+            const len = rnd(0.05, 0.16), s = ctx.createBufferSource(); s.buffer = noise("white");
+            const f = R.filter("bandpass", rnd(4200, 6800), 2.2), hp = R.filter("highpass", 2500, 0.7), g = ctx.createGain(), pk = rnd(0.012, 0.026);
+            // the nib catches on the paper fibres: a rough, fluttering level instead of a smooth one
+            g.gain.setValueAtTime(0.0001, at);
+            for (let q = 0; q < len; q += 0.012) g.gain.linearRampToValueAtTime(pk * rnd(0.35, 1), at + q);
+            g.gain.linearRampToValueAtTime(0.0001, at + len + 0.01);
+            s.connect(f).connect(hp).connect(g).connect(R.out); s.start(at, Math.random() * 5); s.stop(at + len + 0.03);
+            at += len + rnd(0.015, 0.06);
+          }
+          at += rnd(0.18, 0.4);
+        }
+        if (Math.random() < 0.35) { const d = at + rnd(0.3, 0.6); R.tone(d, 3100, 3050, 0.05, 0.006, "sine", R.out, 0.002); R.tone(d + 0.18, 3100, 3050, 0.04, 0.004, "sine", R.out, 0.002); }
+      });
+    },
     writing(R) {
       R.every(2500, 6500, (t) => {
         let at = t;
@@ -308,12 +330,10 @@
     // wind is only outdoors (forest, starry night); in the castle and the witch's tower it is faint and far off
     cabin: [["fire", "Fireplace", (R) => S.fire(R)]],
     loft: [["city", "City traffic", (R) => S.city(R.far(520, 0.45))], ["sirens", "Distant sirens", (R) => S.sirens(R.far(1100, 0.7))]],
-    academia: [["rain", "Rain", (R) => S.rain(R.far(1000, 0.5), 0.8)], ["clock", "Clock", (R) => S.clock(R, false, 0.5)]],
-    nook: [["birds", "Birds", (R) => S.birdsFar(R)]],
+    academia: [["rain", "Rain", (R) => S.rain(R.far(1000, 0.5), 0.8)], ["clock", "Clock", (R) => S.clock(R, false, 0.5)], ["quill", "Quill on paper", (R) => S.quill(R)]],
     library: [["clock", "Clock", (R) => S.clock(R, false, 0.8)], ["hum", "Room hum", (R) => S.hum(R)]],
     starry: [["crickets", "Crickets", (R) => S.crickets(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.6)]],
     cottage: [["birds", "Birds", (R) => S.birdsFar(R)]],
-    candle: [["writing", "Pen on paper", (R) => S.writing(R)]],
     vampire: [["drone", "Low drone", (R) => S.drone(R)]],
     victorian: [["clock", "Grandfather clock", (R) => S.clock(R, true, 0.8)]],
     castle: [["wind", "Wind", (R) => S.wind(R.far(380, 0.35), 1)], ["drips", "Dripping water", (R) => S.drips(R)]],

@@ -416,7 +416,7 @@
 
   function dims(b, base) {
     const scale = (SIZES[b.size] || SIZES.regular)[1];
-    const hh = Math.round(base * scale * (0.94 + (hash(b.id) % 4) * 0.02));
+    const hh = Math.round(base * scale * (b.height ? b.height / 100 : 0.94 + (hash(b.id) % 4) * 0.02));
     const aspect = Math.max(0.5, Math.min(0.9, b.coverAspect || 2 / 3));
     const w = Math.round(hh * aspect);
     const pages = b.pageCount || 280;
@@ -742,18 +742,35 @@
 
   // ---------------------------------------------------------------- lights under each shelf
   const plankWidth = () => Math.min(innerWidth, 1200);
+  // which lights hang under a shelf: each shelf picks its own in the ✦ menu (kept per look); until then it shows the look's.
+  // several can be on at once, e.g. wisteria with fireflies drifting around it
+  const NO_SWITCH = ["fireflies"]; // always alive, no cord needed
+  const TALLEST = ["wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
+  function shelfLights(key) {
+    const sd = shelfDecor(key), mine = (sd.lightsBy || {})[lookId()], base = state.settings.lights || {};
+    const pick = mine || base;
+    let styles = Array.isArray(pick.styles) ? pick.styles : pick.style && pick.style !== "none" ? [pick.style] : [];
+    if (!mine && sd.noLights) styles = [];
+    styles = styles.filter((k) => D.LIGHT_STYLES[k] && k !== "none");
+    return { styles, colour: pick.colour || base.colour || "warm" };
+  }
+  function setShelfLights(key, patch) {
+    const sd = shelfDecor(key), cur = shelfLights(key);
+    setShelfDecor(key, { lightsBy: { ...(sd.lightsBy || {}), [lookId()]: { ...cur, ...patch } } });
+  }
   function addLights(root) {
     const key = root.dataset.key, sd = shelfDecor(key);
-    const base = state.settings.lights || {};
-    // each shelf has its own switch; until it is pulled it follows the "Lights on" setting
-    const cfg = sd.noLights ? { style: "none" } : { ...base, on: sd.lightsOn !== undefined ? sd.lightsOn : !!base.on };
+    const base = state.settings.lights || {}, L = shelfLights(key);
+    // each shelf has its own switch; until it is pulled it follows the look's "on"
+    const on = sd.lightsOn !== undefined ? sd.lightsOn : base.on !== false;
     root.querySelectorAll(".lights, .pullCord").forEach((e) => e.remove());
-    const el = D.lightsEl(plankWidth(), cfg);
-    root.classList.toggle("hasLights", !!el);
-    root.dataset.lights = el ? cfg.style : "";
-    if (!el) return;
     const plank = root.querySelector(".plank");
-    plank.append(el);
+    const els = L.styles.map((st) => D.lightsEl(plankWidth(), { style: st, colour: L.colour, on: NO_SWITCH.includes(st) ? true : on, room: lookId() })).filter(Boolean);
+    els.forEach((el) => plank.append(el));
+    root.classList.toggle("hasLights", els.length > 0);
+    root.dataset.lights = TALLEST.find((k) => L.styles.includes(k)) || "";
+    if (!L.styles.some((k) => !NO_SWITCH.includes(k))) return;
+    const cfg = { on };
     const cord = h(`<button class="pullCord" aria-label="Turn this shelf's lights ${cfg.on ? "off" : "on"}" aria-pressed="${!!cfg.on}"><i></i><b></b></button>`);
     cord.onclick = () => {
       if (cord.classList.contains("yank")) return;
@@ -763,12 +780,12 @@
       setShelfDecor(key, { lightsOn: on });
       // the switch catches at the bottom of the pull; only this shelf's string follows
       setTimeout(() => {
-        const l = root.querySelector(".lights");
-        if (l) {
+        root.querySelectorAll(".lights").forEach((l) => {
+          if (l.classList.contains("fireflies")) return;
           l.classList.remove("switchOn", "switchOff"); void l.offsetWidth;
           l.classList.toggle("on", on); l.classList.add(on ? "switchOn" : "switchOff");
           clearTimeout(l._sw); l._sw = setTimeout(() => l.classList.remove("switchOn", "switchOff"), 1600);
-        }
+        });
         cord.setAttribute("aria-pressed", on); cord.setAttribute("aria-label", `Turn this shelf's lights ${on ? "off" : "on"}`);
       }, 150);
     };
@@ -1095,23 +1112,32 @@
     const section = (key, title, list, opts = {}) => {
       const sec = h(`<section><div class="sectionHead"><h2 class="sectionTitle">${esc(title)}<span class="count">${list.length}</span></h2></div></section>`);
       if (opts.more) { const m = h(`<button class="linkBtn">Only this shelf</button>`); m.onclick = opts.more; sec.firstElementChild.append(m); }
-      const hasLights = (state.settings.lights || {}).style && state.settings.lights.style !== "none";
       const sIdx = shelfN;
       {
         const btn = h(`<button class="decorBtn" aria-label="Decor on this shelf" aria-expanded="false">✦</button>`);
         btn.onclick = (e) => {
           e.stopPropagation();
-          const was = document.querySelector(".decorMenu");
+          // a second tap on the same ✦ closes its menu (check before removing it, or it no longer has a neighbour)
+          const was = document.querySelector(".decorMenu"), mine = !!was && was.previousElementSibling === btn;
           document.querySelectorAll(".decorMenu").forEach((m) => m.remove());
-          if (was && was.previousElementSibling === btn) return;
+          if (mine) { btn.setAttribute("aria-expanded", "false"); return; }
           const menu = h(`<div class="decorMenu" role="dialog" aria-label="Decor on this shelf"></div>`);
           const draw = () => {
             const dz = shelfDecor(key), its = decorItems(key);
             menu.replaceChildren();
-            if (hasLights) {
-              const l = h(`<label class="check"><input type="checkbox" ${dz.noLights ? "" : "checked"}> Lights on this shelf</label>`);
-              l.querySelector("input").onchange = (ev) => { setShelfDecor(key, { noLights: !ev.target.checked }); render(); };
-              menu.append(l);
+            // lights: tap one to hang it, tap it again to take it down; several can hang together
+            const L = shelfLights(key);
+            menu.append(h(`<span class="subLabel">Lights</span>`));
+            const lc = h(`<div class="chips small">${Object.entries(D.LIGHT_STYLES).filter(([k]) => k !== "none").map(([k, l]) => `<button data-v="${k}" aria-pressed="${L.styles.includes(k)}">${esc(l)}</button>`).join("")}</div>`);
+            lc.querySelectorAll("button").forEach((b) => (b.onclick = () => {
+              const v = b.dataset.v, styles = L.styles.includes(v) ? L.styles.filter((x) => x !== v) : [...L.styles, v];
+              setShelfLights(key, { styles }); keepOpen(); render();
+            }));
+            menu.append(lc);
+            if (L.styles.some((k) => !["wisteria", "chinese"].includes(k))) {
+              const cc = h(`<div class="colors small">${Object.entries(D.LIGHT_COLOURS).map(([k, [l, c]]) => `<button class="colorItem" data-v="${k}" aria-pressed="${L.colour === k}"><span class="dot ${L.colour === k ? "on" : ""}" style="background:${c || "conic-gradient(#ff6b6b,#ffd166,#5be3a5,#5cc8f5,#c792ff,#ff6b6b)"};box-shadow:0 0 10px ${c || "#ffd166"}88"></span>${esc(l)}</button>`).join("")}</div>`);
+              cc.querySelectorAll("button").forEach((b) => (b.onclick = () => { setShelfLights(key, { colour: b.dataset.v }); keepOpen(); render(); }));
+              menu.append(cc);
             }
             menu.append(h(`<span class="subLabel">On this shelf</span>`));
             const cur = h(`<div class="decorNow"></div>`);
@@ -1358,6 +1384,7 @@
           ${["size|Size|4|40|0.5|", "spacing|Letter spacing|-6|60|1|", "pos|Position along the spine|0|100|1|%", "shift|Move sideways|-40|40|1|"].map((r) => { const [k, l, mn, mx, st] = r.split("|"); return `<div class="field"><span class="hint">${l}: <b data-out="${k}">${part[k]}</b></span><input type="range" data-k="${k}" min="${mn}" max="${mx}" step="${st}" value="${part[k]}"></div>`; }).join("")}
           <div class="field"><span class="hint">Colour</span><div class="row" style="flex-wrap:nowrap"><button class="btn small" id="d-autoColor" aria-pressed="${!part.color}">Automatic</button><input class="input" type="color" id="d-color" value="${part.color || spineInk(b.spineColor)}" style="padding:4px;width:64px"></div></div>
           <div class="field"><span class="hint">Thickness: <b id="thickVal">${b.thickness ? b.thickness + "%" : "Auto (from page count)"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-thick" min="40" max="180" step="5" value="${b.thickness || 100}"><button class="btn small" id="f-thickAuto">Auto</button></div></div>
+          <div class="field"><span class="hint">Height: <b id="tallVal">${b.height ? b.height + "%" : "Auto"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-tall" min="70" max="120" step="2" value="${b.height || 96}"><button class="btn small" id="f-tallAuto">Auto</button></div></div>
           <div class="field"><span class="hint">Book size</span><div class="seg" id="f-bsize">${Object.entries(SIZES).map(([k, [l]]) => `<button data-v="${k}" aria-pressed="${(b.size || "regular") === k}">${l}</button>`).join("")}</div></div>
         </div></div></div>`);
       const preview = look.querySelector(".lookPreview");
@@ -1405,6 +1432,9 @@
       const thick = look.querySelector("#f-thick");
       thick.oninput = () => { look.querySelector("#thickVal").textContent = thick.value + "%"; stage({ thickness: +thick.value }, false); drawPreview(); };
       look.querySelector("#f-thickAuto").onclick = () => stage({ thickness: null });
+      const tall = look.querySelector("#f-tall");
+      tall.oninput = () => { look.querySelector("#tallVal").textContent = tall.value + "%"; stage({ height: +tall.value }, false); drawPreview(); };
+      look.querySelector("#f-tallAuto").onclick = () => stage({ height: null });
       look.querySelectorAll("#f-bsize button").forEach((btn) => (btn.onclick = () => stage({ size: btn.dataset.v })));
       body.append(look);
 
@@ -1603,7 +1633,7 @@
       };
 
       // ready-made looks and your own
-      const looks = h(`<div class="group"><h3 class="label">Looks</h3><p class="hint">Each look is a whole room: walls, shelf, colours and lettering. Below you can change the lights, the object on the shelf and your bookmark.</p><div class="looks"></div></div>`);
+      const looks = h(`<div class="group"><h3 class="label">Looks</h3><p class="hint">Each look is a whole room: walls, shelf, colours and lettering. Pick lights and objects for each shelf with the ✦ button next to its name.</p><div class="looks"></div></div>`);
       const lookWrap = looks.querySelector(".looks");
       // which look is on (older saves didn't record it, so match by room and colours)
       const current = s.lookKey || (Object.entries(D.LOOKS).find(([, L]) => L.set.backdrop === s.backdrop && L.set.theme === s.theme) || [""])[0];
@@ -1646,35 +1676,6 @@
         mo.querySelectorAll("#m-font button").forEach((b) => (b.onclick = () => pick(b, { headFont: b.dataset.v })));
         body.append(mo);
       }
-
-      // hanging lights
-      const lg = h(`<div class="group"><h3 class="label">Lights</h3><p class="hint">Hang a string of lights under every shelf. Pull the little cord under a shelf to switch just that shelf on or off.</p>
-        <div class="field"><span class="subLabel">Style</span><div class="chips" id="l-style">${Object.entries(D.LIGHT_STYLES).map(([k, l]) => `<button data-v="${k}" aria-pressed="${lights.style === k}">${l}</button>`).join("")}</div></div>
-        <div class="field" id="l-colF"><span class="subLabel">Colour</span><div class="colors" id="l-col">${Object.entries(D.LIGHT_COLOURS).map(([k, [l, c]]) => `<button class="colorItem" data-v="${k}" aria-pressed="${lights.colour === k}"><span class="dot ${lights.colour === k ? "on" : ""}" style="background:${c || "conic-gradient(#ff6b6b,#ffd166,#5be3a5,#5cc8f5,#c792ff,#ff6b6b)"};box-shadow:0 0 12px ${c || "#ffd166"}88"></span>${l}</button>`).join("")}</div></div>
-        <div class="field" id="l-onF"><span class="subLabel">All shelves</span><label class="check"><input type="checkbox" id="l-on" ${lights.on ? "checked" : ""}> Lights on</label></div></div>`);
-      lg.querySelectorAll("#l-style button").forEach((b) => (b.onclick = () => set({ lights: { ...lights, style: b.dataset.v, on: b.dataset.v === "none" ? lights.on : true } })));
-      lg.querySelectorAll("#l-col button").forEach((b) => (b.onclick = () => set({ lights: { ...lights, colour: b.dataset.v, on: true } })));
-      lg.querySelector("#l-on").onchange = (e) => set({ lights: { ...lights, on: e.target.checked }, shelfDecor: clearShelfSwitches() });
-      if (lights.style === "none") { lg.querySelector("#l-colF").hidden = true; lg.querySelector("#l-onF").hidden = true; }
-      body.append(lg);
-
-      // something standing on the shelf
-      const ornCfg = { kind: "none", on: true, ...(s.ornament || {}) };
-      const og = h(`<div class="group"><h3 class="label">On the shelf</h3><p class="hint">The object every shelf starts with. Tap it on the shelf to light it or put it out. Hold it to move it between any books, or drag it to the bin to take it off.</p>
-        <div class="ornGrid big" id="o-kind"></div>
-        <p class="hint small">Use ✦ next to a shelf's name to add as many more as you like.</p></div>`);
-      const okind = og.querySelector("#o-kind");
-      const noneT = h(`<button class="ornTile" aria-pressed="${ornCfg.kind === "none"}"><span class="ornArt"><span class="ornNone">∅</span></span><span class="name">Nothing</span></button>`);
-      noneT.onclick = () => set({ ornament: { ...ornCfg, kind: "none" } });
-      okind.append(noneT);
-      Object.entries(D.ORNAMENTS).forEach(([k, o]) => {
-        if (!o.draw) return;
-        const t = h(`<button class="ornTile" aria-pressed="${ornCfg.kind === k}"><span class="ornArt"></span><span class="name">${esc(o.label)}</span></button>`);
-        t.firstElementChild.append(ornArt(k, 50));
-        t.onclick = () => set({ ornament: { ...ornCfg, kind: k, on: true } });
-        okind.append(t);
-      });
-      body.append(og);
 
       // the bookmark that marks your page in the reader
       const bmg = h(`<div class="group"><h3 class="label">Bookmark</h3><p class="hint">What marks your page in the reader. Each look picks one to match; choose another any time.</p><div class="bmPick"></div></div>`);
