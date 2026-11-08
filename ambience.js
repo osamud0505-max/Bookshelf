@@ -382,7 +382,7 @@
     victorian: [["clock", "Grandfather clock", (R) => S.clock(R, true, 0.8)]],
     castle: [["wind", "Wind", (R) => S.wind(R.far(380, 0.35), 1)], ["drips", "Dripping water", (R) => S.drips(R)]],
     bordello: [["clock", "Clock", (R) => S.clock(R, false, 1)]],
-    forest: [["crickets", "Crickets", (R) => S.crickets(R, 0.8)], ["owl", "Owl", (R) => S.owl(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.55)], ["sparkle", "Magic sparkles", (R) => S.sparkle(R)]],
+    forest: [["bed", "Night", (R) => S.bed(R, "sounds/forest/night.mp3", 0.6)], ["music", "Music", (R) => S.bed(R, "sounds/forest/music.mp3", 0.35)], ["sparkle", "Magic", (R) => S.bed(R, "sounds/forest/magic.mp3", 0.7)]],
     teahouse: [["water", "Stream", (R) => S.water(R)], ["chimes", "Wind chimes", (R) => S.chimes(R)], ["crickets", "Crickets", (R) => S.crickets(R, 0.4)], ["fireworks", "Fireworks", (R) => S.fireworks(R)]],
     // a quiet room, and music playing somewhere further off: muffled, with the room's echo on it
     candle: [["bed", "Room", (R) => S.bed(R, "sounds/candle/room.mp3", 0.7)], ["music", "Music", (R) => S.bed(R, "sounds/candle/music.mp3", 0.42)]],
@@ -399,7 +399,7 @@
   }
 
   // evens out how loud the rooms are against each other
-  const ROOM_GAIN = { nook: 3, cottage: 1, starry: 1, forest: 2.8, castle: 1.6, library: 1.5, candle: 1, vampire: 1, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1, teahouse: 0.8 };
+  const ROOM_GAIN = { nook: 3, cottage: 1, starry: 1, forest: 1, castle: 1.6, library: 1.5, candle: 1, vampire: 1, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1, teahouse: 0.8 };
   // ------------------------------------------------------------------ playing the right room
   const look = () => { try { return (window.Shelf && window.Shelf.lookKey && window.Shelf.lookKey()) || ""; } catch (e) { return ""; } };
   const level = () => (pref.on && !reading ? pref.vol * (ducked ? 0.3 : 1) : 0);
