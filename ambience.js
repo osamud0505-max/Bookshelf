@@ -384,7 +384,7 @@
     forest: [["crickets", "Crickets", (R) => S.crickets(R, 0.8)], ["owl", "Owl", (R) => S.owl(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.55)], ["sparkle", "Magic sparkles", (R) => S.sparkle(R)]],
     teahouse: [["water", "Stream", (R) => S.water(R)], ["chimes", "Wind chimes", (R) => S.chimes(R)], ["crickets", "Crickets", (R) => S.crickets(R, 0.4)], ["fireworks", "Fireworks", (R) => S.fireworks(R)]],
     // a quiet room, and music playing somewhere further off: muffled, with the room's echo on it
-    candle: [["bed", "Room", (R) => S.bed(R, "sounds/candle/room.mp3", 0.7)], ["music", "Music", (R) => S.bed(R, "sounds/candle/music.mp3", 0.28)]],
+    candle: [["bed", "Room", (R) => S.bed(R, "sounds/candle/room.mp3", 0.7)], ["music", "Music", (R) => S.bed(R, "sounds/candle/music.mp3", 0.42)]],
     witch: [["pot", "Bubbling pot", (R) => S.cauldron(R)]],
   };
   /** A layer's own level: 0 when muted, otherwise its slider (1 = as designed, up to 1.5). */
