@@ -1019,30 +1019,61 @@
     function layout() {
       if (!viewW) return;
       const f = Math.max(0, Math.min(count - 1, scroller.scrollLeft / STEP));
-      const widths = [], turns = [];
+      // each book: how open it is (0 spine out, 1 turned to show its cover), its width as seen, and its pose
+      const opens = [], base = [], poses = [], dm = [];
       for (let i = 0; i < count; i++) {
         const b = books[i];
         const o = Math.max(0, Math.min(1, 1 - Math.abs(i - f)));
         const open = o * o * (3 - 2 * o);
-        turns.push(1 - open);
-        if (!b) { widths.push(30); continue; }
-        const { w, d } = dims(b, H);
-        const a = ((1 - open) * Math.PI) / 2;
-        widths.push(w * Math.cos(a) + d * Math.sin(a) + open * 2);
+        opens.push(open);
+        if (!b) { base.push(30); poses.push("stand"); dm.push(null); continue; }
+        const D_ = dims(b, H), a = ((1 - open) * Math.PI) / 2;
+        dm.push(D_);
+        base.push(D_.w * Math.cos(a) + D_.d * Math.sin(a) + open * 2);
+        poses.push(b.pose === "lean" || b.pose === "lie" ? b.pose : "stand");
       }
+      // an object right after a lying book sits on top of that pile instead of taking room in the row
+      const ornAfter = new Map(); // book index -> objects placed right after it
+      for (const o of orns) { if (!o.hang && o.idx > 0) { const arr = ornAfter.get(o.idx - 1) || []; arr.push(o); ornAfter.set(o.idx - 1, arr); } }
+      // lying books next to each other make a pile; a pile ends where an object sits on it
+      const groups = []; // {start, end} of piles
+      for (let i = 0; i < books.length; i++) {
+        if (poses[i] !== "lie") continue;
+        const g = groups[groups.length - 1];
+        if (g && g.end === i - 1 && poses[i - 1] === "lie" && !ornAfter.has(i - 1)) g.end = i; else groups.push({ start: i, end: i });
+      }
+      const groupOf = new Map(); groups.forEach((g) => { for (let i = g.start; i <= g.end; i++) groupOf.set(i, g); });
+      const onPile = new Set(); // objects resting on a pile
+      for (const g of groups) for (const o of ornAfter.get(g.end) || []) onPile.add(o);
+      const LEAN = (16 * Math.PI) / 180;
+      // how much room each book takes in the row
+      const widths = [];
+      for (const g of groups) {
+        g.S = 0; g.extra = 0;
+        for (let i = g.start; i <= g.end; i++) { g.S = Math.max(g.S, dm[i].h * (1 - opens[i])); g.extra += opens[i] * (base[i] + 8); }
+        g.n = g.end - g.start + 1;
+      }
+      for (let i = 0; i < count; i++) {
+        if (groupOf.has(i)) { const g = groupOf.get(i); widths.push(g.S / g.n + opens[i] * (base[i] + 8)); continue; }
+        if (poses[i] === "lean") { const p = LEAN * (1 - opens[i]); widths.push(base[i] * Math.cos(p) + dm[i].h * Math.sin(p) + 2); continue; }
+        widths.push(base[i]);
+      }
+      const ornW = (o) => (onPile.has(o) ? 0 : o.w);
       // the row stays put; it only slides when it is wider than the screen
       const fl = Math.floor(f);
       let openAt = 0; for (let i = 0; i < fl; i++) openAt += widths[i];
       openAt += (f - fl) * (widths[fl] || 0);
       // the open point passes over each decoration gradually, so the row never jumps
       let ornTotal = 0;
-      for (const o of orns) { openAt += o.w * Math.max(0, Math.min(1, f - (o.idx - 1))); ornTotal += o.w; }
+      for (const o of orns) { openAt += ornW(o) * Math.max(0, Math.min(1, f - (o.idx - 1))); ornTotal += ornW(o); }
       const total = widths.reduce((s, v) => s + v, 0) + ornTotal;
       const offset = Math.max(0, Math.min(Math.max(0, total - (viewW - PAD * 2)), openAt - viewW * 0.3));
       let x = 0, k = 0;
-      const placeOrn = (o) => {
-        const left = o.hang ? PAD + x - offset - o.vis / 2 : PAD + x - offset + 5; x += o.w;
-        o.el.style.transform = `translate3d(${left}px,0,0)`;
+      const placeOrn = (o, lift = 0, cx = null) => {
+        const left = cx != null ? cx - o.vis / 2 : o.hang ? PAD + x - offset - o.vis / 2 : PAD + x - offset + 5;
+        if (cx == null) x += o.w;
+        o.el.style.transform = `translate3d(${left.toFixed(1)}px,${(-lift).toFixed(1)}px,0)`;
+        o.el.classList.toggle("onPile", cx != null);
         // a flame leans away from the way it is being pushed, then settles
         if (o.x !== null && Math.abs(left - o.x) > 0.3 && !root.classList.contains("arranging")) {
           const lean = Math.max(-30, Math.min(30, -(left - o.x) * 6));
@@ -1051,19 +1082,54 @@
         }
         o.x = left;
       };
+      const pileAt = new Map(); // group -> { L, top }
       for (let i = 0; i < count; i++) {
-        while (k < orns.length && orns[k].idx <= i) placeOrn(orns[k++]);
+        while (k < orns.length && orns[k].idx <= i) { const o = orns[k++]; if (!onPile.has(o)) placeOrn(o); }
         const left = PAD + x - offset; x += widths[i];
         bookPos[i] = { l: left, c: left + widths[i] / 2 };
         const slot = slots[i];
-        const vis = left + widths[i] > -80 && left < viewW + 80;
+        const vis = left + widths[i] > -120 && left < viewW + 120;
         slot.style.visibility = vis ? "visible" : "hidden";
-        if (!vis) continue;
-        slot.style.width = widths[i] + "px";
-        slot.style.transform = `translate3d(${left}px,0,0)`;
-        if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", turns[i]);
+        if (!vis && !groupOf.has(i)) continue;
+        slot.style.width = base[i] + "px";
+        const pose = poses[i], open = opens[i];
+        if (groupOf.has(i)) {
+          // in a pile: lying on the books below it; while it is chosen it stands up beside the pile and turns its cover to you
+          const g = groupOf.get(i);
+          if (i === g.start) { g.L = left; g.y = 0; g.ex = 0; }
+          const h_ = dm[i].h, d_ = dm[i].d, jit = ((hash(books[i].id) % 7) - 3) * 0.8;
+          const lyX = g.L + Math.max(0, (g.S - h_) / 2) + jit, lyY = g.y;
+          const stX = g.L + g.S + g.ex + 4;
+          g.y += d_ * (1 - open); g.ex += open * (base[i] + 8);
+          // centre of the book lying down and standing up, then the slot is moved and turned about its centre
+          const W = base[i], cxL = lyX + h_ / 2, cyL = lyY + W / 2, cxS = stX + W / 2, cyS = h_ / 2;
+          const cx = cxL + (cxS - cxL) * open, cy = cyL + (cyS - cyL) * open;
+          slot.style.transformOrigin = "50% 50%";
+          slot.style.transform = `translate3d(${(cx - W / 2).toFixed(1)}px,${(h_ / 2 - cy).toFixed(1)}px,0) rotate(${(-90 * (1 - open)).toFixed(2)}deg)`;
+          slot.classList.add("lying");
+          if (i === g.end) pileAt.set(g, { cx: g.L + g.S / 2, top: g.y });
+        } else if (pose === "lean") {
+          // resting on its bottom corner with its top against the neighbour; it straightens up as it turns to you
+          const p = LEAN * (1 - open), W = base[i], h_ = dm[i].h, toLeft = i > 0;
+          if (toLeft) { slot.style.transformOrigin = "0 100%"; slot.style.transform = `translate3d(${(left + h_ * Math.sin(p)).toFixed(1)}px,0,0) rotate(${(-p * 180 / Math.PI).toFixed(2)}deg)`; }
+          else { slot.style.transformOrigin = "100% 100%"; slot.style.transform = `translate3d(${(left + W * Math.cos(p) - W).toFixed(1)}px,0,0) rotate(${(p * 180 / Math.PI).toFixed(2)}deg)`; }
+          slot.classList.remove("lying");
+        } else {
+          slot.style.transformOrigin = "";
+          slot.style.transform = `translate3d(${left}px,0,0)`;
+          slot.classList.remove("lying");
+        }
+        if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", 1 - open);
       }
-      while (k < orns.length) placeOrn(orns[k++]);
+      while (k < orns.length) { const o = orns[k++]; if (!onPile.has(o)) placeOrn(o); }
+      // objects on a pile sit on its top book, side by side if there are several
+      for (const g of groups) {
+        const p = pileAt.get(g), list = ornAfter.get(g.end) || [];
+        if (!p) continue;
+        const tw = list.reduce((s, o) => s + o.vis + 4, -4);
+        let cx = p.cx - tw / 2;
+        for (const o of list) { placeOrn(o, p.top, cx + o.vis / 2); cx += o.vis + 4; }
+      }
       if (webs.length) placeWebs();
       const n = Math.min(Math.round(f), books.length - 1);
       if (n !== front) { if (front >= 0 && !drag && userMoved) soundBookSlide(); front = n; scrollMemory.set(key, n); slots.forEach((s, i) => s.classList.toggle("front", i === n)); drawCaption(); }
@@ -1423,6 +1489,7 @@
           ${["size|Size|4|40|0.5|", "spacing|Letter spacing|-6|60|1|", "pos|Position along the spine|0|100|1|%", "shift|Move sideways|-40|40|1|"].map((r) => { const [k, l, mn, mx, st] = r.split("|"); return `<div class="field"><span class="hint">${l}: <b data-out="${k}">${part[k]}</b></span><input type="range" data-k="${k}" min="${mn}" max="${mx}" step="${st}" value="${part[k]}"></div>`; }).join("")}
           <div class="field"><span class="hint">Colour</span><div class="row" style="flex-wrap:nowrap"><button class="btn small" id="d-autoColor" aria-pressed="${!part.color}">Automatic</button><input class="input" type="color" id="d-color" value="${part.color || spineInk(b.spineColor)}" style="padding:4px;width:64px"></div></div>
           <div class="field"><span class="hint">Thickness: <b id="thickVal">${b.thickness ? b.thickness + "%" : "Auto (from page count)"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-thick" min="40" max="180" step="5" value="${b.thickness || 100}"><button class="btn small" id="f-thickAuto">Auto</button></div></div>
+          <div class="field"><span class="hint">How it sits on the shelf</span><div class="seg" id="f-pose">${[["stand", "Standing"], ["lean", "Leaning"], ["lie", "Lying flat"]].map(([k, l]) => `<button data-v="${k}" aria-pressed="${(b.pose || "stand") === k}">${l}</button>`).join("")}</div></div>
           <div class="field"><span class="hint">Height: <b id="tallVal">${b.height ? b.height + "%" : "Auto"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-tall" min="70" max="120" step="2" value="${b.height || 96}"><button class="btn small" id="f-tallAuto">Auto</button></div></div>
           <div class="field"><span class="hint">Book size</span><div class="seg" id="f-bsize">${Object.entries(SIZES).map(([k, [l]]) => `<button data-v="${k}" aria-pressed="${(b.size || "regular") === k}">${l}</button>`).join("")}</div></div>
         </div></div></div>`);
@@ -1471,6 +1538,7 @@
       const thick = look.querySelector("#f-thick");
       thick.oninput = () => { look.querySelector("#thickVal").textContent = thick.value + "%"; stage({ thickness: +thick.value }, false); drawPreview(); };
       look.querySelector("#f-thickAuto").onclick = () => stage({ thickness: null });
+      look.querySelectorAll("#f-pose button").forEach((btn) => (btn.onclick = () => stage({ pose: btn.dataset.v === "stand" ? null : btn.dataset.v })));
       const tall = look.querySelector("#f-tall");
       tall.oninput = () => { look.querySelector("#tallVal").textContent = tall.value + "%"; stage({ height: +tall.value }, false); drawPreview(); };
       look.querySelector("#f-tallAuto").onclick = () => stage({ height: null });

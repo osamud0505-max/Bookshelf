@@ -1211,3 +1211,8 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 #backdrop .spider.walking .legsA { animation: legs .2s ease-in-out infinite alternate; }
 #backdrop .spider.walking .legsB { animation: legs .2s ease-in-out infinite alternate-reverse; }
 @keyframes legs { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+/* books lying in a pile: no floor shadow under each one, a soft one under the pile instead */
+.slot.lying::after { display: none; }
+.slot.lying { z-index: 1; }
+.slot.lying.front { z-index: 2; }
+.ornament.onPile { z-index: 3; }
