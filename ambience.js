@@ -374,7 +374,7 @@
     starry: [["crickets", "Crickets", (R) => S.crickets(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.6)]],
     cottage: [["birds", "Birds", (R) => S.birdsFar(R)]],
     vampire: [["bed", "Background", (R) => S.bed(R, "sounds/vampire/bg.mp3", 0.5)],
-      ["voice", "Voice", (R) => S.voices(R, Array.from({ length: 12 }, (_, i) => `sounds/vampire/v${i + 1}.mp3`), 0.85, 22000, 50000)]],
+      ["voice", "Voice", (R) => S.voices(R, Array.from({ length: 12 }, (_, i) => `sounds/vampire/v${i + 1}.mp3?e=2`), 0.85, 22000, 50000)]],
     victorian: [["clock", "Grandfather clock", (R) => S.clock(R, true, 0.8)]],
     castle: [["wind", "Wind", (R) => S.wind(R.far(380, 0.35), 1)], ["drips", "Dripping water", (R) => S.drips(R)]],
     bordello: [["clock", "Clock", (R) => S.clock(R, false, 1)]],
