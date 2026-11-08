@@ -7,7 +7,7 @@
 (() => {
   "use strict";
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const SRC = "bg/loft-cat.mp4?v=2";
+  const SRC = "bg/loft-cat.mp4?v=3";
   // where the film sits in the loft picture (fractions of the picture): a little wider than the picture, so the cat
   // comes in and goes out past its edges, with its paw line on the sill's top
   const LEFT = -0.02, WIDTH = 1.04, ASPECT = 552 / 720, PAW = 533 / 980, SILL = 0.8125, TOP = 0.55;
