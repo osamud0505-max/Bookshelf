@@ -13,6 +13,12 @@
 
   // ------------------------------------------------------------------ building blocks
   const bufs = {};
+  // recorded sound files, decoded once and kept
+  const files = {};
+  function loadFile(url) {
+    if (!files[url]) files[url] = fetch(url).then((r) => r.arrayBuffer()).then((a) => new Promise((res, rej) => ctx.decodeAudioData(a, res, rej))).catch(() => { delete files[url]; return null; });
+    return files[url];
+  }
   /** A few seconds of noise that loops without a seam. white = hiss, pink = softer, brown = deep rumble. */
   function noise(kind) {
     if (bufs[kind]) return bufs[kind];
@@ -223,6 +229,39 @@
         if (Math.random() < 0.25) { const s = t + rnd(0.1, beats * gap); R.tone(s, rnd(5200, 6400), rnd(4200, 5000), 0.025, 0.008, "sine", dest, 0.002); R.tone(s + 0.06, rnd(5200, 6400), rnd(4200, 5000), 0.02, 0.006, "sine", dest, 0.002); }
       });
     },
+    /** A recorded background (osamu's own sound files) looping without a seam. */
+    bed(R, url, level) {
+      let dead = false; R.onStop(() => (dead = true));
+      loadFile(url).then((buf) => {
+        if (dead || !buf) return;
+        const s = ctx.createBufferSource(), g = ctx.createGain();
+        s.buffer = buf; s.loop = true;
+        g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(level, ctx.currentTime + 2.5);
+        s.connect(g).connect(R.out); s.start(ctx.currentTime, Math.random() * buf.duration);
+        R.shared.nodes.push(s);
+      });
+    },
+    /** Recorded lines spoken now and then, one at a time, with long quiet stretches between them; never the same twice running. */
+    voices(R, urls, level, minGap, maxGap) {
+      let dead = false, last = -1; R.onStop(() => (dead = true));
+      urls.forEach(loadFile); // fetch them ahead so each line starts on time
+      const next = (ms) => R.shared.timers.push(setTimeout(say, ms));
+      const say = () => {
+        if (dead) return;
+        if (ctx.state !== "running" || document.hidden) { next(4000); return; }
+        let i = Math.floor(Math.random() * urls.length); if (urls.length > 1 && i === last) i = (i + 1) % urls.length; last = i;
+        loadFile(urls[i]).then((buf) => {
+          if (dead) return;
+          if (!buf) { next(minGap); return; }
+          const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = buf; g.gain.value = level;
+          const p = R.pan(rnd(-0.35, 0.35)); // from somewhere in the dark, a little to one side
+          s.connect(g).connect(p || R.out);
+          s.start(ctx.currentTime + 0.05); R.shared.nodes.push(s);
+          next(buf.duration * 1000 + rnd(minGap, maxGap));
+        });
+      };
+      next(rnd(8000, 15000));
+    },
     drone(R) {
       const lp = R.filter("lowpass", 220); lp.connect(R.out);
       const oscs = [55, 55.4, 82.4].map((f) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sawtooth"; o.frequency.value = f; g.gain.value = 0.02; o.connect(g).connect(lp); o.start(); return o; });
@@ -334,7 +373,8 @@
     library: [["clock", "Clock", (R) => S.clock(R, false, 0.8)], ["hum", "Room hum", (R) => S.hum(R)]],
     starry: [["crickets", "Crickets", (R) => S.crickets(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.6)]],
     cottage: [["birds", "Birds", (R) => S.birdsFar(R)]],
-    vampire: [["drone", "Low drone", (R) => S.drone(R)]],
+    vampire: [["bed", "Background", (R) => S.bed(R, "sounds/vampire/bg.mp3", 0.5)],
+      ["voice", "Voice", (R) => S.voices(R, Array.from({ length: 12 }, (_, i) => `sounds/vampire/v${i + 1}.mp3`), 0.85, 22000, 50000)]],
     victorian: [["clock", "Grandfather clock", (R) => S.clock(R, true, 0.8)]],
     castle: [["wind", "Wind", (R) => S.wind(R.far(380, 0.35), 1)], ["drips", "Dripping water", (R) => S.drips(R)]],
     bordello: [["clock", "Clock", (R) => S.clock(R, false, 1)]],
@@ -352,7 +392,7 @@
   }
 
   // evens out how loud the rooms are against each other
-  const ROOM_GAIN = { nook: 3, cottage: 3, starry: 2.8, forest: 2.8, castle: 1.6, library: 1.5, candle: 2.5, vampire: 1.5, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1.2, teahouse: 0.8 };
+  const ROOM_GAIN = { nook: 3, cottage: 3, starry: 2.8, forest: 2.8, castle: 1.6, library: 1.5, candle: 2.5, vampire: 1, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1.2, teahouse: 0.8 };
   // ------------------------------------------------------------------ playing the right room
   const look = () => { try { return (window.Shelf && window.Shelf.lookKey && window.Shelf.lookKey()) || ""; } catch (e) { return ""; } };
   const level = () => (pref.on && !reading ? pref.vol * (ducked ? 0.3 : 1) : 0);
