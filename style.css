@@ -1320,3 +1320,4 @@ html { touch-action: pan-x pan-y; }
 
 /* v105: the shelf is seen straight on, so a pile shows no top face (it read as a slab); objects stand right on the top book */
 .pileTop { display: none; }
+#backdrop .loftCat { position: absolute; left: 0; right: 0; top: 55%; bottom: 0; overflow: hidden; pointer-events: none; }

@@ -1069,6 +1069,8 @@
     // the painted bulbs are always lit, so a soft shade sits over each one and deepens exactly as its glow fades
     return box(`<div class="cabinShade" aria-hidden="true">${off}</div><div class="cabinLights" aria-hidden="true">${h}</div>`, 0.4242, "bottom");
   };
+  // a black cat that now and then jumps onto the loft's windowsill for a nap (cat.js moves it)
+  FX.loftCat = () => { setTimeout(() => window.LoftCat && window.LoftCat.start(), 0); return box(`<div class="loftCat" aria-hidden="true"></div>`); };
   FX.paintedRain = () => {
     const R = rng(12); let drops = ""; for (let i = 0; i < 90; i++) drops += `<i class="drop" style="left:${f1(R() * 100)}%;--t:${f1(0.7 + R() * 0.9)}s;--d:-${f1(R() * 2)}s;--h:${f1(10 + R() * 18)}px"></i>`;
     let beads = ""; for (let i = 0; i < 34; i++) beads += `<i class="bead" style="left:${f1(R() * 96)}%;top:${f1(4 + R() * 90)}%;--t:${f1(5 + R() * 8)}s;--d:-${f1(R() * 10)}s"></i>`;
@@ -1091,7 +1093,7 @@
     return box(`${wins}<div class="loftSky"><i class="plane"><b class="nav"></b><b class="beacon"></b><b class="strobe"></b></i></div>`);
   };
   const PAINTED = {
-    libraryStacks: ["library", "dust", 0.4619], cabinNight: ["cabin3", "paintedFire cabinLights", 0, "bottom"], loftDusk: ["loft", "glowmotes loftLife"], galleryWall: ["candle", ""],
+    libraryStacks: ["library", "dust", 0.4619], cabinNight: ["cabin3", "paintedFire cabinLights", 0, "bottom"], loftDusk: ["loft", "glowmotes loftLife loftCat"], galleryWall: ["candle", ""],
     teaNight: ["teahouse", "petals paintedFireworks"], castleIvy: ["castle", "fog"], vampireMirror: ["vampire", "fog mirrorEyes vampGloom"], study: ["academia", "paintedRain"],
     cottageRoses: ["cottage", ""], greenDamask: ["victorian", ""], damask: ["bordello", ""], enchanted: ["forest", "motes fogThick"],
     witchTower: ["witch", "witchMotes wallSpider"], goldenHour: ["nook", ""],
