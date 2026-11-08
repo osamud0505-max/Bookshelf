@@ -1255,6 +1255,8 @@
   }
 
   // ---------------------------------------------------------------- page
+  // no page zoom (Safari ignores user-scalable=no, so its pinch gesture is stopped here too)
+  ["gesturestart", "gesturechange"].forEach((ev) => document.addEventListener(ev, (e) => e.preventDefault(), { passive: false }));
   const main = document.getElementById("main");
   let reopenDecor = null;
   const keepOpen = () => { const m = document.querySelector(".decorMenu"); const sec = m && m.closest("section"); const sh = sec && sec.querySelector(".shelf"); reopenDecor = sh ? sh.dataset.key : null; };

@@ -1287,3 +1287,5 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 .web canvas { display: block; }
 /* while the mushrooms' fairy dust plays, it drives their light; the usual fades and pulse wait */
 .ornament.fairyRun .litOnly, .ornament.fairyRun .ornGlow, .ornament.fairyRun .ornPool { transition: none !important; animation: none !important; }
+/* no page zoom anywhere (osamu): pinches never scale the app */
+html { touch-action: pan-x pan-y; }
