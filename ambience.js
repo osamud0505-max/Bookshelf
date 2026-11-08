@@ -375,7 +375,7 @@
     academia: [["rain", "Rain", (R) => S.rain(R.far(1000, 0.5), 0.8)], ["clock", "Clock", (R) => S.clock(R, false, 0.5)], ["quill", "Quill on paper", (R) => S.quill(R)]],
     library: [["clock", "Clock", (R) => S.clock(R, false, 0.8)], ["hum", "Room hum", (R) => S.hum(R)]],
     starry: [["crickets", "Crickets", (R) => S.crickets(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.6)]],
-    cottage: [["birds", "Birds", (R) => S.birdsFar(R)]],
+    cottage: [["bed", "Room", (R) => S.bed(R, "sounds/cottage/room.mp3", 0.6)], ["music", "Music", (R) => S.bed(R, "sounds/cottage/music.mp3", 0.42)]],
     vampire: [["bed", "Background", (R) => S.bed(R, "sounds/vampire/bg.mp3", 0.5)],
       ["voice", "Voice", (R) => S.voices(R, Array.from({ length: 12 }, (_, i) => `sounds/vampire/v${i + 1}.mp3?e=2`), 0.85, 22000, 50000)]],
     victorian: [["clock", "Grandfather clock", (R) => S.clock(R, true, 0.8)]],
@@ -397,7 +397,7 @@
   }
 
   // evens out how loud the rooms are against each other
-  const ROOM_GAIN = { nook: 3, cottage: 3, starry: 2.8, forest: 2.8, castle: 1.6, library: 1.5, candle: 1, vampire: 1, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1, teahouse: 0.8 };
+  const ROOM_GAIN = { nook: 3, cottage: 1, starry: 2.8, forest: 2.8, castle: 1.6, library: 1.5, candle: 1, vampire: 1, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1, teahouse: 0.8 };
   // ------------------------------------------------------------------ playing the right room
   const look = () => { try { return (window.Shelf && window.Shelf.lookKey && window.Shelf.lookKey()) || ""; } catch (e) { return ""; } };
   const level = () => (pref.on && !reading ? pref.vol * (ducked ? 0.3 : 1) : 0);
