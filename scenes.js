@@ -541,18 +541,21 @@
     let next = 1200, last = performance.now(), quiet = 0;
 
     // z: 0 = close to us, 1 = far away. Close ones burst high and wide and bright; far ones low, small and hazy.
-    const launch = () => {
-      const z = Math.pow(Math.random(), 0.9), sc = 1.15 - 0.8 * z;
+    // most shells are either clearly close or clearly far, so the two read (and sound) apart; a salvo stays at one depth
+    const pickZ = () => { const r = Math.random(); return r < 0.45 ? rand(0, 0.22) : r < 0.68 ? rand(0.38, 0.62) : rand(0.76, 1); };
+    const launch = (zHint) => {
+      const z = zHint == null ? pickZ() : Math.max(0, Math.min(1, zHint + rand(-0.07, 0.07))), sc = 1.25 - 0.95 * z;
       const kind = pick(KINDS);
       const c1 = kind === "willow" || kind === "kamuro" || kind === "palm" ? "gold" : pick(NAMES);
       let c2 = pick(NAMES); if (c2 === c1) c2 = "silver";
-      const x = W * rand(0.22, 0.78), ty = H * (0.16 + z * 0.42 + rand(-0.05, 0.06));
+      const x = W * rand(0.22, 0.78), ty = H * (0.15 + z * 0.45 + rand(-0.04, 0.05));
       const y0 = H * (1.02 - z * 0.12), g = 160 * sc, vy = -Math.sqrt(2 * g * (y0 - ty));
       shells.push({ x, y: y0, vx: rand(-6, 6) * sc, vy, g, z, sc, kind, c1, c2 });
       if (z < 0.45) send("shelf:firework-launch", { x: x / W, z });
+      return z;
     };
     const star = (s, vx, vy, o = {}) => stars.push(Object.assign({ x: s.x, y: s.y, px: s.x, py: s.y, vx, vy, age: 0, life: 1.8, drag: 2, g: 30 * s.sc,
-      col: PAL[s.c1][0], hot: PAL[s.c1][1], w: 2.1 * s.sc, dim: 1 - 0.55 * s.z, sc: s.sc }, o));
+      col: PAL[s.c1][0], hot: PAL[s.c1][1], w: 2.1 * s.sc, dim: 1 - 0.68 * s.z, sc: s.sc, far: s.z > 0.6 }, o));
     const burst = (s) => {
       const r = W * 0.36 * s.sc * rand(0.85, 1.1); // how far the stars fly
       const sphere = (n, k = 1, o = {}) => {
@@ -588,7 +591,8 @@
         case "glitter": sphere(85, 1, { glitter: true, life: 2.2 }); crackle = 1; crackleAt = 1.1; break;
         case "strobe": sphere(70, 0.9, { strobe: rand(0, 1), life: 2.6, col: "#f2f4ff", hot: "#ffffff", drag: 2.2, g: 22 * s.sc }); crackle = 0.6; crackleAt = 1.2; break;
       }
-      stars.push({ flash: true, x: s.x, y: s.y, r: r * 1.15, age: 0, life: 0.4, dim: 1 - 0.55 * s.z });
+      // the flash lights the air: big and bright up close, a faint smudge far off
+      stars.push({ flash: true, x: s.x, y: s.y, r: r * (s.z < 0.3 ? 1.5 : 1.1), age: 0, life: s.z < 0.3 ? 0.5 : 0.35, dim: (1 - 0.8 * s.z) * (s.z < 0.3 ? 1.3 : 1) });
       send("shelf:firework", { kind: s.kind, x: s.x / W, z: s.z, crackle, crackleAt, crackleDur: s.kind === "kamuro" || s.kind === "willow" ? 1.3 : 0.9 });
     };
     const frame = (now) => {
@@ -596,10 +600,10 @@
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
       next -= dt * 1000;
       if (next <= 0) {
-        launch();
+        const z0 = launch();
         const r = Math.random();
-        if (r < 0.18) { setTimeout(launch, rand(250, 500)); setTimeout(launch, rand(600, 1000)); }
-        else if (r < 0.4) setTimeout(launch, rand(300, 700));
+        if (r < 0.18) { setTimeout(() => launch(z0), rand(250, 500)); setTimeout(() => launch(z0), rand(600, 1000)); }
+        else if (r < 0.4) setTimeout(() => launch(z0), rand(300, 700));
         next = Math.random() < 0.12 ? rand(6000, 9500) : rand(1500, 3600);
       }
       // old light fades away, leaving short trails
@@ -636,10 +640,10 @@
         let col = p.col;
         if (p.change && t > 0.5) col = p.change[0];
         // a burning star is white-hot in its first moments
-        if (t < 0.12 && !p.ember) col = p.hot;
+        if (t < 0.12 && !p.ember && !p.far) col = p.hot;
         ctx.globalAlpha = Math.min(1, a); ctx.strokeStyle = col; ctx.lineWidth = p.w * (p.ember ? 1 : 1 - t * 0.4);
         ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(p.x, p.y); ctx.stroke();
-        if (!p.ember && a > 0.2) { ctx.globalAlpha = a * 0.12; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p.x, p.y, p.w * 1.8, 0, 7); ctx.fill(); }
+        if (!p.ember && a > 0.2) { ctx.globalAlpha = a * (p.far ? 0.2 : 0.12); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p.x, p.y, p.w * (p.far ? 2.6 : 1.8), 0, 7); ctx.fill(); }
         // trailing stars shed embers that hang and fall
         if (p.trail && Math.random() < p.trail * 0.6 && t < 0.85) stars.push({ x: p.x, y: p.y, px: p.x, py: p.y, vx: p.vx * 0.05, vy: p.vy * 0.05, age: 0, life: rand(0.4, 0.9), col: "#ffb860", hot: "#ffb860", drag: 3, g: 26 * (p.sc || 1), w: 0.9 * (p.sc || 1), dim: p.dim * 0.8, ember: true, glitter: p.glitter });
       }
@@ -1145,7 +1149,8 @@
   };
   // a spider that now and then crosses the witch's tower wall (webs.js walks it)
   FX.wallSpider = () => { setTimeout(() => window.ShelfSpider && window.ShelfSpider.start(), 0); return box(`<div class="wallSpider" aria-hidden="true"></div>`); };
-  FX.paintedFireworks = () => { setTimeout(startFireworks, 0); return box(`<canvas class="fxFireworks painted" aria-hidden="true"></canvas>`); };
+  // the moon is painted again, real, on its own layer; the fireworks burn in front of it (they are miles nearer)
+  FX.paintedFireworks = () => { setTimeout(startFireworks, 0); return box(`<div class="teaSky" aria-hidden="true"><i class="teaMoon"></i></div><canvas class="fxFireworks painted" aria-hidden="true"></canvas>`); };
   // red eyes in the vampire's mirror: now and then a face leans close behind the glass. The eyes open, look about,
   // blink naturally a couple of times, then close and sink back into the dark.
   const eye = (cx, flip) => `<g class="eye" style="transform-origin:${cx}px 20px"><path d="M${cx - 17 * flip} 17 Q${cx - 2 * flip} 5 ${cx + 17 * flip} 21 Q${cx + 1 * flip} 30 ${cx - 17 * flip} 17Z" fill="url(#mEyeG)"/>`

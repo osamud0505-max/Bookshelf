@@ -303,10 +303,10 @@
       const on = (e) => {
         if (!ctx || ctx.state !== "running" || document.hidden) return;
         const d = e.detail || {}, z = d.z == null ? 0.5 : d.z, near = 1 - z;
-        const t = ctx.currentTime + 0.04 + z * 0.55, dest = R.pan(((d.x || 0.5) - 0.5) * 0.9) || R.out;
+        const t = ctx.currentTime + 0.03 + z * 0.15, dest = R.pan(((d.x || 0.5) - 0.5) * 0.9) || R.out;
         // the boom: low noise, brighter and harder when close
         const s = ctx.createBufferSource(); s.buffer = noise("brown");
-        const f = R.filter("lowpass", 140 + near * near * 420), g = ctx.createGain(), peak = 0.14 + near * near * 0.85, len = 1.3 + z * 1.4;
+        const f = R.filter("lowpass", 95 + near * near * 620), g = ctx.createGain(), peak = 0.08 + near * near * 0.92, len = 1.3 + z * 1.6;
         g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.008 + z * 0.06); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
         s.connect(f).connect(g); g.connect(dest); if (z > 0.3) { const eg = ctx.createGain(); eg.gain.value = 0.5 * z; g.connect(eg).connect(echo); }
         s.start(t, Math.random() * 4); s.stop(t + len + 0.1);
