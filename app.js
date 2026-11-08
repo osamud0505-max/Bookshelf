@@ -675,7 +675,7 @@
       n.connect(lp).connect(fg).connect(sfxOut()); n.start(at); n.stop(at + 0.12);
     } catch (e) { /* no sound available */ }
   }
-  window.ShelfSfx = { page: soundPageTurn, slide: soundBookSlide, setVolume(v) { if (sfxBus) sfxBus.gain.setTargetAtTime(0.16 * v, sfxBus.context.currentTime, 0.05); } };
+  window.ShelfSfx = { page: soundPageTurn, slide: soundBookSlide, pull: soundPullSwitch, setVolume(v) { if (sfxBus) sfxBus.gain.setTargetAtTime(0.16 * v, sfxBus.context.currentTime, 0.05); } };
   /** A soft glassy shimmer, for things that glow rather than burn. */
   function soundChime(up) {
     try {

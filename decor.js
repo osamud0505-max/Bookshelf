@@ -441,12 +441,13 @@
       + `<feGaussianBlur in="SourceAlpha" stdDeviation="2" result="bl"/><feComposite in="SourceAlpha" in2="bl" operator="out" result="rim0"/><feFlood flood-color="#000" flood-opacity=".28"/><feComposite in2="rim0" operator="in" result="rim"/>`
       + `<feComponentTransfer in="lit" result="cr"><feFuncR type="linear" slope="1.08" intercept="-.02"/><feFuncG type="linear" slope="1.08" intercept="-.02"/><feFuncB type="linear" slope="1.08" intercept="-.02"/></feComponentTransfer>`
       + `<feMerge><feMergeNode in="cr"/><feMergeNode in="rim"/></feMerge></filter>`;
-    el.innerHTML = `<div class="ornGlow"${o.glow ? ` style="background:radial-gradient(closest-side, ${o.glow}, transparent)"` : ""}></div><svg viewBox="0 0 ${o.vw} 200" width="${w}" height="${h}" aria-hidden="true">${o.soft ? body : `<defs>${fx}</defs><g filter="url(#${id}fx)">${body}</g>`}${flames}</svg>`;
+    el.innerHTML = `<div class="ornGlow"${o.glow ? ` style="background:radial-gradient(closest-side, ${o.glow}, transparent)"` : ""}></div><svg viewBox="0 0 ${o.vw} 200" width="${w}" height="${h}" aria-hidden="true">${o.soft || o.flat ? body : `<defs>${fx}</defs><g filter="url(#${id}fx)">${body}</g>`}${flames}</svg>`;
     // where the glow sits: the highest flame
     const ys = [...o.draw("x").matchAll(/data-y="([\d.]+)"/g)].map((m) => +m[1]);
     if (ys.length) el.style.setProperty("--fy", (Math.min(...ys) / 200 * 100).toFixed(1) + "%");
     if (o.still) el.classList.add("still");
     if (o.hang) el.classList.add("hanging");
+    if (o.mount) setTimeout(() => o.mount(el), 0);
     return el;
   }
 
