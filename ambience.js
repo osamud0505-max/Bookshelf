@@ -236,7 +236,7 @@
         if (dead || !buf) return;
         const s = ctx.createBufferSource(), g = ctx.createGain();
         s.buffer = buf; s.loop = true;
-        g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(level, ctx.currentTime + 2.5);
+        g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(level, ctx.currentTime + 1);
         s.connect(g).connect(R.out); s.start(ctx.currentTime, Math.random() * buf.duration);
         R.shared.nodes.push(s);
       });
@@ -260,7 +260,7 @@
           next(buf.duration * 1000 + rnd(minGap, maxGap));
         });
       };
-      next(rnd(8000, 15000));
+      next(rnd(2500, 5000));
     },
     drone(R) {
       const lp = R.filter("lowpass", 220); lp.connect(R.out);
@@ -412,7 +412,7 @@
       const g = ctx.createGain(); g.gain.value = layerLevel(key, id); g.connect(room.out);
       make(makeRoom(g, room.shared)); room.layers[id] = g;
     }
-    room.out.gain.setValueAtTime(0, t); room.out.gain.linearRampToValueAtTime(ROOM_GAIN[key] || 1, t + 2.5);
+    room.out.gain.setValueAtTime(0, t); room.out.gain.linearRampToValueAtTime(ROOM_GAIN[key] || 1, t + 1);
   }
   function start() {
     if (!pref.on) return;
@@ -421,12 +421,15 @@
       master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
     }
     if (ctx.state === "suspended") ctx.resume();
-    setLevel(1.5); update();
+    setLevel(0.8); update();
   }
   // sound may only start from a tap or key press
   const kick = () => { if (pref.on && (!ctx || ctx.state !== "running")) start(); };
-  addEventListener("pointerdown", kick, true);
-  addEventListener("keydown", kick, true);
+  // on a phone a touch only counts once the finger lifts, so listen to every kind of first touch
+  ["pointerdown", "pointerup", "touchend", "click", "keydown"].forEach((ev) => addEventListener(ev, kick, true));
+  // and try straight away: browsers allow it for an app added to the home screen, or a site you play sound on often
+  const early = () => { if (pref.on) start(); };
+  if (document.readyState === "complete") setTimeout(early, 0); else addEventListener("load", () => setTimeout(early, 0));
   document.addEventListener("visibilitychange", () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else if (pref.on) ctx.resume(); });
   // softer while your music plays
   const watchMusic = () => { if (!window.ShelfMusic) return; window.ShelfMusic.listen((now) => { const d = !!(now && now.playing); if (d !== ducked) { ducked = d; setLevel(1.5); } }); };
