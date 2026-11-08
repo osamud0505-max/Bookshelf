@@ -1058,6 +1058,24 @@
     let sparks = ""; for (let i = 0; i < 8; i++) sparks += `<i class="spark" style="left:${f1(38 + R() * 24)}%;--t:${f1(1.6 + R() * 1.8)}s;--d:-${f1(R() * 4)}s;--dx:${f1((R() - 0.5) * 30)}px"></i>`;
     return box(`<div class="fxHearth painted"><div class="fireGlow"></div><svg viewBox="0 0 300 140" preserveAspectRatio="none" aria-hidden="true"><defs>${grad("pfG0", "#ffc04a", "#ff6a10")}${grad("pfG1", "#ffd36a", "#ff7a1a")}${grad("pfG2", "#ffb030", "#ff5a0c")}</defs><g class="flames">${flames}</g></svg>${sparks}</div>`, 0.4242, "bottom");
   };
+  // the garland's own fairy lights (spots found in bg/cabin3.jpg): each bulb glows softly, some breathe slowly, some twinkle
+  FX.cabinLights = () => {
+    let off = ""; const P = [74.19,70.19,36.49,71.96,25.97,70.96,97.32,74.00,36.05,71.35,65.03,71.97,1.71,74.52,50.87,66.94,97.46,72.08,77.24,68.51,35.54,68.27,14.94,71.07,24.67,66.42,36.70,66.82,99.11,76.61,4.00,77.17,80.22,65.62,31.75,64.46,67.39,67.33,97.83,68.29,60.68,64.61,69.98,65.34,9.26,69.82,56.56,65.59,88.52,67.17,81.63,64.97,41.67,66.86,60.84,63.84,47.74,68.06,16.36,64.84,73.82,67.16,12.59,76.45,18.49,70.82,84.92,71.03,49.77,65.46,60.25,70.23,54.14,71.34,12.28,72.19,3.37,74.41,26.97,69.61,72.19,71.65,84.40,64.97,8.94,65.05,33.35,71.23,98.26,78.10,47.34,63.12,44.88,64.00,61.98,70.45,55.75,71.11,16.44,67.35,11.04,72.36,8.68,79.34,47.51,64.02,19.64,64.24,64.45,68.34,83.56,70.01,38.93,64.09,14.47,65.89,71.86,69.12,73.02,64.52,96.97,71.46,4.24,75.66], R = rng(41); let h = "";
+    for (let i = 0; i < P.length; i += 2) {
+      const k = R(), mode = k < 0.45 ? "lb" : k < 0.8 ? "lt" : "ls";
+      const st = `left:${P[i]}%;top:${P[i + 1]}%;--t:${f1(mode === "lt" ? 1.4 + R() * 2.2 : 3 + R() * 4)}s;--d:-${f1(R() * 6)}s;--s:${f2(0.8 + R() * 0.45)}`;
+      h += `<i class="${mode}" style="${st}"></i>`; if (mode !== "ls") off += `<i class="${mode}" style="${st}"></i>`;
+    }
+    // the painted bulbs are always lit, so a soft shade sits over each one and deepens exactly as its glow fades
+    return box(`<div class="cabinShade" aria-hidden="true">${off}</div><div class="cabinLights" aria-hidden="true">${h}</div>`, 0.4242, "bottom");
+  };
+  FX.paintedRain = () => {
+    const R = rng(12); let drops = ""; for (let i = 0; i < 90; i++) drops += `<i class="drop" style="left:${f1(R() * 100)}%;--t:${f1(0.7 + R() * 0.9)}s;--d:-${f1(R() * 2)}s;--h:${f1(10 + R() * 18)}px"></i>`;
+    let beads = ""; for (let i = 0; i < 34; i++) beads += `<i class="bead" style="left:${f1(R() * 96)}%;top:${f1(4 + R() * 90)}%;--t:${f1(5 + R() * 8)}s;--d:-${f1(R() * 10)}s"></i>`;
+    return box(`<div class="fxWindow painted"><div class="pane">${drops}</div></div>`);
+  };
+  // a spider that now and then crosses the witch's tower wall (webs.js walks it)
+  FX.wallSpider = () => { setTimeout(() => window.ShelfSpider && window.ShelfSpider.start(), 0); return box(`<div class="wallSpider" aria-hidden="true"></div>`); };
   FX.paintedFireworks = () => { setTimeout(startFireworks, 0); return box(`<canvas class="fxFireworks painted" aria-hidden="true"></canvas>`); };
   // red eyes in the vampire's mirror: now and then a face leans close behind the glass. The eyes open, look about,
   // blink naturally a couple of times, then close and sink back into the dark.
@@ -1073,7 +1091,7 @@
     return box(`${wins}<div class="loftSky"><i class="plane"><b class="nav"></b><b class="beacon"></b><b class="strobe"></b></i></div>`);
   };
   const PAINTED = {
-    libraryStacks: ["library", "dust", 0.4619], cabinNight: ["cabin2", "paintedFire", 0, "bottom"], loftDusk: ["loft", "glowmotes loftLife"], galleryWall: ["candle", ""],
+    libraryStacks: ["library", "dust", 0.4619], cabinNight: ["cabin3", "paintedFire cabinLights", 0, "bottom"], loftDusk: ["loft", "glowmotes loftLife"], galleryWall: ["candle", ""],
     teaNight: ["teahouse", "petals paintedFireworks"], castleIvy: ["castle", "fog"], vampireMirror: ["vampire", "fog mirrorEyes vampGloom"], study: ["academia", "paintedRain"],
     cottageRoses: ["cottage", ""], greenDamask: ["victorian", ""], damask: ["bordello", ""], enchanted: ["forest", "motes fogThick"],
     witchTower: ["witch", "witchMotes wallSpider"], goldenHour: ["nook", ""],
