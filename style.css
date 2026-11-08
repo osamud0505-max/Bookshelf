@@ -1280,3 +1280,6 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 /* setting down: a small give as it meets the surface */
 .ornament.landed > svg { animation: ornLand .34s cubic-bezier(.3,.7,.4,1); transform-origin: 50% 100%; }
 @keyframes ornLand { 0% { transform: translateY(-2px); } 45% { transform: translateY(0) scale(1.015, .975); } 100% { transform: none; } }
+/* the spider is drawn on its own small canvas that travels over the picture */
+#backdrop .spider { width: 112px; height: 112px; filter: none; }
+.web canvas { display: block; }

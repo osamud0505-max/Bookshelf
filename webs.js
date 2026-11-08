@@ -1,87 +1,189 @@
-/* Cobwebs for the witch's tower: corner webs between books and on the shelf, and webs draped under the shelf edge.
-   They sway a little in the draught. Brushed away (a tap, or a book moving), a web catches, stretches, its anchor threads
-   snap and it balls up into a stringy wad that drops away, the way a web really comes off on a finger or a broom. */
+/* Cobwebs for the witch's tower and the spider on its wall.
+   Webs are real thread nets: every crossing is a point held together by its threads and pinned where the web is stuck to
+   a book or the shelf. A faint draught pushes the free middle about while the pinned edges stay put, light slides along
+   the threads as they move, and loose strands swing. Brushed away, the threads cling to the finger and stretch, the anchor
+   threads let go one by one, broken threads spring back and the whole thing shrinks into a stringy wad that drops. */
 (() => {
   "use strict";
   const KEY = "shelf.webs.gone";
   let gone; try { gone = new Set(JSON.parse(sessionStorage.getItem(KEY) || "[]")); } catch (e) { gone = new Set(); }
   const remember = (id) => { gone.add(id); try { sessionStorage.setItem(KEY, JSON.stringify([...gone])); } catch (e) { /* private mode */ } };
   const rng = (seed) => { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
-  const f1 = (n) => n.toFixed(1);
-  const TH = `stroke="rgba(228,230,238,.55)" stroke-width=".55" fill="none" stroke-linecap="round"`;
-  const THIN = `stroke="rgba(228,230,238,.32)" stroke-width=".4" fill="none"`;
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const DPR = Math.min(2, window.devicePixelRatio || 1);
+  const PAD = 24, FALL = 90; // room around the web to move and to fall into
 
-  /** A corner web: threads fan out of the corner where two surfaces meet (drawn with the corner at bottom left). */
-  function corner(w, h, seed) {
-    const R = rng(seed), n = 6 + Math.floor(R() * 3), rad = [];
-    for (let k = 0; k <= n; k++) {
-      const a = (k / n) * (Math.PI / 2) + (R() - 0.5) * 0.12, len = 0.82 + R() * 0.18;
-      rad.push([Math.cos(a) * w * len, h - Math.sin(a) * h * len]);
+  // ---------------------------------------------------------------- building a net
+  function net() { return { n: [], s: [] }; }
+  const node = (N, x, y, pin = false, hang = false) => (N.n.push({ x, y, px: x, py: y, pin, hang, gx: null }), N.n.length - 1);
+  const seg = (N, a, b, kind, k = 1) => { const A = N.n[a], B = N.n[b]; N.s.push({ a, b, kind, len: Math.hypot(A.x - B.x, A.y - B.y) * k }); };
+
+  /** A corner web, corner at bottom left: one surface runs along the bottom, the other up the left side. */
+  function cornerNet(w, h, R) {
+    const N = net(), nr = 6 + Math.floor(R() * 3), rings = [0.16, 0.29, 0.42, 0.56, 0.7, 0.84, 1];
+    const hub = node(N, 0, h, true), rad = [];
+    for (let k = 0; k <= nr; k++) {
+      const a = (k / nr) * (Math.PI / 2) + (k && k < nr ? (R() - 0.5) * 0.14 : 0), len = k === 0 || k === nr ? 1 : 0.84 + R() * 0.16;
+      const row = [];
+      rings.forEach((r) => {
+        const x = Math.cos(a) * w * r * len, y = h - Math.sin(a) * h * r * len;
+        row.push(node(N, x, y, k === 0 || k === nr)); // the two outer spokes lie on the surfaces: stuck along their length
+      });
+      rad.push(row);
+      seg(N, hub, row[0], "spoke", 0.98);
+      for (let j = 1; j < row.length; j++) seg(N, row[j - 1], row[j], "spoke", 0.98);
     }
-    let anchors = "", body = "", glint = "";
-    rad.forEach(([x, y], k) => {
-      const line = `<path d="M0 ${h} L${f1(x)} ${f1(y)}" ${TH}/>`;
-      if (k === 0 || k === n) anchors += line; else body += line;
-    });
-    // the spiral: rings of sagging threads between neighbouring spokes, with a few broken ones
-    const rings = [0.18, 0.31, 0.45, 0.6, 0.75, 0.9];
-    rings.forEach((r, ri) => {
-      let d = "";
-      for (let k = 0; k < n; k++) {
-        if (R() < 0.1) continue;
-        const [x1, y1] = rad[k], [x2, y2] = rad[k + 1];
-        const ax = x1 * r, ay = h - (h - y1) * r, bx = x2 * r, by = h - (h - y2) * r;
-        const sag = 0.82 + R() * 0.06, cx = ((ax + bx) / 2) * sag, cy = h - (h - (ay + by) / 2) * sag;
-        d += `M${f1(ax)} ${f1(ay)} Q${f1(cx)} ${f1(cy)} ${f1(bx)} ${f1(by)} `;
+    // the spiral: between neighbouring spokes, each thread sags a little towards the hub; a few are broken
+    rings.forEach((r, j) => {
+      const frame = j === rings.length - 1;
+      for (let k = 0; k < nr; k++) {
+        if (!frame && R() < 0.09) continue;
+        const a = rad[k][j], b = rad[k + 1][j], A = N.n[a], B = N.n[b];
+        const sag = frame ? 0.9 : 0.93, mx = ((A.x + B.x) / 2) * sag, my = h - (h - (A.y + B.y) / 2) * sag;
+        const m = node(N, mx, my);
+        seg(N, a, m, frame ? "frame" : "ring", 0.995); seg(N, m, b, frame ? "frame" : "ring", 0.995);
       }
-      (ri === 3 ? (glint += `<path class="glint" d="${d}" stroke="rgba(255,255,255,.9)" stroke-width=".6" fill="none"/>`) : 0);
-      body += `<path d="${d}" ${ri % 2 ? THIN : TH}/>`;
     });
-    // a loose strand hanging off the edge and a speck of dust caught in it
-    const [lx, ly] = rad[Math.floor(n / 2)];
-    body += `<path d="M${f1(lx * 0.9)} ${f1(h - (h - ly) * 0.9)} q${f1(4 + R() * 6)} ${f1(6 + R() * 6)} ${f1(2 + R() * 4)} ${f1(14 + R() * 10)}" ${THIN}/>`;
-    body += `<circle cx="${f1(rad[2][0] * 0.5)}" cy="${f1(h - (h - rad[2][1]) * 0.5)}" r=".9" fill="rgba(200,195,180,.6)"/>`;
-    return { anchors, body: body + glint };
+    // a loose strand hanging off the outer edge
+    const from = rad[Math.floor(nr / 2)][rings.length - 2];
+    let prev = from; const L = 2 + R() * 1.5;
+    for (let q = 1; q <= 3; q++) { const P = N.n[from], c = node(N, P.x + q * 0.6, P.y + q * L, false, true); seg(N, prev, c, "strand"); prev = c; }
+    N.speck = rad[2][2];
+    return N;
   }
 
-  /** A drape: a tattered sheet of web hanging from the underside of the shelf edge. */
-  function drape(w, h, seed) {
-    const R = rng(seed), pts = [];
-    for (let x = 0; x <= w; x += w / (4 + Math.floor(R() * 2))) pts.push(Math.min(w, x + (R() - 0.5) * 6));
-    let anchors = "", body = "";
-    pts.forEach((x) => (anchors += `<path d="M${f1(x)} 0 l${f1((R() - 0.5) * 3)} 3" ${TH}/>`));
-    // layered sagging threads between the anchor points, deeper towards the middle, with a few tears
-    for (let layer = 1; layer <= 4; layer++) {
-      let d = "";
-      for (let k = 0; k < pts.length - 1; k++) {
-        if (R() < 0.12 * layer) continue;
-        const a = pts[k], b = pts[k + 1], mid = (a + b) / 2, dip = (h * layer) / 4.4 * (0.75 + R() * 0.5);
-        d += `M${f1(a)} ${f1(layer * 2)} Q${f1(mid)} ${f1(dip * 1.6)} ${f1(b)} ${f1(layer * 2)} `;
+  /** A drape: a tattered sheet hanging from the underside of the shelf edge, stuck along the top. */
+  function drapeNet(w, h, R) {
+    const N = net(), cols = 6 + Math.floor(R() * 2), rows = 5, grid = [];
+    for (let c = 0; c <= cols; c++) {
+      const x0 = (c / cols) * w + (R() - 0.5) * 4, col = [];
+      for (let r = 0; r <= rows; r++) {
+        // deeper in the middle, shallower at the ends, a little ragged
+        const depth = h * (0.35 + 0.65 * Math.sin((c / cols) * Math.PI)) * (0.85 + R() * 0.3);
+        col.push(node(N, x0 + (R() - 0.5) * 2, (r / rows) * depth, r === 0));
       }
-      body += `<path d="${d}" ${layer % 2 ? TH : THIN}/>`;
+      grid.push(col);
     }
-    // strands dangling down, some with a speck at the end
-    for (let k = 0; k < 4; k++) {
-      const x = w * (0.15 + R() * 0.7), len = h * (0.6 + R() * 0.5);
-      body += `<path class="dangle" style="--d:-${f1(R() * 4)}s" d="M${f1(x)} ${f1(h * 0.3)} q${f1((R() - 0.5) * 6)} ${f1(len / 2)} ${f1((R() - 0.5) * 4)} ${f1(len)}" ${THIN}/>`;
-      if (R() < 0.5) body += `<circle cx="${f1(x)}" cy="${f1(h * 0.3 + len)}" r=".8" fill="rgba(200,195,180,.55)"/>`;
+    for (let c = 0; c <= cols; c++) for (let r = 1; r <= rows; r++) seg(N, grid[c][r - 1], grid[c][r], "spoke", 1.0);
+    for (let r = 1; r <= rows; r++) for (let c = 0; c < cols; c++) { if (R() < 0.08 * r) continue; seg(N, grid[c][r], grid[c + 1][r], r % 2 ? "ring" : "frame", 1.04); }
+    for (let c = 0; c < cols; c++) if (R() < 0.5) { const r = 1 + Math.floor(R() * (rows - 1)); seg(N, grid[c][r], grid[c + 1][r + 1] ?? grid[c + 1][r], "ring", 1.03); }
+    // strands dangling from the bottom edge, free to swing
+    for (let q = 0; q < 4; q++) {
+      const c = 1 + Math.floor(R() * (cols - 1)), base = grid[c][rows], P = N.n[base], L = 3 + R() * 3, n = 3 + Math.floor(R() * 4);
+      let prev = base; for (let k = 1; k <= n; k++) { const m = node(N, P.x, P.y + k * L, false, true); seg(N, prev, m, "strand"); prev = m; }
     }
-    body += `<path class="glint" d="M${f1(pts[1])} 4 Q${f1((pts[1] + pts[2]) / 2)} ${f1(h * 0.45)} ${f1(pts[2])} 4" stroke="rgba(255,255,255,.9)" stroke-width=".6" fill="none"/>`;
-    return { anchors, body };
+    N.speck = grid[2][2];
+    return N;
+  }
+
+  // ---------------------------------------------------------------- moving and drawing
+  const live = new Set();
+  let raf = 0, T = 0;
+  function loop(now) {
+    raf = 0; T = now / 1000;
+    for (const W of live) {
+      if (!W.el.isConnected && !W.tearing) { live.delete(W); continue; }
+      step(W); draw(W);
+      if (W.done) { live.delete(W); W.el.remove(); }
+    }
+    if (live.size && !document.hidden) raf = requestAnimationFrame(loop);
+  }
+  const kick = () => { if (!raf && live.size) raf = requestAnimationFrame(loop); };
+  document.addEventListener("visibilitychange", kick);
+
+  function step(W) {
+    const N = W.N, t = T + W.ph;
+    const wind = calm ? 0 : W.tearing ? 0 : 0.0042 * W.gust(t);
+    const grav = W.tearing ? 0.075 : 0;
+    const drag = W.tearing ? 0.94 : 0.9;
+    for (const p of N.n) {
+      if (p.pin) continue;
+      if (p.gx != null) { p.px = p.x; p.py = p.y; p.x += (p.gx - p.x) * 0.5; p.y += (p.gy - p.y) * 0.5; continue; }
+      const vx = (p.x - p.px) * drag, vy = (p.y - p.py) * drag;
+      p.px = p.x; p.py = p.y;
+      // a draught that rolls across the web, stronger where the web is far from its anchors
+      const fx = wind * (Math.sin(t * 0.9 + p.y * 0.07) + 0.6 * Math.sin(t * 2.3 + p.x * 0.11));
+      const fy = wind * 0.6 * Math.sin(t * 1.3 + p.x * 0.05 + 1.7);
+      p.x += vx + fx; p.y += vy + fy + grav + (p.hang && !W.tearing ? 0.03 : 0);
+      // a corner web cannot pass through the book or shelf it is stuck to
+      if (W.corner && !W.tearing) { if (p.y > W.h) p.y = W.h; if (p.x < 0) p.x = 0; }
+    }
+    if (W.tearing) {
+      W.age++;
+      // the torn web gathers into a wad: every thread slowly shortens
+      if (W.age > W.hold) for (const S of N.s) S.len *= 0.975;
+      // the finger lets go
+      if (W.age === W.hold) for (const p of N.n) p.gx = null;
+      if (W.finger && W.age < W.hold) { const f = Math.min(1, W.age / W.hold), e = f * f * (3 - 2 * f); for (const p of N.n) if (p.gx != null) { p.gx = p.ox + W.pull[0] * e; p.gy = p.oy + W.pull[1] * e; } }
+      if (W.age > W.hold + 70) W.done = true;
+    }
+    for (let it = 0; it < 4; it++) {
+      for (let i = N.s.length - 1; i >= 0; i--) {
+        const S = N.s[i], A = N.n[S.a], B = N.n[S.b];
+        const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy) || 0.001;
+        if (W.tearing) {
+          // a thread pulled far past its length snaps; a stuck end pulled hard comes unstuck
+          if (d > S.len * 2.4 && S.kind !== "strand") { N.s.splice(i, 1); continue; }
+          if (d > S.len * 1.45) { if (A.pin && Math.random() < 0.25) A.pin = false; if (B.pin && Math.random() < 0.25) B.pin = false; }
+        }
+        const k = (d - S.len) / d * (S.kind === "strand" ? 0.5 : 0.45);
+        const aw = A.pin || A.gx != null ? 0 : 1, bw = B.pin || B.gx != null ? 0 : 1, sum = aw + bw;
+        if (!sum) continue;
+        A.x += dx * k * (aw / sum) * 2 * 0.5; A.y += dy * k * (aw / sum) * 2 * 0.5;
+        B.x -= dx * k * (bw / sum) * 2 * 0.5; B.y -= dy * k * (bw / sum) * 2 * 0.5;
+      }
+    }
+  }
+
+  function draw(W) {
+    const c = W.ctx, N = W.N, t = T + W.ph;
+    c.setTransform(DPR, 0, 0, DPR, 0, 0);
+    c.clearRect(0, 0, W.cw, W.ch);
+    c.translate(PAD, PAD);
+    if (W.flip) { c.translate(W.w, 0); c.scale(-1, 1); }
+    const fade = W.tearing ? Math.max(0, Math.min(1, (W.hold + 70 - W.age) / 30)) : 1;
+    c.lineCap = "round";
+    // the light: a band of sheen that drifts across the web and catches threads at the right angle
+    const sx = Math.cos(t * 0.23) * 0.5 + 0.5;
+    for (const S of N.s) {
+      const A = N.n[S.a], B = N.n[S.b];
+      const ang = Math.atan2(B.y - A.y, B.x - A.x), mx = (A.x + B.x) / 2 / (W.w || 1);
+      const catchA = Math.pow(Math.max(0, Math.cos(ang * 2 - t * 0.35 + W.ph)), 14);
+      const near = Math.max(0, 1 - Math.abs(mx - sx) * 3);
+      const glint = calm ? 0 : catchA * near;
+      const base = S.kind === "ring" ? 0.24 : S.kind === "strand" ? 0.3 : 0.4;
+      c.strokeStyle = `rgba(${228 + glint * 27},${230 + glint * 25},${238 + glint * 17},${((base + glint * 0.55) * fade).toFixed(3)})`;
+      c.lineWidth = (S.kind === "ring" ? 0.45 : 0.6) + glint * 0.25;
+      c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.stroke();
+    }
+    // dust caught in it
+    const sp = N.n[N.speck];
+    if (sp) { c.fillStyle = `rgba(200,192,176,${0.55 * fade})`; c.beginPath(); c.arc(sp.x, sp.y, 0.9, 0, 7); c.fill(); }
   }
 
   /** Make a web element. kind: "corner" (corner at bottom left; flip for bottom right) or "drape". */
   function make(id, kind, w, h, flip) {
     if (gone.has(id)) return null;
-    const seed = [...id].reduce((s, c) => s * 31 + c.charCodeAt(0), 7);
-    const { anchors, body } = kind === "drape" ? drape(w, h, seed) : corner(w, h, seed);
+    const seed = [...id].reduce((s, c) => (s * 31 + c.charCodeAt(0)) >>> 0, 7);
+    const R = rng(seed);
+    const N = kind === "drape" ? drapeNet(w, h, R) : cornerNet(w, h, R);
     const el = document.createElement("div");
     el.className = `web ${kind}${flip ? " flip" : ""}`; el.dataset.web = id;
     el.style.width = w + "px"; el.style.height = h + "px";
-    el.style.setProperty("--t", (5 + (seed % 5) * 0.8).toFixed(1) + "s");
-    el.innerHTML = `<svg width="${w}" height="${h + (kind === "drape" ? h * 0.6 : 0)}" viewBox="0 0 ${w} ${h + (kind === "drape" ? h * 0.6 : 0)}" aria-hidden="true"><g class="wSway"><g class="wAnch">${anchors}</g><g class="wBody">${body}</g></g></svg>`;
+    const cv = document.createElement("canvas"), cw = w + PAD * 2, ch = h * (kind === "drape" ? 1.6 : 1) + PAD + FALL;
+    cv.width = Math.ceil(cw * DPR); cv.height = Math.ceil(ch * DPR);
+    cv.style.cssText = `position:absolute;left:${-PAD}px;top:${-PAD}px;width:${cw}px;height:${ch}px;pointer-events:none`;
+    el.append(cv);
+    const g1 = 0.7 + R() * 0.6, g2 = 1.7 + R();
+    const W = { el, N, w, h, flip, corner: kind !== "drape", cw, ch, ctx: cv.getContext("2d"), ph: R() * 50, tearing: false, age: 0, hold: 22,
+      // gusts come and go: mostly still, now and then a breath of air
+      gust: (t) => 0.25 + 0.75 * Math.pow(Math.max(0, Math.sin(t * 0.21 * g1) * Math.sin(t * 0.13 * g2 + 1)), 2) * 3 };
+    el._web = W;
     el.addEventListener("pointerdown", (e) => e.stopPropagation());
     el.addEventListener("click", (e) => { e.stopPropagation(); tear(el, e.clientX, e.clientY); });
+    // settle it before it is seen, so it does not start by sagging into place
+    for (let k = 0; k < 30; k++) step(W);
+    live.add(W); requestAnimationFrame(() => { draw(W); kick(); });
     return el;
   }
 
@@ -89,26 +191,25 @@
   function tear(el, px, py) {
     if (!el || el._torn) return; el._torn = true;
     remember(el.dataset.web);
-    const r = el.getBoundingClientRect(), flip = el.classList.contains("flip"), drp = el.classList.contains("drape");
-    // it is pulled away from where it hangs: corners come out of their corner, drapes come down
-    const dx = drp ? 0 : flip ? -r.width * 0.6 : r.width * 0.6, dy = drp ? r.height * 0.9 : -r.height * 0.2;
-    const ox = px != null ? ((px - r.left) / r.width) * 100 : 50, oy = py != null ? ((py - r.top) / r.height) * 100 : 50;
-    const svg = el.querySelector("svg"), anch = el.querySelector(".wAnch");
+    const W = el._web; if (!W) { el.remove(); return; }
     el.classList.add("tearing");
-    svg.style.transformOrigin = `${ox.toFixed(0)}% ${oy.toFixed(0)}%`;
-    const spin = (Math.random() - 0.5) * 70;
-    const a = svg.animate([
-      { transform: "none", opacity: 1 },
-      // it catches and stretches with the pull, still held at its anchors
-      { transform: `translate(${dx * 0.18}px, ${dy * 0.18}px) scale(${drp ? 1.02 : 1.14}, ${drp ? 1.18 : 0.92})`, opacity: 1, offset: 0.3 },
-      // the anchor threads snap, it springs back a touch and starts to gather
-      { transform: `translate(${dx * 0.3}px, ${dy * 0.35}px) scale(.7) rotate(${spin * 0.3}deg)`, opacity: 0.95, offset: 0.5 },
-      // balled up into a wad that drops away
-      { transform: `translate(${dx * 0.55}px, ${dy * 0.6 + 26}px) scale(.16) rotate(${spin}deg)`, opacity: 0.85, offset: 0.82 },
-      { transform: `translate(${dx * 0.6}px, ${dy * 0.6 + 60}px) scale(.12) rotate(${spin * 1.2}deg)`, opacity: 0 },
-    ], { duration: 1050, easing: "cubic-bezier(.35,0,.4,1)", fill: "forwards" });
-    anch.animate([{ opacity: 1 }, { opacity: 1, offset: 0.36 }, { opacity: 0, offset: 0.44 }, { opacity: 0 }], { duration: 1050, fill: "forwards" });
-    a.onfinish = () => el.remove();
+    W.tearing = true; W.age = 0; live.add(W);
+    const drp = el.classList.contains("drape");
+    if (px != null) {
+      // the threads near the finger stick to it and are dragged away from where the web is anchored
+      const r = el.getBoundingClientRect();
+      let lx = px - r.left, ly = py - r.top; if (W.flip) lx = W.w - lx;
+      W.finger = true;
+      W.pull = drp ? [(Math.random() - 0.5) * 20, W.h * 0.9 + 20] : [W.w * 0.7, -W.h * 0.35];
+      let any = false;
+      for (const p of W.N.n) if (Math.hypot(p.x - lx, p.y - ly) < Math.max(10, W.w * 0.22)) { p.gx = p.x; p.gy = p.y; p.ox = p.x; p.oy = p.y; any = true; }
+      if (!any) { let best = null, bd = 1e9; for (const p of W.N.n) { const d = Math.hypot(p.x - lx, p.y - ly); if (d < bd && !p.pin) { bd = d; best = p; } } if (best) { best.gx = best.x; best.gy = best.y; best.ox = best.x; best.oy = best.y; } }
+    } else {
+      // a book slid against it: the side stuck to that book comes away and the web collapses and drops
+      W.hold = 6;
+      for (const p of W.N.n) { if (p.pin && (drp || p.x < 1.5)) p.pin = false; p.px = p.x - (drp ? 0 : 0.8 + Math.random() * 0.6); }
+    }
+    kick();
     soundTear();
   }
 
@@ -130,20 +231,14 @@
 
 
   // ------------------------------------------------------------------ a spider crossing the wall behind the shelves
-  // It comes in from off screen now and then, wanders across in stop-start bursts like a real spider and leaves by
-  // another edge. Its next visit starts from the edge it last left by, so its trips join up into one long loop.
-  const EDGES = ["left", "top", "right", "bottom"];
+  // It comes in from off screen now and then and leaves by another edge; the next visit starts from the edge it last left
+  // by, so its trips join into one loop. It keeps to the stone: never across the window glass or the hanging herbs.
+  // It moves the way spiders do: a quick dash, a dead stop, a few slow steps, a turn. Its eight legs step in two
+  // alternating sets of four; each foot stays planted on the wall until the body has moved past it, then swings forward.
+  const EDGES = ["left", "right", "bottom"];
+  // places on the witch's tower picture it must keep off, as fractions of the picture: the glass and its arch, the herbs
+  const AVOID = [[0.29, 0.185, 0.72, 0.525], [0.05, 0.02, 0.95, 0.215]];
   let lastExit = null, nextT = 0, running = null;
-  const LEG = (side, k) => {
-    // a leg in two segments: up and out from the body, then bending down and back to its foot
-    const ax = 2.5 - k * 1.8, sy = side, fx = ax + [7, 3, -2, -6][k], fy = sy * (9 + [1, 3, 3, 1][k]), tx = ax + [12, 4, -6, -13][k], ty = sy * (13 + [0, 4, 4, 0][k]);
-    return `<path d="M${ax} ${sy * 2} L${fx} ${fy} L${tx} ${ty}" stroke="#140d0e" stroke-width="1.15" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`;
-  };
-  const SPIDER = `<svg viewBox="-16 -16 32 32" width="34" height="34" aria-hidden="true">`
-    + `<g class="legsA">${LEG(1, 0)}${LEG(-1, 1)}${LEG(1, 2)}${LEG(-1, 3)}</g><g class="legsB">${LEG(-1, 0)}${LEG(1, 1)}${LEG(-1, 2)}${LEG(1, 3)}</g>`
-    + `<ellipse cx="-6.5" cy="0" rx="6.6" ry="5.2" fill="#1b1214"/><ellipse cx="-7.5" cy="-1.6" rx="3.2" ry="1.6" fill="#5a4448" opacity=".45"/><path d="M-10 0 h6 M-9 -1.8 l2 1.8 -2 1.8" stroke="#3a2a2c" stroke-width=".6" fill="none"/>`
-    + `<ellipse cx="2.2" cy="0" rx="4.2" ry="3.5" fill="#20171a"/><ellipse cx="6.2" cy="0" rx="1.9" ry="1.7" fill="#191113"/><circle cx="7" cy="-.7" r=".45" fill="#8a6a6a"/><circle cx="7" cy=".7" r=".45" fill="#8a6a6a"/>`
-    + `<path d="M7.6 -1 l1.6 -.6 M7.6 1 l1.6 .6" stroke="#140d0e" stroke-width=".8"/></svg>`;
   function host() { return document.querySelector("#backdrop .wallSpider"); }
   function startSpider() {
     if (running) return;
@@ -151,21 +246,11 @@
     nextT = setTimeout(visit, lastExit ? 30000 + Math.random() * 40000 : 7000 + Math.random() * 9000);
   }
   function edgePoint(edge, W, H, pad = 40) {
-    const r = 0.12 + Math.random() * 0.76;
-    return edge === "left" ? [-pad, H * r] : edge === "right" ? [W + pad, H * r] : edge === "top" ? [W * r, -pad] : [W * r, H + pad];
+    const r = edge === "bottom" ? 0.08 + Math.random() * 0.84 : 0.25 + Math.random() * 0.7;
+    return edge === "left" ? [-pad, H * r] : edge === "right" ? [W + pad, H * r] : [W * r, H + pad];
   }
-  function visit() {
-    const box = host(); if (!box) return;
-    if (document.hidden) { nextT = setTimeout(visit, 5000); return; }
-    const W = box.clientWidth || innerWidth, H = box.clientHeight || innerHeight;
-    const entry = lastExit || EDGES[Math.floor(Math.random() * 4)];
-    const exits = EDGES.filter((e) => e !== entry), exit = exits[Math.floor(Math.random() * exits.length)];
-    // its route: in from the entry edge, two or three wandering turns on the wall, out by the exit edge
-    const pts = [edgePoint(entry, W, H)];
-    const turns = 2 + Math.floor(Math.random() * 2);
-    for (let k = 1; k <= turns; k++) { const [ax, ay] = pts[0], [bx, by] = edgePoint(exit, W, H); const t = k / (turns + 1); pts.push([ax + (bx - ax) * t + (Math.random() - 0.5) * W * 0.35, ay + (by - ay) * t + (Math.random() - 0.5) * H * 0.25]); }
-    pts.push(edgePoint(exit, W, H));
-    // a smooth path through the turns (Catmull-Rom), sampled finely so it can walk at an even pace
+  const blocked = (x, y, W, H, m) => AVOID.some(([a, b, c, d]) => x > a * W - m && x < c * W + m && y > b * H - m && y < d * H + m);
+  function spline(pts) {
     const path = [];
     for (let i = 0; i < pts.length - 1; i++) {
       const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
@@ -175,28 +260,169 @@
       }
     }
     path.push(pts[pts.length - 1]);
+    return path;
+  }
+  function route(entry, exit, W, H) {
+    for (let tries = 0; tries < 60; tries++) {
+      const a = edgePoint(entry, W, H), b = edgePoint(exit, W, H), pts = [a];
+      const turns = 2 + Math.floor(Math.random() * 2);
+      let ok = true;
+      for (let k = 1; k <= turns && ok; k++) {
+        const t = k / (turns + 1);
+        let p = null;
+        for (let q = 0; q < 20 && !p; q++) {
+          const c = [a[0] + (b[0] - a[0]) * t + (Math.random() - 0.5) * W * 0.5, a[1] + (b[1] - a[1]) * t + (Math.random() - 0.5) * H * 0.35];
+          if (c[0] > W * 0.1 && c[0] < W * 0.9 && c[1] > H * 0.08 && c[1] < H * 0.95 && !blocked(c[0], c[1], W, H, 26)) p = c;
+        }
+        if (p) pts.push(p); else ok = false;
+      }
+      if (!ok) continue;
+      pts.push(b);
+      const path = spline(pts);
+      if (path.every(([x, y]) => !blocked(x, y, W, H, 16))) return path;
+    }
+    // along the lower wall, well clear of everything
+    const y = H * (0.68 + Math.random() * 0.2);
+    return spline([edgePoint(entry, W, H), [W * 0.3, y], [W * 0.7, y + (Math.random() - 0.5) * 40], edgePoint(exit, W, H)]);
+  }
+
+  // the spider's body plan, in pixels, x pointing forward: hips round the front body, and where each foot rests
+  const HIPS = [[3.6, 1.7], [2.4, 2.3], [1.0, 2.4], [-0.3, 2.0]];
+  const REST = [[19.5, 10.5], [8, 17.5], [-5, 17.5], [-16.5, 12]];
+  const LEGS = [];
+  for (let k = 0; k < 4; k++) for (const side of [1, -1]) {
+    const hip = [HIPS[k][0], HIPS[k][1] * side], rest = [REST[k][0], REST[k][1] * side];
+    const reach = Math.hypot(rest[0] - hip[0], rest[1] - hip[1]);
+    LEGS.push({ k, side, hip, rest, L1: reach * 0.52, L2: reach * 0.7, group: (k + (side > 0 ? 0 : 1)) % 2, foot: null, sw: null });
+  }
+  const rot = (x, y, a) => [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)];
+  const SZ = 112; // the spider's own little canvas, which travels with it
+
+  function visit() {
+    const box = host(); if (!box) return;
+    if (document.hidden) { nextT = setTimeout(visit, 5000); return; }
+    const W = box.clientWidth || innerWidth, H = box.clientHeight || innerHeight;
+    const entry = lastExit || EDGES[Math.floor(Math.random() * EDGES.length)];
+    const exits = EDGES.filter((e) => e !== entry), exit = exits[Math.floor(Math.random() * exits.length)];
+    const path = route(entry, exit, W, H);
     const len = [0]; for (let i = 1; i < path.length; i++) len.push(len[i - 1] + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
-    const el = document.createElement("div"); el.className = "spider"; el.innerHTML = SPIDER; box.append(el);
-    running = el;
-    let s = 0, last = performance.now(), speed = 0, pauseUntil = 0, nextPause = last + 1200 + Math.random() * 2500, ang = null;
-    const step = (now) => {
-      if (!el.isConnected) { running = null; return; }
-      const dt = Math.min(0.05, (now - last) / 1000); last = now;
-      // stop-start: it scuttles, freezes for a moment, then goes on
-      if (now < pauseUntil) speed = Math.max(0, speed - 400 * dt);
-      else { speed = Math.min(62, speed + 260 * dt); if (now > nextPause) { pauseUntil = now + 400 + Math.random() * 1500; nextPause = pauseUntil + 1500 + Math.random() * 3000; } }
-      el.classList.toggle("walking", speed > 8);
+    const cv = document.createElement("canvas"); cv.className = "spider";
+    cv.width = SZ * DPR; cv.height = SZ * DPR; cv.style.width = cv.style.height = SZ + "px";
+    box.append(cv); running = cv;
+    const c = cv.getContext("2d");
+    const legs = LEGS.map((l) => ({ ...l, foot: null, sw: null }));
+    // how it moves: dashes and stops
+    let s = 0, last = performance.now(), speed = 0, target = 0, until = last + 300, ang = null, angV = 0, bob = 0;
+    const plan = (now) => {
+      const r = Math.random();
+      if (target > 0 || r < 0.25) { target = 0; until = now + 350 + Math.random() * (r < 0.1 ? 2600 : 1200); }
+      else if (r < 0.45) { target = 22 + Math.random() * 18; until = now + 500 + Math.random() * 700; } // a few careful steps
+      else { target = 75 + Math.random() * 40; until = now + 300 + Math.random() * 650; } // a dash
+    };
+    const frame = (now) => {
+      if (!cv.isConnected) { running = null; return; }
+      const dt = Math.min(0.04, (now - last) / 1000); last = now;
+      if (now > until) plan(now);
+      // spiders start and stop almost at once
+      speed += (target - speed) * Math.min(1, dt * (target > speed ? 14 : 22));
       s += speed * dt;
-      if (s >= len[len.length - 1]) { el.remove(); running = null; lastExit = exit; startSpider(); return; }
+      if (s >= len[len.length - 1]) { cv.remove(); running = null; lastExit = exit; startSpider(); return; }
       let i = 1; while (i < len.length - 1 && len[i] < s) i++;
       const f = (s - len[i - 1]) / Math.max(0.001, len[i] - len[i - 1]);
       const x = path[i - 1][0] + (path[i][0] - path[i - 1][0]) * f, y = path[i - 1][1] + (path[i][1] - path[i - 1][1]) * f;
-      const target = Math.atan2(path[i][1] - path[i - 1][1], path[i][0] - path[i - 1][0]);
-      if (ang === null) ang = target; else { let d = target - ang; d = Math.atan2(Math.sin(d), Math.cos(d)); ang += d * Math.min(1, dt * 8); }
-      el.style.transform = `translate3d(${(x - 17).toFixed(1)}px,${(y - 17).toFixed(1)}px,0) rotate(${(ang * 180 / Math.PI).toFixed(1)}deg)`;
-      requestAnimationFrame(step);
+      const want = Math.atan2(path[Math.min(path.length - 1, i + 2)][1] - path[i - 1][1], path[Math.min(path.length - 1, i + 2)][0] - path[i - 1][0]);
+      if (ang === null) ang = want;
+      else { let d = want - ang; d = Math.atan2(Math.sin(d), Math.cos(d)); const na = ang + d * Math.min(1, dt * (speed > 30 ? 9 : 4)); angV = (na - ang) / Math.max(dt, 0.001); ang = na; }
+      const vx = Math.cos(ang) * speed, vy = Math.sin(ang) * speed;
+      // legs: a planted foot stays where it is on the wall; when it trails too far behind, its set of four steps
+      const stride = 7 + Math.min(1, speed / 110) * 7, swingT = Math.max(0.05, 0.12 - speed * 0.0006);
+      const restW = (l) => { const [rx, ry] = rot(l.rest[0], l.rest[1], ang); return [x + rx, y + ry]; };
+      let swinging = -1;
+      for (const l of legs) {
+        if (!l.foot) l.foot = restW(l);
+        if (l.sw) {
+          l.sw.t += dt / swingT;
+          const e = Math.min(1, l.sw.t), ee = e * e * (3 - 2 * e);
+          l.foot = [l.sw.a[0] + (l.sw.b[0] - l.sw.a[0]) * ee, l.sw.a[1] + (l.sw.b[1] - l.sw.a[1]) * ee];
+          l.lift = Math.sin(e * Math.PI);
+          if (e >= 1) { l.sw = null; l.lift = 0; } else swinging = l.group;
+        }
+      }
+      for (const l of legs) if (!l.sw) { const r = restW(l), e = Math.hypot(l.foot[0] - r[0], l.foot[1] - r[1]); if (e > stride * 1.3) { const lead = stride * 0.45; l.sw = { t: 0, a: l.foot, b: [r[0] + Math.cos(ang) * lead, r[1] + Math.sin(ang) * lead] }; } }
+      if (swinging < 0) {
+        let worst = -1, wErr = 0;
+        for (const l of legs) { const r = restW(l), e = Math.hypot(l.foot[0] - r[0], l.foot[1] - r[1]); if (e > wErr) { wErr = e; worst = l.group; } }
+        if (wErr > (speed > 3 ? stride * 0.55 : 2.2)) {
+          for (const l of legs) if (l.group === worst) {
+            const r = restW(l), lead = speed > 3 ? stride * 0.45 : 0;
+            l.sw = { t: 0, a: l.foot, b: [r[0] + Math.cos(ang) * lead, r[1] + Math.sin(ang) * lead] };
+          }
+          bob = 1;
+        }
+      }
+      bob *= Math.pow(0.02, dt);
+      drawSpider(c, x, y, ang, angV, legs, bob, now);
+      cv.style.transform = `translate3d(${(x - SZ / 2).toFixed(1)}px,${(y - SZ / 2).toFixed(1)}px,0)`;
+      requestAnimationFrame(frame);
     };
-    requestAnimationFrame(step);
+    requestAnimationFrame(frame);
+  }
+
+  function drawSpider(c, x, y, ang, angV, legs, bob, now) {
+    c.setTransform(DPR, 0, 0, DPR, 0, 0);
+    c.clearRect(0, 0, SZ, SZ);
+    c.translate(SZ / 2 - x, SZ / 2 - y); // world coordinates
+    // its shadow falls on the stone a little below and to the right
+    c.shadowColor = "rgba(0,0,0,.5)"; c.shadowBlur = 2.5 * DPR; c.shadowOffsetX = 1.6 * DPR; c.shadowOffsetY = 2.4 * DPR;
+    c.lineCap = "round"; c.lineJoin = "round";
+    for (const l of legs) {
+      const [hx, hy] = rot(l.hip[0], l.hip[1], ang), H = [x + hx, y + hy], F = l.foot;
+      let dx = F[0] - H[0], dy = F[1] - H[1], d = Math.hypot(dx, dy);
+      const L1 = l.L1, L2 = l.L2 * (1 - (l.lift || 0) * 0.12); // a lifted leg looks shorter from above
+      d = Math.max(Math.abs(L1 - L2) + 0.2, Math.min(L1 + L2 - 0.2, d));
+      const base = Math.atan2(dy, dx), a = Math.acos(Math.max(-1, Math.min(1, (L1 * L1 + d * d - L2 * L2) / (2 * L1 * d))));
+      // the knee bends up and out, away from the body
+      const k1 = [H[0] + Math.cos(base + a) * L1, H[1] + Math.sin(base + a) * L1], k2 = [H[0] + Math.cos(base - a) * L1, H[1] + Math.sin(base - a) * L1];
+      const side = (p) => { const [, ly] = rot(p[0] - x, p[1] - y, -ang); return ly * l.side; };
+      const K = side(k1) > side(k2) ? k1 : k2;
+      const tip = [K[0] + (F[0] - K[0]) * 0.72, K[1] + (F[1] - K[1]) * 0.72];
+      c.strokeStyle = "#160f0d"; c.lineWidth = 1.3; c.beginPath(); c.moveTo(H[0], H[1]); c.lineTo(K[0], K[1]); c.stroke();
+      c.lineWidth = 0.9; c.beginPath(); c.moveTo(K[0], K[1]); c.lineTo(tip[0], tip[1]); c.stroke();
+      c.lineWidth = 0.55; c.beginPath(); c.moveTo(tip[0], tip[1]); c.lineTo(F[0], F[1]); c.stroke();
+      // a little sheen on the upper leg and a pale joint
+      c.shadowColor = "transparent";
+      c.strokeStyle = "rgba(150,120,105,.35)"; c.lineWidth = 0.45; c.beginPath(); c.moveTo(H[0], H[1]); c.lineTo(K[0], K[1]); c.stroke();
+      c.fillStyle = "rgba(120,95,85,.6)"; c.beginPath(); c.arc(K[0], K[1], 0.55, 0, 7); c.fill();
+      c.shadowColor = "rgba(0,0,0,.5)";
+    }
+    // body: the front body, then the abdomen, which swings a little behind when it turns and rises with each step
+    c.save(); c.translate(x, y); c.rotate(ang);
+    c.save(); c.translate(-1.2, 0); c.rotate(Math.max(-0.35, Math.min(0.35, -angV * 0.05)));
+    const s = 1 + bob * 0.03;
+    const ab = c.createRadialGradient(-6.4, -1.8, 0.5, -5.8, 0, 6.4);
+    ab.addColorStop(0, "#3e302b"); ab.addColorStop(0.35, "#211714"); ab.addColorStop(1, "#0a0706");
+    c.fillStyle = ab; c.beginPath(); c.ellipse(-5.6, 0, 5.8 * s, 4.5 * s, 0, 0, 7); c.fill();
+    c.shadowColor = "transparent";
+    // markings and hairs on the abdomen
+    c.strokeStyle = "rgba(150,122,100,.2)"; c.lineWidth = 0.45;
+    for (let q = 0; q < 3; q++) { const px = -3.2 - q * 2.1, w = 2.2 - q * 0.5; c.beginPath(); c.moveTo(px - 0.8, -w); c.lineTo(px, 0); c.lineTo(px - 0.8, w); c.stroke(); }
+    // a fuzz of fine hairs: short, uneven, lying back along the body
+    c.strokeStyle = "rgba(95,78,70,.35)"; c.lineWidth = 0.25;
+    for (let q = 0; q < 34; q++) { const t = q * 2.39996, r = 0.55 + ((q * 37) % 11) / 24, ex = -5.6 + Math.cos(t) * 5.4 * r, ey = Math.sin(t) * 4.1 * r; c.beginPath(); c.moveTo(ex, ey); c.lineTo(ex - 0.9, ey + Math.sin(t) * 0.25); c.stroke(); }
+    c.restore();
+    c.shadowColor = "rgba(0,0,0,.5)";
+    const ce = c.createRadialGradient(1.6, -1.2, 0.3, 2, 0, 4);
+    ce.addColorStop(0, "#3a2c27"); ce.addColorStop(0.6, "#1a1214"); ce.addColorStop(1, "#090606");
+    c.fillStyle = ce; c.beginPath(); c.ellipse(1.8, 0, 3.7, 3.1, 0, 0, 7); c.fill();
+    c.shadowColor = "transparent";
+    // palps, which twitch now and then, fangs and eyes
+    const tw = Math.sin(now / 90) * (Math.sin(now / 1300) > 0.7 ? 0.5 : 0);
+    c.strokeStyle = "#1a1210"; c.lineWidth = 0.8;
+    for (const sd of [1, -1]) { c.beginPath(); c.moveTo(5, sd * 1); c.lineTo(6.6, sd * (1.8 + tw)); c.lineTo(7.6, sd * (1.3 + tw)); c.stroke(); }
+    c.fillStyle = "#120c0b"; c.beginPath(); c.ellipse(5.4, 0, 0.9, 1.1, 0, 0, 7); c.fill();
+    c.fillStyle = "rgba(200,185,175,.55)";
+    for (const [ex, ey] of [[4.4, 0.7], [4.4, -0.7], [3.7, 1.3], [3.7, -1.3]]) { c.beginPath(); c.arc(ex, ey, 0.32, 0, 7); c.fill(); }
+    c.restore();
   }
   window.ShelfWebs = { make, tear, isGone: (id) => gone.has(id) };
   window.ShelfSpider = { start: startSpider, _visit: visit };

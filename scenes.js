@@ -1029,7 +1029,7 @@
     return box(`<div class="fxWindow painted"><div class="pane">${drops}</div></div>`);
   };
   // a spider that now and then crosses the witch's tower wall (webs.js walks it)
-  FX.wallSpider = () => { setTimeout(() => window.ShelfSpider && window.ShelfSpider.start(), 0); return `<div class="wallSpider" aria-hidden="true"></div>`; };
+  FX.wallSpider = () => { setTimeout(() => window.ShelfSpider && window.ShelfSpider.start(), 0); return box(`<div class="wallSpider" aria-hidden="true"></div>`); };
   FX.paintedFireworks = () => { setTimeout(startFireworks, 0); return box(`<canvas class="fxFireworks painted" aria-hidden="true"></canvas>`); };
   // red eyes in the vampire's mirror: now and then a face leans close behind the glass. The eyes open, look about,
   // blink naturally a couple of times, then close and sink back into the dark.
