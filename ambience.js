@@ -383,6 +383,8 @@
     bordello: [["clock", "Clock", (R) => S.clock(R, false, 1)]],
     forest: [["crickets", "Crickets", (R) => S.crickets(R, 0.8)], ["owl", "Owl", (R) => S.owl(R)], ["wind", "Wind", (R) => S.wind(R, 0, 0.55)], ["sparkle", "Magic sparkles", (R) => S.sparkle(R)]],
     teahouse: [["water", "Stream", (R) => S.water(R)], ["chimes", "Wind chimes", (R) => S.chimes(R)], ["crickets", "Crickets", (R) => S.crickets(R, 0.4)], ["fireworks", "Fireworks", (R) => S.fireworks(R)]],
+    // a quiet room, and music playing somewhere further off: muffled, with the room's echo on it
+    candle: [["bed", "Room", (R) => S.bed(R, "sounds/candle/room.mp3", 0.7)], ["music", "Music", (R) => S.bed(R, "sounds/candle/music.mp3", 0.28)]],
     witch: [["pot", "Bubbling pot", (R) => S.cauldron(R)]],
   };
   /** A layer's own level: 0 when muted, otherwise its slider (1 = as designed, up to 1.5). */
@@ -395,7 +397,7 @@
   }
 
   // evens out how loud the rooms are against each other
-  const ROOM_GAIN = { nook: 3, cottage: 3, starry: 2.8, forest: 2.8, castle: 1.6, library: 1.5, candle: 2.5, vampire: 1, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1, teahouse: 0.8 };
+  const ROOM_GAIN = { nook: 3, cottage: 3, starry: 2.8, forest: 2.8, castle: 1.6, library: 1.5, candle: 1, vampire: 1, victorian: 1.8, bordello: 3, academia: 1.4, loft: 1, teahouse: 0.8 };
   // ------------------------------------------------------------------ playing the right room
   const look = () => { try { return (window.Shelf && window.Shelf.lookKey && window.Shelf.lookKey()) || ""; } catch (e) { return ""; } };
   const level = () => (pref.on && !reading ? pref.vol * (ducked ? 0.3 : 1) : 0);
