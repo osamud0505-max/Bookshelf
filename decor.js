@@ -587,25 +587,123 @@
     if (o.hang) el.classList.add("hanging");
     if (thumb) { el.classList.add("thumb"); if (o.hourglass) el.classList.add("hg"); return el; }
     if (o.mount) setTimeout(() => o.mount(el), 0);
-    if (o.hourglass) { el.classList.add("hg"); hgRun(el, 0.12 + Math.random() * 0.55); }
+    if (o.hourglass) { el.classList.add("hg"); hgStart(el, 0.12 + Math.random() * 0.55); }
     return el;
   }
-  // ---- the hourglass: one run takes HG_DUR; `p` is how far the sand has run (0 all on top, 1 all below)
-  const HG_DUR = 45;
-  function hgRun(el, p) {
-    p = Math.max(0, Math.min(1, p));
-    el._hg = { t0: performance.now() - p * HG_DUR * 1000 };
-    el.style.setProperty("--hgDur", HG_DUR + "s");
-    el.style.setProperty("--hgAt", (-p * HG_DUR).toFixed(2) + "s");
-    el.classList.remove("hgRun"); void el.offsetWidth; el.classList.add("hgRun");
+  // ---- the hourglass. The sand is simulated, not keyframed: each bulb holds an amount of sand, and its shape is the
+  // part of the bulb below a surface that is level with the world (worked out by bisection so the amount is kept).
+  // Upright, sand runs through the neck at a steady rate; the top surface sinks into a funnel over the neck and the
+  // sand below heaps into a cone. Turned, the sand slides over to the new low side, lagging the glass by up to the
+  // angle real sand rests at, then avalanching. The glass is symmetric about the neck (38, 105), so when it lands
+  // upside down the two bulbs simply swap and the picture resets to upright without a jump.
+  const HG_GLASS = "M22 34 C18 70 34 92 36 105 C34 118 18 140 22 176 L54 176 C58 140 42 118 40 105 C42 92 58 70 54 34Z";
+  const HG_DUR = 45, HG_O = [38, 105], HG_REPOSE = 0.5; // seconds to run through; centre; ~29 degrees
+  const hgBez = (p0, p1, p2, p3, n) => Array.from({ length: n + 1 }, (_, k) => { const t = k / n, u = 1 - t; return [0, 1].map((i) => u * u * u * p0[i] + 3 * u * u * t * p1[i] + 3 * u * t * t * p2[i] + t * t * t * p3[i]); });
+  const HG_U = (() => { const l = hgBez([22, 34], [18, 70], [34, 92], [36.2, 105], 28); const r = l.map(([x, y]) => [76 - x, y]).reverse(); return [...l, ...r]; })();
+  const HG_L = HG_U.map(([x, y]) => [x, 210 - y]).reverse();
+  const hgArea = (P) => { let a = 0; for (let i = 0; i < P.length; i++) { const [x0, y0] = P[i], [x1, y1] = P[(i + 1) % P.length]; a += x0 * y1 - x1 * y0; } return Math.abs(a) / 2; };
+  const HG_S = hgArea(HG_U) * 0.62; // all the sand: about two thirds of a bulb
+  // the part of bulb P lying below a surface: points with f >= 0, f = depth along `down` past c, raised by prof(t)
+  function hgClip(P, down, c, prof) {
+    const tan = [-down[1], down[0]];
+    const T = (p) => (p[0] - HG_O[0]) * tan[0] + (p[1] - HG_O[1]) * tan[1];
+    const f = (p) => (p[0] - HG_O[0]) * down[0] + (p[1] - HG_O[1]) * down[1] - c + prof(T(p));
+    const out = [];
+    for (let i = 0; i < P.length; i++) {
+      const A = P[i], B = P[(i + 1) % P.length], fa = f(A), fb = f(B);
+      if (fa >= 0) out.push(A);
+      if ((fa >= 0) !== (fb >= 0)) { const k = fa / (fa - fb), X = [A[0] + (B[0] - A[0]) * k, A[1] + (B[1] - A[1]) * k]; X.cut = fa >= 0 ? 1 : 2; out.push(X); }
+    }
+    // where the outline leaves the sand and comes back, follow the surface itself (so a funnel or a cone shows)
+    const res = [];
+    for (let i = 0; i < out.length; i++) {
+      const X = out[i], Y = out[(i + 1) % out.length]; res.push(X);
+      if (X.cut === 1 && Y && Y.cut === 2) {
+        const t0 = T(X), t1 = T(Y);
+        for (let k = 1; k < 10; k++) { const t = t0 + (t1 - t0) * k / 10, d = c - prof(t); res.push([HG_O[0] + t * tan[0] + d * down[0], HG_O[1] + t * tan[1] + d * down[1]]); }
+      }
+    }
+    return res;
   }
-  const hgDone = (el) => el._hg ? Math.min(1, (performance.now() - el._hg.t0) / (HG_DUR * 1000)) : 1;
+  function hgFill(P, down, amount, prof) {
+    if (amount <= 0.05) return { d: "", c: null };
+    let lo = -120, hi = 120, R = [];
+    for (let it = 0; it < 22; it++) { const c = (lo + hi) / 2; R = hgClip(P, down, c, prof); if (hgArea(R) > amount) lo = c; else hi = c; }
+    return { d: R.length > 2 ? "M" + R.map(([x, y]) => x.toFixed(2) + " " + y.toFixed(2)).join("L") + "Z" : "", c: (lo + hi) / 2 };
+  }
+  /** Both bulbs' sand for state s: s.a = [top bulb, bottom bulb] amounts (in the glass's own frame), s.th the glass's
+   *  turn, s.ths the angle the sand surface has caught up to, s.fallen how much has run since it was set down. */
+  function hgShapes(s) {
+    const down = [Math.sin(s.ths), Math.cos(s.ths)];
+    const up = Math.pow(Math.abs(Math.cos(s.ths)), 8); // shapes only form when the glass stands upright
+    const flowing = s.flow && s.a[0] > 0.05;
+    const dip = 3.2 * up * Math.min(1, s.fallen / (HG_S * 0.06)) * (flowing ? 1 : 0.6);
+    const cone = up * Math.min(13, 2 + 34 * s.fallen / HG_S) * (s.fallen > 0.05 ? 1 : 0);
+    const crater = (t) => -dip * Math.exp(-(t * t) / 30);
+    const heap = (t) => cone * Math.pow(Math.max(0, 1 - Math.abs(t) / 15), 1.25);
+    // whichever bulb is lower in the world gets the heap, the higher one the funnel
+    const topIsUp = Math.cos(s.th) > 0;
+    const U = hgFill(HG_U, down, s.a[0], topIsUp ? crater : heap), L = hgFill(HG_L, down, s.a[1], topIsUp ? heap : crater);
+    const y2 = L.c != null ? Math.min(176, HG_O[1] + L.c - heap(0)) : 176;
+    return { u: U.d, l: L.d, y2: y2.toFixed(1), stream: flowing && topIsUp && s.th === 0 };
+  }
+  const hgLive = new Set(); let hgRaf = 0, hgTimer = 0, hgLast = 0;
+  function hgStart(el, p) {
+    p = Math.max(0, Math.min(1, p));
+    el._hg = { a: [HG_S * (1 - p), HG_S * p], th: 0, ths: 0, fallen: HG_S * p, flow: true, flip: null, drawn: 0,
+      u: el.querySelector(".hgSandU"), l: el.querySelector(".hgSandL"), st: el.querySelector(".hgStream"), lines: el.querySelectorAll(".hgStream line"), svg: el.querySelector("svg") };
+    hgLive.add(el); hgDraw(el); hgKick();
+  }
+  const hgKick = () => { if (hgLive.size && !document.hidden) { clearTimeout(hgTimer); hgTimer = 0; if (hgRaf) cancelAnimationFrame(hgRaf); hgLast = performance.now(); hgRaf = requestAnimationFrame(hgTick); } };
+  document.addEventListener("visibilitychange", hgKick);
+  function hgDraw(el) {
+    const s = el._hg, sh = hgShapes(s);
+    s.u.setAttribute("d", sh.u); s.l.setAttribute("d", sh.l);
+    s.lines.forEach((ln) => ln.setAttribute("y2", sh.y2));
+    s.st.style.opacity = sh.stream ? "1" : "0";
+  }
+  const ease = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  function hgTick(now) {
+    hgRaf = 0;
+    const dt = Math.min(0.1, (now - hgLast) / 1000); hgLast = now;
+    let busy = false;
+    for (const el of hgLive) {
+      if (!el.isConnected) { hgLive.delete(el); continue; }
+      const s = el._hg;
+      if (s.flip) {
+        busy = true;
+        const t = Math.min(1, (now - s.flip) / 1150);
+        // lifted a little, tipped back, turned over in one smooth swing, settled down onto the shelf
+        const turn = ease(Math.max(0, Math.min(1, (t - 0.1) / 0.78)));
+        s.th = Math.PI * turn - 0.1 * Math.sin(Math.min(1, t / 0.18) * Math.PI) + 0.06 * Math.sin(Math.max(0, (t - 0.86) / 0.14) * Math.PI);
+        const lift = -8 * Math.sin(Math.min(1, t / 0.9) * Math.PI) ** 0.6;
+        s.svg.style.transform = `translateY(${lift.toFixed(2)}%) rotate(${(s.th * 180 / Math.PI).toFixed(2)}deg)`;
+        if (t >= 1) {
+          // upside down is the same glass with the bulbs swapped: reset to upright and carry on
+          s.flip = null; s.th = 0; s.ths -= Math.PI; s.a = [s.a[1], s.a[0]]; s.fallen = 0; s.flow = true;
+          s.svg.style.transform = ""; el.classList.remove("hgFlipping");
+        }
+      } else if (s.a[0] > 0) {
+        const m = Math.min(s.a[0], HG_S / HG_DUR * dt); s.a[0] -= m; s.a[1] += m; s.fallen += m;
+      }
+      // the sand surface follows the glass only once it is tilted past the angle sand rests at, then slides
+      const lag = s.th - s.ths;
+      if (Math.abs(lag) > HG_REPOSE) s.ths += (lag - Math.sign(lag) * HG_REPOSE) * Math.min(1, dt * 14);
+      else if (!s.flip) s.ths += lag * Math.min(1, dt * 0.9); // settling slowly, as the running sand shifts it
+      // drawn every frame while turning; while it just runs, a few times a second is plenty
+      if (s.flip || Math.abs(lag) > 0.001 || now - s.drawn > 120) { hgDraw(el); s.drawn = now; }
+      if (Math.abs(lag) > 0.001) busy = true;
+    }
+    // smooth frames while anything moves fast; otherwise wake a few times a second for the slow drain
+    if (hgLive.size && !document.hidden) {
+      if (busy) hgRaf = requestAnimationFrame(hgTick);
+      else hgTimer = setTimeout(() => { hgTimer = 0; hgRaf = requestAnimationFrame(hgTick); }, 130);
+    }
+  }
   /** Lift the glass, turn it end over end and set it down: whatever had run through is now on top and runs again. */
   function hourglassFlip(el) {
-    if (el.classList.contains("hgFlipping")) return false;
-    const p = hgDone(el);
-    el.classList.add("hgFlipping");
-    setTimeout(() => { el.classList.remove("hgFlipping"); hgRun(el, 1 - p); }, 1150);
+    const s = el._hg; if (!s || s.flip) return false;
+    s.flip = performance.now(); el.classList.add("hgFlipping"); hgKick();
     return true;
   }
 
@@ -783,24 +881,21 @@
       // turned glass looks just like a fresh one with the sand on top.
       label: "Hourglass", scale: 0.62, vw: 76, still: true, flat: true, hourglass: true,
       draw: (g) => {
-        const glass = "M22 34 C18 70 34 92 36 104 C34 116 18 138 22 176 L54 176 C58 138 42 116 40 104 C42 92 58 70 54 34Z";
+        const glass = HG_GLASS, st = hgShapes({ a: [HG_S * 0.65, HG_S * 0.35], th: 0, ths: 0, fallen: HG_S * 0.35, flow: true });
         const end = (y0, d) => `<rect x="8" y="${y0}" width="60" height="12" rx="3" fill="url(#${g})"/><rect x="4" y="${y0 + d * 12}" width="68" height="${d > 0 ? 12 : 12}" rx="3" fill="url(#${g})"/>`
           + [0, 4].map((k) => `<path d="M10 ${y0 + 3 + k} q28 ${k ? 1 : -1} 56 0" stroke="#2a160a" stroke-width=".5" fill="none" opacity=".45"/>`).join("")
           + [4, 8].map((k) => `<path d="M6 ${y0 + d * 12 + k} q32 ${k > 5 ? 1 : -1} 64 0" stroke="#2a160a" stroke-width=".5" fill="none" opacity=".45"/>`).join("")
           + `<rect x="4" y="${y0 + d * 12 + (d > 0 ? 0 : 0)}" width="68" height="2" fill="#fff" opacity=".12"/>`;
-        // a few loose grains through the sand so it reads as sand and not paint
-        const grains = (x0, y0, w, h, n, seed) => Array.from({ length: n }, (_, k) => { const r1 = ((k + seed) * 37) % 97 / 97, r2 = ((k + seed) * 61) % 89 / 89; return `<circle cx="${(x0 + r1 * w).toFixed(1)}" cy="${(y0 + r2 * h).toFixed(1)}" r=".45" fill="${k % 3 ? "#9a7238" : "#f6e2b6"}" opacity=".8"/>`; }).join("");
         return `<defs>${metal(g, WOOD)}<linearGradient id="${g}gl" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".05"/><stop offset=".3" stop-color="#fff" stop-opacity=".35"/><stop offset=".45" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient>`
           + `<linearGradient id="${g}sd" x1="0" x2="1"><stop offset="0" stop-color="#b48a4e"/><stop offset=".35" stop-color="#e2c088"/><stop offset=".6" stop-color="#d6b071"/><stop offset="1" stop-color="#9a733c"/></linearGradient>`
-          + `<clipPath id="${g}up"><path d="M22 34 C18 70 34 92 36 104 L40 104 C42 92 58 70 54 34Z"/></clipPath><clipPath id="${g}lo"><path d="M36 104 C34 116 18 138 22 176 L54 176 C58 138 42 116 40 104Z"/></clipPath></defs>`
+          + `</defs>`
           + `<g class="hgBody">`
           + `<path d="${glass}" fill="rgba(210,230,240,.12)"/>`
-          // the stream: a thread of grains falling from the neck, behind the cone it lands on
-          + `<g class="hgStream"><line x1="38" y1="103" x2="38" y2="176" stroke="#d8b47a" stroke-width="1.1"/><line x1="38" y1="103" x2="38" y2="176" stroke="#f6e2b6" stroke-width=".7" stroke-dasharray="1.2 2.2"/></g>`
-          // the top: a flat bed with a little funnel sinking in over the neck, dropping as it drains
-          + `<g clip-path="url(#${g}up)"><g class="hgTop"><path d="M14 54 L25 54 C31 54.2 35 55.6 38 57.6 C41 55.6 45 54.2 51 54 L62 54 L62 112 L14 112Z" fill="url(#${g}sd)"/><path d="M14 54 L25 54 C31 54.2 35 55.6 38 57.6 C41 55.6 45 54.2 51 54 L62 54" stroke="#f3dcae" stroke-width=".8" fill="none" opacity=".8"/>${grains(22, 58, 32, 40, 18, 3)}</g></g>`
-          // the bottom: a cone that rises as it fills, steep at the peak, settling out to the glass
-          + `<g clip-path="url(#${g}lo)"><g class="hgBot"><path d="M14 178 L14 168 C22 162 30 154 36 146 Q38 143.6 40 146 C46 154 54 162 62 168 L62 178Z" fill="url(#${g}sd)"/><path d="M22 163 C28 158 33 152 36 147 Q38 144.6 40 147" stroke="#f3dcae" stroke-width=".8" fill="none" opacity=".75"/>${grains(22, 150, 32, 24, 16, 11)}</g></g>`
+          // the stream: a thread of grains falling from the neck onto the sand below, only while it runs
+          + `<g class="hgStream"${st.stream ? "" : ' style="opacity:0"'}><line x1="38" y1="105" x2="38" y2="${st.y2}" stroke="#d8b47a" stroke-width="1.1"/><line x1="38" y1="105" x2="38" y2="${st.y2}" stroke="#f6e2b6" stroke-width=".7" stroke-dasharray="1.2 2.2"/></g>`
+          // the sand in each bulb: worked out every frame from how much is there and which way is down, so it drains
+          // into a funnel, piles into a cone below, and slides over (lagging like real sand) while the glass is turned
+          + `<path class="hgSandU" d="${st.u}" fill="url(#${g}sd)" stroke="#f3dcae" stroke-width=".35" stroke-opacity=".5"/><path class="hgSandL" d="${st.l}" fill="url(#${g}sd)" stroke="#f3dcae" stroke-width=".35" stroke-opacity=".5"/>`
           + `<path d="${glass}" fill="url(#${g}gl)" stroke="rgba(255,255,255,.4)" stroke-width="1"/>`
           + `<path d="M27 40 C24 60 30 80 35 96" stroke="#fff" stroke-opacity=".5" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M27 170 C24 150 28 132 34 116" stroke="#fff" stroke-opacity=".35" stroke-width="1.2" fill="none" stroke-linecap="round"/>`
           + end(22, -1) + end(176, 1)
