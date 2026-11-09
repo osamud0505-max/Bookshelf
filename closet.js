@@ -117,17 +117,18 @@
   // size (gap), tallest piece and hook spacing (pitch), all in stored pixels
   const SINGLES_B = [["single-b1",276,880,143.2,18.0,150.0,159.8],["single-b2",231,634,117.9,17.2,124.5,133.9],["single-b3",229,856,89.8,18.8,96.4,106.5],["single-b4",260,798,121.6,18.8,128.6,138.8],["single-b5",275,893,143.7,17.5,149.4,160.3],["single-b6",316,1005,137.4,17.5,120.9,131.9],["single-b7",305,1063,134.8,18.1,118.3,129.3],["single-b8",226,823,125.2,18.0,109.5,119.2]];
   // v160: the uniforms hang all together on one rod, close like osamu's layout pictures (uniforms-layout-ref.jpg, party-layout-ref.jpg): hook spacing measured against each piece's length there
-  // v165: a third picture, the party gowns (gowns-spaced.jpg), hung as in gowns-layout-ref.jpg: hook spacing measured
-  // there (steps, in pitches) since the empty hangers sit closer
+  // v165: a third picture, the party gowns (gowns-spaced.jpg), hung as in gowns-layout-ref.jpg. The purple, pink and gold
+  // dresses are drawn wider here than in that photo, so their hooks sit further apart (steps) to show as much of each
+  // dress as the photo does
   const SINGLES_C = [["single-c1",303,1048,169.0,19.0,155.0,164.0],["single-c2",173,273,85.0,17.0,97.0,109.0],["single-c3",108,754,56.0,20.0,40.5,51.0],["single-c4",140,226,66.5,17.0,43.0,54.0],["single-c5",198,650,91.0,14.0,70.0,80.0],["single-c6",291,1091,136.0,17.0,112.0,124.0],["single-c7",333,987,166.0,16.0,141.0,153.0],["single-c8",245,983,137.0,17.0,112.0,124.0]];
   // z: which piece hangs in front of which, checked pair by pair in osamu's photos (higher = nearer). Party: the
   // jacket over the skirt and the ruffle dress, that dress over the trousers, the trousers over the bow dress.
   // Uniforms: each over the one on its left, the teal dress and the blouse over the purple-skirt outfit. Gowns: the
-  // blue skirt (its flower) over the purple dress, the pink ruffle dress over the skirt and the gold dress
+  // purple dress over the blue skirt, the pink ruffle dress over the skirt and the gold dress
   const RAILS = [
     { list: SINGLES, tall: 1040, pitch: 172, z: [1, 2, 3, 4, 8, 7, 6, 5] },
     { list: SINGLES_B, tall: 1063, pitch: 136, z: [1, 2, 3, 4, 5, 7, 6, 8] },
-    { list: SINGLES_C, tall: 1040, pitch: 112, steps: [1.03, 0.83, 0.98, 1.03, 1.09, 1.11, 0.89], z: [1, 2, 3, 4, 5, 6, 8, 7] },
+    { list: SINGLES_C, tall: 1040, pitch: 112, steps: [1.03, 0.83, 0.98, 1.03, 1.5, 1.85, 0.95], z: [1, 2, 3, 4, 6, 5, 8, 7] },
   ];
   // which picture each shelf hangs, down the room: party clothes, heels, uniforms, gowns, party clothes
   const RAIL_OF = [0, 0, 1, 2, 0];
