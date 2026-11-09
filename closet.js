@@ -128,10 +128,12 @@
   const RAILS = [
     { list: SINGLES, tall: 1040, pitch: 172, z: [1, 2, 3, 4, 8, 7, 6, 5] },
     { list: SINGLES_B, tall: 1063, pitch: 136, z: [1, 2, 3, 4, 5, 7, 6, 8] },
-    { list: SINGLES_C, tall: 1040, pitch: 112, steps: [1.03, 0.83, 0.98, 1.03, 1.5, 1.7, 0.95], z: [1, 2, 3, 4, 8, 7, 6, 5] },
+    { list: SINGLES_C, tall: 1040, pitch: 112, steps: [1.03, 0.83, 0.98, 1.35, 1.5, 1.7, 0.95], z: [1, 2, 3, 4, 8, 7, 6, 5] },
   ];
   // which picture each shelf hangs, down the room: party clothes, heels, uniforms, gowns, party clothes
   const RAIL_OF = [0, 0, 1, 2, 0];
+  // v170: shoes, one per picture (shoes-spaced.jpg), in pairs: [file, w, h, pivotX, pivotY, tipFrom, tipTo]
+  const SHOES = [["shoe-1",116,436,74.1,13.5,78.2,88.2],["shoe-2",114,432,45.1,12.5,49.5,59.5],["shoe-3",122,430,81.5,13.5,85.8,95.5],["shoe-4",124,433,46.8,13.0,51.0,61.0],["shoe-5",135,438,86.5,12.5,72.5,82.5],["shoe-6",130,435,56.2,13.0,42.0,52.0],["shoe-7",131,438,75.0,13.0,60.5,71.0],["shoe-8",123,434,51.4,13.0,37.2,47.2]];
   // a pair of heels still swings as one, from between its two hooks
   RAIL.heels.forEach((m, j) => { m.pieces = [[`heels-${j + 1}`, 0, 0, m.w, m.h, (m.hooks[0][0] + m.hooks[1][0]) / 2, m.inner]]; });
   const pic = (n) => `obj/closet-${n}-cosy.webp`;
@@ -158,17 +160,20 @@
     const rodC = rod.l[2] * rs + 1, rodTop = rodC - rodD / 2;
     const items = [];
     if (plan[0] === "heels") {
-      // pairs of heels, each shoe about a quarter as long as the long dresses (as in real life), starting with a
-      // different pair on each heels shelf
-      const hs = (1150 * sc * 0.27) / 320;
-      const n = RAIL.heels.length; let i = idx * 3, left = x0 - RAIL.heels[i % n].hooks[0][0] * hs;
-      const gap = 10 * hs;
-      while (items.length < n) {
-        const m = RAIL.heels[i % n];
-        if (left + m.hooks[m.hooks.length - 1][0] * hs > x1) break;
-        items.push({ m, s: hs, x: left, amp: 6 });
-        left += m.w * hs + gap; i++;
+      // v170: osamu's spaced-out shoes, each shoe on its own S-hook so each one swings by itself. A pair's hooks sit
+      // close, with a wider gap to the next pair; the shoes are as tall as the old pairs were. Each heels shelf
+      // starts with a different pair and shows only whole pairs that fit
+      const hs = (1150 * sc * 0.27) / 320, s3 = (391 * hs) / 435;
+      const IN = 115 * s3, OUT = 180 * s3, n = SHOES.length;
+      let at = x0 + 8 + SHOES[(idx * 2) % n][3] * s3;
+      for (let k = 0; k < n; k++) {
+        const [f, gw, gh, px, py, t0, t1] = SHOES[(idx * 2 + k) % n];
+        if (at - px * s3 + gw * s3 > x1 - 8) break;
+        const m = { w: gw, h: gh, inner: py, hooks: [[px, t0, t1]], pieces: [[f, 0, 0, gw, gh, px, py]] };
+        items.push({ m, s: s3, x: at - px * s3, amp: 6 });
+        at += k % 2 ? OUT : IN;
       }
+      if (items.length % 2) items.pop();
     } else {
       // osamu's order, spacing and overlap copied from their layout photos, always full size (2.1 books long). A
       // shelf too short for the whole rail shows only the run of pieces that fits at that spacing: the first part of
