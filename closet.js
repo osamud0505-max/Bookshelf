@@ -141,9 +141,9 @@
   }
   function closetRodEl(w, cfg) {
     const bookH = w < 560 ? 196 : 246;
-    // every garment shares one scale, so their sizes stay true to each other; the longest dress is 1.8 books long.
+    // every garment shares one scale, so their sizes stay true to each other; the longest gown is 3 books long, so the clothes are much bigger than the books.
     // Hangers are seen a little from the side, so the pictures are narrowed
-    const s = bookH * 1.8 / 934, sx = 0.78, k = bookH * 1.75 / 128;
+    const s = bookH * 3.0 / 934, sx = 0.78, k = bookH * 1.75 / 128;
     const R = rng((Math.round(w) * 7 + [...String(cfg.seed || "")].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 233280, 3)) % 233280);
     // the rod hangs from the underside of the shelf above on ceiling brackets, so it sits a bracket's drop below the top
     const rodR = 1.7 * k, rs = (rodR * 2) / ROD.th, drop = Math.round(4.2 * k), rodY = f1(drop + rodR);
@@ -160,16 +160,16 @@
     while (x < w - 30) {
       if (R() < 0.18) {
         // a couple of empty hangers pushed together
-        for (let n = 1 + Math.floor(R() * 2); n > 0 && x < w - 30; n--) { items.push({ x, kind: "empty", m: EMPTY }); x += (4.5 + R() * 3) * k; }
-        x += 10 * k;
+        for (let n = 1 + Math.floor(R() * 2); n > 0 && x < w - 30; n--) { items.push({ x, kind: "empty", m: EMPTY }); x += 304 * s * sx * (0.22 + R() * 0.12); }
+        x += 304 * s * sx * 0.45;
       } else {
         const n = draw();
         items.push({ x, kind: n, m: GARMENTS[n] });
-        x += (16 + R() * 9) * k;
+        x += 304 * s * sx * (0.5 + R() * 0.25);
         // keep hooks off the brackets
         if ([0.09, 0.91, 0.07, 0.5, 0.93].some((t) => Math.abs(x - w * t) < 3.5 * k)) x += 7 * k;
       }
-      if (R() < 0.08) x += 18 * k;
+      if (R() < 0.08) x += 304 * s * sx * 0.5;
     }
     let bottom = 0;
     const top = rodY - rodR;
@@ -237,8 +237,8 @@
   };
   D.ORNAMENTS.handbag = painted("Handbag", "handbag", 692, 728, 1.2, [[0.5, 0.48]]);
   D.ORNAMENTS.pencilCup = painted("Pencil cup & lipstick", "pencilcup-small", 558, 503, 0.55, [[0.43, 0.3], [0.84, 0.16]]);
-  D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes-simple", 454, 640, 0.95, [[0.5, 0.49]]);
-  D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags-simple", 800, 436, 0.68, [[0.5, 0.49]]);
+  D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes-detail", 451, 700, 1.2, [[0.5, 0.49]]);
+  D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags-detail", 768, 521, 1.1, [[0.5, 0.49]]);
 
   // each closet shelf gets two of these, taking turns down the room
   D.ORNAMENTS.pencilCup.cycle = ["pencilCup", "shoppingBags", "handbag", "giftBoxes"];
