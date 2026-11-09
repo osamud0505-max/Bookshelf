@@ -548,7 +548,7 @@
   // a picture of a decoration sized to fill a menu tile
   function ornArt(k, box) {
     const o = D.ORNAMENTS[k], hgt = Math.min(box, (box * 1.15 * 200) / (o.vw || 100));
-    return D.ornamentEl(k, Math.round(hgt / (o.scale || 0.7)), true);
+    return D.ornamentEl(k, Math.round(hgt / (o.scale || 0.7)), true, true);
   }
   function setDecorItems(key, items) {
     const dz = shelfDecor(key), byLook = { ...(dz.byLook || {}) };

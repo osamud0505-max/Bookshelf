@@ -546,7 +546,7 @@
   };
   let ornN = 0;
   /** The ornament as an element sized for books `H` pixels tall. */
-  function ornamentEl(kind, H, lit) {
+  function ornamentEl(kind, H, lit, thumb) {
     const o = ORNAMENTS[kind]; if (!o || !o.draw) return null;
     const h = Math.round(H * (o.scale || 0.7)), w = Math.round(h * o.vw / 200);
     const el = document.createElement("div");
@@ -579,12 +579,13 @@
       + `<feMerge><feMergeNode in="cr"/><feMergeNode in="rim"/></feMerge></filter>`;
     // the glow lights the wall but stops at the surface the object stands on (it fades out just above the base), and
     // a small pool of the same light falls on that surface, so a lit object never looks like it is hovering
-    el.innerHTML = `<div class="ornGlowBox"><div class="ornGlowIn"><div class="ornGlow"${o.glow ? ` style="background:radial-gradient(closest-side, ${o.glow}, transparent)"` : ""}></div></div></div><div class="ornPool"${o.glow ? ` style="--pc:${o.glow}"` : ""}></div><svg viewBox="0 0 ${o.vw} 200" width="${w}" height="${h}" aria-hidden="true">${o.soft || o.flat ? body : `<defs>${fx}</defs><g filter="url(#${id}fx)">${body}</g>`}${flames}</svg>`;
+    el.innerHTML = `<div class="ornGlowBox"><div class="ornGlowIn"><div class="ornGlow"${o.glow ? ` style="background:radial-gradient(closest-side, ${o.glow}, transparent)"` : ""}></div></div></div><div class="ornPool"${o.glow ? ` style="--pc:${o.glow}"` : ""}></div><svg viewBox="0 0 ${o.vw} 200" width="${w}" height="${h}" aria-hidden="true">${o.soft || o.flat || thumb ? body : `<defs>${fx}</defs><g filter="url(#${id}fx)">${body}</g>`}${flames}</svg>`;
     // where the glow sits: the highest flame
     const ys = [...o.draw("x").matchAll(/data-y="([\d.]+)"/g)].map((m) => +m[1]);
     if (ys.length) el.style.setProperty("--fy", (Math.min(...ys) / 200 * 100).toFixed(1) + "%");
     if (o.still) el.classList.add("still");
     if (o.hang) el.classList.add("hanging");
+    if (thumb) { el.classList.add("thumb"); if (o.hourglass) el.classList.add("hg"); return el; }
     if (o.mount) setTimeout(() => o.mount(el), 0);
     if (o.hourglass) { el.classList.add("hg"); hgRun(el, 0.12 + Math.random() * 0.55); }
     return el;
@@ -780,7 +781,7 @@
       // a working sand glass: sand runs from the top bulb through the neck into a growing cone below; tap it and it is
       // lifted, turned end over end and set down, and the sand starts again. The frame is the same at both ends, so a
       // turned glass looks just like a fresh one with the sand on top.
-      label: "Hourglass", scale: 0.62, vw: 76, still: true, hourglass: true,
+      label: "Hourglass", scale: 0.62, vw: 76, still: true, flat: true, hourglass: true,
       draw: (g) => {
         const glass = "M22 34 C18 70 34 92 36 104 C34 116 18 138 22 176 L54 176 C58 138 42 116 40 104 C42 92 58 70 54 34Z";
         const end = (y0, d) => `<rect x="8" y="${y0}" width="60" height="12" rx="3" fill="url(#${g})"/><rect x="4" y="${y0 + d * 12}" width="68" height="${d > 0 ? 12 : 12}" rx="3" fill="url(#${g})"/>`

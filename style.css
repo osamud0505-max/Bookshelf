@@ -129,6 +129,8 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 }
 /* the heading and the caption above stay on top of that reach, so they still take taps */
 .sectionHead, .caption { position: relative; z-index: 4; }
+/* a heading with its menu open sits above everything further down the page */
+.sectionHead:has(.decorMenu), .sectionHead.menuOpen { z-index: 30; }
 .caption { pointer-events: none; }
 .caption > * { pointer-events: auto; }
 .scroller::-webkit-scrollbar { display: none; }
@@ -706,6 +708,11 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .ornArt .ornament { position: relative; transform: none !important; cursor: inherit; flex: none; max-height: 52px; }
 .ornArt .ornament svg { max-height: 52px; width: auto; }
 .ornArt .ornGlow { display: none; }
+/* menu pictures are still pictures: no relief filter (set in decor.js), nothing animating, each tile painted on its own.
+   Dozens of live, filtered drawings in a scrolling menu made phones paint it in broken tiles */
+.ornament.thumb *, .ornament.thumb *::before, .ornament.thumb *::after { animation: none !important; transition: none !important; }
+.ornTile, .decorChip { contain: paint; }
+.decorMenu { will-change: scroll-position; }
 .ornArt .ornament::after { bottom: -3px; height: 6px; }
 .ornNone { font-size: 26px; opacity: .5; line-height: 52px; }
 .ornGrid.big .ornArt { height: 58px; }
