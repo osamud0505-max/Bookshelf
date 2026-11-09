@@ -18,37 +18,77 @@
   const node = (N, x, y, pin = false, hang = false) => (N.n.push({ x, y, px: x, py: y, pin, hang, gx: null }), N.n.length - 1);
   const seg = (N, a, b, kind, k = 1) => { const A = N.n[a], B = N.n[b]; N.s.push({ a, b, kind, len: Math.hypot(A.x - B.x, A.y - B.y) * k }); };
 
-  /** A corner web, corner at bottom left: one surface runs along the bottom, the other up the left side. */
-  function cornerNet(w, h, R) {
-    const N = net(), nr = 6 + Math.floor(R() * 3), rings = [0.16, 0.29, 0.42, 0.56, 0.7, 0.84, 1];
-    const hub = node(N, 0, h, true), rad = [];
-    for (let k = 0; k <= nr; k++) {
-      const a = (k / nr) * (Math.PI / 2) + (k && k < nr ? (R() - 0.5) * 0.14 : 0), len = k === 0 || k === nr ? 1 : 0.84 + R() * 0.16;
-      const row = [];
-      rings.forEach((r) => {
-        const x = Math.cos(a) * w * r * len, y = h - Math.sin(a) * h * r * len;
-        row.push(node(N, x, y, k === 0 || k === nr)); // the two outer spokes lie on the surfaces: stuck along their length
-      });
-      rad.push(row);
-      seg(N, hub, row[0], "spoke", 0.98);
-      for (let j = 1; j < row.length; j++) seg(N, row[j - 1], row[j], "spoke", 0.98);
-    }
-    // the spiral: between neighbouring spokes, each thread sags a little towards the hub; a few are broken
-    rings.forEach((r, j) => {
-      const frame = j === rings.length - 1;
-      for (let k = 0; k < nr; k++) {
-        if (!frame && R() < 0.09) continue;
-        const a = rad[k][j], b = rad[k + 1][j], A = N.n[a], B = N.n[b];
-        const sag = frame ? 0.9 : 0.93, mx = ((A.x + B.x) / 2) * sag, my = h - (h - (A.y + B.y) / 2) * sag;
-        const m = node(N, mx, my);
-        seg(N, a, m, frame ? "frame" : "ring", 0.995); seg(N, m, b, frame ? "frame" : "ring", 0.995);
+  /** A corner web, corner at bottom left (or, with `top`, at top left: tucked up under a shelf against the side). Every
+   *  web is different: an orb with its own count of spokes and turns, gaps where threads broke, sometimes a torn patch;
+   *  or a house spider's sheet, a fine irregular mesh of threads strung between the two surfaces. */
+  function cornerNet(w, h, R, top) {
+    const N = net(), Y = (y) => (top ? h - y : y), down = top ? -1 : 1; // `down`: away from the corner, along the wall
+    N.specks = [];
+    if (R() < 0.4) {
+      // the sheet: points stuck along both surfaces, a scatter of points between, each tied to its nearest few
+      const pts = [], along = 5 + Math.floor(R() * 4), up = 4 + Math.floor(R() * 3);
+      pts.push(node(N, 0, Y(h), true));
+      for (let k = 1; k <= along; k++) pts.push(node(N, (k / along) * w * (0.9 + R() * 0.1), Y(h), true));
+      for (let k = 1; k <= up; k++) pts.push(node(N, 0, Y(h - (k / up) * h * (0.9 + R() * 0.1)), true));
+      const inner = 34 + Math.floor(R() * 22);
+      for (let k = 0; k < inner; k++) {
+        // spread through the triangle of the corner, a little denser towards the corner itself
+        let u = R(), v = R(); if (u + v > 1) { u = 1 - u; v = 1 - v; }
+        const f = 0.55 + 0.4 * Math.sqrt(R());
+        pts.push(node(N, u * w * f, Y(h - v * h * f)));
       }
-    });
-    // a loose strand hanging off the outer edge
-    const from = rad[Math.floor(nr / 2)][rings.length - 2];
-    let prev = from; const L = 2 + R() * 1.5;
-    for (let q = 1; q <= 3; q++) { const P = N.n[from], c = node(N, P.x + q * 0.6, P.y + q * L, false, true); seg(N, prev, c, "strand"); prev = c; }
-    N.speck = rad[2][2];
+      N.sheet = true;
+      const P = (i) => N.n[i], links = new Set();
+      for (const i of pts) {
+        const near = pts.filter((j) => j !== i).sort((a, b) => Math.hypot(P(a).x - P(i).x, P(a).y - P(i).y) - Math.hypot(P(b).x - P(i).x, P(b).y - P(i).y));
+        const n = 3 + Math.floor(R() * 2);
+        for (let q = 0; q < n; q++) {
+          const j = near[q], key = i < j ? i + ":" + j : j + ":" + i; if (links.has(key) || (P(i).pin && P(j).pin)) continue;
+          links.add(key); seg(N, i, j, R() < 0.3 ? "frame" : "ring", 0.97 + R() * 0.05);
+        }
+      }
+      // a few long threads across the mouth of the corner
+      for (let q = 0; q < 3; q++) { const a = pts[1 + Math.floor(R() * along)], b = pts[1 + along + Math.floor(R() * up)]; seg(N, a, b, "frame", 0.98); }
+      for (let q = 0; q < 1 + Math.floor(R() * 3); q++) N.specks.push(pts[1 + along + up + Math.floor(R() * inner)]);
+    } else {
+      const nr = 5 + Math.floor(R() * 5), turns = 7 + Math.floor(R() * 7), rings = [];
+      // the turns open out away from the hub, each spacing a little uneven
+      let r = 0.1 + R() * 0.08; for (let j = 0; j < turns; j++) { rings.push(r); r += (1 / turns) * (0.55 + 0.9 * (j / turns)) * (0.7 + R() * 0.6); }
+      const top_ = rings[rings.length - 1]; for (let j = 0; j < turns; j++) rings[j] /= top_;
+      const brk = 0.03 + R() * 0.2, sag = 0.86 + R() * 0.1;
+      const hole = R() < 0.4 ? { k: 1 + Math.floor(R() * (nr - 2)), j0: Math.floor(R() * turns * 0.6), j1: 0 } : null;
+      if (hole) hole.j1 = hole.j0 + 2 + Math.floor(R() * 3);
+      const hub = node(N, 0, Y(h), true), rad = [];
+      for (let k = 0; k <= nr; k++) {
+        const a = (k / nr) * (Math.PI / 2) + (k && k < nr ? (R() - 0.5) * 0.18 : 0), len = k === 0 || k === nr ? 1 : 0.8 + R() * 0.2;
+        const row = [];
+        rings.forEach((rr) => row.push(node(N, Math.cos(a) * w * rr * len, Y(h - Math.sin(a) * h * rr * len), k === 0 || k === nr)));
+        rad.push(row);
+        seg(N, hub, row[0], "spoke", 0.98);
+        for (let j = 1; j < row.length; j++) seg(N, row[j - 1], row[j], "spoke", 0.98);
+      }
+      // the spiral: each thread between two spokes sags a little towards the hub, through two points so it curves
+      rings.forEach((rr, j) => {
+        const frame = j === rings.length - 1;
+        for (let k = 0; k < nr; k++) {
+          if (!frame && R() < brk) continue;
+          if (hole && k === hole.k && j >= hole.j0 && j <= hole.j1) continue;
+          const A = N.n[rad[k][j]], B = N.n[rad[k + 1][j]], s0 = frame ? sag - 0.04 : sag;
+          const mid = (t) => { const x = A.x + (B.x - A.x) * t, yy = Y(A.y) + (Y(B.y) - Y(A.y)) * t, f = 1 - (1 - s0) * Math.sin(t * Math.PI); return node(N, x * f, Y(h - (h - yy) * f)); };
+          const m1 = mid(1 / 3), m2 = mid(2 / 3), kind = frame ? "frame" : "ring";
+          seg(N, rad[k][j], m1, kind, 0.995); seg(N, m1, m2, kind, 0.995); seg(N, m2, rad[k + 1][j], kind, 0.995);
+        }
+      });
+      // a broken spoke end or two hanging loose off the outer edge
+      const loose = Math.floor(R() * 3);
+      for (let q = 0; q < loose; q++) {
+        const from = rad[1 + Math.floor(R() * (nr - 1))][rings.length - 1 - Math.floor(R() * 2)];
+        let prev = from; const L = 2 + R() * 2, n = 2 + Math.floor(R() * 3);
+        for (let z = 1; z <= n; z++) { const P = N.n[from], c = node(N, P.x + z * (R() - 0.3), P.y + z * L, false, true); seg(N, prev, c, "strand"); prev = c; }
+      }
+      for (let q = 0; q < 1 + Math.floor(R() * 3); q++) N.specks.push(rad[1 + Math.floor(R() * (nr - 1))][1 + Math.floor(R() * (turns - 2))]);
+    }
+    N.down = down;
     return N;
   }
 
@@ -117,7 +157,7 @@
       const fy = wind * 0.6 * Math.sin(t * 1.3 + p.x * 0.05 + 1.7);
       p.x += vx + fx; p.y += vy + fy + grav + (p.hang && !W.tearing ? 0.03 : 0);
       // a corner web cannot pass through the book or shelf it is stuck to
-      if (W.corner) { if (p.y > W.h) p.y = W.h; if (p.x < 0 && !W.tearing) p.x = 0; }
+      if (W.corner && !W.tearing) { if (W.top ? p.y < 0 : p.y > W.h) p.y = W.top ? 0 : W.h; if (p.x < 0) p.x = 0; }
     }
     if (W.tearing) {
       W.age++;
@@ -154,6 +194,13 @@
     if (W.flip) { c.translate(W.w, 0); c.scale(-1, 1); }
     const fade = W.tearing ? Math.max(0, Math.min(1, (W.hold + W.life - W.age) / (W.life * 0.6))) : 1;
     c.lineCap = "round";
+    // old webs hold dust: a faint grey haze through the thick of it, densest in the corner
+    if (W.corner) {
+      const cy = W.top ? 0 : W.h, g = c.createRadialGradient(0, cy, 0, 0, cy, Math.min(W.w, W.h) * 0.7);
+      const a = (N.sheet ? 0.11 : 0.05) * fade;
+      g.addColorStop(0, `rgba(215,212,205,${a})`); g.addColorStop(0.6, `rgba(215,212,205,${a * 0.45})`); g.addColorStop(1, "rgba(215,212,205,0)");
+      c.fillStyle = g; c.beginPath(); c.moveTo(0, cy); c.lineTo(W.w * 0.95, cy); c.lineTo(0, W.top ? W.h * 0.95 : W.h * 0.05); c.closePath(); c.fill();
+    }
     // the light: a band of sheen that drifts across the web and catches threads at the right angle
     const sx = Math.cos(t * 0.23) * 0.5 + 0.5;
     for (const S of N.s) {
@@ -162,22 +209,23 @@
       const catchA = Math.pow(Math.max(0, Math.cos(ang * 2 - t * 0.35 + W.ph)), 14);
       const near = Math.max(0, 1 - Math.abs(mx - sx) * 3);
       const glint = calm ? 0 : catchA * near;
-      const base = (S.kind === "ring" ? 0.24 : S.kind === "strand" ? 0.3 : 0.4) * (W.corner ? 1 : 0.7);
+      const base = (S.kind === "ring" ? 0.24 : S.kind === "strand" ? 0.3 : 0.4) * (W.corner ? (N.sheet ? 0.62 : 1) : 0.7);
       c.strokeStyle = `rgba(${228 + glint * 27},${230 + glint * 25},${238 + glint * 17},${((base + glint * 0.55) * fade).toFixed(3)})`;
       c.lineWidth = (S.kind === "ring" ? 0.45 : 0.6) + glint * 0.25;
       c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.stroke();
     }
     // dust caught in it
-    const sp = N.n[N.speck];
-    if (sp) { c.fillStyle = `rgba(200,192,176,${0.55 * fade})`; c.beginPath(); c.arc(sp.x, sp.y, 0.9, 0, 7); c.fill(); }
+    c.fillStyle = `rgba(200,192,176,${0.55 * fade})`;
+    for (const i of N.specks || [N.speck]) { const sp = N.n[i]; if (sp) { c.beginPath(); c.arc(sp.x, sp.y, 0.7 + (i % 3) * 0.2, 0, 7); c.fill(); } }
   }
 
-  /** Make a web element. kind: "corner" (corner at bottom left; flip for bottom right) or "drape". */
+  /** Make a web element. kind: "corner" (corner at bottom left; flip for bottom right), "ceiling" (a corner web tucked
+   *  up under a shelf, corner at top left; flip for top right) or "drape". */
   function make(id, kind, w, h, flip) {
     if (gone.has(id)) return null;
     const seed = [...id].reduce((s, c) => (s * 31 + c.charCodeAt(0)) >>> 0, 7);
     const R = rng(seed);
-    const N = kind === "drape" ? drapeNet(w, h, R) : cornerNet(w, h, R);
+    const N = kind === "drape" ? drapeNet(w, h, R) : cornerNet(w, h, R, kind === "ceiling");
     const el = document.createElement("div");
     el.className = `web ${kind}${flip ? " flip" : ""}`; el.dataset.web = id;
     el.style.width = w + "px"; el.style.height = h + "px";
@@ -186,7 +234,7 @@
     cv.style.cssText = `position:absolute;left:${-PAD}px;top:${-PAD}px;width:${cw}px;height:${ch}px;pointer-events:none`;
     el.append(cv);
     const g1 = 0.7 + R() * 0.6, g2 = 1.7 + R();
-    const W = { el, N, w, h, flip, corner: kind !== "drape", cw, ch, ctx: cv.getContext("2d"), ph: R() * 50, tearing: false, age: 0, hold: 22, life: 45,
+    const W = { el, N, w, h, flip, corner: kind !== "drape", top: kind === "ceiling", cw, ch, ctx: cv.getContext("2d"), ph: R() * 50, tearing: false, age: 0, hold: 22, life: 45,
       // gusts come and go: mostly still, now and then a breath of air
       gust: (t) => 0.25 + 0.75 * Math.pow(Math.max(0, Math.sin(t * 0.21 * g1) * Math.sin(t * 0.13 * g2 + 1)), 2) * 3 };
     el._web = W;
@@ -211,7 +259,7 @@
       const r = el.getBoundingClientRect();
       let lx = px - r.left, ly = py - r.top; if (W.flip) lx = W.w - lx;
       W.finger = true;
-      W.pull = drp ? [(Math.random() - 0.5) * 20, W.h * 0.9 + 20] : [W.w * 0.7, -W.h * 0.35];
+      W.pull = drp || W.top ? [W.w * (W.top ? 0.4 : 0) + (Math.random() - 0.5) * 20, W.h * 0.9 + 20] : [W.w * 0.7, -W.h * 0.35];
       let any = false;
       for (const p of W.N.n) if (Math.hypot(p.x - lx, p.y - ly) < Math.max(10, W.w * 0.22)) { p.gx = p.x; p.gy = p.y; p.ox = p.x; p.oy = p.y; any = true; }
       if (!any) { let best = null, bd = 1e9; for (const p of W.N.n) { const d = Math.hypot(p.x - lx, p.y - ly); if (d < bd && !p.pin) { bd = d; best = p; } } if (best) { best.gx = best.x; best.gy = best.y; best.ox = best.x; best.oy = best.y; } }

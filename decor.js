@@ -516,19 +516,31 @@
     },
     pillars: {
       label: "Melted candles", scale: 0.5, vw: 110,
-      draw: (g) => `<defs>${metal(g, BRASS)}</defs><path d="M3 200 L3 195 Q55 187 107 195 L107 200Z" fill="#2c2a2e"/><ellipse cx="55" cy="194" rx="52" ry="4" fill="#4a474d"/>`
-        // pillar candles burned down into their middles: the wall of wax stays up round the edge in an uneven, melted
-        // lip, the hollow inside glows with the flame through the thin wax, wax has run over the lip and set in drips
+      draw: (g) => `<defs>${metal(g, BRASS)}<linearGradient id="${g}nw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4ead6" stop-opacity=".85"/><stop offset=".45" stop-color="#f1e6cf" stop-opacity=".4"/><stop offset="1" stop-color="#f1e6cf" stop-opacity="0"/></linearGradient></defs><path d="M3 200 L3 195 Q55 187 107 195 L107 200Z" fill="#2c2a2e"/><ellipse cx="55" cy="194" rx="52" ry="4" fill="#4a474d"/>`
+        // pillar candles half burned: the flame has hollowed a deep well, so the rim stands up in a ragged, softened
+        // wall that is higher on one side; wax has spilled over the low side in thick runs that set in beads and pooled
+        // at the foot; the top glows through the thin wall, and the old wax is a touch darker and yellower than the new
         + [[28, 96, 24], [60, 52, 28], [88, 120, 20]].map(([x, top, wd], n) => {
-          const r = wd / 2, lip = `M${x - r} ${top + 3} q${r * 0.2} -5 ${r * 0.45} -2.4 q${r * 0.25} 2 ${r * 0.55} 1.6 q${r * 0.35} -.6 ${r * 0.5} 1.4 q${r * 0.2} -3.6 ${r * 0.5} -2.2 V${top + 3}`;
-          const drip = (dx, len, dw) => `<path d="M${(x + dx - dw / 2).toFixed(1)} ${top + 2} v${len} a${dw / 2} ${dw / 2} 0 0 0 ${dw} 0 v${-len}Z" fill="#ece1cb"/>`;
-          return `<rect x="${x - r}" y="${top + 2}" width="${wd}" height="${191 - top}" rx="2.5" fill="#ece1cb"/>`
-            + drip(-r + 2, 18 + n * 6, 3.4) + drip(r * 0.5, 9 + n * 4, 2.6) + drip(-r * 0.2, 5 + n * 2, 2.2)
-            + `<rect x="${x - r}" y="${top + 2}" width="${wd}" height="${191 - top}" rx="2.5" fill="url(#oWaxSh)"/>`
-            + `<rect class="litOnly" x="${x - r}" y="${top}" width="${wd}" height="${wd * 1.3}" fill="url(#oWaxGlow)"/>`
-            + `<path d="${lip} Z" fill="#f3e9d6"/><ellipse cx="${x}" cy="${top + 3.4}" rx="${r - 2.2}" ry="2.6" fill="#b89a6e"/><ellipse class="litOnly" cx="${x}" cy="${top + 3.4}" rx="${r - 2.4}" ry="2.4" fill="#ffc46a"/>`
-            + `<path d="M${x - r + 2.2} ${top + 3.4} a${r - 2.2} 2.6 0 0 0 ${2 * r - 4.4} 0" stroke="#fffaf0" stroke-opacity=".6" stroke-width=".7" fill="none"/>`
-            + `<path d="M${x} ${top + 4} q.4 -2.4 -.5 -4.6" stroke="#1e1712" stroke-width="1.2" fill="none" stroke-linecap="round"/>` + flame(x, top - 0.6, 0.95);
+          const r = wd / 2, hi = [13, 17, 11][n], sgn = n % 2 ? -1 : 1, wax = "#f1e6cf", L = x - r, R = x + r;
+          // the top edge across the candle, left to right (in units of hi above `top`): low where the wax ran over,
+          // a soft ragged wall rising on the other side
+          const prof = [[0, -0.35], [0.12, -0.42], [0.26, -0.22], [0.4, -0.05], [0.55, 0.25], [0.68, 0.62], [0.8, 0.95], [0.9, 0.8], [1, 0.5]];
+          const pts = prof.map(([f, h]) => [L + (sgn > 0 ? f : 1 - f) * wd, top - h * hi]).sort((a, b) => a[0] - b[0]);
+          let edge = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+          for (let k = 1; k < pts.length; k++) { const [x0, y0] = pts[k - 1], [x1, y1] = pts[k]; edge += ` Q${x0.toFixed(1)} ${y0.toFixed(1)} ${((x0 + x1) / 2).toFixed(1)} ${((y0 + y1) / 2).toFixed(1)}`; }
+          edge += ` L${pts[pts.length - 1][0].toFixed(1)} ${pts[pts.length - 1][1].toFixed(1)}`;
+          const body = `${edge} L${R} 191 Q${R} 193 ${R - 2} 193 L${L + 2} 193 Q${L} 193 ${L} 191Z`;
+          const run = (dx, len, w0, bead) => { const X = x + dx, y0 = top + hi * 0.3; return `<path d="M${X - w0 / 2} ${y0} C${X - w0 / 2 - 0.8} ${y0 + len * 0.4} ${X - w0 * 0.35} ${y0 + len * 0.82} ${X - bead} ${y0 + len} a${bead} ${bead * 1.2} 0 0 0 ${bead * 2} 0 C${X + w0 * 0.35} ${y0 + len * 0.82} ${X + w0 / 2 + 0.8} ${y0 + len * 0.4} ${X + w0 / 2} ${y0}Z" fill="${wax}"/><path d="M${X - w0 / 2 + 0.7} ${y0 + 2} C${X - w0 / 2} ${y0 + len * 0.5} ${X - w0 * 0.25} ${y0 + len * 0.82} ${X - bead * 0.6} ${y0 + len}" stroke="#fff" stroke-width=".8" opacity=".6" fill="none"/><path d="M${X + w0 / 2 - 0.4} ${y0 + 3} C${X + w0 / 2} ${y0 + len * 0.5} ${X + w0 * 0.3} ${y0 + len * 0.82} ${X + bead * 0.9} ${y0 + len}" stroke="#a08460" stroke-width=".7" opacity=".45" fill="none"/>`; };
+          const lowX = sgn > 0 ? L : R, d = sgn > 0 ? 1 : -1;
+          const runs = run(d * 2.6 + (lowX - x), 40 + n * 12, 4.6, 2.6) + run(d * (r * 0.62) + (lowX - x), 22 + n * 6, 3.6, 2.1) + run(d * (r * 1.05) + (lowX - x), 10 + n * 3, 2.6, 1.5);
+          return `<path d="${body}" fill="#e6d7b6"/><path d="${body}" fill="url(#oWaxSh)"/>`
+            + `<path d="${edge} L${R} ${top + hi + 34} L${L} ${top + hi + 34}Z" fill="url(#${g}nw)"/>` + runs
+            + `<path class="litOnly" d="${edge} L${R} ${top + wd * 1.4} L${L} ${top + wd * 1.4}Z" fill="url(#oWaxGlow)"/>`
+            // the well: an opening shaped by the rim, darker deep down, glowing when lit
+            + `<ellipse cx="${x - d * r * 0.08}" cy="${top + hi * 0.18}" rx="${r - 2.6}" ry="${(r * 0.32).toFixed(1)}" fill="#8a6c46" opacity=".6"/><ellipse class="litOnly" cx="${x - d * r * 0.08}" cy="${top + hi * 0.2}" rx="${r - 3}" ry="${(r * 0.27).toFixed(1)}" fill="#ffcd74"/>`
+            + `<path d="${edge}" stroke="#fffaf0" stroke-width=".9" fill="none" opacity=".75"/>`
+            + `<path d="M${x - d * r * 0.08} ${top + hi * 0.2} q.5 -2.6 -.6 -5" stroke="#1e1712" stroke-width="1.2" fill="none" stroke-linecap="round"/>` + flame(x - d * r * 0.08, top + hi * 0.2 - 4.4, 0.95)
+            + `<path d="M${L - 4 - n} 193.5 Q${L - 1} 188 ${x} 188.6 Q${R + 1} 188 ${R + 3 + n} 193.5Z" fill="${wax}"/><path d="M${L - 3} 192.6 Q${x} 188.8 ${R + 2} 192.6" stroke="#fff" stroke-width=".6" opacity=".6" fill="none"/>`;
         }).join(""),
     },
   };
@@ -574,7 +586,26 @@
     if (o.still) el.classList.add("still");
     if (o.hang) el.classList.add("hanging");
     if (o.mount) setTimeout(() => o.mount(el), 0);
+    if (o.hourglass) { el.classList.add("hg"); hgRun(el, 0.12 + Math.random() * 0.55); }
     return el;
+  }
+  // ---- the hourglass: one run takes HG_DUR; `p` is how far the sand has run (0 all on top, 1 all below)
+  const HG_DUR = 45;
+  function hgRun(el, p) {
+    p = Math.max(0, Math.min(1, p));
+    el._hg = { t0: performance.now() - p * HG_DUR * 1000 };
+    el.style.setProperty("--hgDur", HG_DUR + "s");
+    el.style.setProperty("--hgAt", (-p * HG_DUR).toFixed(2) + "s");
+    el.classList.remove("hgRun"); void el.offsetWidth; el.classList.add("hgRun");
+  }
+  const hgDone = (el) => el._hg ? Math.min(1, (performance.now() - el._hg.t0) / (HG_DUR * 1000)) : 1;
+  /** Lift the glass, turn it end over end and set it down: whatever had run through is now on top and runs again. */
+  function hourglassFlip(el) {
+    if (el.classList.contains("hgFlipping")) return false;
+    const p = hgDone(el);
+    el.classList.add("hgFlipping");
+    setTimeout(() => { el.classList.remove("hgFlipping"); hgRun(el, 1 - p); }, 1150);
+    return true;
   }
 
   // ------------------------------------------------------------------ heading fonts
@@ -746,19 +777,35 @@
       },
     },
     hourglass: {
-      label: "Hourglass", scale: 0.62, vw: 76, still: true,
-      draw: (g) => `<defs>${metal(g, WOOD)}<linearGradient id="${g}gl" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".05"/><stop offset=".3" stop-color="#fff" stop-opacity=".35"/><stop offset=".45" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient></defs>`
-        + `<path d="M22 34 C18 70 34 92 36 104 C34 116 18 138 22 176 L54 176 C58 138 42 116 40 104 C42 92 58 70 54 34Z" fill="rgba(210,230,240,.12)"/>`
-        + `<path d="M24 54 C26 72 34 88 38 102 C42 88 50 72 52 54 C44 60 32 60 24 54Z" fill="#d8b47a"/>`
-        + `<path d="M23 176 L53 176 C52 164 44 156 38 150 C32 156 24 164 23 176Z" fill="#d8b47a"/><line x1="38" y1="102" x2="38" y2="152" stroke="#d8b47a" stroke-width="1.2"/>`
-        + `<path d="M22 34 C18 70 34 92 36 104 C34 116 18 138 22 176 L54 176 C58 138 42 116 40 104 C42 92 58 70 54 34Z" fill="url(#${g}gl)" stroke="rgba(255,255,255,.4)" stroke-width="1"/>`
-        + `<rect x="8" y="22" width="60" height="12" rx="3" fill="url(#${g})"/><rect x="8" y="176" width="60" height="12" rx="3" fill="url(#${g})"/>`
-        + [12, 64].map((x) => `<rect x="${x - 2.5}" y="34" width="5" height="142" rx="2" fill="url(#${g})"/>` + [44, 70, 104, 138, 164].map((y) => `<ellipse cx="${x}" cy="${y}" rx="3.6" ry="2.4" fill="url(#${g})"/><ellipse cx="${x - 0.8}" cy="${y - 0.6}" rx="1.2" ry=".7" fill="#fff" opacity=".25"/>`).join("")).join("")
-        + `<rect x="4" y="188" width="68" height="12" rx="3" fill="url(#${g})"/>`
-        + [25, 29, 181, 185, 193, 197].map((y) => `<path d="M${y > 186 ? 6 : 10} ${y} q30 ${y % 2 ? 1 : -1} ${y > 186 ? 64 : 56} 0" stroke="#2a160a" stroke-width=".5" fill="none" opacity=".45"/>`).join("")
-        + `<path d="M24 54 C32 60 44 60 52 54" stroke="#b08850" stroke-width="1" fill="none"/><path d="M38 150 C34 160 28 168 24 175" stroke="#f0d8a8" stroke-width="1.2" fill="none" opacity=".7"/><path d="M38 150 C42 160 48 168 52 175" stroke="#a07840" stroke-width="1.6" fill="none" opacity=".6"/>`
-        + Array.from({ length: 40 }, (_, k) => { const top = k < 22, x = top ? 28 + ((k * 37) % 21) : 26 + ((k * 29) % 25), y = top ? 60 + ((k * 13) % 26) * (1 - ((k * 37) % 21) / 60) : 162 + ((k * 7) % 13); return `<circle cx="${x}" cy="${y}" r=".45" fill="${k % 2 ? "#8a6630" : "#f2dcb0"}"/>`; }).join("")
-        + `<path d="M27 40 C24 60 30 80 35 96" stroke="#fff" stroke-opacity=".5" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M27 170 C24 150 28 132 34 116" stroke="#fff" stroke-opacity=".35" stroke-width="1.2" fill="none" stroke-linecap="round"/>`,
+      // a working sand glass: sand runs from the top bulb through the neck into a growing cone below; tap it and it is
+      // lifted, turned end over end and set down, and the sand starts again. The frame is the same at both ends, so a
+      // turned glass looks just like a fresh one with the sand on top.
+      label: "Hourglass", scale: 0.62, vw: 76, still: true, hourglass: true,
+      draw: (g) => {
+        const glass = "M22 34 C18 70 34 92 36 104 C34 116 18 138 22 176 L54 176 C58 138 42 116 40 104 C42 92 58 70 54 34Z";
+        const end = (y0, d) => `<rect x="8" y="${y0}" width="60" height="12" rx="3" fill="url(#${g})"/><rect x="4" y="${y0 + d * 12}" width="68" height="${d > 0 ? 12 : 12}" rx="3" fill="url(#${g})"/>`
+          + [0, 4].map((k) => `<path d="M10 ${y0 + 3 + k} q28 ${k ? 1 : -1} 56 0" stroke="#2a160a" stroke-width=".5" fill="none" opacity=".45"/>`).join("")
+          + [4, 8].map((k) => `<path d="M6 ${y0 + d * 12 + k} q32 ${k > 5 ? 1 : -1} 64 0" stroke="#2a160a" stroke-width=".5" fill="none" opacity=".45"/>`).join("")
+          + `<rect x="4" y="${y0 + d * 12 + (d > 0 ? 0 : 0)}" width="68" height="2" fill="#fff" opacity=".12"/>`;
+        // a few loose grains through the sand so it reads as sand and not paint
+        const grains = (x0, y0, w, h, n, seed) => Array.from({ length: n }, (_, k) => { const r1 = ((k + seed) * 37) % 97 / 97, r2 = ((k + seed) * 61) % 89 / 89; return `<circle cx="${(x0 + r1 * w).toFixed(1)}" cy="${(y0 + r2 * h).toFixed(1)}" r=".45" fill="${k % 3 ? "#9a7238" : "#f6e2b6"}" opacity=".8"/>`; }).join("");
+        return `<defs>${metal(g, WOOD)}<linearGradient id="${g}gl" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".05"/><stop offset=".3" stop-color="#fff" stop-opacity=".35"/><stop offset=".45" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient>`
+          + `<linearGradient id="${g}sd" x1="0" x2="1"><stop offset="0" stop-color="#b48a4e"/><stop offset=".35" stop-color="#e2c088"/><stop offset=".6" stop-color="#d6b071"/><stop offset="1" stop-color="#9a733c"/></linearGradient>`
+          + `<clipPath id="${g}up"><path d="M22 34 C18 70 34 92 36 104 L40 104 C42 92 58 70 54 34Z"/></clipPath><clipPath id="${g}lo"><path d="M36 104 C34 116 18 138 22 176 L54 176 C58 138 42 116 40 104Z"/></clipPath></defs>`
+          + `<g class="hgBody">`
+          + `<path d="${glass}" fill="rgba(210,230,240,.12)"/>`
+          // the stream: a thread of grains falling from the neck, behind the cone it lands on
+          + `<g class="hgStream"><line x1="38" y1="103" x2="38" y2="176" stroke="#d8b47a" stroke-width="1.1"/><line x1="38" y1="103" x2="38" y2="176" stroke="#f6e2b6" stroke-width=".7" stroke-dasharray="1.2 2.2"/></g>`
+          // the top: a flat bed with a little funnel sinking in over the neck, dropping as it drains
+          + `<g clip-path="url(#${g}up)"><g class="hgTop"><path d="M14 54 L25 54 C31 54.2 35 55.6 38 57.6 C41 55.6 45 54.2 51 54 L62 54 L62 112 L14 112Z" fill="url(#${g}sd)"/><path d="M14 54 L25 54 C31 54.2 35 55.6 38 57.6 C41 55.6 45 54.2 51 54 L62 54" stroke="#f3dcae" stroke-width=".8" fill="none" opacity=".8"/>${grains(22, 58, 32, 40, 18, 3)}</g></g>`
+          // the bottom: a cone that rises as it fills, steep at the peak, settling out to the glass
+          + `<g clip-path="url(#${g}lo)"><g class="hgBot"><path d="M14 178 L14 168 C22 162 30 154 36 146 Q38 143.6 40 146 C46 154 54 162 62 168 L62 178Z" fill="url(#${g}sd)"/><path d="M22 163 C28 158 33 152 36 147 Q38 144.6 40 147" stroke="#f3dcae" stroke-width=".8" fill="none" opacity=".75"/>${grains(22, 150, 32, 24, 16, 11)}</g></g>`
+          + `<path d="${glass}" fill="url(#${g}gl)" stroke="rgba(255,255,255,.4)" stroke-width="1"/>`
+          + `<path d="M27 40 C24 60 30 80 35 96" stroke="#fff" stroke-opacity=".5" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M27 170 C24 150 28 132 34 116" stroke="#fff" stroke-opacity=".35" stroke-width="1.2" fill="none" stroke-linecap="round"/>`
+          + end(22, -1) + end(176, 1)
+          + [12, 64].map((x) => `<rect x="${x - 2.5}" y="34" width="5" height="142" rx="2" fill="url(#${g})"/>` + [44, 70, 105, 140, 166].map((y) => `<ellipse cx="${x}" cy="${y}" rx="3.6" ry="2.4" fill="url(#${g})"/><ellipse cx="${x - 0.8}" cy="${y - 0.6}" rx="1.2" ry=".7" fill="#fff" opacity=".25"/>`).join("")).join("")
+          + `</g>`;
+      },
     },
     globe: {
       label: "Antique globe", scale: 0.78, vw: 120, still: true,
@@ -1280,5 +1327,5 @@
 
   MATERIALS.whitewashWood = { label: "Whitewashed", base: "#d9cfc0", tex: () => grainH(0.3, 0.2) };
 
-  window.Decor = { BACKDROPS, MATERIALS, LIGHT_STYLES, LIGHT_COLOURS, HEAD_FONTS, PALETTES, LOOKS, LOOK_KEYS, ORNAMENTS, lightsEl, ornamentEl, backdropFx, BOOKMARKS, bookmarkSvg };
+  window.Decor = { BACKDROPS, MATERIALS, LIGHT_STYLES, LIGHT_COLOURS, HEAD_FONTS, PALETTES, LOOKS, LOOK_KEYS, ORNAMENTS, lightsEl, ornamentEl, hourglassFlip, backdropFx, BOOKMARKS, bookmarkSvg };
 })();

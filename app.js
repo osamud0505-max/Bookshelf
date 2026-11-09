@@ -701,6 +701,26 @@
     } catch (e) { /* no sound available */ }
   }
   window.ShelfSfx = { page: soundPageTurn, slide: soundBookSlide, pull: soundPullSwitch, clink: soundClink, setVolume(v) { if (sfxBus) sfxBus.gain.setTargetAtTime(0.16 * v, sfxBus.context.currentTime, 0.05); } };
+  /** Turning an hourglass: the sand shifting inside as it tips, a soft wooden knock as it is set down, then the faint
+   *  dry trickle of the stream starting again and fading under the room. Kept quiet. */
+  function soundHourglass() {
+    try {
+      noiseBurst(0.01); const t = actx.currentTime;
+      const grain = (at, len, freq, peak) => {
+        const n = noiseBurst(len + 0.02), f = actx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = freq; f.Q.value = 1.4;
+        const g = actx.createGain(); env(g, at, peak, 0.002, len); n.connect(f).connect(g).connect(sfxOut()); n.start(at); n.stop(at + len + 0.02);
+      };
+      // the sand sliding over as it tips past level: a soft rush made of many grains
+      for (let k = 0; k < 46; k++) { const u = k / 46; grain(t + 0.35 + u * 0.4 + Math.random() * 0.03, 0.02 + Math.random() * 0.03, 2500 + Math.random() * 3500, 0.05 + 0.1 * Math.sin(u * Math.PI)); }
+      // set down: a dull wooden knock, low and short
+      const at = t + 1.05, n = noiseBurst(0.08), bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 520; bp.Q.value = 1.2;
+      const kg = actx.createGain(); env(kg, at, 0.5, 0.002, 0.07); n.connect(bp).connect(kg).connect(sfxOut()); n.start(at); n.stop(at + 0.08);
+      const o = actx.createOscillator(), og = actx.createGain(); o.type = "sine"; o.frequency.setValueAtTime(190, at); o.frequency.exponentialRampToValueAtTime(140, at + 0.09);
+      env(og, at, 0.28, 0.002, 0.1); o.connect(og).connect(sfxOut()); o.start(at); o.stop(at + 0.12);
+      // the stream starting: a fine, dry trickle that fades away over a few seconds
+      for (let k = 0; k < 70; k++) { const u = k / 70; grain(at + 0.15 + u * 3.2 + Math.random() * 0.05, 0.008 + Math.random() * 0.01, 5000 + Math.random() * 4000, 0.045 * (1 - u)); }
+    } catch (e) { /* no sound available */ }
+  }
   /** A soft glassy shimmer, for things that glow rather than burn. */
   function soundChime(up) {
     try {
@@ -829,6 +849,8 @@
     const scroller = root.querySelector(".scroller"), track = root.querySelector(".track"), stage = root.querySelector(".stage"), caption = root.querySelector(".caption");
     // things that hang from the shelf's front edge live outside the scroller, so they are not cut off
     const hangLayer = h(`<div class="hangLayer"></div>`); root.append(hangLayer);
+    // cobwebs tucked under the shelf sit behind the caption, so its words stay readable and tappable over them
+    const webLayer = h(`<div class="hangLayer webLayer"></div>`); root.append(webLayer);
     root.dataset.key = key;
     addLights(root);
     const count = books.length + (opts.onAdd ? 1 : 0);
@@ -882,46 +904,24 @@
       if (opts.onAdd) slots[books.length].style.height = Math.round(H * 0.86) + "px";
       const plank = root.querySelector(".plank");
       hangLayer.style.left = scroller.offsetLeft + "px"; hangLayer.style.top = plank.offsetTop + "px"; hangLayer.style.width = viewW + "px";
+      webLayer.style.cssText = hangLayer.style.cssText;
       buildOrns();
       buildWebs();
     }
 
-    // the witch's tower gathers cobwebs: in corners between a short book and a taller one, against the last book,
-    // and draped under the shelf edge. A book moving tears the webs touching it; a tap brushes one away.
-    let webs = [], websArmed = 0;
+    // the witch's tower gathers cobwebs where nothing is ever moved: tucked up under the shelf in its corners, never on
+    // a book or an object. Each one is spun from its own seed, so no two match. A tap brushes one away.
+    let webs = [];
     function buildWebs() {
       webs.forEach((w) => w.el.remove()); webs = [];
-      if (lookId() !== "witch" || !window.ShelfWebs || !books.length) return;
-      const W = window.ShelfWebs;
-      const used = new Set();
-      for (let i = 0; i < books.length - 1; i++) {
-        const a = books[i], b = books[i + 1], ha = dims(a, H).h, hb = dims(b, H).h, diff = Math.abs(ha - hb);
-        const flip = ha < hb; // the web sits on the shorter book, its corner against the taller one
-        const on = flip ? i : i + 1;
-        if (lyingAt(i) || lyingAt(i + 1)) continue; // a pile has no corner a spider would build in
-        if (diff < 14 || used.has(on) || hash(a.id * 7 + b.id) % 3 === 2) continue;
-        used.add(on);
-        const span = dims(books[on], H).d + 1;
-        const w = Math.round(Math.min(span, 58, 26 + diff * 0.7 + (hash(a.id) % 14))), hh = Math.round(Math.min(diff - 2, w * 0.95));
-        const el = W.make(`${key}:${a.id}-${b.id}`, "corner", w, hh, flip);
-        if (el) { stage.append(el); webs.push({ el, i, w, flip, bottom: Math.min(ha, hb), rest: null }); }
-      }
-      const last = books.length - 1, endEl = lyingAt(last) ? null : W.make(`${key}:end:${books[last].id}`, "corner", 50, 46, false);
-      if (endEl) { stage.append(endEl); webs.push({ el: endEl, i: last, w: 50, end: true, bottom: 0, rest: null }); }
-      const dr = W.make(`${key}:drape`, "drape", 84, 26, false);
-      if (dr) { dr.style.left = Math.round(viewW * (0.22 + (hash(key.length * 13) % 40) / 100)) + "px"; dr.style.top = Math.max(0, (root.querySelector(".plank") || {}).offsetHeight - 1 || 0) + "px"; hangLayer.append(dr); webs.push({ el: dr, hang: true }); }
-      clearTimeout(websArmed); websArmed = setTimeout(() => webs.forEach((w) => (w.rest = w.rel)), 900);
-    }
-    function placeWebs() {
-      for (const w of webs) {
-        if (w.hang || w.el._torn || !bookPos[w.i]) continue;
-        const p = bookPos[w.i], right = p.c * 2 - p.l;
-        const x = w.end ? right : w.flip ? (bookPos[w.i + 1] ? bookPos[w.i + 1].l : right) - w.w : right;
-        w.x = x; w.rel = x + curOffset;
-        w.el.style.bottom = w.bottom + "px";
-        w.el.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`;
-        if (w.rest != null && Math.abs(w.rel - w.rest) > 2) window.ShelfWebs.tear(w.el);
-      }
+      if (lookId() !== "witch" || !window.ShelfWebs) return;
+      const W = window.ShelfWebs, top = Math.max(0, (root.querySelector(".plank") || {}).offsetHeight - 1 || 0);
+      const hk = hash([...key].reduce((s, c) => s * 31 + c.charCodeAt(0), 7) >>> 0);
+      // every shelf has at least one corner web; most have both
+      const left = hk % 5 !== 3, right = !left || hk % 7 !== 2;
+      const put = (el, x) => { if (!el) return; if (x === "right") { el.style.left = "auto"; el.style.right = "0"; } else el.style.left = typeof x === "number" ? Math.round(x) + "px" : x; el.style.top = top + "px"; webLayer.append(el); webs.push({ el, hang: true }); };
+      if (left) { const w = 46 + (hk % 23), hh = 38 + ((hk >> 3) % 22); put(W.make(`${key}:cl`, "ceiling", w, hh, false), 0); }
+      if (right) { const w = 44 + ((hk >> 5) % 25), hh = 36 + ((hk >> 7) % 24); put(W.make(`${key}:cr`, "ceiling", w, hh, true), "right"); }
     }
 
     function idxOf(it) {
@@ -949,6 +949,7 @@
           if (el._noClick) { el._noClick = false; return; }
           e.stopPropagation();
           const od = D.ORNAMENTS[kind];
+          if (od && od.hourglass) { if (D.hourglassFlip(el)) soundHourglass(); return; }
           if (od && od.still) { el.classList.remove("nudge"); void el.offsetWidth; el.classList.add("nudge"); return; }
           if (el.classList.contains("snuffing")) return;
           it.on = it.on === false;
@@ -1111,9 +1112,20 @@
         for (let i = g.start; i <= g.end; i++) { g.S = Math.max(g.S, dm[i].h * (1 - opens[i])); g.extra += opens[i] * (base[i] + 8); }
         g.n = g.end - g.start + 1;
       }
+      // a leaning book rests where it really touches its neighbour: against its side if the neighbour is tall enough,
+      // otherwise on the neighbour's top corner, so it never hangs in the air or sinks into the next book
+      const PILE_GAP = 3 + H * 0.025; // a lying book looks a little longer than its box (its near face is closer to you)
+      const leanFoot = (i) => {
+        const p = LEAN * (1 - opens[i]), h_ = dm[i].h, j = i > 0 ? i - 1 : i + 1;
+        let hn = h_;
+        if (j >= 0 && j < count && dm[j]) hn = groupOf.has(j) ? groupHeight(groupOf.get(j)) : poses[j] === "lean" ? dm[j].h * Math.cos(LEAN * (1 - opens[j])) : dm[j].h;
+        return Math.min(h_ * Math.sin(p), Math.max(0, hn - 2) * Math.tan(p));
+      };
+      function groupHeight(g) { let y = 0; for (let k = g.start; k <= g.end; k++) y += dm[k].d * (1 - opens[k]); return y; }
+      const feet = [];
       for (let i = 0; i < count; i++) {
-        if (groupOf.has(i)) { const g = groupOf.get(i); widths.push(g.S / g.n + opens[i] * (base[i] + 8)); continue; }
-        if (poses[i] === "lean") { const p = LEAN * (1 - opens[i]); widths.push(base[i] * Math.cos(p) + dm[i].h * Math.sin(p) + 2); continue; }
+        if (groupOf.has(i)) { const g = groupOf.get(i); widths.push((g.S + PILE_GAP * 2) / g.n + opens[i] * (base[i] + 8)); continue; }
+        if (poses[i] === "lean") { const p = LEAN * (1 - opens[i]); feet[i] = leanFoot(i); widths.push(base[i] * Math.cos(p) + feet[i] + 3); continue; }
         widths.push(base[i]);
       }
       const ornW = (o) => (onPile.has(o) ? 0 : o.w);
@@ -1158,8 +1170,9 @@
           const g = groupOf.get(i);
           if (i === g.start) { g.L = left; g.y = 0; g.ex = 0; }
           const h_ = dm[i].h, d_ = dm[i].d, jit = ((hash(books[i].id) % 7) - 3) * 0.8;
-          const lyX = g.L + Math.max(0, (g.S - h_) / 2) + jit, lyY = g.y;
-          const stX = g.L + g.S + g.ex + 4;
+          // lying books keep a small gap from the books either side and never stick out past the pile
+          const lyX = Math.max(g.L + PILE_GAP, Math.min(g.L + PILE_GAP + g.S - h_, g.L + PILE_GAP + (g.S - h_) / 2 + jit)), lyY = g.y;
+          const stX = g.L + g.S + PILE_GAP * 2 + g.ex + 4;
           g.y += d_ * (1 - open); g.ex += open * (base[i] + 8);
           // centre of the book lying down and standing up, then the slot is moved and turned about its centre
           const W = base[i], cxL = lyX + h_ / 2, cyL = lyY + W / 2, cxS = stX + W / 2, cyS = h_ / 2;
@@ -1170,9 +1183,11 @@
           if (i === g.end) pileAt.set(g, { cx: lyX + h_ / 2, top: g.y, x: lyX, w: h_, c: books[i].spineColor });
         } else if (pose === "lean") {
           // resting on its bottom corner with its top against the neighbour; it straightens up as it turns to you
-          const p = LEAN * (1 - open), W = base[i], h_ = dm[i].h, toLeft = i > 0;
-          if (toLeft) { slot.style.transformOrigin = "0 100%"; slot.style.transform = `translate3d(${(left + h_ * Math.sin(p)).toFixed(1)}px,0,0) rotate(${(-p * 180 / Math.PI).toFixed(2)}deg)`; }
-          else { slot.style.transformOrigin = "100% 100%"; slot.style.transform = `translate3d(${(left + W * Math.cos(p) - W).toFixed(1)}px,0,0) rotate(${(p * 180 / Math.PI).toFixed(2)}deg)`; }
+          // the spine's near face looks a little taller than the box, so a tilted book is lifted by that much: its
+          // corner then sits on the shelf instead of sinking into it and being cut off flat
+          const p = LEAN * (1 - open), W = base[i], toLeft = i > 0, foot = feet[i] || 0, up = (-H * 0.027 * Math.min(1, p / LEAN * 3)).toFixed(1);
+          if (toLeft) { slot.style.transformOrigin = "0 100%"; slot.style.transform = `translate3d(${(left + 1 + foot).toFixed(1)}px,${up}px,0) rotate(${(-p * 180 / Math.PI).toFixed(2)}deg)`; }
+          else { slot.style.transformOrigin = "100% 100%"; slot.style.transform = `translate3d(${(left + W * Math.cos(p) - W).toFixed(1)}px,${up}px,0) rotate(${(p * 180 / Math.PI).toFixed(2)}deg)`; }
           slot.classList.remove("lying");
         } else {
           slot.style.transformOrigin = "";
@@ -1201,8 +1216,7 @@
         let cx = Math.max(p.x, Math.min(p.x + p.w - tw, p.cx - tw / 2));
         for (const o of list) { placeOrn(o, p.top, cx + o.vis / 2); cx += o.vis + 4; }
       }
-      pileSpans = groups.map((g) => ({ s: g.start, e: g.end, L: g.L, R: g.L + g.S }));
-      if (webs.length) placeWebs();
+      pileSpans = groups.map((g) => ({ s: g.start, e: g.end, L: g.L, R: g.L + g.S + PILE_GAP * 2 }));
       let n = Math.round(g); if (n < 0 || n > count - 1) n = -1; n = Math.min(n, books.length - 1);
       if (n >= 0 && lyingAt(n)) n = front; // passing over a lying book picks nothing and makes no sound
       if (n !== front) { if (front >= 0 && !drag && userMoved) soundBookSlide(); front = n; if (n >= 0) scrollMemory.set(key, n); slots.forEach((s, i) => s.classList.toggle("front", i === n)); drawCaption(); }
