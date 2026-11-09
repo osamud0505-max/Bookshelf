@@ -783,18 +783,21 @@
       + `<path d="M${P(-0.3, 0.3)} Q${P(-0.2, 0.36)} ${P(-0.19, 0.46)} M${P(0.3, 0.3)} Q${P(0.2, 0.36)} ${P(0.19, 0.46)}" stroke="#6a5a44" stroke-width="${f1(0.03 * s)}" fill="none" opacity=".5"/>`
       + `<rect x="${f1(cx - 0.175 * s)}" y="${f1(cy + 0.36 * s)}" width="${f1(0.35 * s)}" height="${f1(0.17 * s)}" rx="${f1(0.04 * s)}" fill="#1a140e"/>${teeth}`
       + `<path d="${skullHoles(cx, cy, s)}" fill="url(#${g}e)"/>`
-      + `<path d="M${P(0.12, -0.5)} l${f1(0.03 * s)} ${f1(0.08 * s)} l${f1(-0.04 * s)} ${f1(0.06 * s)} l${f1(0.03 * s)} ${f1(0.07 * s)}" stroke="#5a4c3a" stroke-width="${f1(0.012 * s)}" fill="none"/>`;
+      + `<path d="M${P(0.12, -0.5)} l${f1(0.03 * s)} ${f1(0.08 * s)} l${f1(-0.04 * s)} ${f1(0.06 * s)} l${f1(0.03 * s)} ${f1(0.07 * s)}" stroke="#5a4c3a" stroke-width="${f1(0.012 * s)}" fill="none"/>`
+      + `<path d="M${P(-0.42, -0.3)} ${Array.from({ length: 16 }, (_, k) => `L${P(-0.42 + (k + 1) * 0.0525, -0.3 - Math.sin((k + 1) / 16 * Math.PI) * 0.14 + (k % 2 ? 0.018 : -0.018))}`).join(" ")}" stroke="#6a5a44" stroke-width="${f1(0.008 * s)}" fill="none" opacity=".55"/>`
+      + Array.from({ length: 18 }, (_, k) => `<circle cx="${f1(cx + (((k * 0.37) % 0.7) - 0.35) * s)}" cy="${f1(cy + (-0.45 + ((k * 0.23) % 0.4)) * s)}" r="${f1((0.004 + (k % 3) * 0.003) * s)}" fill="#7a6a50" opacity=".45"/>`).join("")
+      + `<path d="M${P(-0.44, 0.18)} Q${P(-0.36, 0.26)} ${P(-0.24, 0.24)} M${P(0.44, 0.18)} Q${P(0.36, 0.26)} ${P(0.24, 0.24)}" stroke="#f6eedb" stroke-width="${f1(0.02 * s)}" fill="none" opacity=".45" stroke-linecap="round"/>`;
   };
   D.ORNAMENTS.skull = {
     label: "Skull & candle", scale: 0.62, vw: 110,
     draw: (g) => {
       const wax = "#e6dbc0";
       return skullArt(g, 55, 147, 92)
-        + `<rect x="47" y="58" width="16" height="40" rx="2" fill="${wax}"/><rect x="47" y="58" width="5" height="40" fill="#fff" opacity=".3"/>`
+        + `<rect x="47" y="58" width="16" height="40" rx="2" fill="${wax}"/><rect x="47" y="58" width="16" height="40" rx="2" fill="url(#oWaxSh)"/><rect class="litOnly" x="47" y="56" width="16" height="22" fill="url(#oWaxGlow)"/><ellipse cx="55" cy="58.6" rx="8" ry="1.6" fill="${wax}"/>`
         + `<path d="M47 94 q-6 2 -9 9 q-2 6 1 12 q2 3 3 -1 q0 -8 6 -12Z M63 93 q5 3 7 9 q1 9 -2 14 q-3 2 -3 -3 q1 -10 -4 -14Z M52 97 q0 6 -1 11 q1 4 3 0 q1 -6 0 -11Z" fill="${wax}"/>`
         + `<path d="M48 61 q-1 8 .5 13 M61 60 q1.5 6 .2 10" stroke="${wax}" stroke-width="3" stroke-linecap="round" fill="none"/>`
         + `<line x1="55" y1="58" x2="55" y2="54" stroke="#2a2420" stroke-width="1.2"/>`
-        + `<circle class="ember" cx="55" cy="53.5" r="1.4" fill="#ff7a2a"/><g class="ornFlame" data-x="55" data-y="54"><g class="ornFlicker"><ellipse cx="55" cy="45" rx="5" ry="11" fill="#ffb347" opacity=".55"/><path d="M55 34 C61 42 60 52 55 54 C50 52 49 42 55 34Z" fill="#ffc861"/><path d="M55 42 C57.4 46 57 51.5 55 52.5 C53 51.5 52.6 46 55 42Z" fill="#fffbe6"/></g></g>`;
+        + `<circle class="ember" cx="55" cy="53.5" r="1.4" fill="#ff7a2a"/><g class="ornFlame" data-x="55" data-y="54"><g class="ornFlicker"><ellipse cx="55" cy="45" rx="5" ry="11" fill="#ffb347" opacity=".55"/><path d="M55 34 C61 42 60 52 55 54 C50 52 49 42 55 34Z" fill="url(#oFlameG)"/><path d="M55 42 C57.4 46 57 51.5 55 52.5 C53 51.5 52.6 46 55 42Z" fill="#fffbe6"/></g></g>`;
     },
   };
 
