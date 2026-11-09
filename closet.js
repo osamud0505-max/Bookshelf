@@ -116,10 +116,10 @@
   // v158: a second picture (the school uniforms), so the clothes shelves take turns. Each picture keeps its own hook
   // size (gap), tallest piece and hook spacing (pitch), all in stored pixels
   const SINGLES_B = [["single-b1",276,880,143.2,18.0,150.0,159.8],["single-b2",231,634,117.9,17.2,124.5,133.9],["single-b3",229,856,89.8,18.8,96.4,106.5],["single-b4",260,798,121.6,18.8,128.6,138.8],["single-b5",275,893,143.7,17.5,149.4,160.3],["single-b6",316,1005,137.4,17.5,120.9,131.9],["single-b7",305,1063,134.8,18.1,118.3,129.3],["single-b8",226,823,125.2,18.0,109.5,119.2]];
-  // v160: the uniforms hang all together on one rod, close like osamu's layout picture (uniforms-layout-ref.jpg)
+  // v160: the uniforms hang all together on one rod, close like osamu's layout pictures (uniforms-layout-ref.jpg, party-layout-ref.jpg): hook spacing measured against each piece's length there
   const RAILS = [
-    { list: SINGLES, tall: 1040, pitch: 208 },
-    { list: SINGLES_B, tall: 1063, pitch: 200 },
+    { list: SINGLES, tall: 1040, pitch: 172 },
+    { list: SINGLES_B, tall: 1063, pitch: 136 },
   ];
   // which picture each shelf hangs, down the room: party clothes, heels, uniforms, party clothes, uniforms
   const RAIL_OF = [0, 0, 1, 0, 1];
