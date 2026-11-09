@@ -1161,30 +1161,37 @@
   FX.mirrorEyes = () => box([[50, 56, 41, 6], [60, 30, 53, 27], [38, 72, 47, 44]].map(([x, y, t, d]) =>
     `<i class="mEyes" style="left:${x}%;top:${y}%;--t:${t}s;--d:${d}s"><svg viewBox="0 0 120 40" aria-hidden="true"><defs><radialGradient id="mEyeG" cx=".5" cy=".55" r=".6"><stop offset="0" stop-color="#ffd6a0"/><stop offset=".3" stop-color="#ff3b1c"/><stop offset=".75" stop-color="#b0040c"/><stop offset="1" stop-color="#4a0005"/></radialGradient></defs>${eye(32, 1)}${eye(88, -1)}</svg></i>`).join(""));
   // the loft's city: now and then a window across the street switches off and another switches on, and a far plane crosses the sky
-  const LOFT_WINDOWS = [["off", 38.12, 60.479, 1.026, 0.58, "#1d121e"], ["off", 79.658, 62.219, 1.111, 0.653, "#170d16"], ["off", 58.462, 62.219, 1.111, 0.58, "#1d1321"], ["off", 29.231, 60.479, 1.111, 0.616, "#1d1322"], ["off", 17.179, 61.131, 0.94, 0.653, "#22161d"], ["off", 23.504, 61.168, 1.026, 0.58, "#1e1119"], ["off", 54.615, 60.406, 1.026, 0.435, "#211827"], ["on", 51.197, 60.406, 1.026, 0.435, "#211827"], ["on", 77.863, 63.452, 1.026, 0.58, "#1b101b"], ["on", 74.359, 63.416, 1.197, 0.653, "#160d16"], ["on", 26.923, 61.168, 1.026, 0.58, "#1e1119"], ["on", 18.718, 61.131, 1.111, 0.653, "#150c16"], ["on", 60.171, 62.219, 1.111, 0.58, "#1d1321"]];
-  // the city at night: now and then one window across the way goes dark, or one comes on, one at a time, never often.
-  // Each .lw patch either darkens a lit window ("off") or lights a dark one ("on") when it is shown.
+  // every lit window across the street, found in bg/loft.jpg: [left, top, width, height] in % of the picture and the
+  // colour of the wall round it (a window is switched off by laying that colour over it)
+  const LOFT_WINDOWS = [[68.684, 47.883, 1.265, 0.392, "#19162e"], [69.111, 48.426, 1.094, 0.392, "#18152c"], [70.222, 50.529, 1.692, 0.537, "#0e0d11"], [75.35, 50.638, 1.265, 0.392, "#1c1830"], [80.222, 50.856, 0.667, 0.283, "#1c1832"], [20.222, 50.928, 1.009, 0.428, "#19162f"], [35.179, 51.255, 0.838, 0.283, "#17162c"], [58.94, 52.088, 1.436, 0.392, "#1b1832"], [79.966, 52.161, 1.009, 0.355, "#1b1731"], [74.667, 52.342, 0.752, 0.392, "#1b1833"], [78.513, 52.959, 1.009, 0.5, "#1c1934"], [81.59, 52.995, 0.838, 0.428, "#1d1935"], [24.154, 53.031, 0.581, 0.319, "#1f1935"], [43.47, 53.285, 0.752, 0.319, "#1b1831"], [45.521, 53.285, 0.838, 0.283, "#1f1a33"], [18.684, 53.648, 1.094, 0.392, "#1d1934"], [44.068, 53.72, 1.094, 0.392, "#1e1934"], [75.179, 53.72, 1.094, 0.319, "#1d1a33"], [69.368, 54.083, 0.667, 0.319, "#1c1a36"], [47.402, 54.155, 0.752, 0.392, "#1d1a35"], [19.197, 54.264, 1.094, 0.428, "#1f1a36"], [35.179, 54.3, 0.838, 0.319, "#1f1a31"], [72.53, 54.735, 0.667, 0.283, "#191529"], [55.265, 54.808, 1.265, 0.537, "#101123"], [78.855, 55.025, 0.667, 0.283, "#201d3b"], [53.726, 55.315, 1.179, 0.5, "#141324"], [57.573, 55.315, 1.179, 0.5, "#141325"], [75.692, 55.533, 1.35, 0.609, "#131325"], [69.966, 55.569, 1.35, 0.573, "#121120"], [71.932, 55.569, 1.179, 0.537, "#12111f"], [72.957, 55.569, 1.265, 0.537, "#121122"], [29.966, 55.823, 0.667, 0.355, "#151225"], [20.735, 55.859, 1.265, 0.573, "#121123"], [22.188, 55.896, 1.179, 0.5, "#121120"], [23.726, 55.896, 1.179, 0.537, "#11101f"], [43.641, 56.077, 1.35, 0.573, "#131225"], [45.436, 56.113, 1.265, 0.5, "#131325"], [70.991, 56.403, 1.265, 0.573, "#121221"], [72.957, 56.403, 1.265, 0.609, "#131221"], [38.598, 56.621, 1.179, 0.464, "#1a182f"], [43.641, 56.621, 1.35, 0.573, "#131424"], [36.632, 56.657, 0.838, 0.355, "#19182e"], [80.479, 56.693, 1.179, 0.5, "#141426"], [26.889, 57.165, 1.265, 0.573, "#121225"], [74.496, 57.201, 1.35, 0.609, "#141325"], [25.863, 57.781, 1.265, 0.537, "#141225"], [70.051, 58.071, 1.265, 0.537, "#141426"], [76.547, 58.144, 1.009, 0.5, "#131224"], [54.41, 58.252, 1.094, 0.464, "#121326"], [52.957, 60.283, 1.265, 0.645, "#121226"], [54.496, 60.283, 1.35, 0.682, "#121326"], [37.915, 60.355, 1.35, 0.79, "#100f1f"], [29.111, 60.392, 1.436, 0.79, "#111123"], [35.607, 60.392, 1.265, 0.754, "#110f20"], [20.308, 61.044, 1.436, 0.827, "#0d0c1a"], [16.974, 61.08, 1.265, 0.79, "#0b0c16"], [23.299, 61.08, 1.35, 0.79, "#0d0c19"], [58.342, 62.096, 1.436, 0.754, "#0e0e1d"], [79.453, 62.132, 1.436, 0.827, "#0d0b19"], [70.821, 63.328, 1.436, 0.827, "#0c0b18"], [72.53, 63.328, 1.35, 0.827, "#0e0d1b"], [75.949, 63.328, 1.35, 0.79, "#0d0c1a"], [81.248, 63.328, 1.35, 0.79, "#0d0c1a"]];
+  // the city at night: people across the street switch their lights off and on. Every so often one window goes dark,
+  // and a while later another comes on (some lights snap on, a few fluorescent ones stutter first). The city stays
+  // about as lit as it was painted: between five and eleven windows are dark at any time.
   let cityTimer = 0;
   function cityLights() {
     clearTimeout(cityTimer);
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const pick = (a) => a[Math.floor(Math.random() * a.length)];
     const next = () => {
       const ws = [...document.querySelectorAll("#backdrop .lw")];
       if (!ws.length) return; // left the loft
       if (!document.hidden) {
-        // keep the city about as lit as it was painted: never more than a few windows changed at once
-        const changed = ws.filter((w) => w.classList.contains("flip"));
-        const pool = changed.length >= 4 ? changed : ws;
-        const w = pool[Math.floor(Math.random() * pool.length)];
-        w.classList.toggle("flip");
+        const dark = ws.filter((w) => w.classList.contains("dark")), lit = ws.filter((w) => !w.classList.contains("dark"));
+        const goDark = dark.length < 5 ? true : dark.length > 10 ? false : Math.random() < 0.5;
+        const w = pick(goDark ? lit : dark);
+        w.classList.remove("stutter");
+        if (!goDark && Math.random() < 0.25) { void w.offsetWidth; w.classList.add("stutter"); }
+        w.classList.toggle("dark", goDark);
       }
-      cityTimer = setTimeout(next, 9000 + Math.random() * 21000);
+      cityTimer = setTimeout(next, 5000 + Math.random() * 11000);
     };
-    cityTimer = setTimeout(next, 6000 + Math.random() * 10000);
+    cityTimer = setTimeout(next, 3000 + Math.random() * 5000);
   }
   FX.loftLife = () => {
     const R = rng(23);
-    const wins = LOFT_WINDOWS.map(([k, x, y, w, h, c]) => `<i class="lw ${k}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%;--c:${c}"></i>`).join("");
+    // a few start dark, so there are lights to come on as well as go off
+    const startDark = new Set(Array.from({ length: 7 }, () => Math.floor(Math.random() * LOFT_WINDOWS.length)));
+    const wins = LOFT_WINDOWS.map(([x, y, w, h, c], i) => `<i class="lw${startDark.has(i) ? " dark" : ""}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%;--c:${c}"></i>`).join("");
     setTimeout(cityLights, 0);
     return box(`${wins}<div class="loftSky"><i class="plane"><b class="nav"></b><b class="beacon"></b><b class="strobe"></b></i></div>`);
   };

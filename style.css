@@ -1140,10 +1140,12 @@ body.arrangingDecor .fab, body.arrangingDecor .fabShelf { opacity: 0; pointer-ev
 @keyframes mLook { 0%, 7% { transform: translateX(0); } 8% { transform: translateX(-3px); } 10.5% { transform: translateX(-3px); } 11.5%, 100% { transform: translateX(0); } }
 @media (prefers-reduced-motion: reduce) { #backdrop .mEyes, #backdrop .mEyes .eye, #backdrop .mEyes .pupil { animation: none; } }
 /* loft: windows across the street switching off and on */
-#backdrop .lw { position: absolute; opacity: 0; border-radius: 1px; transition: opacity .25s ease-out; }
-#backdrop .lw.flip { opacity: 1; }
-#backdrop .lw.off { background: var(--c); box-shadow: 0 0 2px 1.5px var(--c); }
-#backdrop .lw.on { background: radial-gradient(ellipse at center, rgb(214,160,136) 0 30%, rgba(176,122,108,.8) 60%, rgba(150,100,95,0) 80%); filter: blur(.5px); }
+/* loft city windows: a .lw patch of the wall's own colour lies over each lit window; .dark shows it (the light is off).
+   Off is quick, as a bulb dies; on is quick too, or a fluorescent stutter (.stutter) */
+#backdrop .lw { position: absolute; opacity: 0; border-radius: 1px; background: var(--c); box-shadow: 0 0 2px 2px var(--c), 0 0 5px 3px color-mix(in srgb, var(--c) 55%, transparent); transition: opacity .35s cubic-bezier(.3,0,.2,1); }
+#backdrop .lw.dark { opacity: 1; transition-duration: .18s; }
+#backdrop .lw.stutter { animation: lwStutter .9s steps(1, end); }
+@keyframes lwStutter { 0% { opacity: 1; } 12% { opacity: .15; } 20% { opacity: .9; } 34% { opacity: .3; } 42% { opacity: 1; } 58% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes lwSwitch { 0%, 55% { opacity: 0; } 55.5%, 84% { opacity: 1; } 84.5%, 100% { opacity: 0; } }
 /* loft: a plane far off, crossing the sky behind the window bars */
 #backdrop .loftSky { position: absolute; left: 15.812%; top: 22.299%; width: 68.376%; height: 22.661%; -webkit-mask: url('bg/loft-sky.png') 0 0 / 100% 100% no-repeat; mask: url('bg/loft-sky.png') 0 0 / 100% 100% no-repeat; }
