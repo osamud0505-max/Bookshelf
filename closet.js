@@ -105,10 +105,21 @@
     "dress-lilac": [326, 901, 158, 9], "shirt-teal": [478, 745, 232, 11], "blouse-pink": [490, 607, 238, 10],
     "skirt-blue": [447, 768, 218, 10], "dress-pink": [446, 838, 217, 11], "skirt-purple": [466, 760, 226, 10],
     "blouse-white": [465, 709, 225, 9], "dress-gold": [352, 881, 172, 10], "cardigan-pink": [474, 616, 231, 11],
+    // the princess gowns (v146)
+    "blue-stars": [493, 897, 244, 11], "rose-tiers": [505, 867, 250, 13], "lavender": [450, 962, 218, 10],
+    "gold-sequin": [508, 808, 251, 12], "ivory-roses": [471, 926, 232, 11], "peach-cape": [430, 947, 212, 10],
+    "red-velvet": [477, 874, 236, 12], "pink-tutu": [554, 750, 276, 12], "butter-floral": [455, 852, 224, 13],
+    "periwinkle": [447, 918, 218, 12], "magenta": [509, 765, 250, 10], "pinafore": [457, 853, 224, 13],
   };
   const EMPTY = [491, 293, 238, 12];
   // how far each hook's curve reaches to the left of that point, where its tip goes down behind the rod
-  const TIP = { "dress-lilac": 30, "shirt-teal": 37, "blouse-pink": 35, "skirt-blue": 39, "dress-pink": 36, "skirt-purple": 35, "blouse-white": 32, "dress-gold": 31, "cardigan-pink": 36, empty: 38 };
+  const TIP = { "dress-lilac": 30, "shirt-teal": 37, "blouse-pink": 35, "skirt-blue": 39, "dress-pink": 36, "skirt-purple": 35, "blouse-white": 32, "dress-gold": 31, "cardigan-pink": 36, empty: 38,
+    "blue-stars": 31, "rose-tiers": 34, lavender: 28, "gold-sequin": 36, "ivory-roses": 32, "peach-cape": 29, "red-velvet": 37, "pink-tutu": 35, "butter-floral": 39, periwinkle: 37, magenta: 29, pinafore: 38 };
+  // the whole wardrobe in one fixed order, mixing colours and lengths. Each shelf starts at a different place in it,
+  // so every shelf shows different clothes
+  const WARDROBE = ["blue-stars", "rose-tiers", "blouse-white", "gold-sequin", "lavender", "skirt-blue", "red-velvet", "butter-floral", "cardigan-pink",
+    "periwinkle", "pink-tutu", "dress-lilac", "magenta", "pinafore", "shirt-teal", "ivory-roses", "dress-pink", "peach-cape", "skirt-purple", "blouse-pink", "dress-gold"];
+  const shelfOrder = [];
   const pic = (n) => `obj/closet-${n}-cosy.webp`;
   // the rod picture: a chrome tube 34 px thick whose middle is 58 px from the top of its 118 px strip; each end piece
   // is 234 px wide with its wall flange centred 60 px (left) or 173 px (right) along it
@@ -117,12 +128,19 @@
     const bookH = w < 560 ? 196 : 246;
     // every garment shares one scale, so their sizes stay true to each other; the longest dress is 1.8 books long.
     // Hangers are seen a little from the side, so the pictures are narrowed
-    const s = bookH * 1.8 / 901, sx = 0.7, k = bookH * 1.75 / 128;
+    const s = bookH * 1.8 / 962, sx = 0.7, k = bookH * 1.75 / 128;
     const R = rng((Math.round(w) * 7 + [...String(cfg.seed || "")].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 233280, 3)) % 233280);
     const rodR = 1.7 * k, rs = (rodR * 2) / ROD.th, rodY = f1(ROD.flR * rs + 4);
-    const items = []; let x = 34, deck = [];
-    // garments come from a shuffled deck, so all nine show before any comes round again
-    const draw = () => { if (!deck.length) { deck = Object.keys(GARMENTS); for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; } } return deck.pop(); };
+    const items = []; let x = 34;
+    // this shelf's place in the room (shelves ask in order, top first) picks where it starts in the wardrobe, 7 apart,
+    // so the shelves under each other hang different clothes; a neighbour or two swap places for a less tidy rail
+    const key = String(cfg.seed || "");
+    if (!shelfOrder.includes(key)) shelfOrder.push(key);
+    const start = (shelfOrder.indexOf(key) * 7) % WARDROBE.length;
+    const deck = WARDROBE.slice(start).concat(WARDROBE.slice(0, start));
+    for (let i = 0; i < deck.length - 1; i++) if (R() < 0.3) { [deck[i], deck[i + 1]] = [deck[i + 1], deck[i]]; i++; }
+    let di = 0;
+    const draw = () => deck[di++ % deck.length];
     while (x < w - 30) {
       if (R() < 0.18) {
         // a couple of empty hangers pushed together
@@ -201,8 +219,8 @@
   };
   D.ORNAMENTS.handbag = painted("Handbag", "handbag", 692, 728, 1.2, [[0.5, 0.48]]);
   D.ORNAMENTS.pencilCup = painted("Pencil cup & lipstick", "pencilcup", 535, 761, 1.0, [[0.4, 0.38], [0.74, 0.27]]);
-  D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes", 503, 678, 1.2, [[0.5, 0.5]]);
-  D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags", 686, 592, 1.1, [[0.5, 0.5]]);
+  D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes-shelf", 455, 700, 1.2, [[0.5, 0.49]]);
+  D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags-shelf", 663, 461, 0.92, [[0.5, 0.49]]);
 
   // each closet shelf gets two of these, taking turns down the room
   D.ORNAMENTS.pencilCup.cycle = ["pencilCup", "shoppingBags", "handbag", "giftBoxes"];
