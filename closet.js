@@ -164,20 +164,21 @@
         left += m.w * hs + gap; i++;
       }
     } else {
-      // all of them in osamu's order, hooks evenly spaced as in their layout picture (one hook every 208 stored px).
-      // On a wide shelf they hang at full size with that spacing; on a narrow one they shrink a little (never below
-      // 1.7 books long) and then hang closer together, so every one of them still fits on the rod
+      // osamu's order, spacing and overlap copied from their layout photos, always full size (2.1 books long). A
+      // shelf too short for the whole rail shows only the run of pieces that fits at that spacing: the first part of
+      // the rail on the upper shelves of each kind, the last part on the lower ones
       const R = RAILS[RAIL_OF[idx % RAIL_OF.length]], LIST = R.list, SINGLE_TALL = R.tall;
       // steps: how far each hanger is from the one before, in pitches (an empty hanger can sit closer)
       const steps = R.steps || LIST.slice(1).map(() => 1), units = steps.reduce((t, v) => t + v, 0);
       const n = LIST.length, PITCH = R.pitch, span = units * PITCH;
-      // never shrunk (osamu): on a narrow shelf they just hang closer together
-      const s2 = bookH * 2.1 / SINGLE_TALL;
-      const pitch = Math.min(PITCH * s2, (x1 - x0 - 16) / units);
+      const s2 = bookH * 2.1 / SINGLE_TALL, pitch = PITCH * s2, room = x1 - x0 - 16;
+      let k = n; while (k > 1 && steps.slice(0, k - 1).reduce((t, v) => t + v, 0) * pitch > room) k--;
+      const from = k < n && idx % RAIL_OF.length >= 3 ? n - k : 0;
       let at = x0 + 8;
       LIST.forEach(([f, gw, gh, px, py, t0, t1], i) => {
+        if (i < from || i >= from + k) return;
         const m = { w: gw, h: gh, inner: py, hooks: [[px, t0, t1]], pieces: [[f, 0, 0, gw, gh, px, py]] };
-        if (i) at += steps[i - 1] * pitch;
+        if (i > from) at += steps[i - 1] * pitch;
         items.push({ m, s: s2, x: at - px * s2, amp: 1.6, z: R.z ? R.z[i] : i });
       });
     }
