@@ -103,107 +103,90 @@
   D.LIGHT_STYLES.closetRod = "Closet rod";
   // v147: every garment is painted without a hanger and laid onto the SAME hanger picture offline (shoulders resting on
   // its arms, straps on its notches), at one shared factor, so every hanger on the rail is exactly the same size
-  const GARMENTS = {
-    "blouse-white": [350, 522, 170, 7], "blue-stars": [485, 856, 239, 7], "butter-floral": [345, 609, 167, 7],
-    "cardigan-pink": [361, 510, 175, 7], "gold-sequin": [395, 629, 193, 7], "ivory-roses": [493, 929, 242, 7],
-    "lavender": [360, 761, 173, 7], "magenta": [415, 588, 205, 7], "peach-cape": [435, 934, 213, 7],
-    "periwinkle": [352, 716, 169, 7], "pinafore": [401, 704, 194, 7], "pink-tutu": [494, 629, 242, 7],
-    "red-velvet": [445, 745, 219, 7], "rose-tiers": [442, 715, 216, 7],
-  };
-  const EMPTY = [304, 182, 148, 7];
-  // how far the hook's curve reaches to the left of its inside top, where its tip goes down behind the rod (same hook on all)
-  const HOOK_TIP = 24;
-  // the wardrobe in one fixed order, mixing colours and lengths. Each shelf starts at a different place in it,
-  // so every shelf shows different clothes
-  const WARDROBE = ["blue-stars", "rose-tiers", "blouse-white", "gold-sequin", "lavender", "red-velvet", "butter-floral",
-    "cardigan-pink", "periwinkle", "pink-tutu", "magenta", "pinafore", "ivory-roses", "peach-cape"];
-  const shelfOrder = [];
+  // v149: osamu's own Gemini pictures (cosy game art). Each clothes rail is ONE picture of a whole set of hangers, so
+  // the clothes overlap like a real closet; the heels are pairs on S-hooks, placed one by one. RAIL holds, for every
+  // picture, its size and its hooks: [centre x, tip from, tip to] and how far down the inside of the hooks' curve is
+  // (inner), all in the stored picture's pixels. The rod is three pieces of one painted rod: left end with its ball
+  // and ceiling bracket, a tube stretched along, right end.
+  const RAIL = {"rod":{"l":[114,124,99.0],"r":[114,129,104.1],"m":[30,28,14.1],"d":23.7,"stemL":73.8,"stemR":38.7},"set-a":{"w":1200,"h":1122,"inner":17.1,"gap":15.5,"hooks":[[146.0,141.1,167.6],[295.2,288.7,317.1],[422.4,417.0,444.0],[559.4,553.6,580.7],[701.8,698.0,719.9],[810.7,790.1,816.5],[959.3,937.7,965.4],[1093.3,1071.8,1099.5]]},"set-b":{"w":1200,"h":1261,"inner":19.3,"gap":15.7,"hooks":[[196.7,177.0,200.0],[328.2,316.1,355.4],[433.4,413.1,437.4],[558.7,527.9,571.8],[690.5,670.2,695.7],[829.2,798.7,843.3],[970.8,941.6,983.6],[1084.9,1055.7,1097.0]]},"set-c":{"w":1200,"h":1132,"inner":22.3,"gap":14.8,"hooks":[[159.5,151.5,185.5],[285.9,276.4,309.7],[418.9,409.3,443.3],[552.1,544.7,575.6],[675.7,673.9,694.3],[813.6,795.7,817.3],[957.7,932.9,965.7],[1080.7,1056.0,1089.3]]},"hangers-empty":{"w":1200,"h":361,"inner":27.1,"gap":17.8,"hooks":[[54.2,32.0,58.0],[201.7,195.4,226.6],[322.1,298.7,327.7],[464.8,430.2,479.3],[613.4,590.0,619.7],[771.3,737.1,787.6],[931.8,898.3,945.9],[1062.2,1028.4,1075.2]]},"heels":[{"w":208,"h":391,"inner":11.5,"gap":10.8,"hooks":[[66.2,63.0,81.9],[144.5,141.3,160.2]]},{"w":223,"h":387,"inner":11.7,"gap":10.8,"hooks":[[75.1,72.0,90.9],[153.7,150.8,169.7]]},{"w":226,"h":392,"inner":11.2,"gap":10.8,"hooks":[[78.1,62.6,81.5],[161.1,145.3,164.2]]},{"w":224,"h":508,"inner":11.2,"gap":10.8,"hooks":[[67.1,51.3,70.2],[159.1,143.6,162.5]]},{"w":229,"h":397,"inner":14.4,"gap":10.8,"hooks":[[88.7,86.0,103.5],[158.0,157.1,172.8]]},{"w":224,"h":396,"inner":14.2,"gap":10.8,"hooks":[[72.2,70.7,86.9],[155.7,153.9,170.1]]},{"w":234,"h":397,"inner":14.4,"gap":10.8,"hooks":[[74.0,72.0,88.7],[150.1,150.8,165.6]]}]};
   const pic = (n) => `obj/closet-${n}-cosy.webp`;
-  const hung = (n) => `obj/closet-${n}-hung.webp`;
-  // the rod picture: a chrome tube 34 px thick whose middle is 58 px from the top of its 118 px strip; each end piece
-  // is 234 px wide with its wall flange centred 60 px (left) or 173 px (right) along it
-  const ROD = { th: 34, h: 118, mid: 58, endW: 234, fl: 60, fr: 173, flR: 56 };
-  // chrome ceiling brackets: a round plate screwed to the underside of the shelf, a stem, and a saddle the rod rests in;
-  // two near the ends (three on a wide shelf), plus rounded caps on the rod's ends
-  function rodMounts(w, rodY, rodR, midL, midW) {
-    const xs = w > 720 ? [0.07, 0.5, 0.93] : [0.09, 0.91];
-    const pw = rodR * 3.4, sw = Math.max(3, rodR * 0.62), cw = rodR * 2.3;
-    const grad = `<defs><linearGradient id="rmC" x1="0" x2="1"><stop offset="0" stop-color="#7d7f86"/><stop offset=".3" stop-color="#f4f5f7"/><stop offset=".55" stop-color="#b9bcc3"/><stop offset="1" stop-color="#6c6e75"/></linearGradient>`
-      + `<linearGradient id="rmV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9eaee"/><stop offset=".6" stop-color="#a7aab2"/><stop offset="1" stop-color="#6e7078"/></linearGradient></defs>`;
-    const one = (cx) => `<g>`
-      // plate against the shelf's underside, seen a little from below
-      + `<ellipse cx="${f1(cx)}" cy="1.6" rx="${f1(pw / 2)}" ry="2.6" fill="url(#rmV)" stroke="#5d5f66" stroke-width=".6"/>`
-      + `<rect x="${f1(cx - sw / 2)}" y="2" width="${f1(sw)}" height="${f1(rodY - 1)}" rx="${f1(sw / 2)}" fill="url(#rmC)" stroke="#5d5f66" stroke-width=".5"/>`
-      // the saddle: a cup under the rod, open at the top, wrapping its lower half
-      + `<path d="M${f1(cx - cw / 2)} ${f1(rodY - rodR * 0.2)} a${f1(cw / 2)} ${f1(rodR * 1.25)} 0 0 0 ${f1(cw)} 0 v${f1(-rodR * 0.35)} h${f1(-cw * 0.14)} a${f1(cw * 0.36)} ${f1(rodR * 0.95)} 0 0 1 ${f1(-cw * 0.72)} 0 h${f1(-cw * 0.14)}z" fill="url(#rmC)" stroke="#5d5f66" stroke-width=".6"/></g>`;
-    const cap = (x) => `<ellipse cx="${f1(x)}" cy="${f1(rodY)}" rx="${f1(rodR * 0.55)}" ry="${f1(rodR * 1.02)}" fill="url(#rmC)" stroke="#5d5f66" stroke-width=".6"/>`;
-    return `<svg class="rodMount" width="${f1(w)}" height="${f1(rodY + rodR * 1.4)}" viewBox="0 0 ${f1(w)} ${f1(rodY + rodR * 1.4)}" aria-hidden="true">${grad}${xs.map((t) => one(w * t)).join("")}${cap(midL + 1)}${cap(midL + +midW - 1)}</svg>`;
-  }
+  const railPic = (n) => `obj/closet-${n}.webp`;
+  const SETS = { a: ["rail-seta", "set-a"], b: ["rail-setb", "set-b"], c: ["rail-setc", "set-c"], e: ["rail-hangers-empty", "hangers-empty"] };
+  // the shelves take turns down the room: clothes, heels, clothes, empty hangers, clothes
+  const PLAN = [["a", "b", "c"], ["heels"], ["b", "c", "a"], ["e", "c", "a"], ["c", "a", "b"]];
+  const shelfOrder = [];
   function closetRodEl(w, cfg) {
     const bookH = w < 560 ? 196 : 246;
-    // every garment shares one scale, so their sizes stay true to each other; the longest gown is 3 books long, so the clothes are much bigger than the books.
-    // Hangers are seen a little from the side, so the pictures are narrowed
-    const s = bookH * 3.0 / 934, sx = 0.78, k = bookH * 1.75 / 128;
-    const R = rng((Math.round(w) * 7 + [...String(cfg.seed || "")].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 233280, 3)) % 233280);
-    // the rod hangs from the underside of the shelf above on ceiling brackets, so it sits a bracket's drop below the top
-    const rodR = 1.7 * k, rs = (rodR * 2) / ROD.th, drop = Math.round(4.2 * k), rodY = f1(drop + rodR);
-    const items = []; let x = 34;
-    // this shelf's place in the room (shelves ask in order, top first) picks where it starts in the wardrobe, 5 apart,
-    // so the shelves under each other hang different clothes; a neighbour or two swap places for a less tidy rail
     const key = String(cfg.seed || "");
     if (!shelfOrder.includes(key)) shelfOrder.push(key);
-    const start = (shelfOrder.indexOf(key) * 5) % WARDROBE.length;
-    const deck = WARDROBE.slice(start).concat(WARDROBE.slice(0, start));
-    for (let i = 0; i < deck.length - 1; i++) if (R() < 0.3) { [deck[i], deck[i + 1]] = [deck[i + 1], deck[i]]; i++; }
-    let di = 0;
-    const draw = () => deck[di++ % deck.length];
-    while (x < w - 30) {
-      if (R() < 0.18) {
-        // a couple of empty hangers pushed together
-        for (let n = 1 + Math.floor(R() * 2); n > 0 && x < w - 30; n--) { items.push({ x, kind: "empty", m: EMPTY }); x += 304 * s * sx * (0.22 + R() * 0.12); }
-        x += 304 * s * sx * 0.45;
-      } else {
-        const n = draw();
-        items.push({ x, kind: n, m: GARMENTS[n] });
-        x += 304 * s * sx * (0.5 + R() * 0.25);
-        // keep hooks off the brackets
-        if ([0.09, 0.91, 0.07, 0.5, 0.93].some((t) => Math.abs(x - w * t) < 3.5 * k)) x += 7 * k;
+    const idx = shelfOrder.indexOf(key), plan = PLAN[idx % PLAN.length];
+    const rod = RAIL.rod, inset = 6;
+    // clothes about 2.4 books long, smaller on a narrow shelf so every hook of a set still sits on the rod
+    const first = RAIL[SETS[plan[0] === "heels" ? "a" : plan[0]][1]];
+    const hookSpan = (m) => m.hooks[m.hooks.length - 1][0] - m.hooks[0][0];
+    // the rod is a bit thicker than the hooks' opening, so the curve of each hook sits snugly over it
+    const rodScale = (scl) => (first.gap * scl * 1.15) / rod.d;
+    const ends = (rs) => [inset + (rod.stemL + 14) * rs, w - inset - (rod.r[0] - rod.stemR + 14) * rs];
+    let sc = bookH * 2.4 / 1150;
+    for (let t = 0; t < 4; t++) { const [a, b] = ends(rodScale(sc)); sc = Math.min(sc, (b - a) / hookSpan(first)); }
+    const rs = rodScale(sc), rodD = rod.d * rs, [x0, x1] = ends(rs);
+    const rodC = rod.l[2] * rs + 1, rodTop = rodC - rodD / 2;
+    const items = [];
+    if (plan[0] === "heels") {
+      // pairs of heels, each shoe about three quarters of a book long, starting with a different pair on each heels shelf
+      const hs = bookH * 0.75 / 320;
+      const n = RAIL.heels.length; let i = idx * 3, left = x0 - RAIL.heels[i % n].hooks[0][0] * hs;
+      const gap = 10 * hs;
+      while (items.length < n) {
+        const m = RAIL.heels[i % n];
+        if (left + m.hooks[m.hooks.length - 1][0] * hs > x1) break;
+        items.push({ pic: railPic(`heels-${(i % n) + 1}`), m, s: hs, x: left, amp: 6 });
+        left += m.w * hs + gap; i++;
       }
-      if (R() < 0.08) x += 304 * s * sx * 0.5;
+    } else {
+      // whole sets, side by side while they fit; a shelf too narrow for even one set has already scaled it down
+      let x = x0;
+      for (let i = 0; i < 6; i++) {
+        const k = plan[i % plan.length], m = RAIL[SETS[k][1]], span = hookSpan(m) * sc;
+        if (items.length && x + span > x1) break;
+        items.push({ pic: railPic(SETS[k][0]), m, s: sc, x: x - m.hooks[0][0] * sc, amp: 1.6 });
+        x += span + 120 * sc;
+      }
     }
-    let bottom = 0;
-    const top = rodY - rodR;
-    const ph = f1(ROD.h * rs), pt = f1(rodY - ROD.mid * rs);
-    const midL = 14, midW = f1(w - 28);
-    const hangers = items.map((it, i) => {
-      const [W, H, ax, ay] = it.m, dw = W * s * sx, dh = H * s, ox = ax * s * sx, oy = ay * s;
-      bottom = Math.max(bottom, top - oy + dh);
-      const tilt = ((R() - 0.5) * 2.4).toFixed(1);
-      return `<div class="hgr" data-i="${i}" style="left:${f1(it.x - ox)}px;top:${f1(top - oy)}px;width:${f1(dw)}px;height:${f1(dh)}px;transform-origin:${f1(ox)}px ${f1(oy)}px;--r:${tilt}deg">`
-        + `<img src="${hung(it.kind === "empty" ? "hanger" : it.kind)}" alt="" draggable="false" decoding="async"><i class="hit" style="left:${f1(ox - Math.min(dw * 0.36, 60))}px;width:${f1(Math.min(dw * 0.72, 120))}px"></i></div>`
-        // the hook's curve goes over the rod and its tip down behind it: a piece of the rod is laid again over the tip
-        + (() => { const pl = f1(it.x - HOOK_TIP * s * sx - 2.5); return `<div class="rodPatch" style="left:${pl}px;width:${f1(HOOK_TIP * s * sx + 1.5)}px;top:${f1(rodY - rodR - 1)}px;height:${f1(rodR * 2 + 2)}px"><img src="${pic("rod-mid")}" alt="" style="left:${f1(midL - pl)}px;top:${f1(pt - (rodY - rodR - 1))}px;width:${f1(midW)}px;height:${ph}px"></div>`; })();
+    // centre what fits between the brackets
+    if (items.length) {
+      const last = items[items.length - 1], lastX = last.x + last.m.hooks[last.m.hooks.length - 1][0] * last.s;
+      const shift = (x1 - lastX) / 2; items.forEach((it) => { it.x += shift; });
+    }
+    let bottom = rodC + rodD;
+    const tube = (l, wd) => `<i class="tube" style="left:${f1(l)}px;width:${f1(wd)}px;top:${f1(rodTop - 0.4)}px;height:${f1(rodD + 0.8)}px;background-size:auto ${f1(rod.m[1] * rs)}px;background-position:0 ${f1(-(rod.m[2] * rs - rodD / 2 - 0.4))}px"></i>`;
+    const parts = items.map((it, i) => {
+      const { m, s } = it, top = rodTop - m.inner * s;
+      bottom = Math.max(bottom, top + m.h * s);
+      const ox = (m.hooks[0][0] + m.hooks[m.hooks.length - 1][0]) / 2 * s;
+      const tilt = it.amp > 3 ? ((((idx * 7 + i * 13) % 9) - 4) * 0.35).toFixed(1) : 0;
+      // the tips of the hooks go down behind the rod: a piece of the tube is laid again over each tip
+      const tips = m.hooks.map((h) => tube(it.x + h[1] * s - 0.5, (h[2] - h[1]) * s + 1)).join("");
+      return `<div class="hgr" data-i="${i}" data-amp="${it.amp}" style="left:${f1(it.x)}px;top:${f1(top)}px;width:${f1(m.w * s)}px;height:${f1(m.h * s)}px;transform-origin:${f1(ox)}px ${f1(m.inner * s)}px;--r:${tilt}deg">`
+        + `<img src="${it.pic}" alt="" draggable="false" decoding="async"><i class="hit" style="left:0;width:100%"></i></div>${tips}`;
     });
-    // the rod is behind the hangers; each hanger brings its own piece of rod to hide its hook's tip
-    const rod = `<div class="rod" style="top:${pt}px;height:${ph}px">`
-      + `<img class="rodMid" src="${pic("rod-mid")}" alt="" style="left:${midL}px;width:${midW}px"></div>`
-      + rodMounts(w, rodY, rodR, midL, midW);
+    const lw = rod.l[0] * rs, rw = rod.r[0] * rs;
+    const rodEl = `<div class="rod" style="top:0;height:${f1(rodC + rodD)}px">`
+      + tube(inset + lw - 2, w - 2 * inset - lw - rw + 4)
+      + `<img src="${railPic("rail-rod-l")}" alt="" style="left:${inset}px;top:${f1(rodC - rod.l[2] * rs)}px;width:${f1(lw)}px;height:${f1(rod.l[1] * rs)}px">`
+      + `<img src="${railPic("rail-rod-r")}" alt="" style="left:${f1(w - inset - rw)}px;top:${f1(rodC - rod.r[2] * rs)}px;width:${f1(rw)}px;height:${f1(rod.r[1] * rs)}px"></div>`;
     const el = document.createElement("div");
-    el.className = "lights closetRod on";
-    el.innerHTML = rod + hangers.reverse().join("");
+    el.className = "lights closetRod rail on";
+    el.innerHTML = rodEl + parts.join("");
     el.style.height = Math.ceil(bottom + 2) + "px";
-    // tap a hanger and it swings, nudging its neighbours a little
+    // tap a pair of heels and it swings; tap a set of clothes and the whole rail sways a little
     el.addEventListener("click", (ev) => {
-      const t = ev.target.closest && ev.target.closest(".hit"), s2 = t && t.parentNode; if (!s2) return;
+      const t = ev.target.closest && ev.target.closest(".hit"), h = t && t.parentNode; if (!h) return;
       ev.stopPropagation();
-      const all = [...el.querySelectorAll(".hgr")], me = +s2.dataset.i, r = t.getBoundingClientRect(), dir = ev.clientX < r.left + r.width / 2 ? -1 : 1;
-      all.forEach((h) => {
-        const dd = Math.abs(+h.dataset.i - me); if (dd > 2) return;
-        const amp = (dd === 0 ? 5 : dd === 1 ? 2.2 : 0.9) * dir;
-        h.style.setProperty("--a", amp + "deg"); h.classList.remove("swing"); void h.getBoundingClientRect(); h.classList.add("swing");
-        clearTimeout(h._sw); h._sw = setTimeout(() => h.classList.remove("swing"), 2300);
-      });
-      hangerTick(items[me] && items[me].kind === "empty");
+      const r = t.getBoundingClientRect(), dir = ev.clientX < r.left + r.width / 2 ? -1 : 1;
+      h.style.setProperty("--a", (+h.dataset.amp * dir) + "deg"); h.classList.remove("swing"); void h.getBoundingClientRect(); h.classList.add("swing");
+      clearTimeout(h._sw); h._sw = setTimeout(() => h.classList.remove("swing"), 2300);
+      hangerTick(false);
     });
     return el;
   }
