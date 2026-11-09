@@ -480,19 +480,23 @@
       draw: (g) => {
         const iron = "#1d1a18";
         let chain = ""; for (let y = 50; y < 70; y += 4.5) chain += `<ellipse cx="35" cy="${y}" rx="${Math.round(y) % 9 ? 1.3 : 2}" ry="2.4" fill="none" stroke="${iron}" stroke-width="1.2"/>`;
-        return `<defs><linearGradient id="${g}l" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff6d8"/><stop offset=".6" stop-color="#ffd27a"/><stop offset="1" stop-color="#f0a948"/></linearGradient></defs>`
-          + `<path d="M22 200 L24 194 L46 194 L48 200Z" fill="${iron}"/><rect x="32.5" y="30" width="5" height="166" fill="${iron}"/><rect x="31" y="150" width="8" height="4" fill="${iron}"/>`
-          + `<circle cx="35" cy="25" r="4" fill="${iron}"/><path d="M35 21 l0 -6" stroke="${iron}" stroke-width="1.6"/>`
+        return `<defs><linearGradient id="${g}i" x1="0" x2="1"><stop offset="0" stop-color="#0b0a09"/><stop offset=".32" stop-color="#4e4741"/><stop offset=".5" stop-color="#26221f"/><stop offset="1" stop-color="#090807"/></linearGradient><linearGradient id="${g}l" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff6d8"/><stop offset=".6" stop-color="#ffd27a"/><stop offset="1" stop-color="#f0a948"/></linearGradient></defs>`
+          + `<path d="M22 200 L24 194 L46 194 L48 200Z" fill="url(#${g}i)"/><rect x="32.5" y="30" width="5" height="166" fill="url(#${g}i)"/><rect x="31" y="150" width="8" height="4" fill="url(#${g}i)"/>`
+          + `<circle cx="35" cy="25" r="4" fill="url(#${g}i)"/><path d="M35 21 l0 -6" stroke="${iron}" stroke-width="1.6"/>`
           // a scroll on each side of the post and a short arm that comes towards you
           + `<path d="M35 44 C28 44 22 40 22 34 C22 29 28 29 28 33" stroke="${iron}" stroke-width="2" fill="none"/><path d="M35 44 C42 44 48 40 48 34 C48 29 42 29 42 33" stroke="${iron}" stroke-width="2" fill="none"/>`
-          + `<ellipse cx="35" cy="46" rx="5" ry="2.6" fill="${iron}"/>` + chain
+          + `<ellipse cx="35" cy="46" rx="5" ry="2.6" fill="url(#${g}i)"/>` + chain
           // the lantern, front on
-          + `<path d="M17 82 L35 68 L53 82Z" fill="${iron}"/><circle cx="35" cy="67" r="2.4" fill="${iron}"/><rect x="18" y="82" width="34" height="3.5" fill="${iron}"/>`
+          + `<path d="M17 82 L35 68 L53 82Z" fill="url(#${g}i)"/><circle cx="35" cy="67" r="2.4" fill="url(#${g}i)"/><rect x="18" y="82" width="34" height="3.5" fill="url(#${g}i)"/>`
           + `<rect x="21" y="85.5" width="28" height="36" fill="rgba(60,50,40,.55)"/><rect class="litOnly" x="21" y="85.5" width="28" height="36" fill="url(#${g}l)"/>`
           + flame(35, 115, 0.62)
           + `<rect x="21" y="85.5" width="28" height="36" fill="none" stroke="${iron}" stroke-width="2.4"/><line x1="35" y1="85.5" x2="35" y2="102" stroke="${iron}" stroke-width="1.4"/><line x1="21" y1="102" x2="49" y2="102" stroke="${iron}" stroke-width="1.2"/>`
-          + `<path d="M24 89 l3 0 0 10 -3 0Z" fill="#fff" opacity=".25"/>`
-          + `<path d="M17 121.5 L53 121.5 L49 128 L21 128Z" fill="${iron}"/><path d="M30 128 L40 128 L37 134 L33 134Z" fill="${iron}"/>`;
+          + `<path d="M24 89 l3 0 0 10 -3 0Z" fill="#fff" opacity=".25"/><path d="M38 105 l2.4 0 0 13 -2.4 0Z" fill="#fff" opacity=".14"/>`
+          + `<rect x="21" y="85.5" width="28" height="7" fill="#1a120a" opacity=".35"/><path d="M18 85.5 h34" stroke="#8a7f74" stroke-width=".5" opacity=".6"/>`
+          + [[22, 87], [48, 87], [22, 120], [48, 120], [35, 101.5]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".9" fill="#6a625a"/>`).join("")
+          + `<path d="M19 81.5 L35 69.3" stroke="#8a7f74" stroke-width=".6" opacity=".7"/><path d="M33.6 30 v164" stroke="#7a7068" stroke-width=".6" opacity=".55"/>`
+          + `<path d="M23 196 h24" stroke="#7a7068" stroke-width=".6" opacity=".5"/>`
+          + `<path d="M17 121.5 L53 121.5 L49 128 L21 128Z" fill="url(#${g}i)"/><path d="M30 128 L40 128 L37 134 L33 134Z" fill="url(#${g}i)"/>`;
       },
     },
     oilLamp: {
@@ -503,6 +507,11 @@
         + `<path d="M40 160 C14 160 10 122 40 118 C70 122 66 160 40 160Z" fill="url(#${g})"/><path d="M40 156 C22 154 20 128 40 124 C60 128 58 154 40 156Z" fill="#000" opacity=".12"/>`
         + `<rect x="30" y="110" width="20" height="9" rx="2" fill="url(#${g})"/>`
         + `<path d="M31 110 C20 92 22 74 31 64 L31 34 L49 34 L49 64 C58 74 60 92 49 110Z" fill="url(#${g}c)" stroke="rgba(255,255,255,.35)" stroke-width="1"/>`
+        + `<rect x="31" y="34" width="18" height="10" fill="#2a1e14" opacity=".28"/><path d="M34 40 C32 60 25 80 26 98" stroke="#fff" stroke-opacity=".5" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M47 70 C53 82 53 96 47 106" stroke="#fff" stroke-opacity=".22" stroke-width="1" fill="none"/>`
+        + [33, 37, 41, 45].map((x) => `<rect x="${x}" y="112" width="2" height="3.6" rx="1" fill="#3a2a10" opacity=".7"/>`).join("")
+        + `<path d="M50 114 h6" stroke="url(#${g})" stroke-width="2"/><circle cx="58" cy="114" r="3.4" fill="url(#${g})" stroke="#5a421c" stroke-width=".5"/><path d="M56 114 h4 M58 112 v4" stroke="#5a421c" stroke-width=".4"/>`
+        + `<ellipse cx="40" cy="139" rx="27" ry="3" fill="none" stroke="#5a421c" stroke-width=".7" opacity=".6"/><ellipse cx="40" cy="132" rx="23" ry="2.4" fill="none" stroke="#f3dc9a" stroke-width=".6" opacity=".5"/>`
+        + `<ellipse cx="29" cy="130" rx="4" ry="7" fill="#fff" opacity=".28" transform="rotate(-20 29 130)"/><path d="M14 196 Q40 190 66 196" stroke="#5a421c" stroke-width=".7" fill="none" opacity=".6"/><path d="M18 190 Q40 184 62 190" stroke="#f3dc9a" stroke-width=".6" fill="none" opacity=".45"/>`
         + `<line x1="40" y1="110" x2="40" y2="98" stroke="#2a2420" stroke-width="2"/>` + flame(40, 98, 0.95),
     },
     pillars: {
@@ -690,7 +699,14 @@
   };
   // ------------------------------------------------------------------ more things to stand among the books
   // (`still` ones have no light: a tap just nudges them)
-  const leaf = (x, y, rot, s, c) => `<path transform="translate(${x} ${y}) rotate(${rot}) scale(${s})" d="M0 0 C-7 -3 -9 -12 -4 -17 C-2 -19 0 -18 0 -16 C0 -18 2 -19 4 -17 C9 -12 7 -3 0 0Z" fill="${c}"/><path transform="translate(${x} ${y}) rotate(${rot}) scale(${s})" d="M0 -1 L0 -15" stroke="rgba(255,255,255,.25)" stroke-width=".8" fill="none"/>`;
+  const fur = (cx, cy, rx, ry, n, lt, dk, seed = 1) => Array.from({ length: n }, (_, k) => {
+    const a = ((k * 137.5 + seed * 31) % 360) * Math.PI / 180, r = Math.sqrt(((k * 0.618 + seed * 0.13) % 1)) * 0.96, x = cx + Math.cos(a) * rx * r, y = cy + Math.sin(a) * ry * r;
+    const lit = (x - cx) / rx + (y - cy) / ry < -0.2, ang = a + 1.2 + (k % 5) * 0.3, L = 1.4 + (k % 3) * 0.5;
+    return `<path d="M${x.toFixed(1)} ${y.toFixed(1)} l${(Math.cos(ang) * L).toFixed(1)} ${(Math.sin(ang) * L).toFixed(1)}" stroke="${lit ? lt : dk}" stroke-width=".45" stroke-linecap="round" opacity="${lit ? 0.4 : 0.22}"/>`;
+  }).join("");
+  const leaf = (x, y, rot, s, c) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})"><path d="M0 0 C-7 -3 -9 -12 -4 -17 C-2 -19 0 -18 0 -16 C0 -18 2 -19 4 -17 C9 -12 7 -3 0 0Z" fill="${c}"/>`
+    + `<path d="M0 0 C7 -3 9 -12 4 -17 C2 -19 0 -18 0 -16Z" fill="#0a1a08" opacity=".22"/><path d="M-1 -2 C-6 -5 -7 -12 -4 -15.5" stroke="#fff" stroke-opacity=".18" stroke-width=".7" fill="none"/>`
+    + `<path d="M0 -1 L0 -15 M0 -5 l-3.4 -3 M0 -9 l-3 -3 M0 -5 l3.4 -3 M0 -9 l3 -3" stroke="rgba(255,255,255,.22)" stroke-width=".5" fill="none"/></g>`;
   const TERRA = [[0, "#7a3a1e"], [0.35, "#c46a3c"], [0.55, "#d9824f"], [1, "#6b3018"]];
   const CERAMIC = [[0, "#b8b2a8"], [0.35, "#f4f0e8"], [0.55, "#ffffff"], [1, "#a9a296"]];
   const WOOD = [[0, "#3b2210"], [0.35, "#7a4a24"], [0.55, "#9a6232"], [1, "#2e1a0c"]];
@@ -709,14 +725,15 @@
         return `<defs>${metal(g, TERRA)}</defs>`
           + `<path d="M30 200 L88 200 L96 152 L22 152Z" fill="url(#${g})"/><path d="M30 200 L88 200 L89 194 L29 194Z" fill="#000" opacity=".15"/>`
           + `<rect x="16" y="140" width="86" height="14" rx="3" fill="url(#${g})"/><rect x="16" y="140" width="86" height="3" rx="1.5" fill="#fff" opacity=".15"/>`
-          + `<ellipse cx="59" cy="141" rx="40" ry="3.5" fill="#3a2414"/>` + vines + leaves;
+          + `<ellipse cx="59" cy="141" rx="40" ry="3.5" fill="#3a2414"/>` + Array.from({ length: 14 }, (_, k) => `<circle cx="${22 + k * 5.4}" cy="${140.4 + (k % 3) * 0.6}" r=".7" fill="${k % 2 ? "#5a3a22" : "#1e120a"}"/>`).join("")
+          + `<rect x="22" y="154" width="74" height="5" fill="#000" opacity=".18"/><path d="M28 172 C40 176 70 168 92 174" stroke="#f3e6d0" stroke-width="2.4" fill="none" opacity=".18"/><path d="M32 188 C50 184 70 190 88 186" stroke="#f3e6d0" stroke-width="1.6" fill="none" opacity=".12"/>` + vines + leaves;
       },
     },
     succulent: {
       label: "Succulent", scale: 0.4, vw: 110, still: true,
       draw: (g) => {
         let petals = "";
-        const ring = (n, r, len, wd, c, rot0) => { for (let i = 0; i < n; i++) { const a = rot0 + (i / n) * 180 - 90; petals += `<path transform="translate(55 122) rotate(${a})" d="M0 0 C${wd} ${-len * 0.4} ${wd * 0.7} ${-len * 0.9} 0 ${-len} C${-wd * 0.7} ${-len * 0.9} ${-wd} ${-len * 0.4} 0 0Z" fill="${c}" stroke="#4f7a6e" stroke-width=".6"/>`; } };
+        const ring = (n, r, len, wd, c, rot0) => { for (let i = 0; i < n; i++) { const a = rot0 + (i / n) * 180 - 90; petals += `<path transform="translate(55 122) rotate(${a})" d="M0 0 C${wd} ${-len * 0.4} ${wd * 0.7} ${-len * 0.9} 0 ${-len} C${-wd * 0.7} ${-len * 0.9} ${-wd} ${-len * 0.4} 0 0Z" fill="${c}" stroke="#4f7a6e" stroke-width=".6"/><path transform="translate(55 122) rotate(${a})" d="M0 -2 L0 ${-len + 3}" stroke="#3f6a5e" stroke-width=".7" opacity=".45"/><path transform="translate(55 122) rotate(${a})" d="M${wd * 0.3} ${-len * 0.85} Q0 ${-len - 1} ${-wd * 0.3} ${-len * 0.85}" stroke="#d98a9a" stroke-width="2" fill="none" opacity=".55" stroke-linecap="round"/><path transform="translate(55 122) rotate(${a})" d="M${-wd * 0.5} ${-len * 0.3} C${-wd * 0.6} ${-len * 0.6} ${-wd * 0.4} ${-len * 0.8} ${-wd * 0.1} ${-len * 0.9}" stroke="#fff" stroke-width="1.2" fill="none" opacity=".28"/>`; } };
         ring(9, 0, 46, 13, "#8fb7a5", 0); ring(7, 0, 36, 12, "#a6c9b6", 10); ring(5, 0, 26, 10, "#bcd9c6", 4); ring(3, 0, 16, 8, "#d3e8d6", 20);
         return `<defs>${metal(g, CERAMIC)}</defs>`
           + `<path d="M24 200 L86 200 C92 176 94 150 92 128 L18 128 C16 150 18 176 24 200Z" fill="url(#${g})"/><rect x="14" y="122" width="82" height="9" rx="4" fill="url(#${g})"/>`
@@ -731,18 +748,27 @@
         + `<path d="M23 176 L53 176 C52 164 44 156 38 150 C32 156 24 164 23 176Z" fill="#d8b47a"/><line x1="38" y1="102" x2="38" y2="152" stroke="#d8b47a" stroke-width="1.2"/>`
         + `<path d="M22 34 C18 70 34 92 36 104 C34 116 18 138 22 176 L54 176 C58 138 42 116 40 104 C42 92 58 70 54 34Z" fill="url(#${g}gl)" stroke="rgba(255,255,255,.4)" stroke-width="1"/>`
         + `<rect x="8" y="22" width="60" height="12" rx="3" fill="url(#${g})"/><rect x="8" y="176" width="60" height="12" rx="3" fill="url(#${g})"/>`
-        + [12, 64].map((x) => `<rect x="${x - 2.5}" y="34" width="5" height="142" rx="2" fill="url(#${g})"/>`).join("")
-        + `<rect x="4" y="188" width="68" height="12" rx="3" fill="url(#${g})"/>`,
+        + [12, 64].map((x) => `<rect x="${x - 2.5}" y="34" width="5" height="142" rx="2" fill="url(#${g})"/>` + [44, 70, 104, 138, 164].map((y) => `<ellipse cx="${x}" cy="${y}" rx="3.6" ry="2.4" fill="url(#${g})"/><ellipse cx="${x - 0.8}" cy="${y - 0.6}" rx="1.2" ry=".7" fill="#fff" opacity=".25"/>`).join("")).join("")
+        + `<rect x="4" y="188" width="68" height="12" rx="3" fill="url(#${g})"/>`
+        + [25, 29, 181, 185, 193, 197].map((y) => `<path d="M${y > 186 ? 6 : 10} ${y} q30 ${y % 2 ? 1 : -1} ${y > 186 ? 64 : 56} 0" stroke="#2a160a" stroke-width=".5" fill="none" opacity=".45"/>`).join("")
+        + `<path d="M24 54 C32 60 44 60 52 54" stroke="#b08850" stroke-width="1" fill="none"/><path d="M38 150 C34 160 28 168 24 175" stroke="#f0d8a8" stroke-width="1.2" fill="none" opacity=".7"/><path d="M38 150 C42 160 48 168 52 175" stroke="#a07840" stroke-width="1.6" fill="none" opacity=".6"/>`
+        + Array.from({ length: 40 }, (_, k) => { const top = k < 22, x = top ? 28 + ((k * 37) % 21) : 26 + ((k * 29) % 25), y = top ? 60 + ((k * 13) % 26) * (1 - ((k * 37) % 21) / 60) : 162 + ((k * 7) % 13); return `<circle cx="${x}" cy="${y}" r=".45" fill="${k % 2 ? "#8a6630" : "#f2dcb0"}"/>`; }).join("")
+        + `<path d="M27 40 C24 60 30 80 35 96" stroke="#fff" stroke-opacity=".5" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M27 170 C24 150 28 132 34 116" stroke="#fff" stroke-opacity=".35" stroke-width="1.2" fill="none" stroke-linecap="round"/>`,
     },
     globe: {
       label: "Antique globe", scale: 0.78, vw: 120, still: true,
-      draw: (g) => `<defs>${metal(g, BRASS)}<radialGradient id="${g}o" cx=".35" cy=".32" r=".8"><stop offset="0" stop-color="#e9dcb4"/><stop offset=".55" stop-color="#c9b27c"/><stop offset="1" stop-color="#6e5a33"/></radialGradient><clipPath id="${g}c"><circle cx="60" cy="86" r="44"/></clipPath></defs>`
+      draw: (g) => `<defs>${metal(g, BRASS)}<radialGradient id="${g}o" cx=".35" cy=".32" r=".8"><stop offset="0" stop-color="#e9dcb4"/><stop offset=".55" stop-color="#c9b27c"/><stop offset="1" stop-color="#6e5a33"/></radialGradient><clipPath id="${g}c"><circle cx="60" cy="86" r="44"/></clipPath><radialGradient id="${g}s" cx=".36" cy=".32" r=".75"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1a1006" stop-opacity=".5"/></radialGradient></defs>`
         + `<path d="M40 200 L44 192 L76 192 L80 200Z" fill="url(#${g})"/><path d="M57 192 L55 150 L65 150 L63 192Z" fill="url(#${g})"/>`
         + `<circle cx="60" cy="86" r="44" fill="url(#${g}o)"/>`
         + `<g clip-path="url(#${g}c)" fill="#8a7444" opacity=".75"><path d="M30 60 C40 50 52 56 50 66 C56 72 48 82 40 78 C34 86 24 78 26 70Z"/><path d="M62 70 C74 64 86 70 84 82 C92 92 80 108 70 104 C66 116 56 112 58 100 C52 92 56 80 62 70Z"/><path d="M78 46 C86 44 94 50 92 56 C86 58 80 54 78 46Z"/><path d="M34 100 C40 98 44 106 40 112 C36 112 32 106 34 100Z"/></g>`
         + `<g clip-path="url(#${g}c)" fill="none" stroke="#6e5a33" stroke-width=".6" opacity=".5"><ellipse cx="60" cy="86" rx="44" ry="14"/><ellipse cx="60" cy="86" rx="20" ry="44"/><line x1="16" y1="86" x2="104" y2="86"/></g>`
         + `<path d="M60 36 A50 50 0 0 1 60 136" stroke="url(#${g})" stroke-width="5" fill="none" transform="rotate(-20 60 86)"/><path d="M60 36 A50 50 0 0 0 60 136" stroke="url(#${g})" stroke-width="2" fill="none" opacity=".5" transform="rotate(-20 60 86)"/>`
-        + `<path d="M42 150 Q60 140 78 150" stroke="url(#${g})" stroke-width="4" fill="none"/><ellipse cx="44" cy="62" rx="10" ry="16" fill="#fff" opacity=".15" transform="rotate(30 44 62)"/>`,
+        + `<path d="M42 150 Q60 140 78 150" stroke="url(#${g})" stroke-width="4" fill="none"/>`
+        + `<g clip-path="url(#${g}c)" fill="none" stroke="#6e5a33" stroke-width=".35" opacity=".45">${[-30, -15, 15, 30].map((d) => `<ellipse cx="60" cy="${86 + d}" rx="${(44 * Math.cos(Math.asin(d / 44))).toFixed(1)}" ry="${(4 * Math.cos(Math.asin(d / 44))).toFixed(1)}"/>`).join("")}${[8, 32].map((r) => `<ellipse cx="60" cy="86" rx="${r}" ry="44"/>`).join("")}</g>`
+        + `<g clip-path="url(#${g}c)" stroke="#4a3a1c" stroke-width=".4" fill="none" opacity=".35"><path d="M24 74 q6 -3 10 0 M66 112 q-5 6 -12 4 M86 60 q5 4 2 10"/></g>`
+        + `<circle cx="60" cy="86" r="44" fill="url(#${g}s)"/><ellipse cx="44" cy="62" rx="10" ry="16" fill="#fff" opacity=".2" transform="rotate(30 44 62)"/>`
+        + `<g transform="rotate(-20 60 86)">${Array.from({ length: 17 }, (_, k) => { const a = (k + 1) * Math.PI / 18; return `<line x1="${(60 + Math.sin(a) * 48.5).toFixed(1)}" y1="${(86 - Math.cos(a) * 48.5).toFixed(1)}" x2="${(60 + Math.sin(a) * 51).toFixed(1)}" y2="${(86 - Math.cos(a) * 51).toFixed(1)}" stroke="#4a3410" stroke-width=".5"/>`; }).join("")}<circle cx="60" cy="38" r="2.4" fill="url(#${g})"/><circle cx="60" cy="134" r="2.4" fill="url(#${g})"/></g>`
+        + `<ellipse cx="60" cy="160" rx="6" ry="2" fill="url(#${g})"/><ellipse cx="60" cy="176" rx="5" ry="2" fill="url(#${g})"/><ellipse cx="60" cy="192" rx="17" ry="2.4" fill="url(#${g})"/>`,
     },
     crystal: {
       label: "Amethyst crystals", scale: 0.5, vw: 120, soft: true, glow: "rgba(190,120,255,.45)",
@@ -766,7 +792,10 @@
           + `<linearGradient id="${g}l" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e8c8ff" stop-opacity=".7"/><stop offset=".5" stop-color="#b070ff" stop-opacity=".35"/><stop offset="1" stop-color="#ffffff" stop-opacity=".6"/></linearGradient></defs><g data-y="110"></g>`
           + `<ellipse class="amHalo" cx="60" cy="150" rx="50" ry="46" fill="#b880ff" filter="url(#${g}b)"/>`
           + `<path d="M4 200 C8 184 30 180 60 182 C90 180 112 184 116 200Z" fill="#4a4550"/><path d="M14 196 C30 188 50 190 60 188" stroke="#6a6570" stroke-width="2" fill="none"/>`
-          + shards.map((s, i) => one(s, ranks.get(i))).join("") + sparks;
+          + Array.from({ length: 26 }, (_, k) => `<circle cx="${10 + ((k * 37) % 100)}" cy="${186 + ((k * 13) % 12)}" r="${(0.6 + (k % 3) * 0.5).toFixed(1)}" fill="${k % 2 ? "#2e2a34" : "#77727e"}"/>`).join("")
+          + shards.map((s, i) => one(s, ranks.get(i))).join("")
+          + shards.map(([x, h, w, l], k) => `<path d="M${x - w * 0.3} 194 Q${x + l * 0.2} ${196 - h * 0.45} ${x + l * 0.5 - 1} ${196 - h * 0.7}" stroke="#fff" stroke-width="${k % 2 ? 2.4 : 1.6}" opacity=".16" fill="none" stroke-linecap="round"/>`).join("")
+          + [[14, 10], [30, 8], [52, 7], [68, 9], [92, 8], [108, 7]].map(([x, h]) => `<path d="M${x - 3} 197 L${x} ${196 - h} L${x + 3} 197Z" fill="#9a6ad4"/><path d="M${x} 197 L${x} ${196 - h} L${x + 3} 197Z" fill="#6a3aa0"/>`).join("") + sparks;
       },
     },
     lavender: {
@@ -775,7 +804,8 @@
         let stems = "", buds = "";
         [[40, 20, 0], [30, 30, -10], [50, 26, 9], [22, 44, -18], [58, 40, 16], [36, 38, -4], [46, 34, 5]].forEach(([x, top, lean], i) => {
           stems += `<path d="M40 150 Q${40 + lean * 0.5} ${(150 + top) / 2} ${x + lean} ${top + 20}" stroke="#7b8a5a" stroke-width="1.3" fill="none"/>`;
-          for (let k = 0; k < 7; k++) { const t = k / 7, bx = x + lean - lean * 0.08 * k, by = top + 20 - k * 4.2; buds += `<ellipse cx="${bx + (k % 2 ? 1.6 : -1.6)}" cy="${by}" rx="2.4" ry="3.6" fill="${["#8d6fc4", "#a68ad6", "#7a5bb4"][(i + k) % 3]}"/>`; }
+          for (let k = 0; k < 7; k++) { const t = k / 7, bx = x + lean - lean * 0.08 * k, by = top + 20 - k * 4.2; buds += `<ellipse cx="${bx + (k % 2 ? 1.6 : -1.6)}" cy="${by}" rx="2.4" ry="3.6" fill="${["#8d6fc4", "#a68ad6", "#7a5bb4"][(i + k) % 3]}"/><ellipse cx="${bx + (k % 2 ? 1.6 : -1.6)}" cy="${by + 1.8}" rx="1.6" ry="1.4" fill="#4a3a6e" opacity=".55"/><circle cx="${bx + (k % 2 ? 1 : -2.2)}" cy="${by - 1.4}" r=".7" fill="#e2d4f6" opacity=".7"/>`; }
+          stems += `<path d="M${40 + lean * 0.3} 118 q${lean > 0 ? 6 : -6} -6 ${lean > 0 ? 9 : -9} -14" stroke="#8a9a6a" stroke-width="1.1" fill="none" opacity="${i % 2 ? 0.9 : 0}"/>`;
         });
         return `<defs><linearGradient id="${g}" x1="0" x2="1"><stop offset="0" stop-color="#9fb8b0" stop-opacity=".35"/><stop offset=".35" stop-color="#e6f2ee" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#7f9a92" stop-opacity=".4"/></linearGradient></defs>`
           + stems + buds
@@ -806,7 +836,13 @@
         + Array.from({ length: 12 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return `<line x1="${60 + Math.sin(a) * 26}" y1="${122 - Math.cos(a) * 26}" x2="${60 + Math.sin(a) * 29}" y2="${122 - Math.cos(a) * 29}" stroke="#2a2018" stroke-width="${i % 3 ? 1 : 2}"/>`; }).join("")
         + `<line x1="60" y1="122" x2="60" y2="102" stroke="#2a2018" stroke-width="2.2" stroke-linecap="round"/><line x1="60" y1="122" x2="74" y2="130" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round"/><circle cx="60" cy="122" r="2" fill="#2a2018"/>`
         + `<rect x="30" y="166" width="60" height="14" rx="2" fill="#000" opacity=".2"/><path d="M40 80 Q60 70 80 80" stroke="url(#${g}b)" stroke-width="2" fill="none"/>`
-        + [16, 104].map((x) => `<circle cx="${x}" cy="194" r="4" fill="url(#${g}b)"/>`).join(""),
+        + [16, 104].map((x) => `<circle cx="${x}" cy="194" r="4" fill="url(#${g}b)"/>`).join("")
+        + Array.from({ length: 60 }, (_, i) => i % 5 ? (() => { const a = (i / 60) * Math.PI * 2; return `<line x1="${(60 + Math.sin(a) * 28).toFixed(2)}" y1="${(122 - Math.cos(a) * 28).toFixed(2)}" x2="${(60 + Math.sin(a) * 29.4).toFixed(2)}" y2="${(122 - Math.cos(a) * 29.4).toFixed(2)}" stroke="#2a2018" stroke-width=".4"/>`; })() : "").join("")
+        + `<circle cx="60" cy="122" r="27.6" fill="none" stroke="#2a2018" stroke-width=".35"/><circle cx="60" cy="122" r="29.6" fill="none" stroke="#2a2018" stroke-width=".35"/>`
+        + `<line x1="60" y1="128" x2="51" y2="96" stroke="#a0201a" stroke-width=".6"/><circle cx="60" cy="122" r="1" fill="#a0201a"/>`
+        + `<path d="M36 112 A26 26 0 0 1 58 97" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".35"/><circle cx="60" cy="122" r="36" fill="none" stroke="#fff6d0" stroke-width=".8" opacity=".5" stroke-dasharray="40 200" transform="rotate(200 60 122)"/>`
+        + [100, 120, 150, 176].map((y, k) => `<path d="M16 ${y} q${k % 2 ? 6 : -4} 10 0 20" stroke="#2a160a" stroke-width=".6" fill="none" opacity=".35"/><path d="M104 ${y + 4} q${k % 2 ? -5 : 4} 10 0 18" stroke="#2a160a" stroke-width=".6" fill="none" opacity=".35"/>`).join("")
+        + `<path d="M14 112 C14 62 106 62 106 112" stroke="#f0c890" stroke-width="1" fill="none" opacity=".4"/>`,
     },
     bust: {
       label: "Marble bust", scale: 0.8, vw: 90, still: true,
@@ -818,7 +854,13 @@
         + `<path d="M28 82 C24 58 36 44 50 46 C64 46 70 60 66 78 C62 64 56 60 48 60 C40 60 34 66 28 82Z" fill="#cfcac0"/>`
         + `<path d="M28 70 q-4 6 0 12 M66 66 q4 6 0 12 M34 54 q4 -4 8 -2 M50 50 q6 -2 10 2" stroke="#b5afa4" stroke-width="2" fill="none" stroke-linecap="round"/>`
         + `<path d="M56 86 L62 96 L56 98" stroke="#b5afa4" stroke-width="1.4" fill="none"/><path d="M40 82 q4 -2 8 0 M54 82 q3 -2 6 0" stroke="#a49e92" stroke-width="1.2" fill="none"/>`
-        + `<path d="M22 150 C34 140 46 152 58 142 C66 136 74 146 78 160" stroke="#cfcac0" stroke-width="3" fill="none"/>`,
+        + `<path d="M22 150 C34 140 46 152 58 142 C66 136 74 146 78 160" stroke="#cfcac0" stroke-width="3" fill="none"/>`
+        // carved curls, the eyes' hollows, lips, the drape's folds, grey veins in the stone and ridges on the plinth
+        + [[34, 52], [40, 48], [47, 47], [54, 48], [61, 52], [30, 60], [65, 60]].map(([x, y]) => `<path d="M${x - 3} ${y + 2} a3 3 0 1 1 4 2.6" stroke="#a49e92" stroke-width="1.1" fill="none"/>`).join("")
+        + `<ellipse cx="44" cy="86" rx="4" ry="2.4" fill="#8a857c" opacity=".35"/><ellipse cx="57" cy="86" rx="3.4" ry="2.2" fill="#8a857c" opacity=".3"/><path d="M50 106 q4 -2 8 0 q-4 2.6 -8 0Z" fill="#a49e92" opacity=".6"/><path d="M44 116 q4 3 8 2" stroke="#a49e92" stroke-width="1" fill="none"/>`
+        + `<path d="M18 168 C26 156 34 150 40 152 M70 170 C64 160 58 154 52 156 M30 176 C38 166 50 164 56 170" stroke="#8a857c" stroke-width="1.2" fill="none" opacity=".45"/>`
+        + `<path d="M14 160 C24 172 40 168 48 182 M58 134 C62 150 70 154 74 170 M38 64 C44 76 40 92 46 104" stroke="#8f8a80" stroke-width=".5" fill="none" opacity=".4"/>`
+        + `<path d="M22 190 h46 M21 195 h48" stroke="#7a756c" stroke-width=".8" opacity=".5"/><path d="M22 186.6 h46" stroke="#fff" stroke-width=".8" opacity=".6"/>`,
     },
     gothicCandelabra: {
       label: "Gothic candelabra", scale: 0.98, vw: 160,
@@ -864,7 +906,9 @@
         + `<ellipse cx="60" cy="96" rx="36" ry="32" fill="url(#${g})"/>`
         + `<ellipse cx="46" cy="140" rx="10" ry="16" fill="url(#${g})" stroke="#d9cbb4" stroke-width=".8"/><ellipse cx="74" cy="140" rx="10" ry="16" fill="url(#${g})" stroke="#d9cbb4" stroke-width=".8"/>`
         + `<circle cx="48" cy="94" r="2.6" fill="#3a2a22"/><circle cx="72" cy="94" r="2.6" fill="#3a2a22"/><path d="M57 102 L63 102 L60 106Z" fill="#e8a3a0"/><path d="M60 106 q-4 4 -7 2 M60 106 q4 4 7 2" stroke="#a88" stroke-width=".9" fill="none"/>`
-        + `<ellipse cx="40" cy="104" rx="6" ry="3.5" fill="#f6c9c3" opacity=".6"/><ellipse cx="80" cy="104" rx="6" ry="3.5" fill="#f6c9c3" opacity=".6"/>`,
+        + `<ellipse cx="40" cy="104" rx="6" ry="3.5" fill="#f6c9c3" opacity=".6"/><ellipse cx="80" cy="104" rx="6" ry="3.5" fill="#f6c9c3" opacity=".6"/>`
+        + fur(60, 160, 40, 38, 150, "#fffdf8", "#b8a68a", 1) + fur(60, 96, 36, 32, 110, "#fffdf8", "#b8a68a", 2) + fur(34, 192, 18, 9, 24, "#fffdf8", "#b8a68a", 3) + fur(86, 192, 18, 9, 24, "#fffdf8", "#b8a68a", 4)
+        + `<path d="M60 66 V86 M60 128 V198" stroke="#cdbda4" stroke-width=".7" stroke-dasharray="1.6 1.6" opacity=".7"/><circle cx="49" cy="93" r=".9" fill="#fff"/><circle cx="73" cy="93" r=".9" fill="#fff"/>`,
     },
     teddy: {
       label: "Teddy bear", scale: 0.52, vw: 130, still: true,
@@ -876,7 +920,9 @@
         + `<ellipse cx="65" cy="78" rx="38" ry="34" fill="url(#${g})"/><ellipse cx="65" cy="92" rx="16" ry="12" fill="#ead6ae"/>`
         + `<ellipse cx="65" cy="86" rx="6" ry="4.5" fill="#3a2414"/><path d="M65 90 v6 M65 96 q-5 4 -9 1 M65 96 q5 4 9 1" stroke="#3a2414" stroke-width="1.4" fill="none"/>`
         + `<circle cx="51" cy="72" r="3.4" fill="#22160c"/><circle cx="79" cy="72" r="3.4" fill="#22160c"/><circle cx="52" cy="71" r="1" fill="#fff"/><circle cx="80" cy="71" r="1" fill="#fff"/>`
-        + `<path d="M50 112 Q65 120 80 112 L86 120 Q65 128 44 120Z" fill="#c9a07a"/><path d="M58 116 L65 112 L72 116 L65 122Z" fill="#b48c66"/>`,
+        + fur(65, 150, 42, 44, 170, "#f3d9a8", "#6a4a24", 1) + fur(65, 78, 38, 34, 130, "#f3d9a8", "#6a4a24", 2) + fur(26, 140, 12, 20, 30, "#f3d9a8", "#6a4a24", 3) + fur(104, 140, 12, 20, 30, "#f3d9a8", "#6a4a24", 4)
+        + `<path d="M65 96 V112 M65 128 V194" stroke="#7a5630" stroke-width=".8" stroke-dasharray="1.8 1.6" opacity=".6"/><path d="M22 186 a7 7 0 0 1 12 0 M94 188 a7 7 0 0 1 12 0" stroke="#b89a6a" stroke-width=".8" fill="none" stroke-dasharray="1.4 1.2"/>`
+        + `<path d="M50 112 Q65 120 80 112 L86 120 Q65 128 44 120Z" fill="#c9a07a"/><path d="M58 116 L65 112 L72 116 L65 122Z" fill="#b48c66"/><path d="M48 116 Q65 123 82 116" stroke="#fff" stroke-width=".8" fill="none" opacity=".4"/><ellipse cx="63" cy="84.5" rx="2" ry="1" fill="#fff" opacity=".45"/>`,
     },
     catLamp: {
       label: "Cat night-light", scale: 0.4, vw: 120, soft: true, glow: "rgba(255,240,215,.55)",
@@ -885,18 +931,22 @@
         + `<path d="M14 200 C8 150 14 90 30 74 L28 40 L48 64 C56 62 64 62 72 64 L92 40 L90 74 C106 90 112 150 106 200Z" fill="url(#${g})"/>`
         + `<path class="litOnly" d="M14 200 C8 150 14 90 30 74 L28 40 L48 64 C56 62 64 62 72 64 L92 40 L90 74 C106 90 112 150 106 200Z" fill="#fffaf0"/>`
         + `<circle cx="46" cy="104" r="3.2" fill="#2a2522"/><circle cx="74" cy="104" r="3.2" fill="#2a2522"/><path d="M56 112 q4 4 8 0" stroke="#2a2522" stroke-width="1.6" fill="none" stroke-linecap="round"/>`
-        + `<ellipse cx="38" cy="114" rx="6" ry="3" fill="#f6c4be" opacity=".55"/><ellipse cx="82" cy="114" rx="6" ry="3" fill="#f6c4be" opacity=".55"/>`,
+        + `<ellipse cx="38" cy="114" rx="6" ry="3" fill="#f6c4be" opacity=".55"/><ellipse cx="82" cy="114" rx="6" ry="3" fill="#f6c4be" opacity=".55"/>`
+        + `<path d="M32 70 L31 50 L44 64Z M88 70 L89 50 L76 64Z" fill="#f2c8c2" opacity=".5"/>`
+        + `<path d="M14 200 C8 150 14 90 30 74" stroke="#a89f92" stroke-width="5" fill="none" opacity=".25"/><path d="M106 200 C112 150 106 90 90 74" stroke="#8e867a" stroke-width="7" fill="none" opacity=".25"/>`
+        + `<path d="M34 86 C26 100 22 130 24 160" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".7"/><rect x="12" y="192" width="96" height="8" fill="#6a6258" opacity=".25"/>`,
     },
     tulips: {
       label: "Tulips in a vase", scale: 0.66, vw: 110, still: true,
       draw: (g) => {
-        const bloom = (x, y, r) => `<g transform="rotate(${r} ${x} ${y + 18})"><path d="M${x - 9} ${y + 4} C${x - 10} ${y + 18} ${x + 10} ${y + 18} ${x + 9} ${y + 4} L${x + 6} ${y - 8} L${x + 2} ${y} L${x} ${y - 10} L${x - 3} ${y} L${x - 7} ${y - 8}Z" fill="#e88a98"/><path d="M${x - 2} ${y - 6} C${x - 6} ${y + 6} ${x - 4} ${y + 14} ${x} ${y + 15}" stroke="#c9667a" stroke-width="1.2" fill="none"/><path d="M${x + 1} ${y - 9} C${x + 8} ${y} ${x + 6} ${y + 12} ${x + 2} ${y + 15}" fill="#f5aab6" opacity=".7"/></g>`;
+        const bloom = (x, y, r) => `<g transform="rotate(${r} ${x} ${y + 18})"><path d="M${x - 9} ${y + 4} C${x - 10} ${y + 18} ${x + 10} ${y + 18} ${x + 9} ${y + 4} L${x + 6} ${y - 8} L${x + 2} ${y} L${x} ${y - 10} L${x - 3} ${y} L${x - 7} ${y - 8}Z" fill="#e88a98"/><path d="M${x - 2} ${y - 6} C${x - 6} ${y + 6} ${x - 4} ${y + 14} ${x} ${y + 15}" stroke="#c9667a" stroke-width="1.2" fill="none"/><path d="M${x + 1} ${y - 9} C${x + 8} ${y} ${x + 6} ${y + 12} ${x + 2} ${y + 15}" fill="#f5aab6" opacity=".7"/><path d="M${x - 9} ${y + 4} C${x - 10} ${y + 18} ${x + 10} ${y + 18} ${x + 9} ${y + 4} C${x + 6} ${y + 14} ${x - 6} ${y + 14} ${x - 9} ${y + 4}Z" fill="#a8404f" opacity=".35"/><path d="M${x - 6} ${y + 2} C${x - 7} ${y + 8} ${x - 5} ${y + 12} ${x - 3} ${y + 13}" stroke="#ffd6dc" stroke-width="1" fill="none" opacity=".6"/><path d="M${x} ${y + 16} v4" stroke="#5f8a4a" stroke-width="2.4"/></g>`;
         return `<defs><linearGradient id="${g}" x1="0" x2="1"><stop offset="0" stop-color="#cfe3e0" stop-opacity=".25"/><stop offset=".3" stop-color="#fff" stop-opacity=".45"/><stop offset=".5" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#b9d0cc" stop-opacity=".3"/></linearGradient></defs>`
           + `<path d="M55 196 C52 150 36 90 28 40 M55 196 C56 140 52 80 56 28 M55 196 C60 150 72 96 82 46" stroke="#5f8a4a" stroke-width="2.2" fill="none"/>`
           + `<path d="M50 150 C34 130 30 112 34 96 C42 116 48 128 52 146Z" fill="#6f9a56"/><path d="M60 150 C76 130 82 116 80 100 C72 118 64 130 58 146Z" fill="#5f8a4a"/>`
           + bloom(28, 30, -14) + bloom(56, 18, 0) + bloom(82, 36, 14)
           + `<path d="M38 140 C34 150 32 166 34 186 Q36 200 55 200 Q74 200 76 186 C78 166 76 150 72 140Z" fill="url(#${g})" stroke="rgba(255,255,255,.5)" stroke-width="1.2"/>`
-          + `<path d="M36 168 C44 172 66 172 76 168 L76 186 Q74 200 55 200 Q36 200 34 186Z" fill="#a9c7c2" opacity=".25"/><ellipse cx="55" cy="140" rx="17" ry="3" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1.2"/>`;
+          + `<path d="M36 168 C44 172 66 172 76 168 L76 186 Q74 200 55 200 Q36 200 34 186Z" fill="#a9c7c2" opacity=".25"/><ellipse cx="55" cy="168" rx="20" ry="2.4" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>`
+          + `<path d="M52 170 L55 196 M57 170 L55 196 M54 170 L55 196" stroke="#4f7a3a" stroke-width="1.6" opacity=".5"/><path d="M40 146 C38 160 37 176 38 190" stroke="#fff" stroke-opacity=".55" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="55" cy="140" rx="17" ry="3" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1.2"/>`;
       },
     },
     instax: {
@@ -904,13 +954,20 @@
       draw: (g) => `<defs><linearGradient id="${g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6cfc6"/><stop offset="1" stop-color="#d9a197"/></linearGradient><radialGradient id="${g}l" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#5a6a8a"/><stop offset=".5" stop-color="#1d2230"/><stop offset="1" stop-color="#0a0c12"/></radialGradient></defs>`
         + `<rect x="8" y="44" width="134" height="154" rx="26" fill="url(#${g})"/><rect x="8" y="44" width="134" height="40" rx="20" fill="#fff" opacity=".18"/>`
         + `<circle cx="78" cy="126" r="46" fill="#f1c2b8" stroke="#c98f86" stroke-width="2"/><circle cx="78" cy="126" r="32" fill="#e6b0a6"/><circle cx="78" cy="126" r="22" fill="url(#${g}l)"/><circle cx="71" cy="118" r="5" fill="#fff" opacity=".45"/>`
-        + `<rect x="18" y="58" width="30" height="22" rx="5" fill="#2a2a32"/><rect x="104" y="56" width="26" height="26" rx="13" fill="#fff6e6" opacity=".85"/><rect x="58" y="54" width="18" height="12" rx="3" fill="#2a2a32"/>`,
+        + `<rect x="18" y="58" width="30" height="22" rx="5" fill="#2a2a32"/><rect x="104" y="56" width="26" height="26" rx="13" fill="#fff6e6" opacity=".85"/><rect x="58" y="54" width="18" height="12" rx="3" fill="#2a2a32"/>`
+        + [40, 36, 28].map((r, k) => `<circle cx="78" cy="126" r="${r}" fill="none" stroke="${k === 2 ? "#3a3a44" : "#fff"}" stroke-width="${k === 2 ? 1.6 : 0.8}" opacity="${k === 2 ? 0.8 : 0.35}"/>`).join("") + `<circle cx="78" cy="126" r="11" fill="#05060a"/><circle cx="78" cy="126" r="14" fill="none" stroke="#5a6a8a" stroke-width=".6" opacity=".6"/><path d="M84 132 a10 10 0 0 0 6 -9" stroke="#8aa0d0" stroke-width="1.2" fill="none" opacity=".5"/>`
+        + [60, 64, 68, 72, 76].map((y) => `<line x1="106" y1="${y}" x2="128" y2="${y}" stroke="#d8cfc0" stroke-width=".6"/>`).join("") + `<rect x="21" y="61" width="10" height="7" rx="2" fill="#6a7a9a" opacity=".55"/>`
+        + `<rect x="30" y="38" width="90" height="6" rx="2" fill="#c98f86"/><rect x="34" y="40" width="82" height="2" fill="#5a3a36" opacity=".6"/><circle cx="128" cy="96" r="6" fill="#e6b0a6" stroke="#c98f86" stroke-width="1"/><circle cx="126.6" cy="94.6" r="1.6" fill="#fff" opacity=".5"/>`
+        + `<rect x="8" y="180" width="134" height="18" rx="10" fill="#000" opacity=".1"/>`,
     },
     heartMirror: {
       label: "Heart mirror", scale: 0.56, vw: 120, still: true,
-      draw: (g) => `<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e9c8c6"/><stop offset="1" stop-color="#b98a8a"/></linearGradient><linearGradient id="${g}m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f3f0"/><stop offset=".45" stop-color="#cfd3d6"/><stop offset=".55" stop-color="#eef0f2"/><stop offset="1" stop-color="#b9bec4"/></linearGradient></defs>`
+      draw: (g) => `<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e9c8c6"/><stop offset="1" stop-color="#b98a8a"/></linearGradient><linearGradient id="${g}m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f3f0"/><stop offset=".45" stop-color="#cfd3d6"/><stop offset=".55" stop-color="#eef0f2"/><stop offset="1" stop-color="#b9bec4"/></linearGradient><linearGradient id="${g}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2e2a" stop-opacity=".55"/><stop offset=".55" stop-color="#6a5248" stop-opacity=".25"/><stop offset=".7" stop-color="#2a201c" stop-opacity=".5"/><stop offset="1" stop-color="#1a1412" stop-opacity=".6"/></linearGradient></defs>`
         + `<path d="M60 178 C20 146 4 116 8 86 C12 58 44 50 60 74 C76 50 108 58 112 86 C116 116 100 146 60 178Z" fill="url(#${g})"/>`
         + `<path d="M60 166 C28 140 16 116 19 90 C22 68 46 64 60 86 C74 64 98 68 101 90 C104 116 92 140 60 166Z" fill="url(#${g}m)"/>`
+        + `<path d="M60 166 C28 140 16 116 19 90 C22 68 46 64 60 86 C74 64 98 68 101 90 C104 116 92 140 60 166Z" fill="url(#${g}r)"/>`
+        + `<path d="M60 162 C31 138 20 116 22.5 91 C25 72 46 68 60 90 C74 68 95 72 97.5 91 C100 116 89 138 60 162Z" fill="none" stroke="#fff" stroke-width="1.2" opacity=".35"/>`
+        + `<path d="M60 178 C20 146 4 116 8 86 C12 58 44 50 60 74 C76 50 108 58 112 86 C116 116 100 146 60 178Z" fill="none" stroke="#7a4a4a" stroke-opacity=".4" stroke-width="2.6" stroke-dasharray=".1 6" stroke-linecap="round" transform="translate(60.6 117) scale(.925) translate(-60 -116)"/><path d="M60 178 C20 146 4 116 8 86 C12 58 44 50 60 74 C76 50 108 58 112 86 C116 116 100 146 60 178Z" fill="none" stroke="#fff4f2" stroke-width="2.2" stroke-dasharray=".1 6" stroke-linecap="round" transform="translate(60 116) scale(.925) translate(-60 -116)"/>`
         + `<path d="M30 86 L48 74 M30 100 L58 80" stroke="#fff" stroke-width="3" opacity=".6" stroke-linecap="round"/>`
         + `<path d="M56 176 L54 190 L66 190 L64 176Z" fill="url(#${g})"/><ellipse cx="60" cy="194" rx="28" ry="6" fill="url(#${g})"/>`,
     },
@@ -934,7 +991,12 @@
         + `<path d="M60 70 L68 40 L102 40 L110 70Z" fill="url(#${g})"/><rect x="74" y="46" width="22" height="12" rx="2" fill="#2a2a30"/>`
         + `<rect x="20" y="56" width="22" height="14" rx="3" fill="url(#${g})"/><rect x="128" y="58" width="20" height="12" rx="3" fill="url(#${g})"/>`
         + `<circle cx="85" cy="132" r="44" fill="url(#${g})"/><circle cx="85" cy="132" r="36" fill="#111"/><circle cx="85" cy="132" r="26" fill="url(#${g}l)"/><circle cx="76" cy="122" r="6" fill="#fff" opacity=".3"/>`
-        + `<text x="30" y="92" font-family="Arial,sans-serif" font-size="9" font-weight="bold" fill="#222" opacity=".7">OLD</text>`,
+        + Array.from({ length: 120 }, (_, k) => `<circle cx="${12 + ((k * 37) % 146)}" cy="${106 + ((k * 23) % 56)}" r=".7" fill="${k % 2 ? "#2e2e33" : "#0c0c0e"}"/>`).join("")
+        + `<circle cx="85" cy="132" r="40" fill="none" stroke="#222" stroke-width=".6"/>` + Array.from({ length: 36 }, (_, k) => { const a = k * Math.PI / 18; return `<line x1="${(85 + Math.cos(a) * 40).toFixed(1)}" y1="${(132 + Math.sin(a) * 40).toFixed(1)}" x2="${(85 + Math.cos(a) * (k % 3 ? 42 : 43.5)).toFixed(1)}" y2="${(132 + Math.sin(a) * (k % 3 ? 42 : 43.5)).toFixed(1)}" stroke="#333" stroke-width=".6"/>`; }).join("")
+        + `<circle cx="85" cy="132" r="30" fill="none" stroke="#3a3a44" stroke-width=".8"/><circle cx="85" cy="132" r="14" fill="#020204"/><path d="M94 140 a12 12 0 0 0 4 -12" stroke="#8a9ad0" stroke-width="1.4" fill="none" opacity=".45"/>`
+        + [[16, 78], [154, 78], [16, 184], [154, 184]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8" fill="#555"/><path d="M${x - 1.2} ${y} h2.4" stroke="#222" stroke-width=".5"/>`).join("")
+        + `<rect x="132" y="50" width="12" height="8" rx="2" fill="url(#${g})"/><circle cx="31" cy="54" r="5" fill="url(#${g})"/>` + Array.from({ length: 8 }, (_, k) => `<line x1="${27 + k}" y1="50" x2="${27 + k}" y2="58" stroke="#444" stroke-width=".4"/>`).join("")
+        + `<rect x="8" y="70" width="154" height="2" rx="1" fill="#fff" opacity=".35"/>`,
     },
     snowGlobe: {
       label: "Snow globe", scale: 0.5, vw: 120, soft: true, glow: "rgba(255,230,180,.4)",
@@ -942,9 +1004,12 @@
         let snow = ""; for (let i = 0; i < 22; i++) { const a = i * 2.4, r = 6 + (i * 13) % 30; snow += `<circle cx="${(60 + Math.cos(a) * r).toFixed(1)}" cy="${(80 + Math.sin(a) * r * 0.9).toFixed(1)}" r="${(0.8 + (i % 3) * 0.5).toFixed(1)}" fill="#fff" opacity=".85"/>`; }
         return `<defs>${metal(g, BRASS)}<radialGradient id="${g}o" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".5" stop-color="#cfe0ea" stop-opacity=".15"/><stop offset="1" stop-color="#8aa0b0" stop-opacity=".35"/></radialGradient></defs><g data-y="90"></g>`
           + `<circle class="litOnly" cx="60" cy="86" r="40" fill="#ffe6b0" opacity=".35"/>`
-          + `<path d="M44 128 L48 96 L52 96 L54 88 L58 70 L62 88 L66 88 L66 128Z" fill="#c9a65e"/><path d="M50 96 L60 76 L70 96Z" fill="#e3c27a"/><rect x="40" y="118" width="40" height="10" fill="#d8b47a"/>`
-          + snow + `<circle cx="60" cy="86" r="46" fill="url(#${g}o)" stroke="rgba(255,255,255,.55)" stroke-width="1.4"/><ellipse cx="44" cy="64" rx="10" ry="16" fill="#fff" opacity=".25" transform="rotate(30 44 64)"/>`
-          + `<path d="M22 132 L98 132 L106 192 L14 192Z" fill="url(#${g})"/><rect x="8" y="190" width="104" height="10" rx="3" fill="url(#${g})"/><path d="M24 150 L96 150" stroke="#5a421c" stroke-width="1" opacity=".5"/>`;
+          + `<path d="M18 116 Q40 104 60 110 Q84 104 102 118 L100 128 L20 128Z" fill="#f4f6fa"/><path d="M18 116 Q40 104 60 110 Q84 104 102 118" stroke="#c8d2de" stroke-width="1" fill="none"/>`
+          + `<rect x="46" y="94" width="28" height="20" fill="#8a5a3a"/><path d="M43 96 L60 80 L77 96Z" fill="#5a3a2a"/><path d="M42 97 L60 79 L78 97" stroke="#fff" stroke-width="2.6" fill="none" stroke-linejoin="round"/>`
+          + `<rect x="51" y="100" width="7" height="6" fill="#3a2a20"/><rect class="litOnly" x="51" y="100" width="7" height="6" fill="#ffc860"/><rect x="62" y="102" width="6" height="12" fill="#4a2a1a"/><rect x="66" y="82" width="4" height="8" fill="#6a4a3a"/>`
+          + [[30, 112, 1], [88, 112, 1.2], [38, 116, 0.7]].map(([x, y, k]) => `<path d="M${x} ${y - 22 * k} L${x + 8 * k} ${y} L${x - 8 * k} ${y}Z" fill="#2f5a3a"/><path d="M${x} ${y - 22 * k} L${x + 4 * k} ${y - 12 * k} L${x - 3 * k} ${y - 13 * k}Z M${x - 6 * k} ${y - 2} L${x + 6 * k} ${y - 2}" stroke="#fff" stroke-width="1.2" fill="#fff" opacity=".85"/>`).join("")
+          + snow + `<circle cx="60" cy="86" r="46" fill="url(#${g}o)" stroke="rgba(255,255,255,.55)" stroke-width="1.4"/><ellipse cx="44" cy="64" rx="10" ry="16" fill="#fff" opacity=".25" transform="rotate(30 44 64)"/><circle cx="60" cy="86" r="44" fill="none" stroke="#3a4a58" stroke-width="3" opacity=".2"/><path d="M92 104 A40 40 0 0 1 70 124" stroke="#fff" stroke-width="2" fill="none" opacity=".35" stroke-linecap="round"/>`
+          + `<path d="M22 132 L98 132 L106 192 L14 192Z" fill="url(#${g})"/><ellipse cx="60" cy="132" rx="38" ry="3" fill="#3a2a10" opacity=".5"/><path d="M19 170 L101 170" stroke="#f3dc9a" stroke-width="1" opacity=".5"/><path d="M18 174 L102 174" stroke="#5a421c" stroke-width="1.2" opacity=".5"/><rect x="8" y="190" width="104" height="10" rx="3" fill="url(#${g})"/><path d="M24 150 L96 150" stroke="#5a421c" stroke-width="1" opacity=".5"/>`;
       },
     },
     apothecary: {
@@ -1010,9 +1075,10 @@
         let roses = "", leaves = ""; const pts = [];
         for (let i = 0; i < 26; i++) { const a = i * 2.39996, r = Math.sqrt(i / 26) * 36; pts.push([55 + Math.cos(a) * r, 64 + Math.sin(a) * r]); }
         pts.forEach(([x, y], i) => (leaves += leaf(x, y + 6, i * 47, 0.9, i % 2 ? "#4f7a3c" : "#3f6a30")));
-        pts.filter((_, i) => i % 2).forEach(([x, y], i) => (roses += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.4" fill="${["#e88a6a", "#f3b48a", "#e8a3a0"][i % 3]}"/><path d="M${(x - 2.5).toFixed(1)} ${y.toFixed(1)} a2.5 2.5 0 1 1 5 0" stroke="#b9584a" stroke-width=".8" fill="none"/>`));
-        return `<defs>${metal(g, CERAMIC)}</defs><circle cx="55" cy="64" r="40" fill="#2f5a28"/>` + leaves + roses
-          + `<rect x="52" y="104" width="6" height="44" fill="#6b4a2a"/>`
+        pts.filter((_, i) => i % 2).forEach(([x, y], i) => (roses += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.4" fill="${["#e88a6a", "#f3b48a", "#e8a3a0"][i % 3]}"/><circle cx="${(x + 1.2).toFixed(1)}" cy="${(y + 1.4).toFixed(1)}" r="4.2" fill="#8a3a2a" opacity=".22"/><path d="M${(x - 4).toFixed(1)} ${(y + 1).toFixed(1)} a4 4 0 0 1 7 -2.6 M${(x - 2.5).toFixed(1)} ${y.toFixed(1)} a2.5 2.5 0 1 1 5 0 a1.6 1.6 0 0 1 -3.2 .4" stroke="#b9584a" stroke-width=".7" fill="none"/><circle cx="${(x - 1.8).toFixed(1)}" cy="${(y - 2).toFixed(1)}" r="1.2" fill="#fff" opacity=".35"/>`));
+        return `<defs>${metal(g, CERAMIC)}<radialGradient id="${g}t" cx=".38" cy=".32" r=".7"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#0a1a06" stop-opacity=".45"/></radialGradient></defs><circle cx="55" cy="64" r="40" fill="#2f5a28"/>` + leaves + roses
+          + `<circle cx="55" cy="64" r="42" fill="url(#${g}t)"/><rect x="52" y="104" width="6" height="44" fill="#6b4a2a"/><rect x="52" y="104" width="2" height="44" fill="#a07a4a" opacity=".6"/><path d="M52 118 l-4 -5 M58 130 l4 -4" stroke="#6b4a2a" stroke-width="1.4"/>`
+          + `<ellipse cx="55" cy="147" rx="24" ry="2.6" fill="#4a6a2a"/>` + Array.from({ length: 10 }, (_, k) => `<circle cx="${34 + k * 4.4}" cy="${146 + (k % 2)}" r="1.4" fill="${k % 2 ? "#5f8a3a" : "#3e5e22"}"/>`).join("")
           + `<path d="M30 148 L80 148 L72 186 L38 186Z" fill="url(#${g})"/><rect x="26" y="144" width="58" height="8" rx="2" fill="url(#${g})"/><path d="M30 200 L80 200 L74 186 L36 186Z" fill="url(#${g})"/>`;
       },
     },
