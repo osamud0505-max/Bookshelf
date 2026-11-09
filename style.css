@@ -185,8 +185,8 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 
 /* ---------- 3D book ---------- */
 .book { --turn: 0; position: relative; width: var(--w); height: var(--h); perspective: 1200px; }
-.book .body { position: absolute; inset: 0; transform-style: preserve-3d; transform: translateY(calc((var(--h) * .5 * (1 - cos(var(--tilt, 0) * 1deg))) - (var(--w) * .5 * sin(var(--turn) * 90deg) + var(--d) * .5 * cos(var(--turn) * 90deg)) * sin(var(--tilt, 0) * 1deg)))
-    rotateX(calc(var(--tilt, 0) * -1deg)) rotateY(calc(var(--turn) * 90deg)); }
+.book .body { position: absolute; inset: 0; transform-style: preserve-3d; transform: translateY(calc((var(--h) * .5 * (1 - cos(var(--te, 0) * 1deg))) - (var(--w) * .5 * sin(var(--turn) * 90deg) + var(--d) * .5 * cos(var(--turn) * 90deg)) * sin(var(--te, 0) * 1deg)))
+    rotateX(calc(var(--te, 0) * -1deg)) rotateY(calc(var(--turn) * 90deg)); }
 /* leaning the book back swings its near bottom edge down over the shelf's front; the translate above lifts it back so it still stands on the floor */
 .face { position: absolute; top: 0; height: var(--h); backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
 .front { left: 0; width: var(--w); border-radius: 1px 3px 3px 1px; transform: translateZ(calc(var(--d) / 2)); background: var(--spine); }
@@ -1473,3 +1473,7 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
 .slot.front::after { background:
     radial-gradient(ellipse 50% 22% at 50% 50%, rgba(0,0,0,.7), rgba(0,0,0,.28) 55%, transparent 100%),
     radial-gradient(ellipse 70% 46% at 66% 58%, rgba(0,0,0,.4), rgba(0,0,0,.14) 60%, transparent 100%); }
+
+/* v181: the lean fades as a book turns its cover to you. Fully turned out, a book's footprint is as deep as it is wide and its far
+   corner climbed above the back of the floor, so it looked like it was sitting behind the shelf. Spine-out keeps the full lean. */
+.book { --te: calc(var(--tilt, 0) * (.3 + .7 * pow(sin(var(--turn) * 90deg), 3))); }
