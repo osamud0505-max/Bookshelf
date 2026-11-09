@@ -151,20 +151,22 @@
         left += m.w * hs + gap; i++;
       }
     } else {
-      // single garments, each on its own hanger, overlapping like a real rail, as many as fit, starting with a
-      // different one on each shelf. They are about 2.1 books long, and the rod is sized to their hooks
-      const s2 = bookH * 2.1 / SINGLE_TALL, n = SINGLES.length;
+      // all of them in osamu's order, hooks evenly spaced as in their layout picture (one hook every 208 stored px).
+      // On a wide shelf they hang at full size with that spacing; on a narrow one they shrink a little (never below
+      // 1.7 books long) and then hang closer together, so every one of them still fits on the rod
+      const n = SINGLES.length, PITCH = 208, span = (n - 1) * PITCH;
+      let s2 = bookH * 2.1 / SINGLE_TALL;
+      for (let t = 0; t < 3; t++) {
+        rs = (SINGLE_GAP * s2) / rod.d; [x0, x1] = ends(rs);
+        s2 = Math.max(bookH * 1.7 / SINGLE_TALL, Math.min(bookH * 2.1 / SINGLE_TALL, (x1 - x0 - 16) / span));
+      }
       rs = (SINGLE_GAP * s2) / rod.d; rodD = rod.d * rs; [x0, x1] = ends(rs);
       rodC = rod.l[2] * rs + 1; rodTop = rodC - rodD / 2;
-      let i = idx * 3, cx = x0, prev = null;
-      while (items.length < 14) {
-        const [f, gw, gh, px, py, t0, t1] = SINGLES[i % n];
-        if (prev) cx += 0.5 * ((prev[1] - prev[3]) + px) * s2;
-        if (cx > x1 - 4) break;
+      const pitch = Math.min(PITCH * s2, (x1 - x0 - 16) / (n - 1));
+      SINGLES.forEach(([f, gw, gh, px, py, t0, t1], i) => {
         const m = { w: gw, h: gh, inner: py, hooks: [[px, t0, t1]], pieces: [[f, 0, 0, gw, gh, px, py]] };
-        items.push({ m, s: s2, x: cx - px * s2, amp: 1.6 });
-        prev = SINGLES[i % n]; i++;
-      }
+        items.push({ m, s: s2, x: x0 + 8 + i * pitch - px * s2, amp: 1.6 });
+      });
     }
     // centre what fits between the brackets
     if (items.length) {
