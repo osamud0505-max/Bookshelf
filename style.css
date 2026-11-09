@@ -1459,3 +1459,17 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
     repeating-linear-gradient(180deg, #efe4cc 0 1px, #d9caa8 1px 2px);
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
 .top::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.2), rgba(255,255,255,.1) 40%, rgba(0,0,0,.1)); }
+
+/* v180: realistic book shadows on the deeper floor. Two layers: a tight dark contact line right under the book's footprint, and a
+   long soft shadow that falls on the floor to the right (light from the upper left), sized by the floor depth. Both sit in the
+   floor plane, so they run back and forward across it rather than hugging the bottom edge. */
+.slot::after {
+  left: -2%; right: -2%; bottom: calc(var(--top-d) * -.5); height: calc(var(--top-d) * .95); border-radius: 0;
+  background:
+    radial-gradient(ellipse 50% 22% at 50% 50%, rgba(0,0,0,.62), rgba(0,0,0,.25) 55%, transparent 100%),
+    radial-gradient(ellipse 62% 42% at 62% 56%, rgba(0,0,0,.34), rgba(0,0,0,.12) 60%, transparent 100%);
+  filter: blur(1.4px);
+}
+.slot.front::after { background:
+    radial-gradient(ellipse 50% 22% at 50% 50%, rgba(0,0,0,.7), rgba(0,0,0,.28) 55%, transparent 100%),
+    radial-gradient(ellipse 70% 46% at 66% 58%, rgba(0,0,0,.4), rgba(0,0,0,.14) 60%, transparent 100%); }
