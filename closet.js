@@ -113,7 +113,12 @@
   // with nothing hidden behind it. [file, width, height, pivot x, pivot y (inside the top of the hook), hook tip
   // from, to] in the stored picture's pixels
   const SINGLES = [["single-1",338,1016,158.6,21.0,168.0,178.1],["single-2",262,1038,95.2,21.0,106.1,118.5],["single-3",170,249,93.0,21.0,104.6,117.0],["single-4",196,751,90.9,21.0,101.2,113.2],["single-5",196,758,103.1,22.5,107.2,117.8],["single-6",251,1037,133.5,21.8,117.0,128.2],["single-7",211,1040,100.4,21.0,78.0,89.6],["single-8",203,946,85.7,21.0,66.4,76.9]];
-  const SINGLE_GAP = 19.7, SINGLE_TALL = 1040;
+  // v158: a second picture (the school uniforms), so the clothes shelves take turns. Each picture keeps its own hook
+  // size (gap), tallest piece and hook spacing (pitch), all in stored pixels
+  const SINGLES_B = [["single-b1",276,880,143.2,18.0,150.0,159.8],["single-b2",231,634,117.9,17.2,124.5,133.9],["single-b3",229,856,89.8,18.8,96.4,106.5],["single-b4",260,798,121.6,18.8,128.6,138.8],["single-b5",275,893,143.7,17.5,149.4,160.3],["single-b6",316,1005,137.4,17.5,120.9,131.9],["single-b7",305,1063,134.8,18.1,118.3,129.3],["single-b8",226,823,125.2,18.0,109.5,119.2]];
+  const RAILS = [{ list: SINGLES, gap: 19.7, tall: 1040, pitch: 208 }, { list: SINGLES_B, gap: 13.1, tall: 1063, pitch: 247 }];
+  // which picture each clothes shelf hangs (the second shelf is heels)
+  const RAIL_OF = [0, 0, 1, 0, 1];
   // a pair of heels still swings as one, from between its two hooks
   RAIL.heels.forEach((m, j) => { m.pieces = [[`heels-${j + 1}`, 0, 0, m.w, m.h, (m.hooks[0][0] + m.hooks[1][0]) / 2, m.inner]]; });
   const pic = (n) => `obj/closet-${n}-cosy.webp`;
@@ -154,7 +159,8 @@
       // all of them in osamu's order, hooks evenly spaced as in their layout picture (one hook every 208 stored px).
       // On a wide shelf they hang at full size with that spacing; on a narrow one they shrink a little (never below
       // 1.7 books long) and then hang closer together, so every one of them still fits on the rod
-      const n = SINGLES.length, PITCH = 208, span = (n - 1) * PITCH;
+      const R = RAILS[RAIL_OF[idx % RAIL_OF.length]], LIST = R.list, SINGLE_GAP = R.gap, SINGLE_TALL = R.tall;
+      const n = LIST.length, PITCH = R.pitch, span = (n - 1) * PITCH;
       let s2 = bookH * 2.1 / SINGLE_TALL;
       for (let t = 0; t < 3; t++) {
         rs = (SINGLE_GAP * s2) / rod.d; [x0, x1] = ends(rs);
@@ -163,7 +169,7 @@
       rs = (SINGLE_GAP * s2) / rod.d; rodD = rod.d * rs; [x0, x1] = ends(rs);
       rodC = rod.l[2] * rs + 1; rodTop = rodC - rodD / 2;
       const pitch = Math.min(PITCH * s2, (x1 - x0 - 16) / (n - 1));
-      SINGLES.forEach(([f, gw, gh, px, py, t0, t1], i) => {
+      LIST.forEach(([f, gw, gh, px, py, t0, t1], i) => {
         const m = { w: gw, h: gh, inner: py, hooks: [[px, t0, t1]], pieces: [[f, 0, 0, gw, gh, px, py]] };
         items.push({ m, s: s2, x: x0 + 8 + i * pitch - px * s2, amp: 1.6 });
       });
