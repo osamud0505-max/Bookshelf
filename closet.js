@@ -133,8 +133,9 @@
     const rodC = rod.l[2] * rs + 1, rodTop = rodC - rodD / 2;
     const items = [];
     if (plan[0] === "heels") {
-      // pairs of heels, each shoe about three quarters of a book long, starting with a different pair on each heels shelf
-      const hs = bookH * 0.75 / 320;
+      // pairs of heels, each shoe about a quarter as long as the long dresses (as in real life), starting with a
+      // different pair on each heels shelf
+      const hs = (1150 * sc * 0.27) / 320;
       const n = RAIL.heels.length; let i = idx * 3, left = x0 - RAIL.heels[i % n].hooks[0][0] * hs;
       const gap = 10 * hs;
       while (items.length < n) {
