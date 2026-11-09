@@ -80,6 +80,8 @@
       // turning away from the light, and a dark lower arris
       ? ["linear-gradient(180deg, rgba(255,255,255,.2) 0, rgba(255,255,255,.12) 2.5px, rgba(0,0,0,.14) 3px, rgba(255,255,255,.34) 3.6px, rgba(255,255,255,.12) 4.6px, rgba(255,255,255,0) 7px, rgba(0,0,0,0) 45%, rgba(0,0,0,.3) 88%, rgba(0,0,0,.55) 100%)", ...(mat.sheen ? ["linear-gradient(90deg, rgba(255,255,255,0) 8%, rgba(255,245,230,.08) 30%, rgba(255,255,255,0) 46%, rgba(255,245,230,.05) 72%, rgba(255,255,255,0) 90%)"] : []), ...mat.tex(), mat.base].join(",")
       : "linear-gradient(180deg, var(--shelf-top) 0, var(--shelf-top) 3px, var(--shelf-color) 3px, var(--shelf-color) 11px, var(--shelf-edge) 100%)");
+    // the shelf's top surface, seen a little from above: things stand on it, a bit back from the front edge
+    set("--plank-top", mat.base ? [...mat.tex(), mat.base].join(",") : "var(--shelf-color)");
     document.documentElement.dataset.mat = s.shelfMat || "paint";
     // backdrop: if it fights the colour scheme (a dark wall behind light text…), veil it so words stay readable
     const bd = D.BACKDROPS[s.backdrop] || D.BACKDROPS.none;

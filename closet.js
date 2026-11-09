@@ -101,61 +101,96 @@
   // ------------------------------------------------------------------ the closet rod under each shelf
   D.LIGHT_STYLES.closetRod = "Closet rod";
   const SATIN = ["#e8358f", "#17a39b", "#8b3fd0", "#f0506a", "#e0ae48", "#c79be8", "#f3e3ee", "#f7a6c9", "#1f9a68", "#3b6fd6"];
-  // each piece of clothing hangs from a hook at (32, 17) on its hanger; drawn facing you, then turned a little to the side.
-  // len is how far down it reaches; the whole hanger is drawn at clothing size against the books (a dress is about
-  // one and three-quarter books long)
-  const sleeveBand = (c, flip) => `<path d="M${flip ? 62 : 2} 44 Q${flip ? 57 : 7} 47 ${flip ? 52 : 12} 46 L${flip ? 51.4 : 12.6} 48.6 Q${flip ? 57 : 7} 49.6 ${flip ? 62.4 : 1.6} 46.6Z" fill="${mix(c, "#fff", 0.3)}"/>`;
+  // ---- hangers and the clothes on them, drawn in the hanger's own picture (64 x 140): the hook's top, where it rests
+  // on the rod, is at (32, 3); its neck is at (32, 17.5) and its arms slope down to the tips at x 3 and 61. Clothes
+  // follow the arms exactly, so the hanger sits inside them. The whole hanger is turned a little to the side.
+  const HOOK_D = "M32 18 C32 14.6 28.4 12.6 28.4 8.6 C28.4 4.8 30.4 3 32.6 3 C35.2 3 37.2 4.9 37 7.6 C36.9 9.4 35.8 10.4 34.6 10.2";
+  const HOOK = `<path d="${HOOK_D}" stroke="#4a4e58" stroke-width="1.25" fill="none" stroke-linecap="round" transform="translate(.3 .35)"/><path d="${HOOK_D}" stroke="url(#cxChrH)" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M29.3 9 C29 6 30.6 3.9 32.4 3.7" stroke="#fff" stroke-width=".35" fill="none" stroke-linecap="round"/>`
+    + `<rect x="30.5" y="16.6" width="3" height="3.4" rx=".8" fill="url(#cxChr)"/>`;
+  const ARM_TOP = "M32 17.5 C26 20 12 27 4.2 31.4 Q1.4 33 2.3 34.6 Q3 35.7 5 35.7 H59 Q61 35.7 61.7 34.6 Q62.6 33 59.8 31.4 C52 27 38 20 32 17.5Z";
+  const ARM_HOLE = "M32 22.2 C27 24.6 16.5 29.8 10.4 32.8 H53.6 C47.5 29.8 37 24.6 32 22.2Z";
+  const ACRYLIC = `<path d="${ARM_TOP} ${ARM_HOLE}" fill-rule="evenodd" fill="rgba(255,240,250,.2)" stroke="rgba(255,240,250,.85)" stroke-width=".55"/>`
+    + `<path d="M31 18.6 C25 21.4 13 27.6 5.4 31.8" stroke="#fff" stroke-width=".5" fill="none" opacity=".85"/><path d="M5 34.6 H59" stroke="#fff" stroke-width=".4" opacity=".6"/>`
+    + `<path d="M10.4 32.8 H53.6" stroke="rgba(60,0,40,.35)" stroke-width=".5"/>`
+    // the little notches in the arms that hold straps
+    + `<path d="M15.6 25.2 q1.2 1.5 2.4 0 M46 25.2 q1.2 1.5 2.4 0" stroke="rgba(255,255,255,.9)" stroke-width=".45" fill="none"/>`;
+  // a hanger with a bar and two clips, for skirts
+  const CLIP_BAR = `<rect x="7" y="18.6" width="50" height="3.6" rx="1.8" fill="rgba(255,240,250,.22)" stroke="rgba(255,240,250,.85)" stroke-width=".55"/><path d="M8 19.6 H56" stroke="#fff" stroke-width=".4" opacity=".8"/>`;
+  const clipBack = (x) => `<rect x="${x - 2.6}" y="21.6" width="5.2" height="4" rx=".8" fill="url(#cxChr)"/>`;
+  const clipFront = (x) => `<path d="M${x - 2.8} 25 H${x + 2.8} L${x + 2.4} 32.4 Q${x} 33.4 ${x - 2.4} 32.4Z" fill="url(#cxChr)"/><path d="M${x - 2.8} 25 H${x + 2.8}" stroke="#3a3d45" stroke-width=".4"/><path d="M${x - 1.6} 26.6 V31.6" stroke="#fff" stroke-width=".45" opacity=".8"/><path d="M${x - 2.4} 32.4 Q${x} 33.4 ${x + 2.4} 32.4" stroke="#3a3d45" stroke-width=".4" fill="none"/>`;
+  // soft folds: narrow at the top, widening as the cloth falls; filled with a gradient so they have no hard edges
+  const fold = (x0, y0, x1, y1, w0, w1, fill) => `<path d="M${f1(x0 - w0 / 2)} ${y0} Q${f1((x0 + x1) / 2 - (w0 + w1) / 4)} ${f1((y0 + y1) / 2)} ${f1(x1 - w1 / 2)} ${y1} L${f1(x1 + w1 / 2)} ${y1} Q${f1((x0 + x1) / 2 + (w0 + w1) / 4)} ${f1((y0 + y1) / 2)} ${f1(x0 + w0 / 2)} ${y0}Z" fill="${fill}"/>`;
+  const hemY = (t, a, b) => (1 - t) * (1 - t) * a + 2 * t * (1 - t) * b + t * t * a;
   const CLOTHES = {
     top: {
-      len: 92, d: "M24 22 Q32 28 40 22 L52 26 Q58 28 60 34 L62 44 Q57 47 52 46 L50 42 L50 88 Q32 92 14 88 L14 42 L12 46 Q7 47 2 44 L4 34 Q6 28 12 26 Z", inner: "M24 22 Q32 21 40 22 Q32 30 24 22Z",
-      folds: "M22 48 Q20 70 22 88 M42 48 Q45 70 43 88 M32 34 Q31 60 33 90 M27 50 Q26 70 27 89",
-      extra: (c) => `<path d="M8 31 q2 4 0 9 M12 29 q2 5 0 11 M52 29 q-2 5 0 11 M56 31 q-2 4 0 9" stroke="${mix(c, "#000", 0.35)}" stroke-width=".6" fill="none" opacity=".6"/>`
-        + sleeveBand(c, 0) + sleeveBand(c, 1) + `<path d="M14 42 Q32 45 50 42" stroke="${mix(c, "#000", 0.25)}" stroke-width=".7" fill="none" opacity=".6"/>`
-        + `<path d="M15 85 Q32 89 49 85" stroke="${mix(c, "#fff", 0.5)}" stroke-width=".5" stroke-dasharray="1.2 1" fill="none"/>`
-        + `<path d="M32 27 l-4 -2.4 v4.8Z M32 27 l4 -2.4 v4.8Z" fill="${mix(c, "#fff", 0.5)}"/><circle cx="32" cy="27" r="1" fill="${mix(c, "#fff", 0.65)}"/><path d="M31.4 27.6 l-1.6 5 M32.6 27.6 l1.6 5" stroke="${mix(c, "#fff", 0.5)}" stroke-width=".8"/>`,
+      len: 92,
+      d: "M25 21.2 Q32 27 39 21.2 C44 23.2 52 27.2 58.5 30.6 Q62 32 62.6 36 L63.5 45 Q58.5 47.6 53.2 46.6 L51.2 41.5 L50.8 88 Q32 92 13.2 88 L12.8 41.5 L10.8 46.6 Q5.5 47.6 0.5 45 L1.4 36 Q2 32 5.5 30.6 C12 27.2 20 23.2 25 21.2Z",
+      inner: "M25 21.2 Q32 19.6 39 21.2 Q32 27 25 21.2Z",
+      folds: (L, D) => fold(18, 44, 17, 89, 2, 6, L) + fold(24, 30, 25, 90, 2, 7, D) + fold(36, 30, 39, 90, 2, 6, L) + fold(45, 44, 47, 89, 2, 5, D) + fold(6, 36, 6, 46, 2, 4, L) + fold(57, 36, 58, 46, 2, 4, D),
+      extra: (c) => {
+        const band = (x0, x1, y) => `<path d="M${x0} ${y} Q${(x0 + x1) / 2} ${y + 2.4} ${x1} ${y - 1} L${x1 + 0.2} ${y + 1.6} Q${(x0 + x1) / 2} ${y + 5} ${x0 - 0.2} ${y + 2.6}Z" fill="${mix(c, "#fff", 0.32)}"/>`;
+        return band(0.5, 10.8, 45) + band(53.2, 63.5, 45.4)
+          + `<path d="M13 41.6 Q32 44.4 51 41.6" stroke="${mix(c, "#000", 0.3)}" stroke-width=".45" fill="none" opacity=".55"/>`
+          + `<path d="M14 85.6 Q32 89.6 50 85.6" stroke="${mix(c, "#fff", 0.55)}" stroke-width=".4" stroke-dasharray="1.1 .9" fill="none"/>`
+          + `<path d="M32 26.4 C30 24 27.2 24.4 28 26.8 C28.6 28.4 31 27.6 32 26.4Z M32 26.4 C34 24 36.8 24.4 36 26.8 C35.4 28.4 33 27.6 32 26.4Z" fill="${mix(c, "#fff", 0.5)}"/><path d="M31.4 27 Q30.4 30 29.6 32 M32.6 27 Q33.6 30 34.4 32" stroke="${mix(c, "#fff", 0.45)}" stroke-width=".8" stroke-linecap="round" fill="none"/><circle cx="32" cy="26.6" r=".9" fill="${mix(c, "#fff", 0.7)}"/>`;
+      },
     },
     shirt: {
-      len: 102, d: "M24 22 Q32 28 40 22 L52 25 Q57 27 58 33 L61 92 Q58 95 54 93 L51 46 L50 98 Q32 102 14 98 L13 46 L10 93 Q6 95 3 92 L6 33 Q7 27 12 25 Z", inner: "M24 22 Q32 21 40 22 Q32 30 24 22Z",
-      folds: "M20 50 Q18 76 21 98 M44 50 Q47 76 43 98 M56 40 Q58 66 57 92 M8 40 Q6 66 7 92 M38 60 Q39 80 38 99",
-      extra: (c) => `<path d="M14 34 Q32 38 50 34" stroke="${mix(c, "#000", 0.25)}" stroke-width=".6" fill="none" opacity=".6"/>`
-        + `<path d="M24 22 L27.5 34 L32 27 L36.5 34 L40 22 Q32 27 24 22Z" fill="${mix(c, "#fff", 0.28)}"/><path d="M27.5 34 L32 27 L36.5 34" stroke="${mix(c, "#000", 0.3)}" stroke-width=".5" fill="none"/>`
-        + `<path d="M30.4 28 V100 M35.6 28 V100" stroke="${mix(c, "#000", 0.22)}" stroke-width=".5"/>${[38, 50, 62, 74, 86].map((y) => `<circle cx="33" cy="${y}" r="1.15" fill="#fff8ee"/><circle cx="33.3" cy="${y + 0.3}" r=".4" fill="#c9b8a8"/>`).join("")}`
-        + `<path d="M39 44 h8 v8 q-4 2 -8 0Z" fill="none" stroke="${mix(c, "#000", 0.25)}" stroke-width=".55"/>`
-        + `<path d="M3 92 L10.2 93 L10.7 86.4 L3.5 85.4Z M61 92 L53.8 93 L53.3 86.4 L60.5 85.4Z" fill="${mix(c, "#fff", 0.22)}"/><path d="M3.5 85.4 L10.7 86.4 M60.5 85.4 L53.3 86.4" stroke="${mix(c, "#000", 0.3)}" stroke-width=".5"/>`,
+      len: 102,
+      d: "M25 21.2 Q32 27 39 21.2 C44 23.2 52 27.2 58.5 30.6 Q61.8 32.2 62 37 L62.4 92 Q58.6 94.6 54.6 93 L52 46 L51 98 Q32 102 13 98 L12 46 L9.4 93 Q5.4 94.6 1.6 92 L2 37 Q2.2 32.2 5.5 30.6 C12 27.2 20 23.2 25 21.2Z",
+      inner: "M25 21.2 Q32 19.6 39 21.2 Q32 27 25 21.2Z",
+      folds: (L, D) => fold(19, 40, 18, 98, 2, 7, L) + fold(26, 46, 25, 99, 2, 5, D) + fold(44, 46, 46, 98, 2, 7, D) + fold(57, 40, 58, 92, 1.6, 3, D) + fold(6, 40, 5.6, 92, 1.6, 3, L),
+      extra: (c) => `<path d="M25 21.2 Q32 24.6 39 21.2 L38.4 23.6 Q32 26.6 25.6 23.6Z" fill="${mix(c, "#000", 0.08)}"/>`
+        + `<path d="M25 21.2 L27.4 33.4 L32 27.2 L36.6 33.4 L39 21.2 Q32 25.6 25 21.2Z" fill="${mix(c, "#fff", 0.3)}"/><path d="M27.4 33.4 L32 27.2 L36.6 33.4" stroke="${mix(c, "#000", 0.35)}" stroke-width=".4" fill="none"/>`
+        + `<path d="M30.2 28.4 V100.5 M33.8 28.4 V100.5" stroke="${mix(c, "#000", 0.22)}" stroke-width=".35"/>${[38, 50, 62, 74, 86].map((y) => `<circle cx="32" cy="${y}" r="1.05" fill="#fff8ee"/><circle cx="32.25" cy="${y + 0.25}" r=".38" fill="#c9b8a8"/>`).join("")}`
+        + `<path d="M39 46 h8 v7.6 q-4 1.8 -8 0Z" fill="${mix(c, "#000", 0.06)}" stroke="${mix(c, "#000", 0.28)}" stroke-width=".4"/><path d="M39 47.4 h8" stroke="${mix(c, "#fff", 0.4)}" stroke-width=".35"/>`
+        + `<path d="M1.7 85 L9.7 86 L9.4 93 Q5.4 94.6 1.6 92Z M62.3 85 L54.3 86 L54.6 93 Q58.6 94.6 62.4 92Z" fill="${mix(c, "#fff", 0.2)}"/><path d="M1.7 85 L9.7 86 M62.3 85 L54.3 86" stroke="${mix(c, "#000", 0.3)}" stroke-width=".4"/>`,
     },
     dress: {
-      len: 128, strap: true, d: "M17 32 Q32 37 47 32 Q47 44 46 50 Q45 54 44 57 L58 122 Q32 130 6 122 L20 57 Q19 54 18 50 Q17 44 17 32Z", inner: "",
-      folds: "M26 62 Q22 92 18 122 M32 63 Q32 96 32 126 M38 62 Q42 92 46 122 M23 62 Q15 90 10 120 M41 62 Q49 90 54 120 M29 63 Q27 95 25 125 M35 63 Q37 95 39 125",
+      len: 128, strap: true,
+      d: "M15 42 Q19 38.5 24.5 40 Q29 41 32 44 Q35 41 39.5 40 Q45 38.5 49 42 Q49.6 50 48 56 L46.5 60 L60 124 Q32 131 4 124 L17.5 60 L16 56 Q14.4 50 15 42Z",
+      inner: "",
+      folds: (L, D) => fold(21, 61, 9, 124, 2, 9, L) + fold(26, 61, 20, 127, 2, 8, D) + fold(31, 61, 31, 128, 2, 9, L) + fold(37, 61, 43, 127, 2, 8, D) + fold(43, 61, 54, 124, 2, 8, L) + fold(23.5, 44, 22.5, 56, 3, 2, L) + fold(40.5, 44, 41.5, 56, 3, 2, D),
       extra: (c) => {
-        let lace = ""; for (let i = 0; i <= 20; i++) { const t = i / 20, x = 6 + t * 52, y = 122 + Math.sin(t * Math.PI) * 5.6; lace += `<circle cx="${f1(x)}" cy="${f1(y + 0.8)}" r="1.5" fill="#fff6fa" opacity=".85"/>`; }
-        return `<path d="M17 32 Q32 37 47 32" stroke="${mix(c, "#fff", 0.45)}" stroke-width="1.2" fill="none"/><path d="M24 35 Q23 46 25 56 M40 35 Q41 46 39 56" stroke="${mix(c, "#000", 0.3)}" stroke-width=".6" fill="none" opacity=".7"/>`
-          + lace + `<path d="M19 55 Q32 58 45 55 L44.6 60.5 Q32 63.5 19.4 60.5Z" fill="${mix(c, "#fff", 0.45)}"/><path d="M19.2 57.5 Q32 60.5 44.8 57.5" stroke="#fff" stroke-width=".5" opacity=".6" fill="none"/>`
-          + `<path d="M38 58 q-6 -6 -8 -1 q2 4 8 1Z M38 58 q6 -6 8 -1 q-2 4 -8 1Z" fill="${mix(c, "#fff", 0.55)}"/><path d="M37.4 59 l-3 12 l2 -1 l1 2Z M38.6 59 l2.6 11 l-2 -.6 l-.6 2Z" fill="${mix(c, "#fff", 0.45)}"/><circle cx="38" cy="58.2" r="1.3" fill="${mix(c, "#fff", 0.7)}"/>`;
+        // a scalloped lace edge along the hem
+        let lace = "", top = "";
+        for (let i = 0; i < 16; i++) {
+          const t0 = i / 16, t1 = (i + 1) / 16, tm = (t0 + t1) / 2;
+          const p0 = [4 + 56 * t0, hemY(t0, 124, 131)], p1 = [4 + 56 * t1, hemY(t1, 124, 131)], pm = [4 + 56 * tm, hemY(tm, 124, 131)];
+          if (!i) lace += `M${f1(p0[0])} ${f1(p0[1] - 2.4)} L${f1(p0[0])} ${f1(p0[1])}`;
+          lace += ` Q${f1(pm[0])} ${f1(pm[1] + 4)} ${f1(p1[0])} ${f1(p1[1])}`;
+          top += `<circle cx="${f1(pm[0])}" cy="${f1(pm[1] + 0.6)}" r=".55" fill="${mix(c, "#000", 0.15)}" opacity=".5"/>`;
+        }
+        lace += ` L60 121.6 Q32 128.6 4 121.6Z`;
+        const sash = "M16.6 56 Q32 59.4 47.4 56 L46.9 61 Q32 64.4 17.1 61Z";
+        return `<path d="${lace}" fill="#fff4f8" opacity=".92"/><path d="M4 121.6 Q32 128.6 60 121.6" stroke="${mix(c, "#000", 0.2)}" stroke-width=".35" fill="none" opacity=".5"/>${top}`
+          + `<path d="M15 42 Q19 38.5 24.5 40 Q29 41 32 44 Q35 41 39.5 40 Q45 38.5 49 42" stroke="${mix(c, "#fff", 0.45)}" stroke-width=".9" fill="none"/>`
+          + `<path d="${sash}" fill="${mix(c, "#fff", 0.42)}"/><path d="M17 57.6 Q32 61 47 57.6" stroke="#fff" stroke-width=".5" fill="none" opacity=".55"/><path d="M17.1 61 Q32 64.4 46.9 61" stroke="${mix(c, "#000", 0.25)}" stroke-width=".4" fill="none"/>`
+          + `<path d="M38 59.4 C34.6 54.6 30.6 56 31.8 59.2 C32.6 61.2 36 60.8 38 59.4Z" fill="${mix(c, "#fff", 0.55)}"/><path d="M38 59.4 C41.4 54.6 45.4 56 44.2 59.2 C43.4 61.2 40 60.8 38 59.4Z" fill="${mix(c, "#fff", 0.48)}"/>`
+          + `<path d="M37.4 60.4 L35.2 72 L36.8 71 L37.6 72.8Z M38.6 60.4 L40.6 71.4 L39 70.6 L38.4 72.4Z" fill="${mix(c, "#fff", 0.42)}"/><ellipse cx="38" cy="59.6" rx="1.4" ry="1.6" fill="${mix(c, "#fff", 0.66)}"/>`;
       },
     },
     skirt: {
-      len: 100, clip: true, d: "M14 30 L50 30 L58 96 Q32 102 6 96 Z", inner: "",
-      folds: "M20 36 L14 97 M26 36 L23 99 M32 36 L32 100 M38 36 L41 99 M44 36 L50 97",
-      extra: (c) => {
-        let pl = ""; for (let i = 0; i < 6; i++) { const a = 14 + i * 6, b = 6 + i * 8.67; if (i % 2) pl += `<path d="M${a} 36 L${a + 6} 36 L${f1(b + 8.67)} ${f1(97 + Math.sin((i + 1) / 6 * Math.PI) * 4)} L${f1(b)} ${f1(97 + Math.sin(i / 6 * Math.PI) * 4)}Z" fill="#2a0418" opacity=".1"/>`; }
-        return pl + `<rect x="14" y="30" width="36" height="6.5" fill="${mix(c, "#000", 0.2)}"/><path d="M14 31.2 H50" stroke="#fff" stroke-width=".5" opacity=".45"/><circle cx="46" cy="33.2" r="1.3" fill="#f2cf7a"/>`
-          + `<path d="M7 93 Q32 99 57 93" stroke="${mix(c, "#fff", 0.45)}" stroke-width=".5" stroke-dasharray="1.2 1" fill="none"/>`;
-      },
+      len: 100, clip: true,
+      d: "M15 28.6 Q32 30.2 49 28.6 L49.4 34.6 L58 96 Q32 102 6 96 L14.6 34.6Z",
+      inner: "",
+      folds: (L, D) => [0, 1, 2, 3, 4, 5, 6].map((i) => fold(16 + i * 5.3, 35, 8 + i * 8, hemY(i / 6, 96, 102) - 1, 1.6, 5, i % 2 ? D : L)).join(""),
+      extra: (c) => `<path d="M15 28.6 Q32 30.2 49 28.6 L49.4 34.6 Q32 36.2 14.6 34.6Z" fill="${mix(c, "#000", 0.16)}"/><path d="M15.2 30 Q32 31.6 48.8 30" stroke="#fff" stroke-width=".4" opacity=".45" fill="none"/>`
+        + `<circle cx="44" cy="32" r="1.1" fill="#f2cf7a"/><circle cx="43.7" cy="31.7" r=".35" fill="#fff"/>`
+        // the waistband puckers a little where each clip bites
+        + `<path d="M15.2 30.8 l1.8 1.6 M18.8 30.8 l-1.8 1.6 M45.2 30.8 l1.8 1.6 M48.8 30.8 l-1.8 1.6" stroke="${mix(c, "#000", 0.35)}" stroke-width=".4" opacity=".6"/>`
+        + `<path d="M7 93 Q32 99 57 93" stroke="${mix(c, "#fff", 0.45)}" stroke-width=".4" stroke-dasharray="1.1 .9" fill="none"/>`,
     },
   };
-  const HOOK = `<path d="M32 17 V10.5 C32 4.5 39.5 3.5 40 8.5 C40.3 11 38.5 12 37 11.6" stroke="#5a5e68" stroke-width="1.15" fill="none" stroke-linecap="round" transform="translate(.35 .35)"/><path d="M32 17 V10.5 C32 4.5 39.5 3.5 40 8.5 C40.3 11 38.5 12 37 11.6" stroke="#eef1f6" stroke-width=".95" fill="none" stroke-linecap="round"/><path d="M31.7 15 V10.8 C31.8 6.5 35 5 37.4 5.6" stroke="#fff" stroke-width=".35" fill="none"/><rect x="30.4" y="15.6" width="3.2" height="3" rx=".8" fill="url(#cxChr)"/>`;
-  const ACRYLIC = `<path d="M32 17 L5 31 Q2 33.5 5.5 34.5 L58.5 34.5 Q62 33.5 59 31 Z" fill="rgba(255,255,255,.16)" stroke="rgba(255,236,248,.8)" stroke-width=".8"/><path d="M32 21.5 L12 31.6 H52 Z" fill="rgba(80,10,50,.22)" stroke="rgba(255,255,255,.45)" stroke-width=".5"/><path d="M8 32.6 H56 M30 19.4 L9 30.2" stroke="#fff" stroke-width=".45" opacity=".75"/><path d="M14 27.6 l1.6 1.4 M50 27.6 l-1.6 1.4" stroke="rgba(255,255,255,.7)" stroke-width=".6"/>`;
-  const CLIPS = `<rect x="10" y="20" width="44" height="4" rx="2" fill="rgba(255,255,255,.2)" stroke="rgba(255,236,248,.8)" stroke-width=".7"/><path d="M11 21 H53" stroke="#fff" stroke-width=".4" opacity=".7"/><path d="M32 17 V20" stroke="#eef1f6" stroke-width=".95"/>`
-    + `<rect x="13" y="23" width="5" height="9" rx="1" fill="url(#cxChr)"/><rect x="46" y="23" width="5" height="9" rx="1" fill="url(#cxChr)"/><path d="M13.6 26 h3.8 M46.6 26 h3.8" stroke="#3a3d45" stroke-width=".4"/>`;
   let rodN = 0;
   function closetRodEl(w, cfg) {
     const bookH = w < 560 ? 196 : 246, k = bookH * 1.75 / 128;
     const id = "cx" + rodN++, R = rng((Math.round(w) * 7 + [...String(cfg.seed || "")].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 233280, 3)) % 233280);
-    const rodR = f1(1.25 * k), rodY = rodR + 7;
+    const rodR = f1(1.7 * k), rodY = rodR + 7;
     const items = []; let x = 14 * k, last = -1;
     while (x < w - 10 * k) {
       if (R() < 0.2) {
-        // a few empty hangers pushed together
+        // a couple of empty hangers pushed together
         for (let n = 1 + Math.floor(R() * 2); n > 0 && x < w - 10 * k; n--) { items.push({ x, kind: "empty" }); x += (4.5 + R() * 3) * k; }
         x += 9 * k;
       } else {
@@ -166,50 +201,57 @@
       }
       if (R() < 0.08) x += 18 * k;
     }
-    let defs = grad(`${id}v`, [[0, "#000", 0], [0.55, "#000", 0.05], [1, "#2a0418", 0.34]], 0, 1)
+    let defs = grad(`${id}v`, [[0, "#000", 0], [0.5, "#000", 0.03], [1, "#2a0418", 0.3]], 0, 1)
       // the side turned away from you is darker
-      + grad(`${id}t`, [[0, "#fff", 0.1], [0.5, "#fff", 0], [0.75, "#2a0418", 0.12], [1, "#2a0418", 0.42]])
-      + `<pattern id="${id}d" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="2.5" cy="2.5" r="1.6" fill="#fff" opacity=".85"/><circle cx="7" cy="7" r="1.6" fill="#fff" opacity=".85"/></pattern>`
-      + grad("cxChr", CHROME, 0, 1);
+      + grad(`${id}t`, [[0, "#fff", 0.12], [0.35, "#fff", 0], [0.7, "#2a0418", 0.1], [1, "#2a0418", 0.4]])
+      + grad(`${id}fl`, [[0, "#fff", 0], [0.5, "#fff", 0.26], [1, "#fff", 0]]) + grad(`${id}fd`, [[0, "#2a0418", 0], [0.5, "#2a0418", 0.2], [1, "#2a0418", 0]])
+      + `<pattern id="${id}d" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="2.5" cy="2.5" r="1.5" fill="#fff" opacity=".85"/><circle cx="7" cy="7" r="1.5" fill="#fff" opacity=".85"/></pattern>`
+      + grad("cxChr", CHROME, 0, 1) + grad("cxChrH", CHROME);
     SATIN.forEach((c, i) => {
-      defs += grad(`${id}s${i}`, [[0, mix(c, "#fff", 0.28)], [0.16, mix(c, "#fff", 0.42)], [0.3, c], [0.44, mix(c, "#000", 0.12)], [0.58, mix(c, "#fff", 0.2)], [0.74, c], [1, mix(c, "#000", 0.45)]]);
+      defs += grad(`${id}s${i}`, [[0, mix(c, "#fff", 0.22)], [0.18, mix(c, "#fff", 0.36)], [0.34, c], [0.5, mix(c, "#000", 0.08)], [0.66, mix(c, "#fff", 0.14)], [0.82, c], [1, mix(c, "#000", 0.38)]]);
     });
+    const L = `url(#${id}fl)`, Dk = `url(#${id}fd)`;
     const hangers = items.map((it, i) => {
       let body = "";
       if (it.kind === "empty") body = HOOK + ACRYLIC;
       else {
-        const G = CLOTHES[it.kind], c = SATIN[it.c];
-        // turned a little to the side, like clothes really hang on a rail
-        const turn = `translate(32 0) scale(.62 1) translate(-32 0)`;
-        body = (G.clip ? CLIPS : HOOK)
-          + `<g transform="${turn}">${G.strap ? ACRYLIC.replace(/rgba\(255,236,248,\.8\)/, "rgba(255,236,248,.6)") : ""}`
-          + `<path d="${G.d}" fill="#2a0418" opacity=".22" transform="translate(5 3)"/>`
-          + (G.inner ? `<path d="${G.inner}" fill="${mix(c, "#000", 0.5)}"/>` : "")
-          + (G.strap ? `<path d="M20.5 33 L21 23 M43.5 33 L43 23" stroke="${mix(c, "#000", 0.1)}" stroke-width="1.4"/>` : "")
+        const G = CLOTHES[it.kind], c = SATIN[it.c], cp = `${id}c${i}`, edge = mix(c, "#000", 0.38);
+        const strapBack = (x0, x1) => `<path d="M${x0} 40.5 L${x1} 25.6" stroke="${mix(c, "#000", 0.35)}" stroke-width="1.3" stroke-linecap="round"/>`;
+        const strapFront = (x0, x1, dir) => `<path d="M${x0} 41 L${x1} 25.4" stroke="${mix(c, "#000", 0.06)}" stroke-width="1.4" stroke-linecap="round"/><path d="M${f1(x1 - 1.5 * dir)} 26.4 Q${f1(x1 - 0.7 * dir)} 23.9 ${f1(x1 + 0.6 * dir)} 25.2" stroke="${mix(c, "#000", 0.06)}" stroke-width="1.4" stroke-linecap="round" fill="none"/><path d="M${x0 - 0.3} 40 L${x1 - 0.3} 26" stroke="#fff" stroke-width=".35" opacity=".5"/>`;
+        body = `<clipPath id="${cp}"><path d="${G.d}"/></clipPath>`
+          + (G.clip ? HOOK + CLIP_BAR + clipBack(17) + clipBack(47) : HOOK)
+          + (G.strap ? strapBack(20.6, 18.2) + strapBack(43.4, 45.8) + ACRYLIC : "")
+          + `<path d="${G.d}" fill="#2a0418" opacity=".2" transform="translate(4 2.5)"/>`
+          + (G.inner ? `<path d="${G.inner}" fill="${mix(c, "#000", 0.5)}"/><path d="M28.6 21.8 Q32 26 35.4 21.8" stroke="url(#cxChr)" stroke-width="1.6" fill="none"/>` : "")
           + `<path d="${G.d}" fill="url(#${id}s${it.c})"/>${it.dots ? `<path d="${G.d}" fill="url(#${id}d)"/>` : ""}`
-          + `<path d="${G.folds}" stroke="#fff" stroke-width="1.1" fill="none" opacity=".2"/><path d="${G.folds}" stroke="#2a0418" stroke-width="1.4" fill="none" opacity=".14" transform="translate(2.2 0)"/>`
+          + `<g clip-path="url(#${cp})">${G.folds(L, Dk)}`
           // satin catches the light in a long soft streak
-          + `<path d="M21 36 Q18 ${f1(G.len * 0.6)} 16 ${G.len - 6}" stroke="#fff" stroke-width="4" fill="none" opacity=".1" stroke-linecap="round"/><path d="M21 36 Q18 ${f1(G.len * 0.6)} 16 ${G.len - 6}" stroke="#fff" stroke-width="1.1" fill="none" opacity=".22" stroke-linecap="round"/>`
+          + fold(20, 32, 15, G.len - 4, 2.4, 5, L)
+          + `<rect x="0" y="0" width="64" height="140" fill="url(#${id}v)"/><path d="${G.d}" fill="url(#${id}t)"/></g>`
           + G.extra(c)
-          + `<path d="${G.d}" fill="url(#${id}v)"/><path d="${G.d}" fill="url(#${id}t)"/></g>`;
+          + `<path d="${G.d}" fill="none" stroke="${edge}" stroke-width=".45" opacity=".7"/>`
+          + (G.strap ? strapFront(19.8, 17.4, 1) + strapFront(44.2, 46.6, -1) : "")
+          + (G.clip ? clipFront(17) + clipFront(47) : "");
       }
-      const tilt = ((R() - 0.5) * 3).toFixed(1);
-      return `<svg class="hgr" data-i="${i}" width="${f1(64 * k)}" height="${f1(140 * k)}" viewBox="0 0 64 140" style="left:${f1(it.x - 36 * k)}px;top:${f1(rodY - rodR - 5.9 * k)}px;--r:${tilt}deg" aria-hidden="true"><g class="hit">${body}</g></svg>`;
+      // the hook's tip goes down behind the rod: a piece of the rod is drawn again over it
+      body += `<rect x="32.8" y="3.6" width="5.6" height="3.4" fill="url(#cxChr)"/><path d="M32.8 3.6 H38.4 M32.8 7 H38.4" stroke="#3a3d45" stroke-width=".25" opacity=".5"/>`;
+      const tilt = ((R() - 0.5) * 2.4).toFixed(1);
+      return `<svg class="hgr" data-i="${i}" width="${f1(64 * 0.62 * k)}" height="${f1(140 * k)}" viewBox="0 0 64 140" preserveAspectRatio="none" style="left:${f1(it.x - 32 * 0.62 * k)}px;top:${f1(rodY - rodR - 3.5 * k)}px;--r:${tilt}deg" aria-hidden="true"><g class="hit">${body}</g></svg>`;
     });
     const rh = Math.ceil(rodY + rodR * 2 + 4);
     const rod = `<svg class="rod" width="${w}" height="${rh}" viewBox="0 0 ${w} ${rh}" aria-hidden="true">`
-      + [rodR * 2.4, w - rodR * 2.4].map((bx) => `<rect x="${f1(bx - rodR * 1.1)}" y="0" width="${f1(rodR * 2.2)}" height="${f1(rodY - rodR)}" fill="url(#cxChr)"/><circle cx="${f1(bx)}" cy="${rodY}" r="${f1(rodR * 1.9)}" fill="url(#cxChr)"/><circle cx="${f1(bx)}" cy="${rodY}" r="${f1(rodR * 1.9)}" fill="none" stroke="#3a3d45" stroke-width=".7"/><circle cx="${f1(bx)}" cy="${rodY}" r="${f1(rodR * 1.15)}" fill="none" stroke="#fff" stroke-width=".6" opacity=".6"/>`).join("")
+      + [rodR * 2.4, w - rodR * 2.4].map((bx) => `<rect x="${f1(bx - rodR * 1.1)}" y="0" width="${f1(rodR * 2.2)}" height="${f1(rodY - rodR)}" fill="url(#cxChrH)"/><circle cx="${f1(bx)}" cy="${rodY}" r="${f1(rodR * 1.9)}" fill="url(#cxChr)"/><circle cx="${f1(bx)}" cy="${rodY}" r="${f1(rodR * 1.9)}" fill="none" stroke="#3a3d45" stroke-width=".7"/><circle cx="${f1(bx)}" cy="${rodY}" r="${f1(rodR * 1.15)}" fill="none" stroke="#fff" stroke-width=".6" opacity=".6"/>`).join("")
       + `<rect x="${f1(rodR * 2.4)}" y="${f1(rodY - rodR)}" width="${f1(w - rodR * 4.8)}" height="${f1(rodR * 2)}" rx="${rodR}" fill="url(#cxChr)"/></svg>`;
+    // the hooks go over the rod: drawn again on top of it, only their part above the rod's middle
     const el = document.createElement("div");
     el.className = "lights closetRod on";
-    // the leftmost is nearest, so it goes on last
     el.innerHTML = `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${defs}</defs></svg>${rod}${hangers.reverse().join("")}`;
-    el.style.height = Math.ceil(rodY - rodR - 5.9 * k + 134 * k) + "px";
+    el.style.height = Math.ceil(rodY - rodR - 3.5 * k + 134 * k) + "px";
     // tap a hanger and it swings, nudging its neighbours a little
     el.addEventListener("click", (ev) => {
       const s = ev.target.closest && ev.target.closest(".hgr"); if (!s) return;
       ev.stopPropagation();
-      const all = [...el.querySelectorAll(".hgr")], me = +s.dataset.i, dir = ev.clientX < s.getBoundingClientRect().left + s.getBoundingClientRect().width * 0.56 ? -1 : 1;
+      const all = [...el.querySelectorAll(".hgr")], me = +s.dataset.i, r = s.getBoundingClientRect(), dir = ev.clientX < r.left + r.width / 2 ? -1 : 1;
       all.forEach((h) => {
         const d = Math.abs(+h.dataset.i - me); if (d > 2) return;
         const amp = (d === 0 ? 5 : d === 1 ? 2.2 : 0.9) * dir;
@@ -351,11 +393,11 @@
       + `<path d="M5 135.5 H127 M5 151.5 H127" stroke="url(#${g}g)" stroke-width="1.2"/>${crown(66, 143, 7.5, `url(#${g}g)`)}`
       // the middle box: pale pink with white spots, tied with a hot pink ribbon both ways
       + box3d(g, { x0: 22, x1: 108, yb: 96, ybot: 131, yl: 80, lh: 17, col: "#f7b3d1", lid: "#f9bfd9", pat: `${g}wd`, d: 6 })
-      + satinBandH(22, 108, 108, 9, "#e8358f") + `<path d="M108 108 L114 104.7 V113.7 L108 117Z" fill="#a51e62"/>` + satinBand(65, 11, 80, 131, "#e8358f")
+      + satinBandH(22, 108, 108, 9, "#e8358f") + `<path d="M108 108 L114 104.7 V113.7 L108 117Z" fill="#a51e62"/>` + satinBand(65, 11, 80, 131, "#e8358f") + `<path d="M59.5 80 H70.5 L76.5 76.7 H65.5Z" fill="#f0479a"/><path d="M61 80 L67 76.7" stroke="#fff" stroke-width=".8" opacity=".4"/>`
       + `<rect x="59.5" y="106.5" width="11" height="12" rx="2" fill="#f0479a"/>`
       // the little box on top, a bit askew: blue with pink spots and a big bow
       + `<g transform="rotate(-4 66 78)">${box3d(g, { x0: 38, x1: 92, yb: 54, ybot: 78, yl: 42, lh: 13, col: "#3d6fd1", lid: "#4479da", pat: `${g}pd`, d: 5 })}`
-      + satinBand(65, 8, 42, 78, "#ff6fb3") + `<path d="M61 42 L65 39.2 L69 42Z" fill="#ff8fc8"/>${bow(67, 37, 1, "#ff6fb3", "#e8358f")}</g>`,
+      + satinBand(65, 8, 42, 78, "#ff6fb3") + `<path d="M61 42 H69 L74 39.25 H66Z" fill="#ff8fc8"/>${bow(67, 37, 1, "#ff6fb3", "#e8358f")}</g>`,
   };
 
   D.ORNAMENTS.shoppingBags = {
@@ -383,14 +425,14 @@
         return rope(gw, -gy, 0.75)
           + `<path d="M${x} ${y} L${x + gw} ${y - gy} H${xr + gw} L${xr} ${y}Z" fill="#2a0418"/>` + t
           // the side: folded in at the top, the near half lit, the far half in shadow
-          + `<path d="M${xr} ${y} L${mid} ${y + 18} V199 L${xr} 200Z" fill="${mix(col, "#000", 0.22)}"/><path d="M${mid} ${y + 18} L${xr + gw} ${y - gy} V${198 - gy} L${mid} 199Z" fill="${mix(col, "#000", 0.42)}"/>`
-          + (pat ? `<path d="M${xr} ${y} L${mid} ${y + 18} L${xr + gw} ${y - gy} V${198 - gy} L${xr} 200Z" fill="url(#${pat})" opacity=".45"/>` : "")
-          + `<path d="M${xr} ${y} L${mid} ${y + 18} L${xr + gw} ${y - gy}" fill="${mix(col, "#000", 0.55)}" stroke="#000" stroke-width=".5" stroke-opacity=".4"/><path d="M${mid} ${y + 18} V199" stroke="#fff" stroke-width=".6" opacity=".25"/>`
+          + `<path d="M${xr} ${y} L${mid} ${y + 12} V199 L${xr} 200Z" fill="${mix(col, "#000", 0.22)}"/><path d="M${mid} ${y + 12} L${xr + gw} ${y - gy} V${198 - gy} L${mid} 199Z" fill="${mix(col, "#000", 0.42)}"/>`
+          + (pat ? `<path d="M${xr} ${y} L${mid} ${y + 12} L${xr + gw} ${y - gy} V${198 - gy} L${xr} 200Z" fill="url(#${pat})" opacity=".45"/>` : "")
+          + `<path d="M${xr} ${y} L${mid} ${y + 12} L${xr + gw} ${y - gy}Z" fill="${mix(col, "#2a0418", 0.6)}"/><path d="M${xr} ${y} L${mid} ${y + 12} L${xr + gw} ${y - gy}" stroke="${mix(col, "#fff", 0.3)}" stroke-width=".6" fill="none" opacity=".7"/><path d="M${mid} ${y + 12} V199" stroke="#fff" stroke-width=".5" opacity=".2"/>`
           + `<path d="M${xr} 190 L${mid} 186 L${xr + gw} ${190 - gy}" stroke="#000" stroke-width=".6" fill="none" opacity=".3"/>`
           + front + `<rect x="${x}" y="${y}" width="${w}" height="${200 - y}" fill="url(#${g}sh)"/>`
           // the folded hem at the top, the creases at the bottom, the lit edge
           + `<rect x="${x}" y="${y}" width="${w}" height="9" fill="#fff" opacity=".16"/><path d="M${x} ${y + 9} H${xr}" stroke="#000" stroke-width=".8" opacity=".28"/><path d="M${x} ${y + 10} H${xr}" stroke="#fff" stroke-width=".5" opacity=".25"/>`
-          + `<path d="M${x} 188 L${x + w * 0.5} 185 L${xr} 188" stroke="#000" stroke-width=".6" fill="none" opacity=".22"/><path d="M${x + 0.6} ${y} V200" stroke="#fff" stroke-width="1" opacity=".35"/>`
+          + `<path d="M${x + 0.6} ${y} V200" stroke="#fff" stroke-width="1" opacity=".35"/><rect x="${x}" y="194" width="${w}" height="6" fill="#000" opacity=".1"/>`
           + [0.3, 0.7].map((f) => `<circle cx="${f1(x + w * f)}" cy="${y + 8}" r="2.2" fill="url(#${g}g)"/><circle cx="${f1(x + w * f)}" cy="${y + 8}" r="1" fill="#3a1020"/>`).join("") + rope(0, 0, 1);
       };
       // where a bag in front shades the one behind it
@@ -408,8 +450,21 @@
         + `<ellipse cx="87" cy="152" rx="15" ry="11" fill="#fff6fa" stroke="#f2cf7a" stroke-width="1.2"/><ellipse cx="87" cy="152" rx="12" ry="8.4" fill="none" stroke="#f2cf7a" stroke-width=".5" stroke-dasharray="1.4 1"/>${crown(87, 150, 4.4, `url(#${g}g)`)}<path d="M80 157.5 h14" stroke="#c94a8c" stroke-width=".8"/>`
         + shade(118, 136) + bag({ x: 118, y: 136, w: 42, gw: 11, col: "#8b3fd0", pat: `${g}gl`, handle: "#f2cf7a", tissue: null })
         // a satin bow tied on the purple bag's handle, and a little crown tag
-        + bow(131, 121, 0.55, "#ff8fc8", "#e8358f")
-        + `<path d="M147 128 L152 146" stroke="#f2cf7a" stroke-width=".8"/><rect x="146" y="145" width="13" height="10" rx="1.5" fill="#fff4fb" transform="rotate(12 152 150)"/>${crown(152.5, 150.5, 3.2, `url(#${g}g)`)}`;
+        + (() => {
+          // points on the purple bag's front handle, so the bow and the tag's string are really tied round it
+          const P = [[130.6, 144], [129.8, 115], [148.2, 115], [147.4, 144]];
+          const at = (t) => { const u = 1 - t; return [0, 1].map((k) => u * u * u * P[0][k] + 3 * u * u * t * P[1][k] + 3 * u * t * t * P[2][k] + t * t * t * P[3][k]); };
+          const [bx, by] = at(0.22), [tx, ty] = at(0.8);
+          // the bow: its knot sits on the rope, a wrap of ribbon going round behind
+          const tie = `<path d="M${f1(bx - 2.4)} ${f1(by - 0.6)} Q${f1(bx)} ${f1(by + 1.8)} ${f1(bx + 2.4)} ${f1(by - 0.2)}" stroke="#c21e6e" stroke-width="2.2" fill="none"/>` + bow(f1(bx), f1(by), 0.5, "#ff8fc8", "#e8358f");
+          // the tag hangs from a loop of gold string round the handle, threaded through the tag's eyelet
+          const lx = tx, ly = ty, ex = tx + 4, ey = ty + 15;
+          const tag = `<path d="M${f1(lx - 1.8)} ${f1(ly - 1.2)} C${f1(lx - 2.2)} ${f1(ly + 2.6)} ${f1(lx + 1.6)} ${f1(ly + 3.2)} ${f1(lx + 2)} ${f1(ly - 0.6)}" stroke="#d7a849" stroke-width=".8" fill="none"/>`
+            + `<path d="M${f1(lx)} ${f1(ly + 2.4)} L${f1(ex - 0.6)} ${f1(ey)} M${f1(lx + 0.8)} ${f1(ly + 2.2)} L${f1(ex + 0.6)} ${f1(ey)}" stroke="#d7a849" stroke-width=".7"/>`
+            + `<g transform="rotate(10 ${f1(ex)} ${f1(ey + 6)})"><path d="M${f1(ex - 6.5)} ${f1(ey + 1)} L${f1(ex - 3)} ${f1(ey - 1.6)} H${f1(ex + 3)} L${f1(ex + 6.5)} ${f1(ey + 1)} V${f1(ey + 12)} H${f1(ex - 6.5)}Z" fill="#fff4fb" stroke="#e8b0cf" stroke-width=".5"/>`
+            + `<circle cx="${f1(ex)}" cy="${f1(ey + 0.6)}" r="1.1" fill="none" stroke="url(#${g}g)" stroke-width=".8"/>${crown(ex, ey + 7, 2.8, `url(#${g}g)`)}</g>`;
+          return tie + tag;
+        })();
     },
   };
 

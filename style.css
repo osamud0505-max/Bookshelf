@@ -135,6 +135,13 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .caption > * { pointer-events: auto; }
 .scroller::-webkit-scrollbar { display: none; }
 .track { position: relative; height: calc(var(--shelf-h) * 1.16); }
+/* the shelf's top seen a little from above: lighter at the front edge, darker toward the wall, where it meets the wall in
+   a soft shadow. Books and objects stand on it a little back from the edge, with their shadows falling on it. */
+.shelf { --top-d: 12px; }
+@media (min-width: 560px) { .shelf { --top-d: 16px; } }
+.track::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--top-d); pointer-events: none;
+  background: linear-gradient(0deg, rgba(255,255,255,.2) 0, rgba(255,255,255,.08) 1.5px, rgba(255,255,255,.04) 30%, rgba(0,0,0,.28) 82%, rgba(0,0,0,.5) 100%), var(--plank-top); }
+.track > .stage { height: calc(100% - var(--top-d) * .5); }
 .snap { position: absolute; top: 0; width: 1px; height: 1px; scroll-snap-align: start; }
 .stage { position: sticky; left: 0; height: 100%; }
 .slot {
@@ -1388,7 +1395,7 @@ html[data-mat="steel"] .plank::before {
 /* the princess closet: a chrome rod under each shelf with clear hangers and satin clothes; tap one and it swings */
 .shelf.hasLights[data-lights="closetRod"] .caption { padding-top: calc(var(--lights-h, 120px) - 6px); }
 .lights.closetRod .rod { top: 0; }
-.lights.closetRod .hgr { position: absolute; overflow: visible; pointer-events: none; transform: rotate(var(--r)); transform-origin: 56.25% 3.6%; }
+.lights.closetRod .hgr { position: absolute; overflow: visible; pointer-events: none; transform: rotate(var(--r)); transform-origin: 50% 2.4%; }
 .lights.closetRod .hgr .hit { pointer-events: visiblePainted; cursor: pointer; }
 .lights.closetRod .hgr.swing { animation: hgrSwing 2.2s cubic-bezier(.3,.6,.4,1); }
 @keyframes hgrSwing {
