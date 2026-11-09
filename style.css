@@ -1477,3 +1477,7 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
 /* v181: the lean only applies while a book is spine-out (cover edge-on). A book showing its cover is as deep as it is wide, so any lean
    made its bottom edge slope up to the back of the floor and it looked like it was standing behind the shelf instead of on it. */
 .book { --te: calc(var(--tilt, 0) * clamp(0, (var(--turn) - .93) / .07, 1)); }
+
+/* v183: osamu wants the books flat as before (no lean, no visible top). The lean code stays but is switched off. */
+.slot .book, html[data-bdk="closet"] .slot .book { --tilt: 0; }
+.top { display: none; }
