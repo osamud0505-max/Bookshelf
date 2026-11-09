@@ -121,8 +121,8 @@
   // jacket hangs over the ruffle dress, the trousers over that dress and the bow dress over the trousers; in the
   // uniforms the vest hangs over the plaid skirt and the teal dress over both its neighbours
   const RAILS = [
-    { list: SINGLES, tall: 1040, pitch: 172, z: [1, 2, 3, 4, 6, 5, 7, 8] },
-    { list: SINGLES_B, tall: 1063, pitch: 136, z: [1, 2, 3, 5, 4, 7, 6, 8] },
+    { list: SINGLES, tall: 1040, pitch: 172, z: [1, 2, 3, 4, 8, 7, 6, 5] },
+    { list: SINGLES_B, tall: 1063, pitch: 136, z: [1, 2, 3, 4, 5, 7, 6, 8] },
   ];
   // which picture each shelf hangs, down the room: party clothes, heels, uniforms, party clothes, uniforms
   const RAIL_OF = [0, 0, 1, 0, 1];
