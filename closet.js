@@ -128,7 +128,7 @@
   const RAILS = [
     { list: SINGLES, tall: 1040, pitch: 172, z: [1, 2, 3, 4, 8, 7, 6, 5] },
     { list: SINGLES_B, tall: 1063, pitch: 136, z: [1, 2, 3, 4, 5, 7, 6, 8] },
-    { list: SINGLES_C, tall: 1040, pitch: 112, steps: [1.03, 0.83, 0.98, 1.03, 1.5, 1.85, 0.95], z: [1, 2, 3, 4, 5, 6, 8, 7] },
+    { list: SINGLES_C, tall: 1040, pitch: 112, steps: [1.03, 0.83, 0.98, 1.03, 1.2, 1.85, 0.95], z: [1, 2, 3, 4, 5, 6, 8, 7] },
   ];
   // which picture each shelf hangs, down the room: party clothes, heels, uniforms, gowns, party clothes
   const RAIL_OF = [0, 0, 1, 2, 0];
