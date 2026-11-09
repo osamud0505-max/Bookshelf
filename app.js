@@ -76,7 +76,9 @@
     // shelf material: a lit top edge, a darker underside, then the grain over the base colour
     const mat = D.MATERIALS[s.shelfMat] || D.MATERIALS.paint;
     set("--plank-bg", mat.base
-      ? ["linear-gradient(180deg, rgba(255,255,255,.28) 0 1.5px, rgba(255,255,255,.1) 1.5px 4px, rgba(255,255,255,0) 4px 55%, rgba(0,0,0,.38) 100%)", ...mat.tex(), mat.base].join(",")
+      // the board's profile: its top face catching the light, a rounded front edge with a crisp highlight, the front face
+      // turning away from the light, and a dark lower arris
+      ? ["linear-gradient(180deg, rgba(255,255,255,.2) 0, rgba(255,255,255,.12) 2.5px, rgba(0,0,0,.14) 3px, rgba(255,255,255,.34) 3.6px, rgba(255,255,255,.12) 4.6px, rgba(255,255,255,0) 7px, rgba(0,0,0,0) 45%, rgba(0,0,0,.3) 88%, rgba(0,0,0,.55) 100%)", ...(mat.sheen ? ["linear-gradient(90deg, rgba(255,255,255,0) 8%, rgba(255,245,230,.08) 30%, rgba(255,255,255,0) 46%, rgba(255,245,230,.05) 72%, rgba(255,255,255,0) 90%)"] : []), ...mat.tex(), mat.base].join(",")
       : "linear-gradient(180deg, var(--shelf-top) 0, var(--shelf-top) 3px, var(--shelf-color) 3px, var(--shelf-color) 11px, var(--shelf-edge) 100%)");
     document.documentElement.dataset.mat = s.shelfMat || "paint";
     // backdrop: if it fights the colour scheme (a dark wall behind light text…), veil it so words stay readable

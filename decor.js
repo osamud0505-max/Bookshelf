@@ -11,6 +11,9 @@
 
   // ------------------------------------------------------------------ wood
   const grainH = (dark = 0.55, light = 0.25) => [
+    // fine, sharp grain lines running the length of the board, and tiny open pores between them
+    `${noise({ w: 640, h: 48, fx: 0.0022, fy: 0.62, oct: 3, type: "turbulence", a: 2.6 * dark + 0.9, b: -0.62 })} 0 0 / 640px 48px`,
+    `${noise({ w: 240, h: 40, fx: 0.06, fy: 1.6, oct: 1, a: 2.2 * dark + 0.6, b: -1.15 })} 0 0 / 240px 40px`,
     `${noise({ w: 700, h: 160, fx: 0.0035, fy: 0.16, oct: 4, a: 1.9 * dark + 0.4, b: -0.75 })} 0 0 / 700px 160px`,
     `${noise({ w: 500, h: 120, fx: 0.006, fy: 0.3, oct: 2, rgb: [1, 0.92, 0.8], a: 1.2 * light + 0.3, b: -0.55 })} 0 0 / 500px 120px`,
   ];
@@ -115,19 +118,19 @@
   const MATERIALS = {
     paint: { label: "Painted", base: null, tex: () => "none" },
     oak: { label: "Oak", base: "#b07c48", tex: () => grainH(0.5, 0.3) },
-    walnut: { label: "Walnut", base: "#5a3820", tex: () => grainH(0.75, 0.2) },
-    cherry: { label: "Cherry", base: "#8e4326", tex: () => grainH(0.6, 0.25) },
+    walnut: { sheen: 1, label: "Walnut", base: "#5a3820", tex: () => grainH(0.75, 0.2) },
+    cherry: { sheen: 1, label: "Cherry", base: "#8e4326", tex: () => grainH(0.6, 0.25) },
     pine: { label: "Pine", base: "#d4a568", tex: () => grainH(0.45, 0.35) },
-    mahogany: { label: "Mahogany", base: "#5c2216", tex: () => grainH(0.7, 0.2) },
-    ebony: { label: "Ebony", base: "#221915", tex: () => grainH(0.8, 0.15) },
+    mahogany: { sheen: 1, label: "Mahogany", base: "#5c2216", tex: () => grainH(0.7, 0.2) },
+    ebony: { sheen: 1, label: "Ebony", base: "#221915", tex: () => grainH(0.8, 0.15) },
     driftwood: { label: "Driftwood", base: "#a49784", tex: () => grainH(0.45, 0.45) },
-    marble: { label: "Marble", base: "#ebe7e1", tex: () => [`${noise({ w: 600, h: 200, fx: 0.004, fy: 0.012, oct: 5, type: "turbulence", rgb: [0.35, 0.35, 0.38], a: -3.2, b: 0.95 })} 0 0 / 600px 200px`] },
+    marble: { label: "Marble", base: "#ebe7e1", tex: () => [`${noise({ w: 520, h: 120, fx: 0.009, fy: 0.03, oct: 5, type: "turbulence", rgb: [0.32, 0.32, 0.36], a: -16, b: 1.7 })} 0 0 / 520px 120px`, `${noise({ w: 600, h: 200, fx: 0.004, fy: 0.012, oct: 5, type: "turbulence", rgb: [0.35, 0.35, 0.38], a: -3.2, b: 0.95 })} 0 0 / 600px 200px`, "linear-gradient(90deg, rgba(255,255,255,0) 10%, rgba(255,255,255,.18) 34%, rgba(255,255,255,0) 52%)"] },
     concrete: { label: "Concrete", base: "#8b8884", tex: () => [`${noise({ fx: 0.8, fy: 0.8, oct: 2, a: 1.3, b: -0.5 })} 0 0 / 360px`] },
     steel: { label: "Black steel", base: "#2a2b2e", tex: () => [`${noise({ w: 600, h: 60, fx: 0.002, fy: 0.9, oct: 2, rgb: [1, 1, 1], a: 0.7, b: -0.32 })} 0 0 / 600px 60px`] },
-    brass: { label: "Brass", base: "#b08a45", tex: () => [`${noise({ w: 600, h: 60, fx: 0.002, fy: 0.9, oct: 2, rgb: [1, 0.95, 0.8], a: 1, b: -0.4 })} 0 0 / 600px 60px`, "linear-gradient(90deg, rgba(255,255,255,.0), rgba(255,255,255,.18) 40%, rgba(255,255,255,0) 60%)"] },
-    honey: { label: "Honey oak", base: "#87562f", tex: () => grainH(0.55, 0.3) },
+    brass: { label: "Brass", base: "#b08a45", tex: () => ["linear-gradient(180deg, rgba(255,246,214,.55) 0 1px, rgba(255,246,214,.1) 2px, rgba(60,36,0,.18) 3.4px, rgba(255,240,200,.42) 4.4px, rgba(255,240,200,.08) 7px, rgba(255,255,255,0) 9px, rgba(70,44,0,.25) 100%)", "linear-gradient(90deg, rgba(60,36,0,.22), rgba(255,240,200,0) 12%, rgba(255,240,200,.25) 22%, rgba(60,36,0,.12) 34%, rgba(255,240,200,0) 48%, rgba(255,240,200,.18) 66%, rgba(60,36,0,.18) 82%, rgba(255,240,200,.1) 94%)", `${noise({ w: 600, h: 60, fx: 0.002, fy: 0.9, oct: 2, rgb: [1, 0.95, 0.8], a: 1, b: -0.4 })} 0 0 / 600px 60px`, "linear-gradient(90deg, rgba(255,255,255,.0), rgba(255,255,255,.18) 40%, rgba(255,255,255,0) 60%)"] },
+    honey: { sheen: 1, label: "Honey oak", base: "#87562f", tex: () => grainH(0.55, 0.3) },
     paintedWhite: { label: "Painted white", base: "#ddd5c8", tex: () => [`${noise({ w: 700, h: 160, fx: 0.003, fy: 0.2, oct: 3, a: 0.6, b: -0.28 })} 0 0 / 700px 160px`] },
-    lacquer: { label: "Black lacquer", base: "#1f0b09", tex: () => ["linear-gradient(90deg, rgba(255,255,255,0), rgba(255,220,200,.10) 35%, rgba(255,255,255,0) 55%, rgba(255,220,200,.06) 80%, rgba(255,255,255,0))", ...grainH(0.5, 0.08)] },
+    lacquer: { label: "Black lacquer", base: "#1f0b09", tex: () => ["linear-gradient(180deg, transparent 4.8px, rgba(255,232,220,.3) 5.3px, rgba(255,232,220,.07) 6.6px, transparent 9px, transparent 12px, rgba(255,200,180,.06) 14px, transparent 16px)", "linear-gradient(90deg, rgba(255,255,255,0), rgba(255,220,200,.10) 35%, rgba(255,255,255,0) 55%, rgba(255,220,200,.06) 80%, rgba(255,255,255,0))", ...grainH(0.5, 0.08)] },
     glass: { label: "Glass", base: "rgba(200,230,228,.28)", tex: () => ["linear-gradient(90deg, rgba(255,255,255,.0), rgba(255,255,255,.25) 30%, rgba(255,255,255,.05) 55%, rgba(255,255,255,.2) 80%, rgba(255,255,255,0))"] },
   };
 
@@ -180,22 +183,48 @@
             + `<path d="M${x - 7.2} ${cy - 2.5} A${r - 2.2} ${r - 2.2} 0 0 1 ${x - 1.5} ${cy - 7.6}" stroke="#fff" stroke-opacity=".6" stroke-width="1.2" fill="none" stroke-linecap="round"/>`
             + `<circle cx="${x + 5.2}" cy="${cy + 4.8}" r=".9" fill="#fff" opacity=".35"/><path d="M${x + 4} ${cy + 7.6} A${r - 1.4} ${r - 1.4} 0 0 0 ${x + 8} ${cy + 2}" stroke="#fff" stroke-opacity=".18" stroke-width=".8" fill="none"/></g>`;
         } else if (style === "lanterns") {
-          // round paper lantern: ribbed shade, dark cap and base, a tassel
-          const cy = p.y + 24, rx = 13, ry = 15, lit = on ? c : "#d9cdbb";
-          const ribs = [-0.62, -0.25, 0.25, 0.62].map((f) => `<ellipse cx="${p.x}" cy="${cy}" rx="${(rx * Math.abs(f)).toFixed(1)}" ry="${ry}" fill="none" stroke="rgba(90,40,20,.28)" stroke-width=".7"/>`).join("");
-          bulbs += `<g class="bulb" style="--d:${d}s"><line x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${cy - ry}" stroke="#2a2420" stroke-width="1.1"/>`
-            + `<circle class="halo" cx="${p.x}" cy="${cy}" r="24" fill="${c}" filter="url(#${id})"/>`
-            + `<ellipse class="glassOff" cx="${p.x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#d9cdbb" stroke="rgba(90,40,20,.35)" stroke-width=".8"/>`
-            + `<ellipse class="ember" cx="${p.x}" cy="${cy}" rx="${rx * 0.6}" ry="${ry * 0.6}" fill="#ff8a3a" filter="url(#${id}e)"/>`
-            + `<ellipse class="glass" cx="${p.x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" stroke="rgba(90,40,20,.35)" stroke-width=".8"/>${ribs}`
-            + `<ellipse cx="${p.x - 4}" cy="${cy - 4}" rx="4" ry="7" fill="#fff" opacity=".25"/>`
-            + `<rect x="${p.x - 6}" y="${cy - ry - 2}" width="12" height="4" rx="1" fill="#2a2420"/><rect x="${p.x - 6}" y="${cy + ry - 2}" width="12" height="4" rx="1" fill="#2a2420"/>`
-            + `<line x1="${p.x}" y1="${cy + ry + 2}" x2="${p.x}" y2="${cy + ry + 10}" stroke="#b33a2c" stroke-width="2"/></g>`;
+          // round paper lantern: rice paper on a wire spiral (ribs bow with the shape), lit from a hot core and darker at
+          // the rims, dark lacquered caps, a tassel
+          const cy = p.y + 24, rx = 13, ry = 15, x = p.x;
+          let ribs = ""; for (const f of [-0.8, -0.5, -0.18, 0.18, 0.5, 0.8]) ribs += `<path d="M${(x + rx * f * 0.5).toFixed(1)} ${cy - ry + 1} Q${(x + rx * f * 1.3).toFixed(1)} ${cy} ${(x + rx * f * 0.5).toFixed(1)} ${cy + ry - 1}" fill="none" stroke="rgba(90,40,20,${(0.18 + Math.abs(f) * 0.2).toFixed(2)})" stroke-width=".6"/>`;
+          for (let yy = -ry + 4; yy < ry - 2; yy += 3.4) { const hw = rx * Math.sqrt(1 - (yy / ry) ** 2); ribs += `<path d="M${(x - hw).toFixed(1)} ${(cy + yy).toFixed(1)} q${hw.toFixed(1)} 1.4 ${(hw * 2).toFixed(1)} 0" fill="none" stroke="rgba(90,50,20,.12)" stroke-width=".4"/>`; }
+          let tas = ""; for (let t2 = 0; t2 < 7; t2++) { const u = (t2 - 3) / 3; tas += `<path d="M${(x + u).toFixed(1)} ${cy + ry + 3} q${(u * 0.5).toFixed(1)} 4 ${(u * 1.6).toFixed(1)} ${9 + (t2 % 2)}" stroke="${t2 % 2 ? "#d0483a" : "#a8302a"}" stroke-width=".6" fill="none"/>`; }
+          bulbs += `<g class="bulb" style="--d:${d}s"><line x1="${x}" y1="${p.y}" x2="${x}" y2="${cy - ry - 2}" stroke="#2a2420" stroke-width="1.1"/>`
+            + `<circle class="halo" cx="${x}" cy="${cy}" r="24" fill="${c}" filter="url(#${id})"/>`
+            + `<ellipse class="glassOff" cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#${id}po)"/>`
+            + `<ellipse class="ember" cx="${x}" cy="${cy}" rx="${rx * 0.6}" ry="${ry * 0.6}" fill="#ff8a3a" filter="url(#${id}e)"/>`
+            + `<ellipse class="glass" cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}"/><ellipse class="glass" cx="${x}" cy="${cy + 1}" rx="${rx * 0.75}" ry="${ry * 0.75}" fill="url(#${id}wc)" opacity=".75"/>`
+            + ribs + `<ellipse cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#${id}pr)" stroke="rgba(90,40,20,.3)" stroke-width=".6"/>`
+            + `<path d="M${x - rx + 3} ${cy - 6} Q${x - rx + 1} ${cy} ${x - rx + 3} ${cy + 6}" stroke="#fff" stroke-opacity=".3" stroke-width="1.4" fill="none" stroke-linecap="round"/>`
+            + `<path d="M${x - 6} ${cy - ry + 1.5} l.8 -3.6 h10.4 l.8 3.6z" fill="url(#${id}cap)"/><path d="M${x - 6} ${cy + ry - 1.5} l.8 3.6 h10.4 l.8 -3.6z" fill="url(#${id}cap)"/>`
+            + `<circle cx="${x}" cy="${cy + ry + 3}" r="1.2" fill="#2a2420"/>${tas}</g>`;
         } else if (style === "stars") {
-          const r = 5.5, pts = Array.from({ length: 10 }, (_, i) => { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r; return `${(p.x + rr * Math.cos(a)).toFixed(1)},${(p.y + 9 + rr * Math.sin(a)).toFixed(1)}`; }).join(" ");
-          bulbs += `<g class="bulb" style="--d:${d}s"><line x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${p.y + 4}" stroke="#2a2420" stroke-width="1"/><circle class="halo" cx="${p.x}" cy="${p.y + 9}" r="11" fill="${c}" filter="url(#${id})"/><polygon class="glassOff" points="${pts}" fill="rgba(255,255,255,.25)" stroke="rgba(255,255,255,.4)" stroke-width=".6"/><circle class="ember" cx="${p.x}" cy="${p.y + 9}" r="3" fill="#ff7a1a" filter="url(#${id}e)"/><polygon class="glass" points="${pts}" fill="${c}" stroke="rgba(255,255,255,.4)" stroke-width=".6"/></g>`;
+          // a moulded star lamp: five faceted arms (each arm a light and a shaded face, like pressed glass), a little cap
+          // on the wire; lit, the star fills with light from a bright core
+          const r = 6.2, cx = p.x, cy = p.y + 10, V = (i, rr) => { const a = -Math.PI / 2 + i * Math.PI / 5; return [cx + rr * Math.cos(a), cy + rr * Math.sin(a)]; };
+          const P = Array.from({ length: 10 }, (_, i) => V(i, i % 2 ? r * 0.44 : r)), pts = P.map((q) => q[0].toFixed(1) + "," + q[1].toFixed(1)).join(" ");
+          let fac = "";
+          for (let a = 0; a < 5; a++) {
+            const t = P[a * 2], l = P[(a * 2 + 9) % 10], rt = P[a * 2 + 1], f = (q) => q[0].toFixed(2) + " " + q[1].toFixed(2);
+            fac += `<path d="M${cx} ${cy}L${f(t)}L${f(l)}Z" fill="#fff" opacity="${(0.1 + 0.22 * ((a + 1) % 3) / 2).toFixed(2)}"/><path d="M${cx} ${cy}L${f(t)}L${f(rt)}Z" fill="#000" opacity="${(0.07 + 0.05 * (a % 2)).toFixed(2)}"/>`;
+          }
+          bulbs += `<g class="bulb" style="--d:${d}s"><path d="M${p.x} ${p.y} v2.6" stroke="#2a2420" stroke-width="1"/><rect x="${p.x - 1.4}" y="${p.y + 1.6}" width="2.8" height="2.4" rx=".6" fill="url(#${id}cap)"/>`
+            + `<circle class="halo" cx="${cx}" cy="${cy}" r="13" fill="${c}" filter="url(#${id})"/>`
+            + `<polygon class="glassOff" points="${pts}" fill="rgba(235,238,245,.32)" stroke="rgba(255,255,255,.45)" stroke-width=".5" stroke-linejoin="round"/>`
+            + `<circle class="ember" cx="${cx}" cy="${cy}" r="2.4" fill="#ff7a1a" filter="url(#${id}e)"/>`
+            + `<polygon class="glass" points="${pts}" fill="${c}" stroke-linejoin="round"/><circle class="glass" cx="${cx}" cy="${cy}" r="3.6" fill="url(#${id}wc)"/>`
+            + fac + `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,.5)" stroke-width=".45" stroke-linejoin="round"/></g>`;
         } else {
-          bulbs += `<g class="bulb" style="--d:${d}s"><circle class="halo" cx="${p.x}" cy="${p.y + 3}" r="8" fill="${c}" filter="url(#${id})"/><ellipse class="glassOff" cx="${p.x}" cy="${p.y + 3.5}" rx="2.4" ry="3.2" fill="rgba(255,255,255,.28)"/><circle class="ember" cx="${p.x}" cy="${p.y + 3.5}" r="2" fill="#ff7a1a" filter="url(#${id}e)"/><ellipse class="glass" cx="${p.x}" cy="${p.y + 3.5}" rx="2.4" ry="3.2" fill="${c}"/><circle cx="${p.x}" cy="${p.y}" r="1.3" fill="#2a2420"/></g>`;
+          // a fairy light: a tiny wheat-grain bulb in a little green plastic holder on the twisted wire; lit, a white-hot
+          // centre fading to the bulb's colour, with a tight bright glow and a wide soft one
+          const x = p.x, y0 = p.y, cy = y0 + 6.6;
+          bulbs += `<g class="bulb" style="--d:${d}s"><circle class="halo" cx="${x}" cy="${cy}" r="9" fill="${c}" filter="url(#${id})"/>`
+            + `<path d="M${x - 1.5} ${y0 - 0.4} h3 l-.3 3.4 h-2.4z" fill="url(#${id}cap)"/>`
+            + `<ellipse class="glassOff" cx="${x}" cy="${cy}" rx="2.3" ry="3.5" fill="url(#${id}og)" stroke="rgba(255,255,255,.3)" stroke-width=".3"/>`
+            + `<circle class="ember" cx="${x}" cy="${cy}" r="1.6" fill="#ff7a1a" filter="url(#${id}e)"/>`
+            + `<ellipse class="glass" cx="${x}" cy="${cy}" rx="3.6" ry="4.6" fill="${c}" opacity=".55" filter="url(#${id}e)"/>`
+            + `<ellipse class="glass" cx="${x}" cy="${cy}" rx="2.3" ry="3.5" fill="${c}"/><ellipse class="glass" cx="${x}" cy="${cy + 0.3}" rx="1.5" ry="2.4" fill="url(#${id}wc)"/>`
+            + `<path d="M${x - 1.3} ${cy - 1.8} q-.5 1.4 0 2.8" stroke="#fff" stroke-opacity=".7" stroke-width=".5" fill="none" stroke-linecap="round"/></g>`;
         }
         k++;
       }
@@ -203,7 +232,7 @@
     const glowCol = col[1] || "#ffd9a0";
     const el = document.createElement("div");
     el.className = "lights " + style + (on ? " on" : "");
-    el.innerHTML = `<div class="lightGlow" style="--glow:${glowCol}"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="${style === "globe" ? 5 : 3}"/></filter><filter id="${id}e" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.2"/></filter>${style === "globe" ? `<linearGradient id="${id}sk" x1="0" x2="1"><stop offset="0" stop-color="#0c0b0a"/><stop offset=".35" stop-color="#3a3632"/><stop offset=".6" stop-color="#1a1816"/><stop offset="1" stop-color="#080707"/></linearGradient><linearGradient id="${id}br" x1="0" x2="1"><stop offset="0" stop-color="#6a4a1c"/><stop offset=".35" stop-color="#e8c47a"/><stop offset=".6" stop-color="#a87a34"/><stop offset="1" stop-color="#4a3210"/></linearGradient><radialGradient id="${id}cg" cx=".42" cy=".38" r=".62"><stop offset="0" stop-color="#fff" stop-opacity=".04"/><stop offset=".75" stop-color="#d8e2ee" stop-opacity=".1"/><stop offset="1" stop-color="#e8eef6" stop-opacity=".3"/></radialGradient>` : ""}</defs><path d="${wire}" stroke="#2a2420" stroke-width="1.3" fill="none" opacity=".85"/>${bulbs}</svg>`;
+    el.innerHTML = `<div class="lightGlow" style="--glow:${glowCol}"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="${style === "globe" ? 5 : 3}"/></filter><filter id="${id}e" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.2"/></filter><linearGradient id="${id}cap" x1="0" x2="1"><stop offset="0" stop-color="#0d1a10"/><stop offset=".4" stop-color="#3c5a40"/><stop offset=".7" stop-color="#1c2e1f"/><stop offset="1" stop-color="#0a120b"/></linearGradient><radialGradient id="${id}wc" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".45" stop-color="#fffbf0" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><radialGradient id="${id}po" cx=".42" cy=".4" r=".7"><stop offset="0" stop-color="#ece2d0"/><stop offset=".75" stop-color="#d4c6ae"/><stop offset="1" stop-color="#a8977a"/></radialGradient><radialGradient id="${id}pr" cx=".5" cy=".5" r=".5"><stop offset=".55" stop-color="#3a1a08" stop-opacity="0"/><stop offset="1" stop-color="#3a1a08" stop-opacity=".38"/></radialGradient><radialGradient id="${id}og" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".6" stop-color="#e8e4dc" stop-opacity=".22"/><stop offset="1" stop-color="#cfc8bc" stop-opacity=".4"/></radialGradient>${style === "globe" ? `<linearGradient id="${id}sk" x1="0" x2="1"><stop offset="0" stop-color="#0c0b0a"/><stop offset=".35" stop-color="#3a3632"/><stop offset=".6" stop-color="#1a1816"/><stop offset="1" stop-color="#080707"/></linearGradient><linearGradient id="${id}br" x1="0" x2="1"><stop offset="0" stop-color="#6a4a1c"/><stop offset=".35" stop-color="#e8c47a"/><stop offset=".6" stop-color="#a87a34"/><stop offset="1" stop-color="#4a3210"/></linearGradient><radialGradient id="${id}cg" cx=".42" cy=".38" r=".62"><stop offset="0" stop-color="#fff" stop-opacity=".04"/><stop offset=".75" stop-color="#d8e2ee" stop-opacity=".1"/><stop offset="1" stop-color="#e8eef6" stop-opacity=".3"/></radialGradient>` : ""}</defs><path d="${wire}" stroke="#1d1a17" stroke-width="1.4" fill="none" opacity=".9"/>${style === "globe" ? `<path d="${wire}" stroke="#fff" stroke-opacity=".12" stroke-width=".5" fill="none" transform="translate(0 -.4)"/>` : `<path d="${wire}" stroke="#4a4038" stroke-width=".7" stroke-dasharray="1.6 1.4" fill="none"/>`}${bulbs}</svg>`;
     el.style.height = H + "px";
     return el;
   }
@@ -218,29 +247,37 @@
       const x = gap * (i + 0.5) + ((i * 37) % 11) - 5, chain = 8 + ((i * 53) % 5) * 7, tall = 20 + ((i * 29) % 3) * 4;
       const dishY = chain + tall + 8, top = dishY - tall;
       H = Math.max(H, dishY + 8);
-      let links = ""; for (let y = 0; y < chain + 2; y += 4) links += `<ellipse cx="${x}" cy="${y + 2}" rx="${y % 8 ? 1 : 1.6}" ry="2" fill="none" stroke="#7a6640" stroke-width=".9"/>`;
+      // brass chain links (alternately face-on and edge-on), a cylinder of wax shaded round, a melted rim with drips
+      // running down it, a bent charred wick, a flame that is blue at the root, white inside and amber at the tip
+      let links = ""; for (let y = 0; y < chain + 2; y += 4) links += y % 8 ? `<line x1="${x}" y1="${y + 0.2}" x2="${x}" y2="${y + 3.8}" stroke="url(#${id}b)" stroke-width="1.3" stroke-linecap="round"/>` : `<ellipse cx="${x}" cy="${y + 2}" rx="1.5" ry="2.1" fill="none" stroke="url(#${id}b)" stroke-width=".9"/>`;
+      const dr = (dx, len, wd) => `<path d="M${x + dx - wd / 2} ${top + 0.8} v${len} a${wd / 2} ${wd / 2} 0 0 0 ${wd} 0 v${-len}Z" fill="url(#${id}w)"/>`;
       out += `<g class="bulb candle" style="--d:${((i * 0.41) % 1.3).toFixed(2)}s">${links}`
-        + `<path d="M${x - 4} ${chain + 2} L${x} ${top - 2} L${x + 4} ${chain + 2}" stroke="#7a6640" stroke-width=".8" fill="none" opacity=".0"/>`
         + `<circle class="halo" cx="${x}" cy="${top - 8}" r="20" fill="${flameC}" filter="url(#${id})"/>`
-        + `<rect x="${x - 3.6}" y="${top}" width="7.2" height="${tall}" rx="1.4" fill="${wax}"/>`
-        + `<path d="M${x - 3.6} ${top + 2} q1.2 5 0 8 M${x + 2.2} ${top + 1} q1.3 4 .4 9" stroke="${wax}" stroke-width="2.2" stroke-linecap="round" fill="none" filter="brightness(.92)"/>`
-        + `<rect x="${x - 3.6}" y="${top}" width="2.2" height="${tall}" fill="#fff" opacity=".25"/>`
-        + `<line x1="${x}" y1="${top}" x2="${x}" y2="${top - 3}" stroke="#2a2420" stroke-width=".9"/>`
-        + `<g class="flame"><path d="M${x} ${top - 15} C${x + 4.2} ${top - 9} ${x + 3.6} ${top - 3} ${x} ${top - 2.5} C${x - 3.6} ${top - 3} ${x - 4.2} ${top - 9} ${x} ${top - 15}Z" fill="${flameC}"/><path d="M${x} ${top - 10} C${x + 1.8} ${top - 7} ${x + 1.5} ${top - 4} ${x} ${top - 3.5} C${x - 1.5} ${top - 4} ${x - 1.8} ${top - 7} ${x} ${top - 10}Z" fill="#fffbe8"/></g>`
-        + `<path d="M${x - 9} ${dishY - 2} Q${x} ${dishY + 5} ${x + 9} ${dishY - 2} Z" fill="#a88a4e"/><ellipse cx="${x}" cy="${dishY - 2}" rx="9" ry="2" fill="#c9a865"/>`
-        + `<line x1="${x - 8}" y1="${dishY - 2}" x2="${x}" y2="${chain + 1}" stroke="#7a6640" stroke-width=".7"/><line x1="${x + 8}" y1="${dishY - 2}" x2="${x}" y2="${chain + 1}" stroke="#7a6640" stroke-width=".7"/>`
+        + `<rect x="${x - 3.6}" y="${top}" width="7.2" height="${tall}" rx="1" fill="url(#${id}w)"/>`
+        + dr(-2.2, 4 + (i % 3) * 3, 1.6) + dr(2, 2.5 + ((i + 1) % 3) * 2.5, 1.4)
+        + `<rect x="${x - 3.6}" y="${top}" width="7.2" height="${tall}" rx="1" fill="url(#${id}sh)"/>`
+        + `<ellipse cx="${x}" cy="${top + 0.8}" rx="3.6" ry="1.1" fill="#fffaf0" opacity=".5"/><ellipse cx="${x}" cy="${top + 1}" rx="2.6" ry=".7" fill="#000" opacity=".12"/>`
+        + `<rect class="glass" x="${x - 3.6}" y="${top}" width="7.2" height="${Math.min(9, tall)}" fill="url(#${id}t)"/>`
+        + `<path d="M${x} ${top + 1} q.3 -2 -.6 -3.6" stroke="#1a1410" stroke-width=".9" fill="none" stroke-linecap="round"/>`
+        + `<g class="flame"><path d="M${x} ${top - 16} C${x + 4.3} ${top - 9} ${x + 3.7} ${top - 3} ${x} ${top - 2.5} C${x - 3.7} ${top - 3} ${x - 4.3} ${top - 9} ${x} ${top - 16}Z" fill="url(#${id}fl)"/><path d="M${x} ${top - 10.5} C${x + 1.8} ${top - 7.5} ${x + 1.5} ${top - 4.4} ${x} ${top - 3.8} C${x - 1.5} ${top - 4.4} ${x - 1.8} ${top - 7.5} ${x} ${top - 10.5}Z" fill="#fffdf2"/><ellipse cx="${x}" cy="${top - 3.6}" rx="1.5" ry="1.6" fill="#4a6cff" opacity=".42"/></g>`
+        + `<path d="M${x - 9} ${dishY - 2} Q${x} ${dishY + 5.5} ${x + 9} ${dishY - 2} Z" fill="url(#${id}b)"/><ellipse cx="${x}" cy="${dishY - 2}" rx="9" ry="2" fill="#d8b86e" stroke="#7a5c26" stroke-width=".4"/><ellipse cx="${x}" cy="${dishY - 2.2}" rx="4.4" ry="1" fill="#5a4418" opacity=".55"/>`
+        + `<path d="M${x - 8} ${dishY - 2} L${x} ${chain + 1} L${x + 8} ${dishY - 2}" stroke="url(#${id}b)" stroke-width=".7" fill="none"/><circle cx="${x}" cy="${dishY + 3.2}" r="1.3" fill="url(#${id}b)"/>`
         + `</g>`;
     }
     const el = document.createElement("div");
     el.className = "lights candles" + (on ? " on" : "");
-    el.innerHTML = `<div class="lightGlow" style="--glow:${flameC}"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="6"/></filter></defs>${out}</svg>`;
+    el.innerHTML = `<div class="lightGlow" style="--glow:${flameC}"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="6"/></filter>`
+      + `<linearGradient id="${id}w" x1="0" x2="1"><stop offset="0" stop-color="${wax}"/><stop offset="1" stop-color="${wax}"/></linearGradient><linearGradient id="${id}sh" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".38"/><stop offset=".28" stop-color="#fff" stop-opacity=".32"/><stop offset=".45" stop-color="#fff" stop-opacity=".06"/><stop offset=".8" stop-color="#000" stop-opacity=".18"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>`
+      + `<linearGradient id="${id}b" x1="0" x2="1"><stop offset="0" stop-color="#4a3410"/><stop offset=".35" stop-color="#d9b464"/><stop offset=".5" stop-color="#f6e2a2"/><stop offset=".7" stop-color="#9a7430"/><stop offset="1" stop-color="#3e2a0c"/></linearGradient>`
+      + `<linearGradient id="${id}t" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${flameC}" stop-opacity=".55"/><stop offset="1" stop-color="${flameC}" stop-opacity="0"/></linearGradient>`
+      + `<linearGradient id="${id}fl" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff8a2a" stop-opacity=".6"/><stop offset=".35" stop-color="${flameC}"/><stop offset=".85" stop-color="#ffe9a8"/><stop offset="1" stop-color="#ffd27a"/></linearGradient></defs>${out}</svg>`;
     el.style.height = H + "px";
     return el;
   }
 
   /** Long, full strands of wisteria hanging from the shelf edge, with tiny lights tucked in that slowly glow and fade. */
   function wisteriaEl(w, cfg = {}) {
-    const n = Math.max(9, Math.round(w / 22)), gap = w / n;
+    const n = Math.max(9, Math.round(w / 22)), gap = w / n, id = "lg" + lid++;
     let vine = `M0 3`, leaves = "", strands = "", H = 0;
     for (let i = 0; i <= n; i++) vine += ` Q${(i - 0.5) * gap} ${i % 2 ? 9 : 1} ${i * gap} 3`;
     // deeper violet at the top of each cluster, paler lilac toward the tip
@@ -261,12 +298,12 @@
       else {
         for (let y = 2, k = 0; y < len; y += 2.2, k++) {
           const f = y / len, r = 4.6 * (1 - f * 0.78) + 0.7;
-          st += `<circle cx="${(c + Math.sin(y * 1.7 + i) * r * 0.75).toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="${shade(f, k + i)}"/>`;
+          st += `<use href="#${id}f${Math.min(2, Math.floor(f * 3)) * 3 + (k + i) % 3}" transform="translate(${(c + Math.sin(y * 1.7 + i) * r * 0.75).toFixed(1)} ${y.toFixed(1)}) rotate(${((k * 47 + i * 13) % 50) - 25}) scale(${(r * 1.12).toFixed(2)})"/>`;
         }
         // three or four tiny lights nestled in the flowers, each breathing on its own slow rhythm
         for (let k = 0, m = 3 + (i % 2); k < m; k++) {
           const y = len * (0.18 + k * 0.22) + ((i * 7 + k * 5) % 6), x = c + (((i + k) % 3) - 1) * 2.4;
-          st += `<g class="glint" style="--gt:${(4.2 + ((i * 3 + k * 7) % 9) * 0.55).toFixed(2)}s;--gd:-${(((i * 1.37 + k * 2.1) % 6)).toFixed(2)}s"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.5" fill="${glow}" opacity=".4"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.4" fill="#fffaf0"/></g>`;
+          st += `<g class="glint" style="--gt:${(4.2 + ((i * 3 + k * 7) % 9) * 0.55).toFixed(2)}s;--gd:-${(((i * 1.37 + k * 2.1) % 6)).toFixed(2)}s"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="url(#${id}gl)"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.1" fill="#fffaf0"/></g>`;
         }
       }
       strands += `<svg class="strand" width="24" height="${len + 8}" viewBox="0 0 24 ${len + 8}" style="left:${(x0 - c).toFixed(1)}px;--d:-${((i * 0.53) % 2.4).toFixed(2)}s;--t:${(4.6 + (i % 4) * 0.7).toFixed(1)}s" aria-hidden="true">${st}</svg>`;
@@ -274,30 +311,61 @@
     }
     const el = document.createElement("div");
     el.className = "lights wisteria" + (cfg.on ? " on" : "");
-    el.innerHTML = `${strands}<svg class="vine" width="${w}" height="12" viewBox="0 0 ${w} 12" aria-hidden="true"><path d="${vine}" stroke="${vineC}" stroke-width="1.6" fill="none"/>${leaves}</svg>`;
+    // each floret is a little pea flower: a rounded banner petal, paler at its heart with a light blotch, darker at its
+    // edge, and the small darker keel and wings beneath it
+    let fl = "";
+    SH.forEach((row, a) => row.forEach((col, b) => {
+      const k = a * 3 + b;
+      fl += `<radialGradient id="${id}g${k}" cx=".5" cy=".38" r=".62"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".25" stop-color="${col}"/><stop offset=".8" stop-color="${col}"/><stop offset="1" stop-color="#1c1438" stop-opacity=".9"/></radialGradient>`
+        + `<g id="${id}f${k}"><ellipse cx="-.55" cy=".42" rx=".5" ry=".42" fill="${col}"/><ellipse cx="-.55" cy=".42" rx=".5" ry=".42" fill="#1c1438" opacity="0.25"/><ellipse cx=".55" cy=".42" rx=".5" ry=".42" fill="${col}"/><ellipse cx=".55" cy=".42" rx=".5" ry=".42" fill="#1c1438" opacity="0.18"/>`
+        + `<path d="M0 .2 C-1.15 .25 -1.25 -.85 -.35 -.9 Q0 -.98 .35 -.9 C1.25 -.85 1.15 .25 0 .2Z" fill="url(#${id}g${k})"/>`
+        + `<ellipse cx="0" cy="-.28" rx=".22" ry=".16" fill="#fff6d8" opacity=".55"/><ellipse cx="0" cy=".55" rx=".34" ry=".3" fill="${col}"/><ellipse cx="0" cy=".55" rx=".34" ry=".3" fill="#1c1438" opacity="0.36"/></g>`;
+    }));
+    fl += `<radialGradient id="${id}gl"><stop offset="0" stop-color="${glow}" stop-opacity=".75"/><stop offset=".35" stop-color="${glow}" stop-opacity=".3"/><stop offset="1" stop-color="${glow}" stop-opacity="0"/></radialGradient>`;
+    el.innerHTML = `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${fl}</defs></svg>${strands}<svg class="vine" width="${w}" height="12" viewBox="0 0 ${w} 12" aria-hidden="true"><path d="${vine}" stroke="${vineC}" stroke-width="1.6" fill="none"/>${leaves}</svg>`;
     el.style.height = H + "px";
     return el;
   }
 
   /** Big round red lanterns with gold caps and tassels, on cords of different lengths. */
   function chineseEl(w, cfg) {
+    // silk over a bamboo frame: the ribs bow with the lantern's shape, the silk is lit from a hot core and goes deep red
+    // toward the rims, lacquered gold caps with ridges, a hook ring and cord, a gold medallion, and a knotted tassel
     const on = !!cfg.on, n = Math.max(2, Math.round(w / 120)), gap = w / n, id = "lg" + lid++;
     let out = "", H = 0;
     for (let i = 0; i < n; i++) {
       const x = gap * (i + 0.5) + ((i * 23) % 13) - 6, cord = 6 + ((i * 37) % 3) * 9, rx = 20, ry = 16, cy = cord + 6 + ry;
-      H = Math.max(H, cy + ry + 30);
-      let ribs = ""; for (const f of [-0.75, -0.4, 0, 0.4, 0.75]) ribs += `<ellipse cx="${x}" cy="${cy}" rx="${(rx * Math.abs(f)).toFixed(1)}" ry="${ry}" fill="none" stroke="rgba(90,10,0,.45)" stroke-width=".7"/>`;
-      out += `<g class="bulb" style="--d:${((i * 0.7) % 2).toFixed(2)}s"><line x1="${x}" y1="0" x2="${x}" y2="${cord + 3}" stroke="#2a1410" stroke-width="1"/>`
+      H = Math.max(H, cy + ry + 34);
+      let ribs = "";
+      for (const f of [-0.86, -0.6, -0.3, 0, 0.3, 0.6, 0.86]) {
+        const bx = x + rx * f;
+        ribs += `<path d="M${(x + rx * f * 0.42).toFixed(1)} ${cy - ry + 0.6} Q${(x + rx * f * 1.32).toFixed(1)} ${cy} ${(x + rx * f * 0.42).toFixed(1)} ${cy + ry - 0.6}" fill="none" stroke="rgba(70,6,0,${(0.3 + Math.abs(f) * 0.25).toFixed(2)})" stroke-width="${f === 0 ? 0.6 : 0.75}"/>`;
+      }
+      let tas = ""; for (let k = 0; k < 13; k++) { const u = (k - 6) / 6; tas += `<path d="M${(x + u * 2.4).toFixed(2)} ${cy + ry + 11} q${(u * 0.8).toFixed(2)} 8 ${(u * 3.2).toFixed(2)} ${(17 + (k % 3) * 1.6).toFixed(1)}" stroke="${k % 4 === 1 ? "#f6d27a" : k % 3 ? "#c99632" : "#e0b14d"}" stroke-width=".7" fill="none"/>`; }
+      out += `<g class="bulb" style="--d:${((i * 0.7) % 2).toFixed(2)}s"><line x1="${x}" y1="0" x2="${x}" y2="${cord}" stroke="#2a1410" stroke-width="1"/><circle cx="${x}" cy="${cord + 1.6}" r="1.8" fill="none" stroke="url(#${id}g)" stroke-width=".9"/>`
         + `<circle class="halo" cx="${x}" cy="${cy}" r="34" fill="#ff4a1c" filter="url(#${id})"/>`
-        + `<ellipse class="glassOff" cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#6e1a12"/><ellipse class="ember" cx="${x}" cy="${cy}" rx="${rx * 0.55}" ry="${ry * 0.55}" fill="#ff6a2a" filter="url(#${id}e)"/><ellipse class="glass" cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#${id}f)"/>${ribs}`
-        + `<path d="M${x - 6} ${cy - 3} q6 -5 12 0 q-6 5 -12 0Z" fill="#2a0a05" opacity=".45"/>`
-        + `<rect x="${x - 9}" y="${cy - ry - 3}" width="18" height="5" rx="1.5" fill="#d6a73e"/><rect x="${x - 9}" y="${cy + ry - 2}" width="18" height="5" rx="1.5" fill="#d6a73e"/>`
-        + Array.from({ length: 7 }, (_, k) => `<line x1="${x - 4.5 + k * 1.5}" y1="${cy + ry + 3}" x2="${x - 5 + k * 1.7}" y2="${cy + ry + 22 + (k % 2) * 3}" stroke="#e0b14d" stroke-width=".9"/>`).join("")
-        + `<rect x="${x - 2}" y="${cy + ry + 2}" width="4" height="4" rx="1" fill="#b8402f"/></g>`;
+        + `<ellipse class="glassOff" cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#${id}o)"/>`
+        + `<ellipse class="ember" cx="${x}" cy="${cy}" rx="${rx * 0.55}" ry="${ry * 0.55}" fill="#ff6a2a" filter="url(#${id}e)"/>`
+        + `<ellipse class="glass" cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#${id}f)"/><ellipse class="glass" cx="${x}" cy="${cy + 2}" rx="${rx * 0.42}" ry="${ry * 0.5}" fill="#ffd27a" opacity=".55" filter="url(#${id}e)"/>`
+        + ribs + `<ellipse cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#${id}v)"/>`
+        // the medallion
+        + `<circle cx="${x}" cy="${cy}" r="6.4" fill="#2a0a05" fill-opacity=".18" stroke="#f0c45a" stroke-opacity=".8" stroke-width=".8"/><circle cx="${x}" cy="${cy}" r="4.6" fill="none" stroke="#f0c45a" stroke-opacity=".55" stroke-width=".45"/>`
+        + `<path d="M${x - 2.6} ${cy} h5.2 M${x} ${cy - 2.6} v5.2 M${x - 1.8} ${cy - 1.8} l3.6 3.6 M${x + 1.8} ${cy - 1.8} l-3.6 3.6" stroke="#f0c45a" stroke-opacity=".7" stroke-width=".55"/>`
+        + `<path d="M${x - rx + 4} ${cy - 6} Q${x - rx + 1.5} ${cy} ${x - rx + 4} ${cy + 6}" stroke="#fff" stroke-opacity=".22" stroke-width="1.6" fill="none" stroke-linecap="round"/>`
+        // caps
+        + `<path d="M${x - 9.5} ${cy - ry + 2} L${x - 8} ${cy - ry - 3} H${x + 8} L${x + 9.5} ${cy - ry + 2}Z" fill="url(#${id}g)"/><path d="M${x - 8.6} ${cy - ry - 1.2} h17.2 M${x - 9} ${cy - ry + 0.6} h18" stroke="#6a4610" stroke-width=".5"/>`
+        + `<path d="M${x - 9.5} ${cy + ry - 2} L${x - 8} ${cy + ry + 3} H${x + 8} L${x + 9.5} ${cy + ry - 2}Z" fill="url(#${id}g)"/><path d="M${x - 9} ${cy + ry - 0.6} h18 M${x - 8.6} ${cy + ry + 1.2} h17.2" stroke="#6a4610" stroke-width=".5"/>`
+        // the knot, a bead and the tassel
+        + `<line x1="${x}" y1="${cy + ry + 3}" x2="${x}" y2="${cy + ry + 6}" stroke="#b8402f" stroke-width="1.1"/><path d="M${x} ${cy + ry + 5} l2.6 2.4 -2.6 2.4 -2.6 -2.4Z" fill="#c23a28" stroke="#7a1a10" stroke-width=".4"/>`
+        + `<circle cx="${x}" cy="${cy + ry + 10.6}" r="1.5" fill="url(#${id}g)"/>${tas}<rect x="${x - 2.4}" y="${cy + ry + 11}" width="4.8" height="2.2" rx=".8" fill="#b8402f"/></g>`;
     }
     const el = document.createElement("div");
     el.className = "lights chinese" + (on ? " on" : "");
-    el.innerHTML = `<div class="lightGlow" style="--glow:#ff5a2a"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="9"/></filter><filter id="${id}e" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="4"/></filter><radialGradient id="${id}f" cx=".45" cy=".42" r=".65"><stop offset="0" stop-color="#ffb070"/><stop offset=".45" stop-color="#ff4a1f"/><stop offset="1" stop-color="#b3180c"/></radialGradient></defs>${out}</svg>`;
+    el.innerHTML = `<div class="lightGlow" style="--glow:#ff5a2a"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="9"/></filter><filter id="${id}e" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="4"/></filter>`
+      + `<radialGradient id="${id}f" cx=".46" cy=".5" r=".62"><stop offset="0" stop-color="#ffc27a"/><stop offset=".35" stop-color="#ff6a2c"/><stop offset=".75" stop-color="#e02a12"/><stop offset="1" stop-color="#8e1208"/></radialGradient>`
+      + `<radialGradient id="${id}o" cx=".42" cy=".42" r=".7"><stop offset="0" stop-color="#9a2a1c"/><stop offset=".7" stop-color="#6e1a12"/><stop offset="1" stop-color="#3e0a06"/></radialGradient>`
+      + `<linearGradient id="${id}v" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2a0400" stop-opacity=".45"/><stop offset=".22" stop-color="#2a0400" stop-opacity="0"/><stop offset=".78" stop-color="#2a0400" stop-opacity="0"/><stop offset="1" stop-color="#2a0400" stop-opacity=".5"/></linearGradient>`
+      + `<linearGradient id="${id}g" x1="0" x2="1"><stop offset="0" stop-color="#6a4610"/><stop offset=".3" stop-color="#e8bf5a"/><stop offset=".5" stop-color="#fff0b8"/><stop offset=".7" stop-color="#c8932e"/><stop offset="1" stop-color="#5a3a0c"/></linearGradient></defs>${out}</svg>`;
     el.style.height = H + "px";
     return el;
   }

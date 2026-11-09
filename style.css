@@ -651,7 +651,7 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .shelf.hasLights[data-lights="lanterns"] .caption { padding-top: 66px; }
 .shelf.hasLights[data-lights="fireflies"] .caption { padding-top: 36px; }
 .lights.fireflies { top: auto; bottom: -40px; height: 280px; overflow: visible; }
-.lights.fireflies i { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--c); opacity: 0; box-shadow: 0 0 6px 2px var(--c), 0 0 14px 4px color-mix(in srgb, var(--c) 45%, transparent); }
+.lights.fireflies i { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(circle, #fffef0 0 22%, var(--c) 55%, color-mix(in srgb, var(--c) 70%, #000) 100%); opacity: 0; box-shadow: 0 0 6px 2px var(--c), 0 0 14px 4px color-mix(in srgb, var(--c) 45%, transparent); }
 .lights.fireflies.on i { animation: drift var(--t) ease-in-out infinite alternate, blink calc(var(--t) * .7) ease-in-out infinite; animation-delay: var(--d); }
 @keyframes drift { from { transform: translate(0, 0); } to { transform: translate(var(--dx), var(--dy)); } }
 @keyframes blink { 0%, 100% { opacity: .15; } 30%, 60% { opacity: 1; } }
