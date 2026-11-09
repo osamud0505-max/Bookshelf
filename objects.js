@@ -61,10 +61,11 @@
       const PX = [9, 17, 25, 33, 41, 49, 59, 69, 77, 85, 93, 101, 109];
       PX.forEach((x, i) => {
         const len = 26 + ((i * 7) % 3) * 5 + (i % 2 ? 0 : 4), y0 = rimY + 7, w = 2.6;
-        prisms += `<g class="prism" style="--i:${i}"><line x1="${x}" y1="${y0 - 3}" x2="${x}" y2="${y0}" stroke="#9c8a62" stroke-width=".5"/><circle cx="${x}" cy="${y0 + 1.6}" r="1.8" fill="url(#${g}cr)" stroke="#fff" stroke-opacity=".5" stroke-width=".3"/>`
+        prisms += `<g class="prism" data-x="${x}" data-y="${y0 - 3}" data-l="${len}" style="--i:${i}"><line x1="${x}" y1="${y0 - 3}" x2="${x}" y2="${y0}" stroke="#9c8a62" stroke-width=".5"/><circle cx="${x}" cy="${y0 + 1.6}" r="1.8" fill="url(#${g}cr)" stroke="#fff" stroke-opacity=".5" stroke-width=".3"/>`
           + `<path d="M${x} ${y0 + 4} L${x + w} ${y0 + 10} L${x + w * 0.7} ${y0 + len - 6} L${x} ${y0 + len} L${x - w * 0.7} ${y0 + len - 6} L${x - w} ${y0 + 10}Z" fill="url(#${g}cr)" stroke="#e8eef4" stroke-opacity=".6" stroke-width=".35"/>`
           + `<path d="M${x} ${y0 + 4} L${x} ${y0 + len}" stroke="#fff" stroke-opacity=".55" stroke-width=".5"/><path d="M${x - w * 0.6} ${y0 + 12} L${x - w * 0.4} ${y0 + len - 8}" stroke="#7d8a99" stroke-opacity=".45" stroke-width=".5"/>`
-          + `<circle class="spark" cx="${x + 0.6}" cy="${y0 + 12 + (i % 3) * 4}" r=".9" fill="#fff"/></g>`;
+          + `<circle class="spark" cx="${x + 0.6}" cy="${y0 + 12 + (i % 3) * 4}" r=".9" fill="#fff"/>`
+          + `<path class="glint" d="M${x - 0.3} ${y0 + 8 + (i % 4) * 3} l.3 -2.2 .3 2.2 2.2 .3 -2.2 .3 -.3 2.2 -.3 -2.2 -2.2 -.3Z" fill="#fff" opacity="0"/></g>`;
         if (i % 3 === 0) arms += `<path d="M${cx} ${rimY + 13} Q${(cx + x) / 2} ${rimY + 9} ${x} ${rimY + 3}" stroke="#4a3818" stroke-width="1.1" fill="none"/>`;
       });
       // the stem: baluster with relief, a collar, and a domed foot with leafy scallops
@@ -104,6 +105,88 @@
       setTimeout(() => el.classList.remove("chainPull"), 900);
     },
   };
+
+  // ------------------------------------------------------------------ the lamp's crystals swing when the shelf is swiped
+  // Each prism is a little pendulum hung from its hook (real ones are a few centimetres long, so they swing about twice
+  // a second, longer ones a touch slower). Sliding the books along jolts the shelf: every change in the scroll's speed
+  // nudges the pivots, the prisms swing, fall out of step, knock against their neighbours (a soft glass clink, glints
+  // as they turn in the light) and settle again over a couple of seconds.
+  const SWING = new WeakMap();
+  const swingOf = (lamp) => {
+    let s = SWING.get(lamp); if (s) return s;
+    const ps = [...lamp.querySelectorAll(".prism")].map((el, i) => {
+      const x = +el.dataset.x, y = +el.dataset.y, len = +el.dataset.l, L = 4 + len * 0.55; // pivot to centre of mass, in drawing units
+      return { el, glint: el.querySelector(".glint"), x, y, len, L, w0: Math.sqrt(9810 / (L * 2.5)), th: 0, om: 0, k: 0.85 + Math.random() * 0.3,
+        f: 5600 - len * 70 + (i % 3) * 140, lastHit: 0 };
+    });
+    s = { lamp, ps, run: false, last: 0, sv: null, st: 0 }; SWING.set(lamp, s); return s;
+  };
+  const step = (s, dt) => {
+    const ps = s.ps;
+    for (const p of ps) { p.om += (-p.w0 * p.w0 * Math.sin(p.th) - 1.4 * p.om) * dt; p.th += p.om * dt; }
+    // neighbours knock together: compare where their bodies are, a little below the middle of each drop
+    for (let i = 0; i + 1 < ps.length; i++) {
+      const a = ps[i], b = ps[i + 1], ra = 4 + a.len * 0.6, rb = 4 + b.len * 0.6;
+      const gap = (b.x + rb * Math.sin(b.th)) - (a.x + ra * Math.sin(a.th)) - 6.6;
+      const va = ra * a.om * Math.cos(a.th), vb = rb * b.om * Math.cos(b.th), rel = va - vb; // > 0: closing
+      if (gap < 0 && rel > 0) {
+        const e = 0.55, J = (1 + e) * rel / 2; a.om -= J / (ra * Math.cos(a.th)); b.om += J / (rb * Math.cos(b.th));
+        const now = performance.now(), hit = Math.min(1, rel / 140);
+        if (hit > 0.03 && now - a.lastHit > 60 && window.ShelfSfx && window.ShelfSfx.clink) {
+          a.lastHit = b.lastHit = now; const r = s.lamp.getBoundingClientRect();
+          window.ShelfSfx.clink(Math.random() < 0.5 ? a.f : b.f, hit, ((r.left + r.width / 2) / innerWidth - 0.5) * 1.2);
+          a.flash = b.flash = Math.max(a.flash || 0, hit);
+        }
+      }
+    }
+  };
+  const draw = (s) => {
+    const lit = s.lamp.classList.contains("lit");
+    for (const p of s.ps) {
+      p.el.setAttribute("transform", `rotate(${(p.th * 57.2958).toFixed(2)} ${p.x} ${p.y})`);
+      // a turning crystal throws a glint now and then; a knock always does
+      const g = Math.min(1, Math.abs(p.om) / 3) * (Math.random() < 0.18 ? 1 : 0), f = p.flash || 0;
+      p.glint.setAttribute("opacity", (Math.max(g * 0.7, f) * (lit ? 1 : 0.55)).toFixed(2)); p.flash = f * 0.8;
+    }
+  };
+  const run = (s) => {
+    if (s.run) return; s.run = true; s.last = performance.now();
+    const tick = (now) => {
+      if (!s.lamp.isConnected) { s.run = false; return; }
+      let dt = Math.min(0.05, (now - s.last) / 1000); s.last = now;
+      while (dt > 0) { const h = Math.min(dt, 1 / 240); step(s, h); dt -= h; }
+      draw(s);
+      const e = s.ps.reduce((m, p) => Math.max(m, Math.abs(p.th) + Math.abs(p.om) / p.w0), 0);
+      if (e < 0.002) { for (const p of s.ps) { p.th = p.om = 0; p.el.removeAttribute("transform"); p.glint.setAttribute("opacity", "0"); } s.run = false; return; }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
+  // the swipe: watch every shelf's scroller; a change in its speed jolts the lamps standing on that shelf
+  const rowSpeed = new WeakMap();
+  addEventListener("scroll", (ev) => {
+    const sc = ev.target; if (!sc || !sc.classList || !sc.classList.contains("scroller")) return;
+    const row = sc.parentElement; if (!row) return;
+    const lamps = row.querySelectorAll('.ornament[data-kind="pinkLamp"]'); if (!lamps.length || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const now = performance.now(), prev = rowSpeed.get(sc) || { x: sc.scrollLeft, t: now, v: 0 };
+    const dt = Math.max(8, now - prev.t), v = (sc.scrollLeft - prev.x) / dt * 1000; // px per second
+    const sv = prev.v + (v - prev.v) * 0.5, dv = sv - prev.v;
+    rowSpeed.set(sc, { x: sc.scrollLeft, t: now, v: sv });
+    // when the scrolling stops (no event for a moment) that sudden stop is a jolt too (scrollend is not on every phone)
+    clearTimeout(prev.end);
+    const end = setTimeout(() => { const q = rowSpeed.get(sc); if (!q) return; rowSpeed.set(sc, { x: sc.scrollLeft, t: performance.now(), v: 0 }); jolt(lamps, -q.v); }, 110);
+    rowSpeed.get(sc).end = end;
+    if (Math.abs(dv) > 2) jolt(lamps, dv);
+  }, { capture: true, passive: true });
+  function jolt(lamps, dv) {
+    lamps.forEach((lamp) => {
+      if (!lamp.isConnected) return;
+      const s = swingOf(lamp);
+      // the pivots are pushed with the books; the crystals lag behind (so they swing against the push)
+      for (const p of s.ps) p.om = Math.max(-4.5, Math.min(4.5, p.om - 0.0011 * dv * p.k * (20 / p.L) * p.w0 / 14));
+      run(s);
+    });
+  }
 
   // ------------------------------------------------------------------ the quill and ink stand
   // brass tray with scrolls and little feet, a pen cup, a square ink bottle with a cream label,

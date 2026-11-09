@@ -677,7 +677,28 @@
       n.connect(lp).connect(fg).connect(sfxOut()); n.start(at); n.stop(at + 0.12);
     } catch (e) { /* no sound available */ }
   }
-  window.ShelfSfx = { page: soundPageTurn, slide: soundBookSlide, pull: soundPullSwitch, setVolume(v) { if (sfxBus) sfxBus.gain.setTargetAtTime(0.16 * v, sfxBus.context.currentTime, 0.05); } };
+  /** Two little glass prisms touching: a bright, short, slightly out-of-tune ring (small glass rings at
+   *  inharmonic partials), the higher ones dying first, with a tiny tick of contact. Very soft. */
+  let clinks = [];
+  function soundClink(freq, hit, pan) {
+    try {
+      const now = performance.now(); clinks = clinks.filter((t) => now - t < 1000);
+      if (clinks.length > 18 || !actx || actx.state !== "running") return; // never a rattle; and only once audio is already up
+      clinks.push(now);
+      const t = actx.currentTime + Math.random() * 0.004, v = Math.max(0.05, Math.min(1, hit));
+      const out = actx.createGain(); out.gain.value = 0.55 * v * v;
+      let dest = out; if (actx.createStereoPanner) { const p = actx.createStereoPanner(); p.pan.value = Math.max(-0.6, Math.min(0.6, pan || 0)); out.connect(p); p.connect(sfxOut()); } else out.connect(sfxOut());
+      [[1, 0.5, 0.55], [2.32, 0.3, 0.32], [4.25, 0.16, 0.18], [6.63, 0.08, 0.1]].forEach(([r, a, d]) => {
+        const f = freq * r * (1 + (Math.random() - 0.5) * 0.004); if (f > 16000) return;
+        const o = actx.createOscillator(), g = actx.createGain(); o.type = "sine"; o.frequency.value = f;
+        const len = d * (0.6 + v * 0.6); env(g, t, a, 0.0015, len);
+        o.connect(g).connect(dest); o.start(t); o.stop(t + len + 0.05);
+      });
+      const n = noiseBurst(0.012), hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 6000;
+      const ng = actx.createGain(); env(ng, t, 0.12, 0.0008, 0.006); n.connect(hp).connect(ng).connect(dest); n.start(t); n.stop(t + 0.012);
+    } catch (e) { /* no sound available */ }
+  }
+  window.ShelfSfx = { page: soundPageTurn, slide: soundBookSlide, pull: soundPullSwitch, clink: soundClink, setVolume(v) { if (sfxBus) sfxBus.gain.setTargetAtTime(0.16 * v, sfxBus.context.currentTime, 0.05); } };
   /** A soft glassy shimmer, for things that glow rather than burn. */
   function soundChime(up) {
     try {
