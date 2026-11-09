@@ -146,7 +146,7 @@
     const on = !!cfg.on, col = LIGHT_COLOURS[cfg.colour] || LIGHT_COLOURS.warm;
     const colour = (i) => col[1] || MULTI[i % MULTI.length];
     const sag = style === "globe" ? 24 : style === "lanterns" ? 20 : 18, span = style === "globe" ? 190 : style === "lanterns" ? 200 : 130;
-    const n = Math.max(2, Math.round(w / span)), L = w / n, H = sag + (style === "globe" ? 34 : style === "lanterns" ? 46 : 18);
+    const n = Math.max(2, Math.round(w / span)), L = w / n, H = sag + (style === "globe" ? 40 : style === "lanterns" ? 46 : 18);
     const id = "lg" + lid++;
     const q = (x0, t) => { const x1 = x0 + L, cx = x0 + L / 2, cy = 2 + sag * 2, u = 1 - t; return { x: u * u * x0 + 2 * u * t * cx + t * t * x1, y: u * u * 2 + 2 * u * t * cy + t * t * 2 }; };
     let wire = "M0 2", bulbs = "", k = 0;
@@ -156,12 +156,29 @@
       for (const t of ts) {
         const p = q(x0, t), c = colour(k), d = ((k * 0.73) % 3).toFixed(2);
         if (style === "globe") {
-          bulbs += `<g class="bulb" style="--d:${d}s"><line x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${p.y + 9}" stroke="#2a2420" stroke-width="1.4"/><rect x="${p.x - 2.6}" y="${p.y + 8}" width="5.2" height="5" rx="1" fill="#3a332d"/>`
-            + `<circle class="halo" cx="${p.x}" cy="${p.y + 20}" r="16" fill="${c}" filter="url(#${id})"/><circle class="glassOff" cx="${p.x}" cy="${p.y + 20}" r="8" fill="rgba(255,255,255,.2)" stroke="rgba(255,255,255,.45)" stroke-width=".8"/>`
-            + `<path d="M${p.x - 2.5} ${p.y + 21} q2.5 -4 5 0" stroke="rgba(80,70,60,.6)" stroke-width="1" fill="none"/>`
-            + `<circle class="ember" cx="${p.x}" cy="${p.y + 20}" r="4" fill="#ff7a1a" filter="url(#${id}e)"/>`
-            + `<circle class="glass" cx="${p.x}" cy="${p.y + 20}" r="8" fill="${c}" stroke="rgba(255,255,255,.45)" stroke-width=".8"/>`
-            + `<path class="glass" d="M${p.x - 2.5} ${p.y + 21} q2.5 -4 5 0" stroke="#fff7e0" stroke-width="1" fill="none"/></g>`;
+          // an Edison globe bulb: a black bakelite socket and a threaded brass collar on its flex, a clear glass sphere
+          // with a squirrel-cage filament on two lead wires; lit, the filament burns white-gold and the glass glows amber
+          const x = p.x, top = p.y, cy = top + 25, r = 10, gid = id + "b" + k, neck = cy - r + 1.5;
+          let zig = `M${x - 3.6} ${cy + 1.2}`; for (let z = 0; z < 8; z++) zig += ` l.9 ${z % 2 ? 2 : -2}`;
+          bulbs += `<g class="bulb" style="--d:${d}s">`
+            + `<defs><radialGradient id="${gid}" cx=".5" cy=".55" r=".55"><stop offset="0" stop-color="#fff9e8"/><stop offset=".35" stop-color="${c}" stop-opacity=".85"/><stop offset=".8" stop-color="${c}" stop-opacity=".45"/><stop offset="1" stop-color="#b8601c" stop-opacity=".55"/></radialGradient></defs>`
+            + `<path d="M${x} ${top} q.6 2.5 0 4.5 q-.6 2 0 3" stroke="#1a1714" stroke-width="1.5" fill="none"/>`
+            + `<circle class="halo" cx="${x}" cy="${cy}" r="21" fill="${c}" filter="url(#${id})"/>`
+            // socket and collar
+            + `<rect x="${x - 3.4}" y="${top + 7}" width="6.8" height="6" rx="1.4" fill="url(#${id}sk)"/><path d="M${x - 3.4} ${top + 9} h6.8 M${x - 3.4} ${top + 11} h6.8" stroke="#000" stroke-opacity=".45" stroke-width=".5"/>`
+            + `<rect x="${x - 2.9}" y="${top + 12.6}" width="5.8" height="3.6" rx=".6" fill="url(#${id}br)"/><path d="M${x - 2.9} ${top + 13.6} l5.8 .5 M${x - 2.9} ${top + 14.8} l5.8 .5" stroke="#6b4a18" stroke-width=".45"/>`
+            // clear glass (always there), lead wires and the cold filament
+            + `<circle cx="${x}" cy="${cy}" r="${r}" fill="url(#${id}cg)" stroke="rgba(235,240,248,.35)" stroke-width=".6"/>`
+            + `<path d="M${x - 1.2} ${neck} L${x - 3.6} ${cy + 1.2} M${x + 1.2} ${neck} L${x + 3.6} ${cy + 1.2}" stroke="#8a8a88" stroke-width=".45" fill="none"/>`
+            + `<path class="glassOff" d="${zig}" stroke="#5a5048" stroke-width=".55" fill="none" stroke-linejoin="round"/>`
+            + `<circle class="ember" cx="${x}" cy="${cy + 0.5}" r="4" fill="#ff7a1a" filter="url(#${id}e)"/>`
+            // lit: the glass fills with warm light, the filament burns
+            + `<circle class="glass" cx="${x}" cy="${cy}" r="${r}" fill="url(#${gid})"/>`
+            + `<path class="glass" d="${zig}" stroke="#ffb04a" stroke-width="2.2" fill="none" stroke-linejoin="round" filter="url(#${id}e)"/>`
+            + `<path class="glass" d="${zig}" stroke="#fffaf0" stroke-width=".7" fill="none" stroke-linejoin="round"/>`
+            // reflections on the glass
+            + `<path d="M${x - 7.2} ${cy - 2.5} A${r - 2.2} ${r - 2.2} 0 0 1 ${x - 1.5} ${cy - 7.6}" stroke="#fff" stroke-opacity=".6" stroke-width="1.2" fill="none" stroke-linecap="round"/>`
+            + `<circle cx="${x + 5.2}" cy="${cy + 4.8}" r=".9" fill="#fff" opacity=".35"/><path d="M${x + 4} ${cy + 7.6} A${r - 1.4} ${r - 1.4} 0 0 0 ${x + 8} ${cy + 2}" stroke="#fff" stroke-opacity=".18" stroke-width=".8" fill="none"/></g>`;
         } else if (style === "lanterns") {
           // round paper lantern: ribbed shade, dark cap and base, a tassel
           const cy = p.y + 24, rx = 13, ry = 15, lit = on ? c : "#d9cdbb";
@@ -186,7 +203,7 @@
     const glowCol = col[1] || "#ffd9a0";
     const el = document.createElement("div");
     el.className = "lights " + style + (on ? " on" : "");
-    el.innerHTML = `<div class="lightGlow" style="--glow:${glowCol}"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="${style === "globe" ? 5 : 3}"/></filter><filter id="${id}e" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.2"/></filter></defs><path d="${wire}" stroke="#2a2420" stroke-width="1.3" fill="none" opacity=".85"/>${bulbs}</svg>`;
+    el.innerHTML = `<div class="lightGlow" style="--glow:${glowCol}"></div><svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><defs><filter id="${id}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="${style === "globe" ? 5 : 3}"/></filter><filter id="${id}e" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.2"/></filter>${style === "globe" ? `<linearGradient id="${id}sk" x1="0" x2="1"><stop offset="0" stop-color="#0c0b0a"/><stop offset=".35" stop-color="#3a3632"/><stop offset=".6" stop-color="#1a1816"/><stop offset="1" stop-color="#080707"/></linearGradient><linearGradient id="${id}br" x1="0" x2="1"><stop offset="0" stop-color="#6a4a1c"/><stop offset=".35" stop-color="#e8c47a"/><stop offset=".6" stop-color="#a87a34"/><stop offset="1" stop-color="#4a3210"/></linearGradient><radialGradient id="${id}cg" cx=".42" cy=".38" r=".62"><stop offset="0" stop-color="#fff" stop-opacity=".04"/><stop offset=".75" stop-color="#d8e2ee" stop-opacity=".1"/><stop offset="1" stop-color="#e8eef6" stop-opacity=".3"/></radialGradient>` : ""}</defs><path d="${wire}" stroke="#2a2420" stroke-width="1.3" fill="none" opacity=".85"/>${bulbs}</svg>`;
     el.style.height = H + "px";
     return el;
   }

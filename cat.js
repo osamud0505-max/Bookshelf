@@ -7,7 +7,7 @@
 (() => {
   "use strict";
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const V = "?v=8", IN = "bg/loft-cat-in.mp4" + V, SLEEP = "bg/loft-cat-sleep.mp4" + V;
+  const V = "?v=9", IN = "bg/loft-cat-in.mp4" + V, SLEEP = "bg/loft-cat-sleep.mp4" + V;
   // the film covers this band of the loft picture (fractions of the picture's height), full width
   const Y0 = 1702 / 2758, BAND = 658 / 2758, TOP = 0.55;
   let arrived = false, timer = 0, active = null;
