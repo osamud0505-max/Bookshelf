@@ -391,11 +391,20 @@
   const BRASS = [[0, "#5a421c"], [0.28, "#c9a65e"], [0.45, "#f3dc9a"], [0.62, "#a9843f"], [1, "#4a3616"]];
   const BRONZE = [[0, "#33240f"], [0.28, "#87683a"], [0.45, "#c9a46a"], [0.62, "#6e5226"], [1, "#281b0b"]];
   const SILVER = [[0, "#3d4046"], [0.3, "#a9adb5"], [0.46, "#f1f3f6"], [0.62, "#8b9097"], [1, "#30333a"]];
-  const taper = (x, top, bottom, wd, wax = "#efe6d2") => `<rect x="${x - wd / 2}" y="${top}" width="${wd}" height="${bottom - top}" rx="1.6" fill="${wax}"/>`
-    + `<rect x="${x - wd / 2}" y="${top}" width="${wd * 0.3}" height="${bottom - top}" fill="#fff" opacity=".28"/>`
-    + `<path d="M${x - wd / 2 + 0.6} ${top + 2} q-1 7 .4 12 M${x + wd / 2 - 1.2} ${top + 1} q1.4 5 .2 9 M${x} ${top + 1} q.8 4 0 6" stroke="${wax}" stroke-width="2.6" stroke-linecap="round" fill="none"/>`
-    + `<line x1="${x}" y1="${top}" x2="${x}" y2="${top - 4}" stroke="#2a2420" stroke-width="1.2"/>`;
-  const flame = (x, y, s = 1) => `<circle class="ember" cx="${x}" cy="${y - 0.5}" r="${1.4 * s}" fill="#ff7a2a"/><g class="ornFlame" data-x="${x}" data-y="${y}"><g class="ornFlicker"><ellipse cx="${x}" cy="${y - 9 * s}" rx="${5 * s}" ry="${11 * s}" fill="#ffb347" opacity=".55"/><path d="M${x} ${y - 20 * s} C${x + 6 * s} ${y - 12 * s} ${x + 5 * s} ${y - 2 * s} ${x} ${y} C${x - 5 * s} ${y - 2 * s} ${x - 6 * s} ${y - 12 * s} ${x} ${y - 20 * s}Z" fill="#ffc861"/><path d="M${x} ${y - 13 * s} C${x + 2.6 * s} ${y - 9 * s} ${x + 2.2 * s} ${y - 3 * s} ${x} ${y - 1.5 * s} C${x - 2.2 * s} ${y - 3 * s} ${x - 2.6 * s} ${y - 9 * s} ${x} ${y - 13 * s}Z" fill="#fffbe6"/><ellipse cx="${x}" cy="${y - 1}" rx="${1.6 * s}" ry="${2.4 * s}" fill="#5a7cff" opacity=".55"/></g></g>`;
+  // a taper: a cylinder of wax shaded round, a melted cup at the top with a rim, wax that has run down the side and
+  // set in drips, a charred wick, and (lit) the top of the candle glowing warm from the flame through the wax
+  const taper = (x, top, bottom, wd, wax = "#efe6d2") => {
+    const r = wd / 2, h = bottom - top, k = Math.round(x * 7 + top) % 5, d1 = Math.min(h * 0.45, 5 + k * 2.2), d2 = Math.min(h * 0.35, 3 + ((k + 2) % 5) * 1.6);
+    const drip = (dx, len, dw) => `<path d="M${(x + dx - dw / 2).toFixed(2)} ${top + 1} v${len.toFixed(1)} a${dw / 2} ${dw / 2} 0 0 0 ${dw} 0 v${(-len).toFixed(1)}Z" fill="${wax}"/>`;
+    return `<rect x="${x - r}" y="${top}" width="${wd}" height="${h}" rx="1.2" fill="${wax}"/>`
+      + drip(-r + 0.9, d1, Math.max(1.4, wd * 0.18)) + drip(r * 0.45, d2, Math.max(1.2, wd * 0.14))
+      + `<rect x="${x - r}" y="${top}" width="${wd}" height="${h}" rx="1.2" fill="url(#oWaxSh)"/>`
+      + `<rect class="litOnly" x="${x - r}" y="${top}" width="${wd}" height="${Math.min(h, wd * 2.2)}" fill="url(#oWaxGlow)"/>`
+      + `<ellipse cx="${x}" cy="${top + 0.6}" rx="${r}" ry="${(wd * 0.17).toFixed(2)}" fill="${wax}"/><ellipse cx="${x}" cy="${top + 0.9}" rx="${(r * 0.72).toFixed(2)}" ry="${(wd * 0.11).toFixed(2)}" fill="#7a6040" opacity=".16"/>`
+      + `<path d="M${x - r} ${top + 0.6} a${r} ${(wd * 0.17).toFixed(2)} 0 0 0 ${wd} 0" stroke="#fff" stroke-opacity=".45" stroke-width=".5" fill="none"/>`
+      + `<path d="M${x} ${top + 1} q.4 -2.2 -.5 -4.2" stroke="#1e1712" stroke-width="1.15" fill="none" stroke-linecap="round"/>`;
+  };
+  const flame = (x, y, s = 1) => `<circle class="ember" cx="${x}" cy="${y - 0.5}" r="${1.4 * s}" fill="#ff7a2a"/><g class="ornFlame" data-x="${x}" data-y="${y}"><g class="ornFlicker"><ellipse cx="${x}" cy="${y - 9 * s}" rx="${5 * s}" ry="${11 * s}" fill="#ffb347" opacity=".5"/><path d="M${x} ${y - 20 * s} C${x + 6 * s} ${y - 12 * s} ${x + 5 * s} ${y - 2 * s} ${x} ${y} C${x - 5 * s} ${y - 2 * s} ${x - 6 * s} ${y - 12 * s} ${x} ${y - 20 * s}Z" fill="url(#oFlameG)"/><path d="M${x} ${y - 13 * s} C${x + 2.6 * s} ${y - 9 * s} ${x + 2.2 * s} ${y - 3 * s} ${x} ${y - 1.5 * s} C${x - 2.2 * s} ${y - 3 * s} ${x - 2.6 * s} ${y - 9 * s} ${x} ${y - 13 * s}Z" fill="#fffbe6"/><ellipse cx="${x}" cy="${y - 1}" rx="${1.6 * s}" ry="${2.4 * s}" fill="#5a7cff" opacity=".55"/></g></g>`;
   const ORNAMENTS = {
     none: { label: "None" },
     candlestick: {
@@ -499,7 +508,19 @@
     pillars: {
       label: "Melted candles", scale: 0.5, vw: 110,
       draw: (g) => `<defs>${metal(g, BRASS)}</defs><path d="M3 200 L3 195 Q55 187 107 195 L107 200Z" fill="#2c2a2e"/><ellipse cx="55" cy="194" rx="52" ry="4" fill="#4a474d"/>`
-        + [[28, 96, 24], [60, 52, 28], [88, 120, 20]].map(([x, top, wd]) => `<rect x="${x - wd / 2}" y="${top}" width="${wd}" height="${193 - top}" rx="3" fill="#ece1cb"/><rect x="${x - wd / 2}" y="${top}" width="${wd * 0.3}" height="${193 - top}" fill="#fff" opacity=".3"/><path d="M${x - wd / 2} ${top + 2} Q${x - wd / 2 - 1} ${top + 18} ${x - wd / 2 + 2} ${top + 26} M${x + wd / 2 - 2} ${top + 2} Q${x + wd / 2 + 1} ${top + 12} ${x + wd / 2 - 1} ${top + 16}" stroke="#ece1cb" stroke-width="4" stroke-linecap="round" fill="none"/><ellipse cx="${x}" cy="${top + 1}" rx="${wd / 2}" ry="3" fill="#d9ccb2"/><line x1="${x}" y1="${top + 1}" x2="${x}" y2="${top - 4}" stroke="#2a2420" stroke-width="1.2"/>` + flame(x, top - 4, 0.95)).join(""),
+        // pillar candles burned down into their middles: the wall of wax stays up round the edge in an uneven, melted
+        // lip, the hollow inside glows with the flame through the thin wax, wax has run over the lip and set in drips
+        + [[28, 96, 24], [60, 52, 28], [88, 120, 20]].map(([x, top, wd], n) => {
+          const r = wd / 2, lip = `M${x - r} ${top + 3} q${r * 0.2} -5 ${r * 0.45} -2.4 q${r * 0.25} 2 ${r * 0.55} 1.6 q${r * 0.35} -.6 ${r * 0.5} 1.4 q${r * 0.2} -3.6 ${r * 0.5} -2.2 V${top + 3}`;
+          const drip = (dx, len, dw) => `<path d="M${(x + dx - dw / 2).toFixed(1)} ${top + 2} v${len} a${dw / 2} ${dw / 2} 0 0 0 ${dw} 0 v${-len}Z" fill="#ece1cb"/>`;
+          return `<rect x="${x - r}" y="${top + 2}" width="${wd}" height="${191 - top}" rx="2.5" fill="#ece1cb"/>`
+            + drip(-r + 2, 18 + n * 6, 3.4) + drip(r * 0.5, 9 + n * 4, 2.6) + drip(-r * 0.2, 5 + n * 2, 2.2)
+            + `<rect x="${x - r}" y="${top + 2}" width="${wd}" height="${191 - top}" rx="2.5" fill="url(#oWaxSh)"/>`
+            + `<rect class="litOnly" x="${x - r}" y="${top}" width="${wd}" height="${wd * 1.3}" fill="url(#oWaxGlow)"/>`
+            + `<path d="${lip} Z" fill="#f3e9d6"/><ellipse cx="${x}" cy="${top + 3.4}" rx="${r - 2.2}" ry="2.6" fill="#b89a6e"/><ellipse class="litOnly" cx="${x}" cy="${top + 3.4}" rx="${r - 2.4}" ry="2.4" fill="#ffc46a"/>`
+            + `<path d="M${x - r + 2.2} ${top + 3.4} a${r - 2.2} 2.6 0 0 0 ${2 * r - 4.4} 0" stroke="#fffaf0" stroke-opacity=".6" stroke-width=".7" fill="none"/>`
+            + `<path d="M${x} ${top + 4} q.4 -2.4 -.5 -4.6" stroke="#1e1712" stroke-width="1.2" fill="none" stroke-linecap="round"/>` + flame(x, top - 0.6, 0.95);
+        }).join(""),
     },
   };
   let ornN = 0;
@@ -512,6 +533,15 @@
     el.style.width = w + "px"; el.style.height = h + "px";
     if (o.soft) el.classList.add("soft");
     const id = "orn" + ornN++;
+    if (!document.getElementById("ornShared")) {
+      // shading every object shares: wax turning away from the light, wax lit from within by its flame, a flame's colour
+      const sh = document.createElement("div");
+      sh.innerHTML = `<svg id="ornShared" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>`
+        + `<linearGradient id="oWaxSh" x1="0" x2="1"><stop offset="0" stop-color="#3a2410" stop-opacity=".42"/><stop offset=".22" stop-color="#fff" stop-opacity=".3"/><stop offset=".4" stop-color="#fff" stop-opacity=".05"/><stop offset=".78" stop-color="#3a2410" stop-opacity=".16"/><stop offset="1" stop-color="#3a2410" stop-opacity=".48"/></linearGradient>`
+        + `<linearGradient id="oWaxGlow" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffcf7a" stop-opacity=".55"/><stop offset="1" stop-color="#ffcf7a" stop-opacity="0"/></linearGradient>`
+        + `<linearGradient id="oFlameG" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff8a2a" stop-opacity=".55"/><stop offset=".3" stop-color="#ffb347"/><stop offset=".75" stop-color="#ffd77a"/><stop offset="1" stop-color="#ffe9b0"/></linearGradient></defs></svg>`;
+      document.body.appendChild(sh.firstChild);
+    }
     // every object gets the same finish: relief lighting, a darker rim and a touch more contrast.
     // Flames stay outside it so they stay cheap to animate.
     let body = o.draw(id), flames = "";
@@ -887,10 +917,15 @@
     candleJar: {
       label: "Candle jar", scale: 0.34, vw: 110,
       draw: (g) => `<defs><linearGradient id="${g}" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".15"/><stop offset=".3" stop-color="#fff" stop-opacity=".45"/><stop offset=".5" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity=".25"/></linearGradient></defs>`
-        + `<rect x="10" y="40" width="90" height="160" rx="10" fill="#f1e8d6"/><ellipse cx="55" cy="80" rx="38" ry="7" fill="#e8dcc4"/>`
+        // thick glass round a pour of wax: the wax is shaded round, its melted pool glows when lit, the glass has a
+        // heavy base and a lip that catch the light, and soot has darkened the glass a little above the wax
+        + `<rect x="10" y="40" width="90" height="160" rx="10" fill="#f1e8d6"/><rect x="10" y="78" width="90" height="122" rx="10" fill="url(#oWaxSh)"/><rect x="10" y="40" width="90" height="40" fill="#2a2018" opacity=".22"/>`
+        + `<ellipse cx="55" cy="80" rx="38" ry="7" fill="#e8dcc4"/><ellipse class="litOnly" cx="55" cy="80" rx="30" ry="5" fill="#ffd690" opacity=".8"/><rect class="litOnly" x="12" y="80" width="86" height="40" fill="url(#oWaxGlow)"/>`
         + `<rect x="24" y="112" width="62" height="56" rx="3" fill="#fbf7ef"/><text x="55" y="140" font-family="Georgia,serif" font-size="12" text-anchor="middle" fill="#7a6a58">vanilla</text><line x1="38" y1="150" x2="72" y2="150" stroke="#b9a988" stroke-width=".8"/>`
         + `<rect x="10" y="40" width="90" height="160" rx="10" fill="url(#${g})" stroke="rgba(255,255,255,.5)" stroke-width="1.2"/>`
-        + `<line x1="55" y1="80" x2="55" y2="72" stroke="#2a2420" stroke-width="1.4"/>` + flame(55, 72, 1.15),
+        + `<rect x="13" y="186" width="84" height="12" rx="6" fill="#fff" opacity=".18"/><ellipse cx="55" cy="41" rx="45" ry="3" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.4"/>`
+        + `<rect x="18" y="48" width="5" height="140" rx="2.5" fill="#fff" opacity=".35"/><rect x="88" y="52" width="3" height="130" rx="1.5" fill="#fff" opacity=".18"/>`
+        + `<path d="M55 80 q.5 -3 -.6 -7" stroke="#1e1712" stroke-width="1.5" fill="none" stroke-linecap="round"/>` + flame(55, 74, 1.15),
     },
     oldCamera: {
       label: "Vintage camera", scale: 0.32, vw: 170, still: true,
