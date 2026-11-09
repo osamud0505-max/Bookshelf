@@ -745,6 +745,8 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .ornament.hgRun .hgStream { animation: hgStream var(--hgDur) linear var(--hgAt) both; }
 .ornament.hgRun .hgStream line + line { animation: hgGrains .22s linear infinite; }
 .ornament.hgFlipping .hgTop, .ornament.hgFlipping .hgBot { animation-play-state: paused; }
+.ornament.hg svg > ellipse { transition: opacity .25s; }
+.ornament.hgFlipping svg > ellipse { opacity: 0; transition: opacity .12s; }
 .ornament.hgFlipping .hgStream { animation: none; opacity: 0; transition: opacity .12s; }
 .ornament.hgFlipping svg { animation: hgFlip 1.15s cubic-bezier(.45,.05,.35,1) both; transform-origin: 50% 50%; }
 @keyframes hgTop { from { transform: translateY(0); } to { transform: translateY(165px); } }

@@ -790,11 +790,11 @@
   };
   D.ORNAMENTS.skull = {
     // cosy game art: a cracked skull with a candle melted onto its crown; the flame and its glow are live on top
-    label: "Skull & candle", scale: 0.55, vw: 95, flat: true, img: "obj/skull.webp",
+    label: "Skull & candle", scale: 0.55, vw: 95, flat: true, img: "obj/skull-cosy.webp",
     draw: (g) => `<defs><radialGradient id="${g}w"><stop offset="0" stop-color="#ffd27a" stop-opacity=".8"/><stop offset="1" stop-color="#ffb24a" stop-opacity="0"/></radialGradient></defs>`
-      + `<image href="obj/skull.webp" x=".6" y="30" width="93.7" height="170" preserveAspectRatio="none"/>`
-      + `<ellipse class="litOnly" cx="48.9" cy="46" rx="13" ry="5" fill="url(#${g}w)"/><ellipse class="litOnly" cx="48.9" cy="56" rx="15" ry="12" fill="url(#${g}w)" opacity=".3"/>`
-      + `<circle class="ember" cx="48.9" cy="30.3" r="1.4" fill="#ff7a2a"/><g class="ornFlame" data-x="48.9" data-y="30.8"><g class="ornFlicker"><ellipse cx="48.9" cy="21.8" rx="5" ry="11" fill="#ffb347" opacity=".55"/><path d="M48.9 10.8 C54.9 18.8 53.9 28.8 48.9 30.8 C43.9 28.8 42.9 18.8 48.9 10.8Z" fill="url(#oFlameG)"/><path d="M48.9 18.8 C51.3 22.8 50.9 28.3 48.9 29.3 C46.9 28.3 46.5 22.8 48.9 18.8Z" fill="#fffbe6"/></g></g>`,
+      + D.contact(g, 48, 40) + `<image href="obj/skull-cosy.webp" x=".6" y="31.5" width="93.7" height="170" preserveAspectRatio="none"/>`
+      + `<g transform="translate(0 1.5)"><ellipse class="litOnly" cx="48.9" cy="46" rx="13" ry="5" fill="url(#${g}w)"/><ellipse class="litOnly" cx="48.9" cy="56" rx="15" ry="12" fill="url(#${g}w)" opacity=".3"/>`
+      + `<circle class="ember" cx="48.9" cy="30.3" r="1.4" fill="#ff7a2a"/><g class="ornFlame" data-x="48.9" data-y="30.8"><g class="ornFlicker"><ellipse cx="48.9" cy="21.8" rx="5" ry="11" fill="#ffb347" opacity=".55"/><path d="M48.9 10.8 C54.9 18.8 53.9 28.8 48.9 30.8 C43.9 28.8 42.9 18.8 48.9 10.8Z" fill="url(#oFlameG)"/><path d="M48.9 18.8 C51.3 22.8 50.9 28.3 48.9 29.3 C46.9 28.3 46.5 22.8 48.9 18.8Z" fill="#fffbe6"/></g></g></g>`,
   };
 
   // ------------------------------------------------------------------ potion bottles that light the shelf; tapped, the potions rise out, become a skull and vanish

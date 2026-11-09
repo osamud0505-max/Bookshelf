@@ -404,6 +404,8 @@
       + `<path d="M${x - r} ${top + 0.6} a${r} ${(wd * 0.17).toFixed(2)} 0 0 0 ${wd} 0" stroke="#fff" stroke-opacity=".45" stroke-width=".5" fill="none"/>`
       + `<path d="M${x} ${top + 1} q.4 -2.2 -.5 -4.2" stroke="#1e1712" stroke-width="1.15" fill="none" stroke-linecap="round"/>`;
   };
+  // painted objects: a soft dark contact shadow where the picture meets the shelf, so it sits on the wood
+  const contact = (id, cx, rx) => `<defs><radialGradient id="${id}cs"><stop offset="0" stop-color="#000" stop-opacity=".62"/><stop offset=".55" stop-color="#000" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs><ellipse cx="${cx}" cy="197.5" rx="${rx}" ry="5.5" fill="url(#${id}cs)"/>`;
   const flame = (x, y, s = 1) => `<circle class="ember" cx="${x}" cy="${y - 0.5}" r="${1.4 * s}" fill="#ff7a2a"/><g class="ornFlame" data-x="${x}" data-y="${y}"><g class="ornFlicker"><ellipse cx="${x}" cy="${y - 9 * s}" rx="${5 * s}" ry="${11 * s}" fill="#ffb347" opacity=".5"/><path d="M${x} ${y - 20 * s} C${x + 6 * s} ${y - 12 * s} ${x + 5 * s} ${y - 2 * s} ${x} ${y} C${x - 5 * s} ${y - 2 * s} ${x - 6 * s} ${y - 12 * s} ${x} ${y - 20 * s}Z" fill="url(#oFlameG)"/><path d="M${x} ${y - 13 * s} C${x + 2.6 * s} ${y - 9 * s} ${x + 2.2 * s} ${y - 3 * s} ${x} ${y - 1.5 * s} C${x - 2.2 * s} ${y - 3 * s} ${x - 2.6 * s} ${y - 9 * s} ${x} ${y - 13 * s}Z" fill="#fffbe6"/><ellipse cx="${x}" cy="${y - 1}" rx="${1.6 * s}" ry="${2.4 * s}" fill="#5a7cff" opacity=".55"/></g></g>`;
   const ORNAMENTS = {
     none: { label: "None" },
@@ -517,11 +519,11 @@
     pillars: {
       // cosy game art: three ivory pillars burned down to ragged rims, wax run down and pooled at their feet.
       // The flames and the glow in their wells are live on top of the picture.
-      label: "Melted candles", scale: 0.45, vw: 139, flat: true, img: "obj/pillars.webp",
+      label: "Melted candles", scale: 0.45, vw: 139, flat: true, img: "obj/pillars-cosy.webp",
       draw: (g) => `<defs><radialGradient id="${g}w"><stop offset="0" stop-color="#ffd27a" stop-opacity=".8"/><stop offset=".6" stop-color="#ffb24a" stop-opacity=".25"/><stop offset="1" stop-color="#ffb24a" stop-opacity="0"/></radialGradient></defs>`
-        + `<image href="obj/pillars.webp" x=".7" y="30" width="137.5" height="170" preserveAspectRatio="none"/>`
-        + [[40.5, 30.7, 22], [96.2, 64.2, 21], [66.9, 107.4, 20]].map(([x, y, r]) => `<ellipse class="litOnly" cx="${x}" cy="${y + 15}" rx="${r}" ry="7" fill="url(#${g}w)"/><ellipse class="litOnly" cx="${x}" cy="${y + 26}" rx="${r + 2}" ry="16" fill="url(#${g}w)" opacity=".3"/>`).join("")
-        + [[40.5, 30.7], [96.2, 64.2], [66.9, 107.4]].map(([x, y]) => flame(x, y - 0.4, 1.05)).join(""),
+        + contact(g, 69, 66) + `<image href="obj/pillars-cosy.webp" x=".7" y="31.5" width="137.5" height="170" preserveAspectRatio="none"/>`
+        + [[40.5, 32.2, 22], [96.2, 65.7, 21], [66.9, 108.9, 20]].map(([x, y, r]) => `<ellipse class="litOnly" cx="${x}" cy="${y + 15}" rx="${r}" ry="7" fill="url(#${g}w)"/><ellipse class="litOnly" cx="${x}" cy="${y + 26}" rx="${r + 2}" ry="16" fill="url(#${g}w)" opacity=".3"/>`).join("")
+        + [[40.5, 32.2], [96.2, 65.7], [66.9, 108.9]].map(([x, y]) => flame(x, y - 0.4, 1.05)).join(""),
     },
   };
   let ornN = 0;
@@ -762,7 +764,7 @@
       // below, and a tap lifts the glass, turns it end over end and sets it down. The picture is the same at both
       // ends, so a turned glass looks just like a fresh one with the sand on top. Sand is drawn in the picture's pixels,
       // flat and cel-shaded like the art, with a brown outline along its surface.
-      label: "Hourglass", scale: 0.6, vw: 120, still: true, flat: true, hourglass: true, img: "obj/hourglass.webp",
+      label: "Hourglass", scale: 0.6, vw: 120, still: true, flat: true, hourglass: true, img: "obj/hourglass-cosy.webp",
       draw: (g) => {
         const cx = 209.5, N = 350, P = [[0, 10], [10, 11], [20, 16], [30, 34], [40, 44], [50, 54], [60, 65], [80, 85], [90, 94], [100, 102], [120, 116], [140, 125], [160, 130], [180, 132], [200, 131], [220, 126], [240, 113], [248, 100]];
         const side = (dir, sgn) => P.map(([dy, hw]) => `${(cx + dir * Math.max(1, hw - 4)).toFixed(0)} ${(N + sgn * dy).toFixed(0)}`);
@@ -773,7 +775,7 @@
         const specks = (y0, n) => Array.from({ length: n }, (_, k) => `<circle cx="${(cx - 70 + ((k * 53) % 140)).toFixed(0)}" cy="${(y0 + ((k * 37) % 60)).toFixed(0)}" r="${2 + (k % 2)}" fill="#b88f55" opacity=".7"/>`).join("");
         return `<defs><linearGradient id="${g}sh" gradientUnits="userSpaceOnUse" x1="${cx - 130}" x2="${cx + 130}" y1="0" y2="0"><stop offset="0" stop-color="#8a5a2c" stop-opacity=".7"/><stop offset=".26" stop-color="#8a5a2c" stop-opacity=".18"/><stop offset=".27" stop-color="#8a5a2c" stop-opacity="0"/><stop offset=".55" stop-color="#fff4d6" stop-opacity=".18"/><stop offset=".74" stop-color="#8a5a2c" stop-opacity="0"/><stop offset=".75" stop-color="#8a5a2c" stop-opacity=".22"/><stop offset="1" stop-color="#8a5a2c" stop-opacity=".75"/></linearGradient>`
           + `<clipPath id="${g}up"><path d="${bulb(-1)}"/></clipPath><clipPath id="${g}lo"><path d="${bulb(1)}"/></clipPath></defs>`
-          + `<g class="hgBody"><image href="obj/hourglass.webp" x="0" y="0" width="119.4" height="200" preserveAspectRatio="none"/>`
+          + contact(g, 60, 62) + `<g class="hgBody"><image href="obj/hourglass-cosy.webp" x="0" y="0" width="119.4" height="200" preserveAspectRatio="none"/>`
           + `<g transform="scale(.285714)">`
           + `<g class="hgStream"><line x1="${cx}" y1="${N - 2}" x2="${cx}" y2="${N + 250}" stroke="#d9b679" stroke-width="5"/><line x1="${cx}" y1="${N - 2}" x2="${cx}" y2="${N + 250}" stroke="#f7e6bf" stroke-width="2.4" stroke-dasharray="5 9"/></g>`
           + `<g clip-path="url(#${g}up)"><g class="hgTop">` + sand(topD) + specks(T + 25, 9)
@@ -783,7 +785,7 @@
           + `<path d="M${cx - 150} ${N + 228} L${cx - 110} ${N + 220} C${cx - 110} ${N + 205} ${cx - 50} ${B + 60} ${cx - 10} ${B + 8} Q${cx} ${B - 2} ${cx + 10} ${B + 8} C${cx + 50} ${B + 60} ${cx + 110} ${N + 205} ${cx + 150} ${N + 228}" stroke="#7a4f28" stroke-width="3.2" fill="none"/>`
           + `<path d="M${cx - 70} ${B + 70} C${cx - 40} ${B + 45} ${cx - 20} ${B + 22} ${cx - 8} ${B + 10}" stroke="#fff3d2" stroke-width="3" fill="none" opacity=".7" stroke-linecap="round"/></g></g>`
           + `</g>`
-          + `<image href="obj/hourglass-glass.webp" x="0" y="0" width="119.4" height="200" preserveAspectRatio="none"/></g>`;
+          + `<image href="obj/hourglass-glass-cosy.webp" x="0" y="0" width="119.4" height="200" preserveAspectRatio="none"/></g>`;
       },
     },
     globe: {
@@ -1306,5 +1308,5 @@
 
   MATERIALS.whitewashWood = { label: "Whitewashed", base: "#d9cfc0", tex: () => grainH(0.3, 0.2) };
 
-  window.Decor = { BACKDROPS, MATERIALS, LIGHT_STYLES, LIGHT_COLOURS, HEAD_FONTS, PALETTES, LOOKS, LOOK_KEYS, ORNAMENTS, lightsEl, ornamentEl, hourglassFlip, backdropFx, BOOKMARKS, bookmarkSvg };
+  window.Decor = { BACKDROPS, MATERIALS, LIGHT_STYLES, LIGHT_COLOURS, HEAD_FONTS, PALETTES, LOOKS, LOOK_KEYS, ORNAMENTS, lightsEl, ornamentEl, hourglassFlip, contact, backdropFx, BOOKMARKS, bookmarkSvg };
 })();
