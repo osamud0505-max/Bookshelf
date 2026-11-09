@@ -1474,6 +1474,6 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
     radial-gradient(ellipse 50% 22% at 50% 50%, rgba(0,0,0,.7), rgba(0,0,0,.28) 55%, transparent 100%),
     radial-gradient(ellipse 70% 46% at 66% 58%, rgba(0,0,0,.4), rgba(0,0,0,.14) 60%, transparent 100%); }
 
-/* v181: the lean fades as a book turns its cover to you. Fully turned out, a book's footprint is as deep as it is wide and its far
-   corner climbed above the back of the floor, so it looked like it was sitting behind the shelf. Spine-out keeps the full lean. */
-.book { --te: calc(var(--tilt, 0) * (.3 + .7 * pow(sin(var(--turn) * 90deg), 3))); }
+/* v181: the lean only applies while a book is spine-out (cover edge-on). A book showing its cover is as deep as it is wide, so any lean
+   made its bottom edge slope up to the back of the floor and it looked like it was standing behind the shelf instead of on it. */
+.book { --te: calc(var(--tilt, 0) * clamp(0, (var(--turn) - .93) / .07, 1)); }
