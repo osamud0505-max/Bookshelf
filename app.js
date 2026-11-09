@@ -479,7 +479,7 @@
           <span class="grain"></span><span class="wear"></span><span class="rub"></span><span class="hinge"></span><span class="sheen"></span><span class="fShade"></span>
         </div>
         <div class="face spine"><span class="sForm"></span><span class="grain"></span><span class="wear"></span><span class="rub"></span><span class="sShade"></span></div>
-        <div class="face pages"></div><div class="face back"></div>
+        <div class="face pages"></div><div class="face back"></div><div class="face top"></div>
       </div></div>`);
     el.style.cssText = `--w:${w}px;--h:${hh}px;--d:${d}px;--spine:${b.spineColor};--ink:${spineInk(b.spineColor)}` + (turn !== undefined ? `;--turn:${turn}` : "")
       // every book is worn in its own way: stains, rubbed corners and scratches sit in different places
