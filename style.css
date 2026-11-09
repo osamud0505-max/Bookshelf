@@ -1437,11 +1437,11 @@ html[data-mat="steel"] .plank::before {
 @media (prefers-reduced-motion: reduce) { .lights.closetRod .pc .sp { animation: none; opacity: .55; transform: translate(-50%, -50%) scale(.6); } }
 
 /* v174: the princess closet's shelves are deeper, seen from above like the floor of a cubby (osamu's picture): the floor
-   is a trapezoid, as wide as the shelf at the front and narrower at the back, so its sides slant in. Books and objects
+   is deep and runs the full width of the row (a slanted end looked like the shelf was being cut off whenever the row moved). Books and objects
    still stand halfway back on it, because everything keys off --top-d. */
 html[data-bdk="closet"] .shelf { --top-d: 34px; --floor-in: 26px; }
 @media (min-width: 560px) { html[data-bdk="closet"] .shelf { --top-d: 46px; --floor-in: 36px; } }
-html[data-bdk="closet"] .track::before { clip-path: polygon(var(--floor-in) 0, calc(100% - var(--floor-in)) 0, 100% 100%, 0 100%);
+html[data-bdk="closet"] .track::before {
   background: linear-gradient(0deg, rgba(255,255,255,.22) 0, rgba(255,255,255,.1) 2px, rgba(255,255,255,.03) 40%, rgba(0,0,0,.2) 78%, rgba(0,0,0,.42) 100%),
     linear-gradient(90deg, rgba(255,255,255,0), rgba(255,230,244,.22) 30%, rgba(255,255,255,0) 50%, rgba(255,230,244,.12) 78%, rgba(255,255,255,0)), #e0408f; }
 /* (the lacquer's glint line is left out here: on the deeper floor it would show as a white line along the back edge) */
