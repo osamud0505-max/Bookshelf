@@ -140,10 +140,10 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .track { position: relative; height: calc(var(--shelf-h) * 1.16); }
 /* the shelf's top seen a little from above: lighter at the front edge, darker toward the wall, where it meets the wall in
    a soft shadow. Books and objects stand on it a little back from the edge, with their shadows falling on it. */
-.shelf { --top-d: 12px; }
-@media (min-width: 560px) { .shelf { --top-d: 16px; } }
+.shelf { --top-d: 34px; --floor-in: 26px; }
+@media (min-width: 560px) { .shelf { --top-d: 46px; --floor-in: 36px; } }
 .track::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--top-d); pointer-events: none;
-  background: linear-gradient(0deg, rgba(255,255,255,.2) 0, rgba(255,255,255,.08) 1.5px, rgba(255,255,255,.04) 30%, rgba(0,0,0,.28) 82%, rgba(0,0,0,.5) 100%), var(--plank-top); }
+  background: linear-gradient(0deg, rgba(255,255,255,.22) 0, rgba(255,255,255,.1) 2px, rgba(255,255,255,.03) 40%, rgba(0,0,0,.2) 78%, rgba(0,0,0,.42) 100%), var(--plank-top); }
 .track > .stage { height: calc(100% - var(--top-d) * .5); }
 .snap { position: absolute; top: 0; width: 1px; height: 1px; scroll-snap-align: start; }
 .stage { position: sticky; left: 0; height: 100%; }
@@ -1431,6 +1431,7 @@ html[data-mat="steel"] .plank::before {
     linear-gradient(0deg, rgba(255,255,255,0), #fff 50%, rgba(255,255,255,0)) center / 7% 100% no-repeat;
   animation: spTwinkle 3.4s ease-in-out infinite; animation-play-state: paused; }
 .lights.closetRod.rail.vis .pc .sp { animation-play-state: running; }
+html.swiping .lights.closetRod.rail.vis .pc .sp { animation-play-state: paused; }
 @keyframes spTwinkle { 0%, 38%, 100% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; }
   62% { transform: translate(-50%, -50%) scale(1) rotate(35deg); opacity: 1; }
   82% { transform: translate(-50%, -50%) scale(.4) rotate(70deg); opacity: .55; } }

@@ -1296,6 +1296,12 @@
     }
 
     ["pointerdown", "wheel", "keydown"].forEach((ev) => scroller.addEventListener(ev, () => (userMoved = true), { passive: true }));
+    // freeze the closet glints while a finger is on the shelf so swipes stay smooth
+    let swipeT = 0;
+    const swipeOn = () => { clearTimeout(swipeT); document.documentElement.classList.add("swiping"); };
+    const swipeOff = () => { clearTimeout(swipeT); swipeT = setTimeout(() => document.documentElement.classList.remove("swiping"), 350); };
+    scroller.addEventListener("pointerdown", swipeOn, { passive: true });
+    ["pointerup", "pointercancel"].forEach((ev) => scroller.addEventListener(ev, swipeOff, { passive: true }));
     scroller.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(layout); }, { passive: true });
     function easePanHome() {
       if (!panX || panEase) return;
