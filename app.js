@@ -543,7 +543,8 @@
     const oc = state.settings.ornament || {};
     if (!oc.kind || oc.kind === "none" || dz.noCandle) return [];
     const pos = oc.pos || "end";
-    return [{ id: "d0", kind: "auto", after: pos === "start" ? null : pos === "middle" ? "mid" : "end", on: !dz.out }];
+    const first = { id: "d0", kind: "auto", after: pos === "start" ? null : pos === "middle" ? "mid" : "end", on: !dz.out };
+    return D.ORNAMENTS[oc.kind] && D.ORNAMENTS[oc.kind].cycle ? [first, { id: "d1", kind: "auto2", after: null, on: true }] : [first];
   }
   // a picture of a decoration sized to fill a menu tile
   // Menu pictures are plain images: each drawing is laid out once off screen, the styles the page sheet gives its parts
@@ -588,10 +589,13 @@
     setShelfDecor(key, { byLook, items: undefined });
   }
   function resolveKind(kind, idx) {
-    if (kind !== "auto") return D.ORNAMENTS[kind] ? kind : null;
+    if (kind !== "auto" && kind !== "auto2") return D.ORNAMENTS[kind] ? kind : null;
     const k = (state.settings.ornament || {}).kind;
     const od = D.ORNAMENTS[k];
     if (!od) return null;
+    // a room with a set of objects (the closet) puts two of them on each shelf, taking turns down the room
+    if (od.cycle) return od.cycle[(idx * 2 + (kind === "auto2" ? 1 : 0)) % od.cycle.length];
+    if (kind === "auto2") return null;
     return od.alt && idx % 2 ? od.alt : k;
   }
   // the bin that shows while a decoration is lifted
@@ -821,8 +825,8 @@
   const plankWidth = () => Math.min(innerWidth, 1200);
   // which lights hang under a shelf: each shelf picks its own in the ✦ menu (kept per look); until then it shows the look's.
   // several can be on at once, e.g. wisteria with fireflies drifting around it
-  const NO_SWITCH = ["fireflies"]; // always alive, no cord needed
-  const TALLEST = ["wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
+  const NO_SWITCH = ["fireflies", "closetRod"]; // always alive, no cord needed
+  const TALLEST = ["closetRod", "wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
   function shelfLights(key) {
     const sd = shelfDecor(key), mine = (sd.lightsBy || {})[lookId()], base = state.settings.lights || {};
     const pick = mine || base;
@@ -842,7 +846,7 @@
     const on = sd.lightsOn !== undefined ? sd.lightsOn : base.on !== false;
     root.querySelectorAll(".lights, .pullCord").forEach((e) => e.remove());
     const plank = root.querySelector(".plank");
-    const els = L.styles.map((st) => D.lightsEl(plankWidth(), { style: st, colour: L.colour, on: NO_SWITCH.includes(st) ? true : on, room: lookId() })).filter(Boolean);
+    const els = L.styles.map((st) => D.lightsEl(plankWidth(), { style: st, colour: L.colour, on: NO_SWITCH.includes(st) ? true : on, room: lookId(), seed: key })).filter(Boolean);
     els.forEach((el) => plank.append(el));
     root.classList.toggle("hasLights", els.length > 0);
     root.dataset.lights = TALLEST.find((k) => L.styles.includes(k)) || "";
@@ -858,7 +862,7 @@
       // the switch catches at the bottom of the pull; only this shelf's string follows
       setTimeout(() => {
         root.querySelectorAll(".lights").forEach((l) => {
-          if (l.classList.contains("fireflies")) return;
+          if (l.classList.contains("fireflies") || l.classList.contains("closetRod")) return;
           l.classList.remove("switchOn", "switchOff"); void l.offsetWidth;
           l.classList.toggle("on", on); l.classList.add(on ? "switchOn" : "switchOff");
           clearTimeout(l._sw); l._sw = setTimeout(() => l.classList.remove("switchOn", "switchOff"), 1600);
@@ -1375,7 +1379,7 @@
               setShelfLights(key, { styles }); keepOpen(); render();
             }));
             menu.append(lc);
-            if (L.styles.some((k) => !["wisteria", "chinese"].includes(k))) {
+            if (L.styles.some((k) => !["wisteria", "chinese", "closetRod"].includes(k))) {
               const cc = h(`<div class="colors small">${Object.entries(D.LIGHT_COLOURS).map(([k, [l, c]]) => `<button class="colorItem" data-v="${k}" aria-pressed="${L.colour === k}"><span class="dot ${L.colour === k ? "on" : ""}" style="background:${c || "conic-gradient(#ff6b6b,#ffd166,#5be3a5,#5cc8f5,#c792ff,#ff6b6b)"};box-shadow:0 0 10px ${c || "#ffd166"}88"></span>${esc(l)}</button>`).join("")}</div>`);
               cc.querySelectorAll("button").forEach((b) => (b.onclick = () => { setShelfLights(key, { colour: b.dataset.v }); keepOpen(); render(); }));
               menu.append(cc);
@@ -1871,7 +1875,7 @@
         const t = THEMES[set_.theme] ? THEMES[set_.theme].t : set_.customBg ? derivePalette(set_.customBg) : THEMES.graphite.t;
         const bd = D.BACKDROPS[set_.backdrop] || D.BACKDROPS.none, mat = D.MATERIALS[set_.shelfMat] || D.MATERIALS.paint;
         const plank = mat.base ? [...mat.tex(), mat.base].join(",") : (set_.shelf || "#34343f");
-        const lit = set_.lights && set_.lights.style !== "none" && set_.lights.on;
+        const lit = set_.lights && set_.lights.style !== "none" && set_.lights.style !== "closetRod" && set_.lights.on;
         return h(`<span class="lookArt" style="background:${bd.tone ? bd.css() : t[0]}"><i class="lookPlank" style="background:${plank}"></i>${lit ? `<i class="lookLights" style="--c:${(D.LIGHT_COLOURS[set_.lights.colour] || D.LIGHT_COLOURS.warm)[1] || "#ffd166"}"></i>` : ""}<b style="color:${bd.tone === "dark" || (!bd.tone && t[9] === "dark") ? "#f3ede4" : "#221c16"};font-family:${(D.HEAD_FONTS[set_.headFont] || D.HEAD_FONTS.bricolage)[1]};background:${set_.accent || "#f2c76b"}33">${esc(label)}</b></span>`);
       };
 

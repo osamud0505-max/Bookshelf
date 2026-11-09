@@ -1385,3 +1385,25 @@ html[data-mat="steel"] .plank::before {
   content: ""; position: absolute; left: 0; right: 0; top: 2px; height: 6px; pointer-events: none; opacity: .5; mix-blend-mode: screen;
   background: repeating-linear-gradient(90deg, transparent 0 13px, rgba(255,255,255,.05) 13px 14px, transparent 14px 41px, rgba(255,255,255,.035) 41px 43px, transparent 43px 97px);
 }
+/* the princess closet: a chrome rod under each shelf with clear hangers and satin clothes; tap one and it swings */
+.shelf.hasLights[data-lights="closetRod"] .caption { padding-top: 122px; }
+@media (min-width: 600px) { .shelf.hasLights[data-lights="closetRod"] .caption { padding-top: 146px; } }
+.lights.closetRod .rod { top: 0; }
+.lights.closetRod .hgr { position: absolute; overflow: visible; pointer-events: none; transform: rotate(var(--r)); transform-origin: 56.25% 3.6%; }
+.lights.closetRod .hgr .hit { pointer-events: visiblePainted; cursor: pointer; }
+.lights.closetRod .hgr.swing { animation: hgrSwing 2.2s cubic-bezier(.3,.6,.4,1); }
+@keyframes hgrSwing {
+  0% { transform: rotate(var(--r)); }
+  12% { transform: rotate(calc(var(--r) + var(--a))); }
+  32% { transform: rotate(calc(var(--r) - var(--a) * .62)); }
+  52% { transform: rotate(calc(var(--r) + var(--a) * .36)); }
+  70% { transform: rotate(calc(var(--r) - var(--a) * .18)); }
+  86% { transform: rotate(calc(var(--r) + var(--a) * .07)); }
+  100% { transform: rotate(var(--r)); }
+}
+#backdrop .glint4 { width: var(--s); height: var(--s); opacity: 0; margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  background: radial-gradient(circle, #fff 0 10%, rgba(255,210,236,.6) 18%, transparent 40%), linear-gradient(90deg, transparent 46%, rgba(255,255,255,.95) 50%, transparent 54%), linear-gradient(0deg, transparent 46%, rgba(255,255,255,.95) 50%, transparent 54%);
+  -webkit-mask: radial-gradient(circle, #000 20%, transparent 70%); mask: radial-gradient(circle, #000 20%, transparent 70%);
+  animation: glint4 var(--t) ease-in-out infinite; animation-delay: var(--d); }
+@keyframes glint4 { 0%, 70%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); } 82% { opacity: 1; transform: scale(1) rotate(25deg); } }
+@media (prefers-reduced-motion: reduce) { #backdrop .glint4 { animation: none; opacity: .5; } .lights.closetRod .hgr.swing { animation: none; } }
