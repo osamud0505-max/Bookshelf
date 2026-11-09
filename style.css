@@ -96,6 +96,9 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   margin: 0 calc(-1 * var(--gutter)) 28px; padding: 2px var(--gutter) 6px;
 }
 .tabs::-webkit-scrollbar { display: none; }
+/* the first shelf reaches up behind the tabs (for the glow of its lights): the tabs, search and header stay on top, so they
+   still take taps and swipes */
+.tabs, .searchBox, .header { position: relative; z-index: 5; }
 .tab {
   flex: none; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px;
   border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--muted-fg);
