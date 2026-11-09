@@ -109,11 +109,6 @@
   // (inner), all in the stored picture's pixels. The rod is three pieces of one painted rod: left end with its ball
   // and ceiling bracket, a tube stretched along, right end.
   const RAIL = {"rod":{"l":[114,124,99.0],"r":[114,129,104.1],"m":[30,28,14.1],"d":23.7,"stemL":73.8,"stemR":38.7},"set-a":{"w":1200,"h":1122,"inner":17.1,"gap":15.5,"hooks":[[146.0,141.1,167.6],[295.2,288.7,317.1],[422.4,417.0,444.0],[559.4,553.6,580.7],[701.8,698.0,719.9],[810.7,790.1,816.5],[959.3,937.7,965.4],[1093.3,1071.8,1099.5]]},"set-b":{"w":1200,"h":1261,"inner":19.3,"gap":15.7,"hooks":[[196.7,177.0,200.0],[328.2,316.1,355.4],[433.4,413.1,437.4],[558.7,527.9,571.8],[690.5,670.2,695.7],[829.2,798.7,843.3],[970.8,941.6,983.6],[1084.9,1055.7,1097.0]]},"set-c":{"w":1200,"h":1132,"inner":22.3,"gap":14.8,"hooks":[[159.5,151.5,185.5],[285.9,276.4,309.7],[418.9,409.3,443.3],[552.1,544.7,575.6],[675.7,673.9,694.3],[813.6,795.7,817.3],[957.7,932.9,965.7],[1080.7,1056.0,1089.3]]},"hangers-empty":{"w":1200,"h":361,"inner":27.1,"gap":17.8,"hooks":[[54.2,32.0,58.0],[201.7,195.4,226.6],[322.1,298.7,327.7],[464.8,430.2,479.3],[613.4,590.0,619.7],[771.3,737.1,787.6],[931.8,898.3,945.9],[1062.2,1028.4,1075.2]]},"heels":[{"w":208,"h":391,"inner":11.5,"gap":10.8,"hooks":[[66.2,63.0,81.9],[144.5,141.3,160.2]]},{"w":223,"h":387,"inner":11.7,"gap":10.8,"hooks":[[75.1,72.0,90.9],[153.7,150.8,169.7]]},{"w":226,"h":392,"inner":11.2,"gap":10.8,"hooks":[[78.1,62.6,81.5],[161.1,145.3,164.2]]},{"w":224,"h":508,"inner":11.2,"gap":10.8,"hooks":[[67.1,51.3,70.2],[159.1,143.6,162.5]]},{"w":229,"h":397,"inner":14.4,"gap":10.8,"hooks":[[88.7,86.0,103.5],[158.0,157.1,172.8]]},{"w":224,"h":396,"inner":14.2,"gap":10.8,"hooks":[[72.2,70.7,86.9],[155.7,153.9,170.1]]},{"w":234,"h":397,"inner":14.4,"gap":10.8,"hooks":[[74.0,72.0,88.7],[150.1,150.8,165.6]]}]};
-  // v153: the single pieces of each picture: [file, left, top, width, height, pivot x, pivot y] in its pixels,
-  // back to front
-  const PIECES = {"set-a":[["rail-seta-6",667.0,0.0,327,1116,810.7,16.8],["rail-seta-8",1009.2,0.0,191,881,1093.3,17.4],["rail-seta-2",163.7,0.0,222,747,295.2,16.1],["rail-seta-3",338.3,0.0,179,907,422.4,17.4],["rail-seta-4",443.4,0.6,220,861,559.4,16.8],["rail-seta-5",580.0,0.6,178,994,701.8,17.4],["rail-seta-1",0.6,0.0,280,933,146.0,16.8],["rail-seta-7",886.8,0.0,253,1121,959.3,17.4]],"set-b":[["rail-setb-2",228.2,0.7,197,323,328.2,19.7],["rail-setb-5",613.8,0.7,164,814,690.5,21.6],["rail-setb-1",0.7,0.0,350,1212,196.7,22.3],["rail-setb-4",482.6,0.7,161,260,558.7,19.0],["rail-setb-6",671.5,0.7,338,1260,829.2,19.0],["rail-setb-7",887.9,1.3,304,1249,970.8,19.0],["rail-setb-3",368.5,0.7,124,870,433.4,22.3],["rail-setb-8",1012.5,1.3,187,1133,1084.9,19.0]],"set-c":[["rail-setc-6",704.2,2.5,215,991,813.6,24.7],["rail-setc-2",182.4,3.7,249,1122,285.9,22.3],["rail-setc-3",341.3,3.7,142,266,418.9,21.6],["rail-setc-5",570.6,0.0,198,817,675.7,27.2],["rail-setc-7",691.2,3.7,362,1128,957.7,22.3],["rail-setc-1",0.0,2.5,432,1123,159.5,22.3],["rail-setc-4",473.6,3.7,186,806,552.1,22.3],["rail-setc-8",916.8,2.5,283,1129,1080.7,22.9]],"hangers-empty":[["rail-empty-3",260.8,3.7,126,357,322.1,29.0],["rail-empty-8",921.4,3.7,279,354,1062.2,26.0],["rail-empty-1",0.7,3.7,124,352,54.2,29.0],["rail-empty-4",378.2,3.7,184,296,464.8,26.0],["rail-empty-5",561.7,3.0,120,354,613.4,28.2],["rail-empty-6",680.6,0.0,206,302,771.3,26.0],["rail-empty-2",106.3,4.5,202,354,201.7,30.5],["rail-empty-7",834.4,4.5,254,348,931.8,26.0]],"heels":[[["heels-1-1",0.5,0.5,113,390,66.2,11.7],["heels-1-2",104.9,0.5,103,390,144.5,11.2]],[["heels-2-3",0.0,0.0,122,387,75.2,11.7],["heels-2-4",112.0,0.5,111,387,153.7,11.7]],[["heels-3-5",0.5,0.5,130,392,78.1,11.2],["heels-3-6",110.2,0.5,116,388,161.1,11.2]],[["heels-4-7",0.0,0.0,126,491,67.0,11.2],["heels-4-8",113.0,0.5,110,507,159.1,11.2]],[["heels-5-2",0.0,0.5,228,396,158.0,14.4],["heels-5-1",21.2,0.9,84,216,88.7,14.4]],[["heels-6-5",0.0,0.5,121,396,72.2,14.4],["heels-6-6",112.5,0.5,111,395,155.7,14.0]],[["heels-7-7",0.5,0.9,128,396,74.0,14.4],["heels-7-8",113.9,0.5,120,395,150.1,14.4]]]};
-  RAIL["set-a"].pieces = PIECES["set-a"]; RAIL["set-b"].pieces = PIECES["set-b"]; RAIL["set-c"].pieces = PIECES["set-c"];
-  RAIL["hangers-empty"].pieces = PIECES["hangers-empty"]; RAIL.heels.forEach((m, j) => { m.pieces = PIECES.heels[j]; });
   const pic = (n) => `obj/closet-${n}-cosy.webp`;
   const railPic = (n) => `obj/closet-${n}.webp`;
   const SETS = { a: ["rail-seta", "set-a"], b: ["rail-setb", "set-b"], c: ["rail-setc", "set-c"], e: ["rail-hangers-empty", "hangers-empty"] };
@@ -146,7 +141,7 @@
       while (items.length < n) {
         const m = RAIL.heels[i % n];
         if (left + m.hooks[m.hooks.length - 1][0] * hs > x1) break;
-        items.push({ m, s: hs, x: left, amp: 6 });
+        items.push({ pic: railPic(`heels-${(i % n) + 1}`), m, s: hs, x: left, amp: 6 });
         left += m.w * hs + gap; i++;
       }
     } else {
@@ -155,7 +150,7 @@
       for (let i = 0; i < 6; i++) {
         const k = plan[i % plan.length], m = RAIL[SETS[k][1]], span = hookSpan(m) * sc;
         if (items.length && x + span > x1) break;
-        items.push({ m, s: sc, x: x - m.hooks[0][0] * sc, amp: 1.6 });
+        items.push({ pic: railPic(SETS[k][0]), m, s: sc, x: x - m.hooks[0][0] * sc, amp: 1.6 });
         x += span + 120 * sc;
       }
     }
@@ -166,23 +161,15 @@
     }
     let bottom = rodC + rodD;
     const tube = (l, wd) => `<i class="tube" style="left:${f1(l)}px;width:${f1(wd)}px;top:${f1(rodTop - 0.4)}px;height:${f1(rodD + 0.8)}px;background-size:auto ${f1(rod.m[1] * rs)}px;background-position:0 ${f1(-(rod.m[2] * rs - rodD / 2 - 0.4))}px"></i>`;
-    // v153: every hanger (and every shoe) is its own picture, so each one swings on its own. pcs holds them in
-    // the rail's pixels, back to front: the bounding box, the pivot (the inside of the hook resting on the rod)
-    const pcs = [];
     const parts = items.map((it, i) => {
       const { m, s } = it, top = rodTop - m.inner * s;
       bottom = Math.max(bottom, top + m.h * s);
+      const ox = (m.hooks[0][0] + m.hooks[m.hooks.length - 1][0]) / 2 * s;
+      const tilt = it.amp > 3 ? ((((idx * 7 + i * 13) % 9) - 4) * 0.35).toFixed(1) : 0;
+      // the tips of the hooks go down behind the rod: a piece of the tube is laid again over each tip
       const tips = m.hooks.map((h) => tube(it.x + h[1] * s - 0.5, (h[2] - h[1]) * s + 1)).join("");
-      const shoe = it.amp > 3;
-      const inner = m.pieces.map(([f, x, y, pw, ph, px, py], j) => {
-        const n = pcs.length;
-        // the heels hang a touch crooked on their hooks, each its own way
-        const th0 = shoe ? ((((idx * 7 + i * 13 + j * 5) % 9) - 4) * 0.006) : 0;
-        pcs.push({ shoe, x: it.x + x * s, y: top + y * s, w: pw * s, h: ph * s, cx: it.x + px * s, cy: top + py * s,
-          len: Math.max(20, (y + ph - py) * s), src: railPic(f), th0, th: th0, om: 0, b: 0, bv: 0, tw: 0, tv: 0, hit: 0 });
-        return `<div class="pc" data-n="${n}" style="left:${f1(x * s)}px;top:${f1(y * s)}px;width:${f1(pw * s)}px;height:${f1(ph * s)}px;transform-origin:${f1((px - x) * s)}px ${f1((py - y) * s)}px${th0 ? `;transform:rotate(${th0}rad)` : ""}"><img src="${railPic(f)}" alt="" draggable="false" decoding="async"></div>`;
-      }).join("");
-      return `<div class="hgr" style="left:${f1(it.x)}px;top:${f1(top)}px;width:${f1(m.w * s)}px;height:${f1(m.h * s)}px">${inner}</div>${tips}`;
+      return `<div class="hgr" data-i="${i}" data-amp="${it.amp}" style="left:${f1(it.x)}px;top:${f1(top)}px;width:${f1(m.w * s)}px;height:${f1(m.h * s)}px;transform-origin:${f1(ox)}px ${f1(m.inner * s)}px;--r:${tilt}deg">`
+        + `<img src="${it.pic}" alt="" draggable="false" decoding="async"><i class="hit" style="left:0;width:100%"></i></div>${tips}`;
     });
     const lw = rod.l[0] * rs, rw = rod.r[0] * rs;
     const rodEl = `<div class="rod" style="top:0;height:${f1(rodC + rodD)}px">`
@@ -196,153 +183,16 @@
     el.className = "lights closetRod rail on";
     el.innerHTML = `<div class="railIn" style="top:${f1(-lift)}px">${rodEl}${parts.join("")}</div><i class="underShade"></i>`;
     el.style.height = Math.ceil(bottom - lift + 10) + "px";
-    const pcEls = el.querySelectorAll(".pc");
-    pcs.forEach((p, n) => { p.el = pcEls[n]; p.img = pcEls[n].firstChild; });
-    railTouch(el, el.firstChild, pcs);
+    // tap a pair of heels and it swings; tap a set of clothes and the whole rail sways a little
+    el.addEventListener("click", (ev) => {
+      const t = ev.target.closest && ev.target.closest(".hit"), h = t && t.parentNode; if (!h) return;
+      ev.stopPropagation();
+      const r = t.getBoundingClientRect(), dir = ev.clientX < r.left + r.width / 2 ? -1 : 1;
+      h.style.setProperty("--a", (+h.dataset.amp * dir) + "deg"); h.classList.remove("swing"); void h.getBoundingClientRect(); h.classList.add("swing");
+      clearTimeout(h._sw); h._sw = setTimeout(() => h.classList.remove("swing"), 2300);
+      hangerTick(false);
+    });
     return el;
-  }
-
-  // ------------------------------------------------------------------ touching the clothes and the heels
-  // Each hanger is a pendulum hung from the rod. A tap pushes just the one under the finger, away from the side it
-  // was touched on. A finger drawn across the rail brushes every piece it passes over, each one pushed as hard as
-  // the finger was moving. Clothes are long and soft: they swing slowly, settle quickly, the hem trails behind the
-  // hanger (a shear that follows the swing) and the hanger turns a little on the rod. Heels are short and stiff:
-  // they swing faster and longer, twist on their S-hooks, and knock into the shoe beside them with a little clink.
-  const PHYS = {
-    cloth: { k: 22, z: 0.17, tap: 0.3, gain: 0.34, max: 0.75, lim: 0.16, tk: 14, tz: 0.18, twist: 0.6 },
-    shoe: { k: 62, z: 0.06, tap: 1.45, gain: 1.5, max: 3.2, lim: 0.42, tk: 9, tz: 0.05, twist: 2.4 },
-  };
-  const reduce = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
-  // where each picture is see-through, so a tap on the gap between two dresses touches the one behind
-  const MASKS = {};
-  function maskOf(p) {
-    if (MASKS[p.src] !== undefined) return MASKS[p.src];
-    const im = p.img; if (!im || !im.complete || !im.naturalWidth) return null;
-    try {
-      const W = Math.max(1, Math.round(im.naturalWidth / 4)), H = Math.max(1, Math.round(im.naturalHeight / 4));
-      const c = document.createElement("canvas"); c.width = W; c.height = H;
-      const g = c.getContext("2d"); g.drawImage(im, 0, 0, W, H);
-      const d = g.getImageData(0, 0, W, H).data, a = new Uint8Array(W * H);
-      for (let q = 0; q < W * H; q++) a[q] = d[q * 4 + 3] > 40 ? 1 : 0;
-      MASKS[p.src] = { W, H, a };
-    } catch (e) { MASKS[p.src] = null; }
-    return MASKS[p.src];
-  }
-  function solidAt(p, X, Y) {
-    // undo the piece's current swing so the test follows it
-    const c = Math.cos(-p.th), s = Math.sin(-p.th), dx = X - p.cx, dy = Y - p.cy;
-    const lx = p.cx + dx * c - dy * s - p.x, ly = p.cy + dx * s + dy * c - p.y;
-    if (lx < 0 || ly < 0 || lx >= p.w || ly >= p.h) return false;
-    const m = maskOf(p); if (!m) return true;
-    return !!m.a[Math.floor(ly / p.h * m.H) * m.W + Math.floor(lx / p.w * m.W)];
-  }
-  function railTouch(el, inner, pcs) {
-    el.style.pointerEvents = "auto";
-    el.style.touchAction = "pan-y";
-    let raf = 0, last = 0, down = null, lastSound = 0;
-    const local = (ev) => { const r = inner.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
-    // front-most first: later pieces in the list are drawn over earlier ones
-    const under = (X, Y) => { const out = []; for (let n = pcs.length - 1; n >= 0; n--) if (solidAt(pcs[n], X, Y)) out.push(pcs[n]); return out; };
-    const draw = (p) => {
-      const t = `rotate(${p.th.toFixed(4)}rad)` + (p.shoe ? "" : ` skewX(${p.b.toFixed(4)}rad)`);
-      p.el.style.transform = Math.abs(p.tw) > 0.002 ? `perspective(700px) rotateY(${p.tw.toFixed(4)}rad) ${t}` : t;
-    };
-    const sound = (now, empty, clink) => { if (now - lastSound < (clink ? 45 : 85)) return; lastSound = now; clink ? shoeClink(clink) : hangerTick(empty); };
-    function step(dt) {
-      for (const p of pcs) {
-        const P = p.shoe ? PHYS.shoe : PHYS.cloth;
-        const k = P.k, c = 2 * P.z * Math.sqrt(k);
-        const acc = -k * (p.th - p.th0) - c * p.om;
-        p.om += acc * dt; p.th += p.om * dt;
-        // a closet is crowded: a hanger can only swing so far before the clothes beside it hold it back
-        if (Math.abs(p.th - p.th0) > P.lim) { p.th = p.th0 + Math.sign(p.th - p.th0) * P.lim; p.om *= -0.25; }
-        if (!p.shoe) {
-          // the hem trails the hanger: pushed one way by the hanger's swing, springing back on its own
-          const bacc = -70 * p.b - 2 * 0.22 * Math.sqrt(70) * p.bv + 0.9 * acc * (p.len / 260);
-          p.bv += bacc * dt; p.b = Math.max(-0.12, Math.min(0.12, p.b + p.bv * dt));
-        }
-        const tacc = -P.tk * p.tw - 2 * P.tz * Math.sqrt(P.tk) * p.tv;
-        p.tv += tacc * dt; p.tw = Math.max(-0.5, Math.min(0.5, p.tw + p.tv * dt));
-      }
-      // heels side by side knock into each other. A shoe that hits one hanging still bounces back off it; two
-      // swinging shoes that meet trade their swing
-      for (let n = 0; n + 1 < pcs.length; n++) {
-        const a = pcs[n], b = pcs[n + 1]; if (!a.shoe || !b.shoe) continue;
-        const L = (a.len + b.len) / 2, room = Math.max(4, (b.cx - a.cx) - 0.8 * (a.w + b.w) / 2) / L;
-        const close = (b.th - b.th0) - (a.th - a.th0); if (close <= room) continue;
-        const rel = b.om - a.om; if (rel <= 0) continue;
-        const still = (q) => Math.abs(q.om) < 0.25 && Math.abs(q.th - q.th0) < 0.02;
-        if (still(b)) { a.om = -a.om * 0.45; a.th = a.th0 + (b.th - b.th0) - room; }
-        else if (still(a)) { b.om = -b.om * 0.45; b.th = b.th0 + (a.th - a.th0) + room; }
-        else { const e = 0.55, m = (a.om + b.om) / 2; a.om = m + rel * (1 + e) / 2 - rel / 2; b.om = m - rel * (1 + e) / 2 + rel / 2; }
-        a.tv += rel * 0.4; b.tv -= rel * 0.4;
-        sound(performance.now(), false, Math.min(1, rel / 3));
-      }
-    }
-    function frame(now) {
-      raf = 0;
-      let dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
-      while (dt > 0) { const h = Math.min(1 / 120, dt); step(h); dt -= h; }
-      let moving = false;
-      for (const p of pcs) {
-        const live = Math.abs(p.th - p.th0) > 2e-4 || Math.abs(p.om) > 2e-3 || Math.abs(p.b) > 2e-4 || Math.abs(p.bv) > 2e-3 || Math.abs(p.tw) > 1e-3 || Math.abs(p.tv) > 3e-3;
-        if (live) { moving = true; draw(p); }
-        else if (p.on) { p.th = p.th0; p.om = p.b = p.bv = p.tw = p.tv = 0; draw(p); }
-        if (p.on !== live) { p.on = live; p.el.classList.toggle("live", live); }
-      }
-      if (moving && el.isConnected) raf = requestAnimationFrame(frame);
-    }
-    const kick = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } };
-    // push a piece; v is how fast the bottom of it is sent sideways (+ to the right), tw how much it turns
-    const push = (p, v, tw) => {
-      const P = p.shoe ? PHYS.shoe : PHYS.cloth, k = reduce() ? 0.35 : 1;
-      const dv = Math.max(-P.max, Math.min(P.max, v)) * k;
-      p.om -= dv; p.tv += tw * P.twist * k;
-      kick();
-    };
-    el.addEventListener("pointerdown", (ev) => {
-      if (ev.button > 0) return;
-      const [X, Y] = local(ev);
-      down = { X, Y, x: X, y: Y, t: ev.timeStamp, lt: ev.timeStamp, moved: false, id: ev.pointerId, hit: under(X, Y)[0] };
-    });
-    el.addEventListener("pointermove", (ev) => {
-      if (!down || ev.pointerId !== down.id) return;
-      const [X, Y] = local(ev), dx = X - down.x, dy = Y - down.y, dt = Math.max(8, ev.timeStamp - down.lt);
-      if (!down.moved && Math.hypot(X - down.X, Y - down.Y) < 8) return;
-      down.moved = true;
-      const vx = dx / dt, now = ev.timeStamp;
-      // everything the finger passed over since the last move: the one in front gets the full push, the ones
-      // behind it are dragged along a little less
-      const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 6));
-      let touched = 0, empty = false;
-      for (let q = 1; q <= steps; q++) {
-        const px = down.x + dx * q / steps, py = down.y + dy * q / steps;
-        under(px, py).forEach((p, depth) => {
-          if (now - p.hit < 180) return;
-          p.hit = now; touched++; empty = empty || p.len < 60;
-          const P = p.shoe ? PHYS.shoe : PHYS.cloth;
-          // a push lower down the piece turns it less for the same finger speed than one near the hook
-          const reach = Math.max(0.35, Math.min(1, (py - p.cy) / p.len));
-          push(p, vx * P.gain * (depth ? 0.55 : 1) / Math.sqrt(reach), (Math.random() - 0.5) * Math.sign(vx || 1) * 0.6);
-        });
-      }
-      if (touched) sound(performance.now(), empty);
-      down.x = X; down.y = Y; down.lt = ev.timeStamp;
-    });
-    const up = (ev) => {
-      if (!down || ev.pointerId !== down.id) return;
-      const d = down; down = null;
-      if (d.moved || ev.type === "pointercancel" || ev.timeStamp - d.t > 600) return;
-      const p = d.hit; if (!p) return;
-      const P = p.shoe ? PHYS.shoe : PHYS.cloth;
-      // tapped on its left, it swings right, and the other way round; off the middle line it turns a little too
-      const off = (d.X - p.cx) / Math.max(10, p.w / 2), dir = off < 0 ? 1 : -1;
-      push(p, dir * P.tap * (0.75 + 0.25 * Math.min(1, Math.abs(off))), -off * 0.5);
-      sound(performance.now(), p.len < 60, p.shoe ? 0.35 : 0);
-    };
-    el.addEventListener("pointerup", up);
-    el.addEventListener("pointercancel", up);
-    el.addEventListener("click", (ev) => { if (under(...local(ev)).length) ev.stopPropagation(); });
   }
   const baseLights = D.lightsEl;
   D.lightsEl = (w, cfg) => (cfg && cfg.style === "closetRod" ? closetRodEl(w, cfg) : baseLights(w, cfg));
@@ -360,22 +210,6 @@
         o.type = "sine"; o.frequency.value = f;
         g.gain.setValueAtTime(0.0001, t + dt); g.gain.exponentialRampToValueAtTime(0.018 * lvl / (i + 1), t + dt + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.09);
         o.connect(g).connect(actx.destination); o.start(t + dt); o.stop(t + dt + 0.12);
-      });
-    } catch (e) { /* no sound */ }
-  }
-
-  // a heel knocking the one beside it: a short bright clink of patent and metal, louder the harder they meet
-  function shoeClink(force) {
-    try {
-      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-      if (actx.state === "suspended") actx.resume();
-      const lvl = window.ShelfSfxLevel ? window.ShelfSfxLevel() : 1; if (!lvl) return;
-      const t = actx.currentTime, v = 0.02 * lvl * (0.4 + 0.6 * force);
-      [[1850 + Math.random() * 300, 1], [4100 + Math.random() * 500, 0.45]].forEach(([f, k]) => {
-        const o = actx.createOscillator(), g = actx.createGain();
-        o.type = "triangle"; o.frequency.value = f;
-        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v * k, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
-        o.connect(g).connect(actx.destination); o.start(t); o.stop(t + 0.09);
       });
     } catch (e) { /* no sound */ }
   }
