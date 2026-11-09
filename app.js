@@ -546,9 +546,41 @@
     return [{ id: "d0", kind: "auto", after: pos === "start" ? null : pos === "middle" ? "mid" : "end", on: !dz.out }];
   }
   // a picture of a decoration sized to fill a menu tile
+  // Menu pictures are plain images: each drawing is laid out once off screen, the styles the page sheet gives its parts
+  // are written onto them, and the result becomes an <img>. A phone draws dozens of images in a scrolling menu easily;
+  // dozens of live drawings it could not (the menu broke up into patches on Android Chrome).
+  const thumbs = new Map();
+  const STYLE_PROPS = ["display", "visibility", "opacity", "fill", "stroke", "fill-opacity", "stroke-opacity", "stroke-width"];
+  function thumbUrl(k, H) {
+    const id = k + ":" + H; if (thumbs.has(id)) return thumbs.get(id);
+    const el = D.ornamentEl(k, H, true, true), host = document.createElement("div");
+    host.style.cssText = "position:fixed;left:-10000px;top:0;pointer-events:none";
+    host.append(el); document.body.append(host);
+    const svg = el.querySelector("svg"); let url = "";
+    try {
+      const fix = (v) => v.replace(/url\("?[^#")]*#([^")]+)"?\)/g, "url(#$1)");
+      svg.querySelectorAll("*").forEach((n) => {
+        if (n.closest("defs")) return;
+        const cs = getComputedStyle(n), st = [];
+        STYLE_PROPS.forEach((p) => { const v = cs.getPropertyValue(p); if (v) st.push(p + ":" + fix(v)); });
+        if (!n.hasAttribute("transform") && cs.transform && cs.transform !== "none") st.push("transform:" + cs.transform, "transform-origin:" + cs.transformOrigin, "transform-box:" + cs.transformBox);
+        n.setAttribute("style", st.join(";"));
+      });
+      const shared = document.getElementById("ornShared");
+      if (shared) { const d = document.createElementNS("http://www.w3.org/2000/svg", "defs"); d.innerHTML = shared.querySelector("defs").innerHTML; svg.prepend(d); }
+      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(svg));
+    } catch (e) { url = ""; }
+    host.remove();
+    thumbs.set(id, url); return url;
+  }
   function ornArt(k, box) {
-    const o = D.ORNAMENTS[k], hgt = Math.min(box, (box * 1.15 * 200) / (o.vw || 100));
-    return D.ornamentEl(k, Math.round(hgt / (o.scale || 0.7)), true, true);
+    const o = D.ORNAMENTS[k], hgt = Math.min(box, (box * 1.15 * 200) / (o.vw || 100)), H = Math.round(hgt / (o.scale || 0.7));
+    const url = thumbUrl(k, H);
+    if (!url) return D.ornamentEl(k, H, true, true);
+    const w = Math.round(H * (o.scale || 0.7) * o.vw / 200), hh = Math.round(H * (o.scale || 0.7));
+    const img = new Image(w, hh); img.className = "ornThumb"; img.alt = ""; img.decoding = "async"; img.draggable = false; img.src = url;
+    return img;
   }
   function setDecorItems(key, items) {
     const dz = shelfDecor(key), byLook = { ...(dz.byLook || {}) };
