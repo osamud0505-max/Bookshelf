@@ -1340,5 +1340,6 @@ html { touch-action: pan-x pan-y; }
 #backdrop .loftCatFilm.now { transition: none; }
 /* the room is in shadow below the sill, darkest at the floor and in the left corner the cat jumps up from */
 #backdrop .loftCat::after { content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(to top, rgba(4,2,4,.9) 0%, rgba(4,2,4,.7) 16%, rgba(4,2,4,.32) 30%, transparent 40%),
-              radial-gradient(ellipse 34% 30% at 0% 72%, rgba(4,2,4,.55), transparent 80%); }
+  background: linear-gradient(to top, rgba(3,2,3,.97) 0%, rgba(3,2,3,.9) 18%, rgba(3,2,3,.62) 29%, rgba(3,2,3,.2) 36%, transparent 41%),
+              radial-gradient(ellipse 30% 34% at 0% 66%, rgba(3,2,3,.8), rgba(3,2,3,.35) 55%, transparent 85%),
+              radial-gradient(ellipse 30% 34% at 100% 66%, rgba(3,2,3,.8), rgba(3,2,3,.35) 55%, transparent 85%); }
