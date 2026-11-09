@@ -789,12 +789,16 @@
       + `<path d="M${P(-0.44, 0.18)} Q${P(-0.36, 0.26)} ${P(-0.24, 0.24)} M${P(0.44, 0.18)} Q${P(0.36, 0.26)} ${P(0.24, 0.24)}" stroke="#f6eedb" stroke-width="${f1(0.02 * s)}" fill="none" opacity=".45" stroke-linecap="round"/>`;
   };
   D.ORNAMENTS.skull = {
-    // cosy game art: a cracked skull with a candle melted onto its crown; the flame and its glow are live on top
-    label: "Skull & candle", scale: 0.55, vw: 95, flat: true, img: "obj/skull-dim-lit.webp",
-    draw: (g) => `<defs><radialGradient id="${g}w"><stop offset="0" stop-color="#ffd27a" stop-opacity=".8"/><stop offset="1" stop-color="#ffb24a" stop-opacity="0"/></radialGradient></defs>`
-      + D.contact(g, 48, 40) + `<image href="obj/skull-dim.webp" x=".6" y="31.5" width="93.7" height="170" preserveAspectRatio="none"/><image class="litOnly" href="obj/skull-dim-lit.webp" x=".6" y="31.5" width="93.7" height="170" preserveAspectRatio="none"/>`
-      + `<g transform="translate(0 1.5)"><ellipse class="litOnly" cx="48.9" cy="46" rx="13" ry="5" fill="url(#${g}w)"/><ellipse class="litOnly" cx="48.9" cy="56" rx="15" ry="12" fill="url(#${g}w)" opacity=".3"/>`
-      + `<circle class="ember" cx="48.9" cy="30.3" r="1.4" fill="#ff7a2a"/><g class="ornFlame" data-x="48.9" data-y="30.8"><g class="ornFlicker"><ellipse cx="48.9" cy="21.8" rx="5" ry="11" fill="#ffb347" opacity=".55"/><path d="M48.9 10.8 C54.9 18.8 53.9 28.8 48.9 30.8 C43.9 28.8 42.9 18.8 48.9 10.8Z" fill="url(#oFlameG)"/><path d="M48.9 18.8 C51.3 22.8 50.9 28.3 48.9 29.3 C46.9 28.3 46.5 22.8 48.9 18.8Z" fill="#fffbe6"/></g></g></g>`,
+    label: "Skull & candle", scale: 0.62, vw: 110,
+    draw: (g) => {
+      const wax = "#e6dbc0";
+      return skullArt(g, 55, 147, 92)
+        + `<rect x="47" y="58" width="16" height="40" rx="2" fill="${wax}"/><rect x="47" y="58" width="16" height="40" rx="2" fill="url(#oWaxSh)"/><rect class="litOnly" x="47" y="56" width="16" height="22" fill="url(#oWaxGlow)"/><ellipse cx="55" cy="58.6" rx="8" ry="1.6" fill="${wax}"/>`
+        + `<path d="M47 94 q-6 2 -9 9 q-2 6 1 12 q2 3 3 -1 q0 -8 6 -12Z M63 93 q5 3 7 9 q1 9 -2 14 q-3 2 -3 -3 q1 -10 -4 -14Z M52 97 q0 6 -1 11 q1 4 3 0 q1 -6 0 -11Z" fill="${wax}"/>`
+        + `<path d="M48 61 q-1 8 .5 13 M61 60 q1.5 6 .2 10" stroke="${wax}" stroke-width="3" stroke-linecap="round" fill="none"/>`
+        + `<line x1="55" y1="58" x2="55" y2="54" stroke="#2a2420" stroke-width="1.2"/>`
+        + `<circle class="ember" cx="55" cy="53.5" r="1.4" fill="#ff7a2a"/><g class="ornFlame" data-x="55" data-y="54"><g class="ornFlicker"><ellipse cx="55" cy="45" rx="5" ry="11" fill="#ffb347" opacity=".55"/><path d="M55 34 C61 42 60 52 55 54 C50 52 49 42 55 34Z" fill="url(#oFlameG)"/><path d="M55 42 C57.4 46 57 51.5 55 52.5 C53 51.5 52.6 46 55 42Z" fill="#fffbe6"/></g></g>`;
+    },
   };
 
   // ------------------------------------------------------------------ potion bottles that light the shelf; tapped, the potions rise out, become a skull and vanish
