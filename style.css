@@ -1403,7 +1403,7 @@ html[data-mat="steel"] .plank::before {
 /* the clothes take on the room: a little darker and pinker, lit from the front, in the shelf's shadow at the top */
 .lights.closetRod.rail .hgr img { filter: brightness(.9) saturate(.93) drop-shadow(5px 9px 7px rgba(38,0,22,.42)) drop-shadow(1px 1px 1px rgba(38,0,22,.35)); }
 .lights.closetRod.rail .underShade { position: absolute; left: 0; right: 0; top: 0; bottom: 0; pointer-events: none; mix-blend-mode: multiply;
-  background: linear-gradient(180deg, rgba(70,8,45,.72) 0, rgba(110,20,70,.42) 22px, rgba(160,60,110,.16) 70px, rgba(255,255,255,0) 150px, rgba(255,255,255,0) 70%, rgba(120,30,80,.22) 100%); }
+  background: linear-gradient(180deg, rgba(90,15,58,.42) 0, rgba(120,26,78,.3) 14px, rgba(160,60,110,.14) 60px, rgba(255,255,255,0) 150px, rgba(255,255,255,0) 70%, rgba(120,30,80,.22) 100%); }
 .lights.closetRod .tube { position: absolute; pointer-events: none; background: url(obj/closet-rail-rod-m.webp) repeat-x; }
 .lights.closetRod.rail .rod { filter: drop-shadow(0 2px 1.5px rgba(42,4,24,.3)); }
 .lights.closetRod.rail .hgr img { filter: drop-shadow(2px 3px 2.5px rgba(42,4,24,.3)); }

@@ -175,9 +175,9 @@
       + tube(inset + lw - 2, w - 2 * inset - lw - rw + 4)
       + `<img src="${railPic("rail-rod-l")}" alt="" style="left:${inset}px;top:${f1(rodC - rod.l[2] * rs)}px;width:${f1(lw)}px;height:${f1(rod.l[1] * rs)}px">`
       + `<img src="${railPic("rail-rod-r")}" alt="" style="left:${f1(w - inset - rw)}px;top:${f1(rodC - rod.r[2] * rs)}px;width:${f1(rw)}px;height:${f1(rod.r[1] * rs)}px"></div>`;
-    // like a real closet, the rod sits back under the shelf: the shelf's front edge hides the rod and the tops of the
-    // hooks, so the hangers come down from under it. The rail is lifted and clipped at the shelf's bottom edge
-    const lift = rodC + rodD / 2 + 3;
+    // the rod sits right under the shelf: the shelf's front edge hides the brackets that hold it up, so only the rod
+    // and the hooks over it show. The rail is lifted and clipped at the shelf's bottom edge, just above the rod
+    const lift = rodTop - 2.5;
     const el = document.createElement("div");
     el.className = "lights closetRod rail on";
     el.innerHTML = `<div class="railIn" style="top:${f1(-lift)}px">${rodEl}${parts.join("")}</div><i class="underShade"></i>`;
