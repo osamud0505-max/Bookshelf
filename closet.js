@@ -137,7 +137,7 @@
   // a pair of heels still swings as one, from between its two hooks
   RAIL.heels.forEach((m, j) => { m.pieces = [[`heels-${j + 1}`, 0, 0, m.w, m.h, (m.hooks[0][0] + m.hooks[1][0]) / 2, m.inner]]; });
   const pic = (n) => `obj/closet-${n}-cosy.webp`;
-  const railPic = (n) => `obj/closet-${n}.webp`;
+  const railPic = (n) => `obj/closet-${n}.webp?f=2`;
   // the shelves take turns down the room: clothes, heels, clothes, clothes, clothes
   const PLAN = [["s"], ["heels"], ["s"], ["s"], ["s"]];
   const shelfOrder = [];
