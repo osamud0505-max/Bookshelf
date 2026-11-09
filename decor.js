@@ -519,9 +519,9 @@
     pillars: {
       // cosy game art: three ivory pillars burned down to ragged rims, wax run down and pooled at their feet.
       // The flames and the glow in their wells are live on top of the picture.
-      label: "Melted candles", scale: 0.45, vw: 139, flat: true, img: "obj/pillars-cosy.webp",
+      label: "Melted candles", scale: 0.45, vw: 139, flat: true, img: "obj/pillars-dim-lit.webp",
       draw: (g) => `<defs><radialGradient id="${g}w"><stop offset="0" stop-color="#ffd27a" stop-opacity=".8"/><stop offset=".6" stop-color="#ffb24a" stop-opacity=".25"/><stop offset="1" stop-color="#ffb24a" stop-opacity="0"/></radialGradient></defs>`
-        + contact(g, 69, 66) + `<image href="obj/pillars-cosy.webp" x=".7" y="31.5" width="137.5" height="170" preserveAspectRatio="none"/>`
+        + contact(g, 69, 66) + `<image href="obj/pillars-dim.webp" x=".7" y="31.5" width="137.5" height="170" preserveAspectRatio="none"/><image class="litOnly" href="obj/pillars-dim-lit.webp" x=".7" y="31.5" width="137.5" height="170" preserveAspectRatio="none"/>`
         + [[40.5, 32.2, 22], [96.2, 65.7, 21], [66.9, 108.9, 20]].map(([x, y, r]) => `<ellipse class="litOnly" cx="${x}" cy="${y + 15}" rx="${r}" ry="7" fill="url(#${g}w)"/><ellipse class="litOnly" cx="${x}" cy="${y + 26}" rx="${r + 2}" ry="16" fill="url(#${g}w)" opacity=".3"/>`).join("")
         + [[40.5, 32.2], [96.2, 65.7], [66.9, 108.9]].map(([x, y]) => flame(x, y - 0.4, 1.05)).join(""),
     },
@@ -764,28 +764,28 @@
       // below, and a tap lifts the glass, turns it end over end and sets it down. The picture is the same at both
       // ends, so a turned glass looks just like a fresh one with the sand on top. Sand is drawn in the picture's pixels,
       // flat and cel-shaded like the art, with a brown outline along its surface.
-      label: "Hourglass", scale: 0.6, vw: 120, still: true, flat: true, hourglass: true, img: "obj/hourglass-cosy.webp",
+      label: "Hourglass", scale: 0.6, vw: 120, still: true, flat: true, hourglass: true, img: "obj/hourglass-dim.webp",
       draw: (g) => {
         const cx = 209.5, N = 350, P = [[0, 10], [10, 11], [20, 16], [30, 34], [40, 44], [50, 54], [60, 65], [80, 85], [90, 94], [100, 102], [120, 116], [140, 125], [160, 130], [180, 132], [200, 131], [220, 126], [240, 113], [248, 100]];
         const side = (dir, sgn) => P.map(([dy, hw]) => `${(cx + dir * Math.max(1, hw - 4)).toFixed(0)} ${(N + sgn * dy).toFixed(0)}`);
         const bulb = (sgn) => { const L = side(-1, sgn), R = side(1, sgn).reverse(); return `M${L.join(" L")} L${R.join(" L")}Z`; };
-        const sand = (d) => `<path d="${d}" fill="#e2c38a"/><path d="${d}" fill="url(#${g}sh)"/>`;
+        const sand = (d) => `<path d="${d}" fill="#b99e72"/><path d="${d}" fill="url(#${g}sh)"/>`;
         const T = N - 160, topD = `M0 ${T} L${cx - 60} ${T} C${cx - 30} ${T + 1} ${cx - 11} ${T + 7} ${cx} ${T + 15} C${cx + 11} ${T + 7} ${cx + 30} ${T + 1} ${cx + 60} ${T} L420 ${T} L420 ${N + 30} L0 ${N + 30}Z`;
         const B = N + 100, botD = `M0 ${N + 300} L0 ${N + 225} C${cx - 110} ${N + 205} ${cx - 50} ${B + 60} ${cx - 10} ${B + 8} Q${cx} ${B - 2} ${cx + 10} ${B + 8} C${cx + 50} ${B + 60} ${cx + 110} ${N + 205} 420 ${N + 225} L420 ${N + 300}Z`;
-        const specks = (y0, n) => Array.from({ length: n }, (_, k) => `<circle cx="${(cx - 70 + ((k * 53) % 140)).toFixed(0)}" cy="${(y0 + ((k * 37) % 60)).toFixed(0)}" r="${2 + (k % 2)}" fill="#b88f55" opacity=".7"/>`).join("");
-        return `<defs><linearGradient id="${g}sh" gradientUnits="userSpaceOnUse" x1="${cx - 130}" x2="${cx + 130}" y1="0" y2="0"><stop offset="0" stop-color="#8a5a2c" stop-opacity=".7"/><stop offset=".26" stop-color="#8a5a2c" stop-opacity=".18"/><stop offset=".27" stop-color="#8a5a2c" stop-opacity="0"/><stop offset=".55" stop-color="#fff4d6" stop-opacity=".18"/><stop offset=".74" stop-color="#8a5a2c" stop-opacity="0"/><stop offset=".75" stop-color="#8a5a2c" stop-opacity=".22"/><stop offset="1" stop-color="#8a5a2c" stop-opacity=".75"/></linearGradient>`
+        const specks = (y0, n) => Array.from({ length: n }, (_, k) => `<circle cx="${(cx - 70 + ((k * 53) % 140)).toFixed(0)}" cy="${(y0 + ((k * 37) % 60)).toFixed(0)}" r="${2 + (k % 2)}" fill="#8a6a40" opacity=".7"/>`).join("");
+        return `<defs><linearGradient id="${g}sh" gradientUnits="userSpaceOnUse" x1="${cx - 130}" x2="${cx + 130}" y1="0" y2="0"><stop offset="0" stop-color="#8a5a2c" stop-opacity=".7"/><stop offset=".26" stop-color="#8a5a2c" stop-opacity=".18"/><stop offset=".27" stop-color="#8a5a2c" stop-opacity="0"/><stop offset=".55" stop-color="#fff4d6" stop-opacity=".08"/><stop offset=".74" stop-color="#8a5a2c" stop-opacity="0"/><stop offset=".75" stop-color="#8a5a2c" stop-opacity=".22"/><stop offset="1" stop-color="#8a5a2c" stop-opacity=".75"/></linearGradient>`
           + `<clipPath id="${g}up"><path d="${bulb(-1)}"/></clipPath><clipPath id="${g}lo"><path d="${bulb(1)}"/></clipPath></defs>`
-          + contact(g, 60, 62) + `<g class="hgBody"><image href="obj/hourglass-cosy.webp" x="0" y="0" width="119.4" height="200" preserveAspectRatio="none"/>`
+          + contact(g, 60, 62) + `<g class="hgBody"><image href="obj/hourglass-dim.webp" x="0" y="0" width="119.4" height="200" preserveAspectRatio="none"/>`
           + `<g transform="scale(.285714)">`
-          + `<g class="hgStream"><line x1="${cx}" y1="${N - 2}" x2="${cx}" y2="${N + 250}" stroke="#d9b679" stroke-width="5"/><line x1="${cx}" y1="${N - 2}" x2="${cx}" y2="${N + 250}" stroke="#f7e6bf" stroke-width="2.4" stroke-dasharray="5 9"/></g>`
+          + `<g class="hgStream"><line x1="${cx}" y1="${N - 2}" x2="${cx}" y2="${N + 250}" stroke="#b09670" stroke-width="5"/><line x1="${cx}" y1="${N - 2}" x2="${cx}" y2="${N + 250}" stroke="#d8c49c" stroke-width="2.4" stroke-dasharray="5 9"/></g>`
           + `<g clip-path="url(#${g}up)"><g class="hgTop">` + sand(topD) + specks(T + 25, 9)
-          + `<path d="M${cx - 140} ${T} L${cx - 60} ${T} C${cx - 30} ${T + 1} ${cx - 11} ${T + 7} ${cx} ${T + 15} C${cx + 11} ${T + 7} ${cx + 30} ${T + 1} ${cx + 60} ${T} L${cx + 140} ${T}" stroke="#7a4f28" stroke-width="3.2" fill="none"/>`
-          + `<path d="M${cx - 50} ${T + 4} C${cx - 28} ${T + 5} ${cx - 12} ${T + 10} ${cx - 4} ${T + 16}" stroke="#fff3d2" stroke-width="3" fill="none" opacity=".75" stroke-linecap="round"/></g></g>`
+          + `<path d="M${cx - 140} ${T} L${cx - 60} ${T} C${cx - 30} ${T + 1} ${cx - 11} ${T + 7} ${cx} ${T + 15} C${cx + 11} ${T + 7} ${cx + 30} ${T + 1} ${cx + 60} ${T} L${cx + 140} ${T}" stroke="#5a3a1e" stroke-width="3.2" fill="none"/>`
+          + `<path d="M${cx - 50} ${T + 4} C${cx - 28} ${T + 5} ${cx - 12} ${T + 10} ${cx - 4} ${T + 16}" stroke="#fff3d2" stroke-width="3" fill="none" opacity=".45" stroke-linecap="round"/></g></g>`
           + `<g clip-path="url(#${g}lo)"><g class="hgBot">` + sand(botD) + specks(B + 50, 8)
-          + `<path d="M${cx - 150} ${N + 228} L${cx - 110} ${N + 220} C${cx - 110} ${N + 205} ${cx - 50} ${B + 60} ${cx - 10} ${B + 8} Q${cx} ${B - 2} ${cx + 10} ${B + 8} C${cx + 50} ${B + 60} ${cx + 110} ${N + 205} ${cx + 150} ${N + 228}" stroke="#7a4f28" stroke-width="3.2" fill="none"/>`
-          + `<path d="M${cx - 70} ${B + 70} C${cx - 40} ${B + 45} ${cx - 20} ${B + 22} ${cx - 8} ${B + 10}" stroke="#fff3d2" stroke-width="3" fill="none" opacity=".7" stroke-linecap="round"/></g></g>`
+          + `<path d="M${cx - 150} ${N + 228} L${cx - 110} ${N + 220} C${cx - 110} ${N + 205} ${cx - 50} ${B + 60} ${cx - 10} ${B + 8} Q${cx} ${B - 2} ${cx + 10} ${B + 8} C${cx + 50} ${B + 60} ${cx + 110} ${N + 205} ${cx + 150} ${N + 228}" stroke="#5a3a1e" stroke-width="3.2" fill="none"/>`
+          + `<path d="M${cx - 70} ${B + 70} C${cx - 40} ${B + 45} ${cx - 20} ${B + 22} ${cx - 8} ${B + 10}" stroke="#fff3d2" stroke-width="3" fill="none" opacity=".4" stroke-linecap="round"/></g></g>`
           + `</g>`
-          + `<image href="obj/hourglass-glass-cosy.webp" x="0" y="0" width="119.4" height="200" preserveAspectRatio="none"/></g>`;
+          + `<image href="obj/hourglass-glass-cosy.webp" x="0" y="0" width="119.4" height="200" preserveAspectRatio="none" opacity=".7"/></g>`;
       },
     },
     globe: {
