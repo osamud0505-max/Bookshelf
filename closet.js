@@ -175,10 +175,13 @@
       + tube(inset + lw - 2, w - 2 * inset - lw - rw + 4)
       + `<img src="${railPic("rail-rod-l")}" alt="" style="left:${inset}px;top:${f1(rodC - rod.l[2] * rs)}px;width:${f1(lw)}px;height:${f1(rod.l[1] * rs)}px">`
       + `<img src="${railPic("rail-rod-r")}" alt="" style="left:${f1(w - inset - rw)}px;top:${f1(rodC - rod.r[2] * rs)}px;width:${f1(rw)}px;height:${f1(rod.r[1] * rs)}px"></div>`;
+    // like a real closet, the rod sits back under the shelf: the shelf's front edge hides the rod and the tops of the
+    // hooks, so the hangers come down from under it. The rail is lifted and clipped at the shelf's bottom edge
+    const lift = rodC + rodD / 2 + 3;
     const el = document.createElement("div");
     el.className = "lights closetRod rail on";
-    el.innerHTML = rodEl + parts.join("");
-    el.style.height = Math.ceil(bottom + 2) + "px";
+    el.innerHTML = `<div class="railIn" style="top:${f1(-lift)}px">${rodEl}${parts.join("")}</div><i class="underShade"></i>`;
+    el.style.height = Math.ceil(bottom - lift + 10) + "px";
     // tap a pair of heels and it swings; tap a set of clothes and the whole rail sways a little
     el.addEventListener("click", (ev) => {
       const t = ev.target.closest && ev.target.closest(".hit"), h = t && t.parentNode; if (!h) return;
