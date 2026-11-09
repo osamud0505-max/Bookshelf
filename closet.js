@@ -117,9 +117,12 @@
   // size (gap), tallest piece and hook spacing (pitch), all in stored pixels
   const SINGLES_B = [["single-b1",276,880,143.2,18.0,150.0,159.8],["single-b2",231,634,117.9,17.2,124.5,133.9],["single-b3",229,856,89.8,18.8,96.4,106.5],["single-b4",260,798,121.6,18.8,128.6,138.8],["single-b5",275,893,143.7,17.5,149.4,160.3],["single-b6",316,1005,137.4,17.5,120.9,131.9],["single-b7",305,1063,134.8,18.1,118.3,129.3],["single-b8",226,823,125.2,18.0,109.5,119.2]];
   // v160: the uniforms hang all together on one rod, close like osamu's layout pictures (uniforms-layout-ref.jpg, party-layout-ref.jpg): hook spacing measured against each piece's length there
+  // z: which piece hangs in front of which, as in osamu's photos (higher = nearer). In the party clothes the mint
+  // jacket hangs over the ruffle dress, the trousers over that dress and the bow dress over the trousers; in the
+  // uniforms the vest hangs over the plaid skirt and the teal dress over both its neighbours
   const RAILS = [
-    { list: SINGLES, tall: 1040, pitch: 172 },
-    { list: SINGLES_B, tall: 1063, pitch: 136 },
+    { list: SINGLES, tall: 1040, pitch: 172, z: [1, 2, 3, 4, 6, 5, 7, 8] },
+    { list: SINGLES_B, tall: 1063, pitch: 136, z: [1, 2, 3, 5, 4, 7, 6, 8] },
   ];
   // which picture each shelf hangs, down the room: party clothes, heels, uniforms, party clothes, uniforms
   const RAIL_OF = [0, 0, 1, 0, 1];
@@ -175,7 +178,7 @@
       LIST.forEach(([f, gw, gh, px, py, t0, t1], i) => {
         const m = { w: gw, h: gh, inner: py, hooks: [[px, t0, t1]], pieces: [[f, 0, 0, gw, gh, px, py]] };
         if (i) at += steps[i - 1] * pitch;
-        items.push({ m, s: s2, x: at - px * s2, amp: 1.6 });
+        items.push({ m, s: s2, x: at - px * s2, amp: 1.6, z: R.z ? R.z[i] : i });
       });
     }
     // centre what fits between the brackets
@@ -183,6 +186,8 @@
       const pv = (it, k) => it.x + it.m.hooks[k < 0 ? it.m.hooks.length - 1 : 0][0] * it.s;
       const shift = (x0 + x1) / 2 - (pv(items[0], 0) + pv(items[items.length - 1], -1)) / 2;
       items.forEach((it) => { it.x += shift; });
+      // drawn back to front
+      items.sort((a, b) => (a.z || 0) - (b.z || 0));
     }
     let bottom = rodC + rodD;
     const tube = (l, wd) => `<i class="tube" style="left:${f1(l)}px;width:${f1(wd)}px;top:${f1(rodTop - 0.4)}px;height:${f1(rodD + 0.8)}px;background-size:auto ${f1(rod.m[1] * rs)}px;background-position:0 ${f1(-(rod.m[2] * rs - rodD / 2 - 0.4))}px"></i>`;
