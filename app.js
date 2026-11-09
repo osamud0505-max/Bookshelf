@@ -576,7 +576,8 @@
   }
   function ornArt(k, box) {
     const o = D.ORNAMENTS[k], hgt = Math.min(box, (box * 1.15 * 200) / (o.vw || 100)), H = Math.round(hgt / (o.scale || 0.7));
-    const url = thumbUrl(k, H);
+    // a painted object is already a picture
+    const url = o.img || thumbUrl(k, H);
     if (!url) return D.ornamentEl(k, H, true, true);
     const w = Math.round(H * (o.scale || 0.7) * o.vw / 200), hh = Math.round(H * (o.scale || 0.7));
     const img = new Image(w, hh); img.className = "ornThumb"; img.alt = ""; img.decoding = "async"; img.draggable = false; img.src = url;
