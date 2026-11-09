@@ -1396,6 +1396,8 @@ html[data-mat="steel"] .plank::before {
 .shelf.hasLights[data-lights="closetRod"] .caption { padding-top: calc(var(--lights-h, 120px) - 6px); }
 .lights.closetRod .rod { position: absolute; left: 0; right: 0; pointer-events: none; filter: drop-shadow(0 3px 2px rgba(42,4,24,.35)); }
 .lights.closetRod .rod img { position: absolute; top: 0; height: 100%; }
+.ornament[data-kind="handbag"], .ornament[data-kind="pencilCup"], .ornament[data-kind="giftBoxes"], .ornament[data-kind="shoppingBags"] { bottom: calc(var(--top-d) * -.42); }
+.lights.closetRod .rodMount { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; filter: drop-shadow(0 2px 1.5px rgba(42,4,24,.35)); }
 .lights.closetRod .rodPatch { position: absolute; pointer-events: none; overflow: hidden; }
 .lights.closetRod .rodPatch img { position: absolute; max-width: none; }
 .lights.closetRod .hgr { position: absolute; pointer-events: none; transform: rotate(var(--r)); }
