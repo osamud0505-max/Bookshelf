@@ -738,7 +738,7 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .ornament.nudge svg { animation: ornNudge .5s ease-in-out; transform-origin: 50% 100%; }
 /* the hourglass: sand drains from the top (slowly while the bulb is wide, faster as it narrows) into a cone below */
 .ornament.hg .hgTop, .ornament.hg .hgBot, .ornament.hg .hgStream { transform-box: view-box; }
-.ornament.hg .hgBot { transform: translateY(250px); }
+.ornament.hg .hgBot { transform: translateY(36px); }
 .ornament.hg .hgStream { opacity: 0; }
 .ornament.hgRun .hgTop { animation: hgTop var(--hgDur) cubic-bezier(.55,0,.85,.7) var(--hgAt) both; }
 .ornament.hgRun .hgBot { animation: hgBot var(--hgDur) cubic-bezier(.2,.5,.6,1) var(--hgAt) both; }
@@ -746,11 +746,11 @@ html[data-bd="1"] .iconBtn { background: color-mix(in srgb, var(--background) 45
 .ornament.hgRun .hgStream line + line { animation: hgGrains .22s linear infinite; }
 .ornament.hgFlipping .hgTop, .ornament.hgFlipping .hgBot { animation-play-state: paused; }
 .ornament.hgFlipping .hgStream { animation: none; opacity: 0; transition: opacity .12s; }
-.ornament.hgFlipping svg { animation: hgFlip 1.15s cubic-bezier(.45,.05,.35,1) both; transform-origin: 50% 50%; }
-@keyframes hgTop { from { transform: translateY(0); } to { transform: translateY(181px); } }
-@keyframes hgBot { from { transform: translateY(250px); } to { transform: translateY(0); } }
+.ornament.hgFlipping svg { animation: hgFlip 1.15s cubic-bezier(.45,.05,.35,1) both; transform-origin: 50% 52.5%; }
+@keyframes hgTop { from { transform: translateY(0); } to { transform: translateY(51px); } }
+@keyframes hgBot { from { transform: translateY(36px); } to { transform: translateY(0); } }
 @keyframes hgStream { 0% { opacity: 0; } .4% { opacity: 1; } 98.6% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes hgGrains { to { stroke-dashoffset: -11; } }
+@keyframes hgGrains { to { stroke-dashoffset: -3.4; } }
 @keyframes hgFlip { 0% { transform: none; } 16% { transform: translateY(-7%) rotate(-6deg); } 72% { transform: translateY(-8%) rotate(184deg); } 88% { transform: translateY(-1%) rotate(179deg); } 100% { transform: translateY(0) rotate(180deg); } }
 @keyframes ornNudge { 25% { transform: rotate(-4deg); } 60% { transform: rotate(3deg); } 85% { transform: rotate(-1deg); } }
 .decorBin { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom)); z-index: 60; display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: 999px; background: rgba(24,20,18,.82); color: #f1e6d4; border: 1px solid rgba(217,180,106,.35); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-size: .85rem; box-shadow: 0 10px 30px rgba(0,0,0,.4); opacity: 0; pointer-events: none; transform: translate(-50%, 20px); transition: opacity .2s, transform .2s, background .15s; }
