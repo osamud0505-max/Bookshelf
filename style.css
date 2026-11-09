@@ -1401,30 +1401,20 @@ html[data-mat="steel"] .plank::before {
 .lights.closetRod.rail { overflow: hidden; }
 .lights.closetRod.rail .railIn { position: absolute; left: 0; width: 100%; height: 100%; }
 /* the clothes take on the room: a little darker and pinker, lit from the front, in the shelf's shadow at the top */
-.lights.closetRod.rail .hgr img { filter: brightness(.9) saturate(.93) drop-shadow(5px 9px 7px rgba(38,0,22,.42)) drop-shadow(1px 1px 1px rgba(38,0,22,.35)); }
 .lights.closetRod.rail .underShade { position: absolute; left: 0; right: 0; top: 0; bottom: 0; pointer-events: none; mix-blend-mode: multiply;
   background: linear-gradient(180deg, rgba(90,15,58,.42) 0, rgba(120,26,78,.3) 14px, rgba(160,60,110,.14) 60px, rgba(255,255,255,0) 150px, rgba(255,255,255,0) 70%, rgba(120,30,80,.22) 100%); }
 .lights.closetRod .tube { position: absolute; pointer-events: none; background: url(obj/closet-rail-rod-m.webp) repeat-x; }
 .lights.closetRod.rail .rod { filter: drop-shadow(0 2px 1.5px rgba(42,4,24,.3)); }
-.lights.closetRod.rail .hgr img { filter: drop-shadow(2px 3px 2.5px rgba(42,4,24,.3)); }
 .lights.closetRod .rodPatch { position: absolute; pointer-events: none; overflow: hidden; }
 .lights.closetRod .rodPatch img { position: absolute; max-width: none; }
-.lights.closetRod .hgr { position: absolute; pointer-events: none; transform: rotate(var(--r)); }
-.lights.closetRod .hgr img { display: block; width: 100%; height: 100%; filter: drop-shadow(3px 4px 3px rgba(42,4,24,.28)); }
-.lights.closetRod .hgr .hit { position: absolute; top: 0; bottom: 0; pointer-events: auto; cursor: pointer; }
-.lights.closetRod .hgr.swing { animation: hgrSwing 2.2s cubic-bezier(.3,.6,.4,1); }
-@keyframes hgrSwing {
-  0% { transform: rotate(var(--r)); }
-  12% { transform: rotate(calc(var(--r) + var(--a))); }
-  32% { transform: rotate(calc(var(--r) - var(--a) * .62)); }
-  52% { transform: rotate(calc(var(--r) + var(--a) * .36)); }
-  70% { transform: rotate(calc(var(--r) - var(--a) * .18)); }
-  86% { transform: rotate(calc(var(--r) + var(--a) * .07)); }
-  100% { transform: rotate(var(--r)); }
-}
+.lights.closetRod .hgr { position: absolute; pointer-events: none; }
+/* v153: each hanger and each shoe is its own picture that swings from its hook */
+.lights.closetRod .pc { position: absolute; pointer-events: none; }
+.lights.closetRod .pc.live { will-change: transform; }
+.lights.closetRod .pc img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; filter: drop-shadow(2px 3px 2.5px rgba(42,4,24,.3)); }
 #backdrop .glint4 { width: var(--s); height: var(--s); opacity: 0; margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
   background: radial-gradient(circle, #fff 0 10%, rgba(255,210,236,.6) 18%, transparent 40%), linear-gradient(90deg, transparent 46%, rgba(255,255,255,.95) 50%, transparent 54%), linear-gradient(0deg, transparent 46%, rgba(255,255,255,.95) 50%, transparent 54%);
   -webkit-mask: radial-gradient(circle, #000 20%, transparent 70%); mask: radial-gradient(circle, #000 20%, transparent 70%);
   animation: glint4 var(--t) ease-in-out infinite; animation-delay: var(--d); }
 @keyframes glint4 { 0%, 70%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); } 82% { opacity: 1; transform: scale(1) rotate(25deg); } }
-@media (prefers-reduced-motion: reduce) { #backdrop .glint4 { animation: none; opacity: .5; } .lights.closetRod .hgr.swing { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #backdrop .glint4 { animation: none; opacity: .5; } }
