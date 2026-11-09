@@ -124,11 +124,11 @@
   // z: which piece hangs in front of which, checked pair by pair in osamu's photos (higher = nearer). Party: the
   // jacket over the skirt and the ruffle dress, that dress over the trousers, the trousers over the bow dress.
   // Uniforms: each over the one on its left, the teal dress and the blouse over the purple-skirt outfit. Gowns: the
-  // blue skirt over the purple dress (osamu), the pink ruffle dress over the skirt and the gold dress
+  // purple dress over the blue skirt, the skirt over the pink ruffle dress (osamu), that dress over the gold one
   const RAILS = [
     { list: SINGLES, tall: 1040, pitch: 172, z: [1, 2, 3, 4, 8, 7, 6, 5] },
     { list: SINGLES_B, tall: 1063, pitch: 136, z: [1, 2, 3, 4, 5, 7, 6, 8] },
-    { list: SINGLES_C, tall: 1040, pitch: 112, steps: [1.03, 0.83, 0.98, 1.03, 1.2, 1.85, 0.95], z: [1, 2, 3, 4, 5, 6, 8, 7] },
+    { list: SINGLES_C, tall: 1040, pitch: 112, steps: [1.03, 0.83, 0.98, 1.03, 1.5, 1.7, 0.95], z: [1, 2, 3, 4, 8, 7, 6, 5] },
   ];
   // which picture each shelf hangs, down the room: party clothes, heels, uniforms, gowns, party clothes
   const RAIL_OF = [0, 0, 1, 2, 0];
