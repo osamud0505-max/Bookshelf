@@ -544,7 +544,7 @@
     if (!oc.kind || oc.kind === "none" || dz.noCandle) return [];
     const pos = oc.pos || "end";
     const first = { id: "d0", kind: "auto", after: pos === "start" ? null : pos === "middle" ? "mid" : "end", on: !dz.out };
-    return D.ORNAMENTS[oc.kind] && D.ORNAMENTS[oc.kind].cycle ? [first, { id: "d1", kind: "auto2", after: null, on: true }] : [first];
+    return D.ORNAMENTS[oc.kind] && D.ORNAMENTS[oc.kind].cycle ? [first, { id: "d1", kind: "auto2", after: "mid", on: true }] : [first];
   }
   // a picture of a decoration sized to fill a menu tile
   // Menu pictures are plain images: each drawing is laid out once off screen, the styles the page sheet gives its parts
@@ -848,6 +848,8 @@
     const plank = root.querySelector(".plank");
     const els = L.styles.map((st) => D.lightsEl(plankWidth(), { style: st, colour: L.colour, on: NO_SWITCH.includes(st) ? true : on, room: lookId(), seed: key })).filter(Boolean);
     els.forEach((el) => plank.append(el));
+    // how far the tallest hanging thing reaches (the closet's clothes), so the shelf's caption sits below it
+    root.style.setProperty("--lights-h", Math.max(0, ...els.map((e) => parseFloat(e.style.height) || 0)) + "px");
     root.classList.toggle("hasLights", els.length > 0);
     root.dataset.lights = TALLEST.find((k) => L.styles.includes(k)) || "";
     if (!L.styles.some((k) => !NO_SWITCH.includes(k))) return;
