@@ -1433,3 +1433,15 @@ html[data-mat="steel"] .plank::before {
   62% { transform: translate(-50%, -50%) scale(1) rotate(35deg); opacity: 1; }
   82% { transform: translate(-50%, -50%) scale(.4) rotate(70deg); opacity: .55; } }
 @media (prefers-reduced-motion: reduce) { .lights.closetRod .pc .sp { animation: none; opacity: .55; transform: translate(-50%, -50%) scale(.6); } }
+
+/* v174: the princess closet's shelves are deeper, seen from above like the floor of a cubby (osamu's picture): the floor
+   is a trapezoid, as wide as the shelf at the front and narrower at the back, so its sides slant in. Books and objects
+   still stand halfway back on it, because everything keys off --top-d. */
+html[data-bdk="closet"] .shelf { --top-d: 34px; --floor-in: 26px; }
+@media (min-width: 560px) { html[data-bdk="closet"] .shelf { --top-d: 46px; --floor-in: 36px; } }
+html[data-bdk="closet"] .track::before { clip-path: polygon(var(--floor-in) 0, calc(100% - var(--floor-in)) 0, 100% 100%, 0 100%);
+  background: linear-gradient(0deg, rgba(255,255,255,.22) 0, rgba(255,255,255,.1) 2px, rgba(255,255,255,.03) 40%, rgba(0,0,0,.2) 78%, rgba(0,0,0,.42) 100%), var(--plank-top); }
+/* the corners either side of the floor: the shelf's side, a little darker than the floor, so the slant reads */
+html[data-bdk="closet"] .track::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--top-d); pointer-events: none;
+  clip-path: polygon(0 0, var(--floor-in) 0, 0 100%, 0 0, 100% 0, 100% 100%, calc(100% - var(--floor-in)) 0, 100% 0);
+  background: linear-gradient(90deg, rgba(40,4,26,.5), rgba(40,4,26,.15) 40%, rgba(40,4,26,0)); }

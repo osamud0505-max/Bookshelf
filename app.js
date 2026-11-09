@@ -89,6 +89,7 @@
     const vignette = bd.tone ? ["radial-gradient(ellipse 120% 90% at 50% 40%, rgba(0,0,0,0) 55%, rgba(0,0,0,.28))"] : [];
     set("--backdrop", [...veil, ...vignette, bd.css()].join(","));
     document.documentElement.dataset.bd = bd.tone ? "1" : "";
+    document.documentElement.dataset.bdk = s.backdrop || "";
     // moving pieces of the backdrop (falling stars, floating lights); only rebuilt when they change, so they never restart
     const bdEl = document.getElementById("backdrop"), fx = bd.fx || "";
     if (bdEl && bdEl.dataset.fx !== fx) { bdEl.dataset.fx = fx; bdEl.innerHTML = fx ? D.backdropFx(fx) : ""; }
