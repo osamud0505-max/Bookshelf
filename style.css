@@ -1985,3 +1985,34 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.cabinSwags .cSnow { top: -16px; height: 96.33px; background: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
 .lights.cabinSwags .cSnowLit { -webkit-mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
 .lights.cabinSwags::after { display: none; }
+/* v266 (osamu: the switch should feel like Christmas, and the pull should match the other looks): tapping an ornament
+   pulls it down on its ribbon or chain like the other hanging lights; switching on runs left to right along the shelf,
+   each ornament lighting with a star glint and the snow sparkling behind, then they twinkle gently, red and clear
+   taking turns; switching off fades them right to left. All opacity/transform only */
+.lights.cabinSwags .vDrop.yank .cOrn, .lights.cabinSwags .vDrop.yank .cHalo, .lights.cabinSwags .vDrop.yank .cBow,
+.lights.cabinSwags .vDrop.yank .cRingB, .lights.cabinSwags .vDrop.yank .cRingF { animation: vPull 1s ease both; }
+.lights.cabinSwags.on .vDrop.yank .cHalo { animation: vPullHalo 1s ease both; }
+.lights.cabinSwags .vDrop.yank .cChain, .lights.cabinSwags .vDrop.yank .cRibbon { transform-origin: 50% 0; animation: vChainPull 1s ease both; }
+.lights.cabinSwags.switchOn .cOn, .lights.cabinSwags.switchOn .cIn, .lights.cabinSwags.switchOn .cHalo { transition-duration: .45s; transition-delay: calc(var(--o) * .8s); }
+.lights.cabinSwags.switchOff .cOn, .lights.cabinSwags.switchOff .cIn, .lights.cabinSwags.switchOff .cHalo { transition-duration: .4s; transition-delay: calc((1 - var(--o)) * .7s); }
+.lights.cabinSwags .cGlint { position: absolute; transform: translate(-50%, -50%) scale(0); opacity: 0; pointer-events: none;
+  background: radial-gradient(closest-side, #fff 0, #fffbe6 30%, rgba(255,236,190,.85) 55%, rgba(255,230,180,0));
+  clip-path: polygon(50% 0, 57% 43%, 100% 50%, 57% 57%, 50% 100%, 43% 57%, 0 50%, 43% 43%); }
+.lights.cabinSwags.switchOn .cGlint { animation: cGlint .75s ease-out both; animation-delay: calc(var(--o) * .8s + .12s); }
+@keyframes cGlint { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(0deg); } 35% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(30deg); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(.2) rotate(70deg); } }
+.lights.cabinSwags.on:not(.switchOn) .cIn { animation: cTwinkle 3.2s ease-in-out infinite; animation-delay: calc(var(--i) * .23s); }
+.lights.cabinSwags.on:not(.switchOn) .cClear .cIn { animation-delay: calc(var(--i) * .23s + 1.6s); }
+@keyframes cTwinkle { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.lights.cabinSwags .cSparks { position: absolute; left: 0; right: 0; top: -16px; height: 60px; pointer-events: none; z-index: 2; }
+.lights.cabinSwags .cSparks i { position: absolute; opacity: 0; transform: scale(0);
+  background: radial-gradient(closest-side, #fff 0, rgba(255,255,255,.9) 35%, rgba(220,235,255,0));
+  clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%); }
+.lights.cabinSwags.on:not(.switchOn) .cSparks i { animation: cSpark 7s ease-in-out infinite; animation-delay: var(--sd); }
+.lights.cabinSwags.switchOn .cSparks i { animation: cSparkOn .7s ease-out both; animation-delay: calc(var(--o) * .8s); }
+@keyframes cSpark { 0%, 86%, 100% { opacity: 0; transform: scale(0) rotate(0deg); } 92% { opacity: 1; transform: scale(1) rotate(25deg); } }
+@keyframes cSparkOn { 0% { opacity: 0; transform: scale(0) rotate(0deg); } 40% { opacity: 1; transform: scale(1.2) rotate(30deg); } 100% { opacity: 0; transform: scale(0) rotate(60deg); } }
+@media (prefers-reduced-motion: reduce) { .lights.cabinSwags .cGlint, .lights.cabinSwags .cSparks i, .lights.cabinSwags .cIn, .lights.cabinSwags .vDrop.yank * { animation: none !important; } }
+/* each ornament gives a little jingle (a swing from its loop) as the light reaches it */
+.lights.cabinSwags.switchOn .vDrop:not(.yank) .cOrn { transform-origin: 50% 2px; animation: cJingle 1s ease-out both; animation-delay: calc(var(--o) * .8s); }
+@keyframes cJingle { 0% { rotate: 0deg; } 18% { rotate: 7deg; } 40% { rotate: -5deg; } 62% { rotate: 2.5deg; } 82% { rotate: -1deg; } 100% { rotate: 0deg; } }
+@media (prefers-reduced-motion: reduce) { .lights.cabinSwags.switchOn .cOrn { animation: none; } }

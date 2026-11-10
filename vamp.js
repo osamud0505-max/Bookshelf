@@ -533,12 +533,20 @@
         ? `<i class="cChain" style="left:${f1(c - 1.5)}px;height:${f1(ly - 1.8)}px"></i>` + ring("cRingB", "M0 -2.6 A1.8 2.6 0 1 1 0 2.6 A1.8 2.6 0 1 1 0 -2.6")
         : `<i class="cRibbon" style="left:${f1(c - 1.67)}px;height:${f1(ly - 2)}px"></i>`;
       const front = d.gold ? ring("cRingF", "M0 -2.6 A1.8 2.6 0 0 0 0 2.6") : `<i class="cBow" style="left:${f1(c - 9)}px;top:${f1(ly - 5.6)}px"></i>`;
-      return `<div class="vDrop cDrop${d.o.red ? " cRed" : " cClear"}" data-n="${i}" style="left:${f1(d.cx - c)}px;top:${f1(d.py)}px;width:${f1(box)}px;height:${f1(d.chain + d.hh)}px;transform-origin:50% 0;--i:${i}">`
+      return `<div class="vDrop cDrop${d.o.red ? " cRed" : " cClear"}" data-n="${i}" style="left:${f1(d.cx - c)}px;top:${f1(d.py)}px;width:${f1(box)}px;height:${f1(d.chain + d.hh)}px;transform-origin:50% 0;--i:${i};--o:${(d.cx / w).toFixed(3)}">`
         + `<i class="cHalo" style="top:${f1(d.chain + d.hh * 0.55)}px;width:${f1(d.ww * 4)}px;height:${f1(d.hh * 3)}px"></i>${hang}`
         + `<div class="cOrn" style="left:${f1(c - d.ww * d.o.hx)}px;top:${f1(d.chain)}px;width:${f1(d.ww)}px;height:${f1(d.hh)}px">`
         + `<img class="cDim" src="${src}" alt="" draggable="false" decoding="async"><img class="cOn" src="${src}" alt="" draggable="false" decoding="async">`
-        + `<i class="cIn" style="-webkit-mask-image:url(${src});mask-image:url(${src})"></i></div>${front}</div>`;
+        + `<i class="cIn" style="-webkit-mask-image:url(${src});mask-image:url(${src})"></i>`
+        + `<i class="cGlint" style="left:${f1(d.ww * 0.68)}px;top:${f1(d.hh * (d.o.ar < 0.35 ? 0.22 : 0.36))}px;width:${f1(Math.min(32, Math.max(18, d.ww * 0.95)))}px;height:${f1(Math.min(32, Math.max(18, d.ww * 0.95)))}px"></i></div>${front}</div>`;
     };
+    // v266 (osamu: switching should feel festive): glints that wink along the snowy lip, swept left to right when the
+    // lights come on and twinkling now and then while they're on
+    let sparks = "";
+    for (let x = 6 + R() * 14; x < w - 4; x += 22 + R() * 20) {
+      const s = 8 + R() * 7;
+      sparks += `<i style="left:${f1(x - s / 2)}px;top:${f1(8 + R() * 30 - s / 2)}px;width:${f1(s)}px;height:${f1(s)}px;--o:${(x / w).toFixed(3)};--sd:${(R() * 7).toFixed(2)}s"></i>`;
+    }
     const H = Math.ceil(maxY + 10);
     const el = document.createElement("div");
     el.className = "lights cabinSwags" + (cfg.on ? " on" : "");
@@ -547,10 +555,19 @@
       + `<g class="cLit">${g.lit.map((d, j) => `<g class="cTw cTw${j}">${d.join("")}</g>`).join("")}</g></svg>`; };
     el.innerHTML = `<div class="vIn"><svg class="cDefs" width="0" height="0" aria-hidden="true"><defs>`
       + `<radialGradient id="cbDot"><stop offset="0" stop-color="#fffbe8"/><stop offset=".28" stop-color="#ffe3a6"/><stop offset=".55" stop-color="rgba(255,196,110,.3)"/><stop offset="1" stop-color="rgba(255,180,90,0)"/></radialGradient>`
-      + `</defs></svg><div class="cShade"></div>${drops.map(bauble).join("")}<div class="cSnow" aria-hidden="true"><i class="cSnowLit"></i></div></div>`;
+      + `</defs></svg><div class="cShade"></div>${drops.map(bauble).join("")}<div class="cSnow" aria-hidden="true"><i class="cSnowLit"></i></div><div class="cSparks" aria-hidden="true">${sparks}</div></div>`;
     const dEls = el.querySelectorAll(".cDrop");
     drops.forEach((d, i) => { d.els = [dEls[i]]; });
-    touch(el, drops, [], { quiet: true });
+    touch(el, drops, []);
+    // v266: a little run of glass bells as the lights sweep on (rising, left to right), falling softly when they go off
+    const NOTES = [1568, 1760, 2093, 2349, 2637, 3136, 3520];
+    let was = el.classList.contains("on");
+    new MutationObserver(() => {
+      const on = el.classList.contains("on"); if (on === was) return; was = on;
+      if (!el.isConnected || !window.ShelfSfx || !window.ShelfSfx.clink) return;
+      const seq = on ? NOTES : NOTES.slice(0, 4).reverse(), step = on ? 120 : 140;
+      seq.forEach((f, j) => setTimeout(() => { try { window.ShelfSfx.clink(f, on ? 0.55 - j * 0.03 : 0.3, (j / (seq.length - 1) - 0.5) * (on ? 1 : -1)); } catch (e) { /* no sound */ } }, j * step));
+    }).observe(el, { attributes: true, attributeFilter: ["class"] });
     return el;
   }
 
