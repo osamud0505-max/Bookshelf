@@ -432,7 +432,6 @@
   // ------------------------------------------------------------------ things on the shelves
   // cosy game art pictures standing on y = 200, the top of the shelf, with a soft contact shadow where they meet it
   const contact = (g, cx, rx) => `<defs><radialGradient id="${g}cs" cx=".5" cy="1" r="1"><stop offset="0" stop-color="#2a0418" stop-opacity=".5"/><stop offset=".5" stop-color="#2a0418" stop-opacity=".22"/><stop offset="1" stop-color="#2a0418" stop-opacity="0"/></radialGradient><radialGradient id="${g}cc"><stop offset="0" stop-color="#1a0210" stop-opacity=".75"/><stop offset=".7" stop-color="#1a0210" stop-opacity=".35"/><stop offset="1" stop-color="#1a0210" stop-opacity="0"/></radialGradient></defs>`
-    + `<path d="M${f1(cx - rx * 1.12)} 200 C${f1(cx - rx * 1.1)} 190 ${f1(cx - rx * 0.8)} 185 ${cx} 185 C${f1(cx + rx * 0.8)} 185 ${f1(cx + rx * 1.1)} 190 ${f1(cx + rx * 1.12)} 200Z" fill="url(#${g}cs)"/>`
     + `<ellipse cx="${cx}" cy="199.2" rx="${f1(rx * 1.02)}" ry="1.7" fill="url(#${g}cc)"/>`;
   const painted = (label, name, W, H, scale, shadows) => {
     const vw = f1(200 * W / H);
