@@ -284,6 +284,17 @@
         maxY = Math.max(maxY, sy + sr);
       }
     }
+    // the big paper star lanterns: three to a shelf's width, on cords of different lengths
+    const groups = Math.max(1, Math.round(w / unit)), lan = [];
+    const SPOT = [[0.18, 0.3], [0.5, 0.12], [0.8, 0.36]];
+    for (let k = 0; k < groups * 3; k++) {
+      const sp = SPOT[k % 3], s = Math.round(unit * (0.2 + R() * 0.05));
+      const x = Math.min(w - s / 2 - 4, Math.max(s / 2 + 4, (Math.floor(k / 3) + sp[0] + (R() - 0.5) * 0.05) * (w / groups)));
+      const cord = Math.round(top + unit * sp[1] + R() * unit * 0.06);
+      lan.push(`<div class="scLan" style="left:${f1(x - s / 2)}px;top:${top}px;width:${s}px;--cord:${cord - top}px;--sw:${(2.6 + R() * 1.4).toFixed(1)}s;--sd:${(-R() * 3).toFixed(1)}s">`
+        + `<i class="scCord"></i><b class="scHalo"></b><img class="scOffImg" src="obj/star-lantern.webp" alt=""><img class="scOnImg" src="obj/star-lantern-lit.webp" alt=""></div>`);
+      maxY = Math.max(maxY, cord + s);
+    }
     const H = Math.ceil(maxY + 8);
     const el = document.createElement("div");
     el.className = "lights starCurtain" + (cfg.on ? " on" : "");
@@ -294,7 +305,7 @@
       + `<g class="scOff">${offd.join("")}</g>`
       + `<g class="scStars">${stars.join("")}</g>`
       + `<g class="scLit">${dots.map((g, k) => `<g class="scTw scTw${k}">${g.join("").replace(/r="([\d.]+)"/g, (m, r) => `r="${(r * 2.2).toFixed(1)}"`)}</g>`).join("")}</g>`
-      + `</svg><div class="starTrimGlow"></div><div class="starTrim"></div>`;
+      + `</svg>${lan.join("")}<div class="starTrimGlow"></div><div class="starTrim"></div>`;
     return el;
   }
 

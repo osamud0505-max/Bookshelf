@@ -1727,3 +1727,14 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.starCurtain.on .starTrimGlow::after { opacity: 1; }
 .shelf[data-lights="starCurtain"] .plank { box-shadow: none; }
 @media (prefers-reduced-motion: reduce) { .lights.starCurtain.on .scTw { animation: none; } }
+/* v242 starry: big paper star lanterns hanging in the curtain, glowing warm through their punched stars */
+.lights.starCurtain .scLan { position: absolute; transform-origin: 50% 0; animation: scSway var(--sw) ease-in-out var(--sd) infinite alternate; pointer-events: none; }
+.lights.starCurtain .scCord { position: absolute; left: 50%; top: 0; width: 1px; margin-left: -.5px; height: calc(var(--cord) + 2px); background: rgba(190,175,150,.55); }
+.lights.starCurtain .scLan img { position: absolute; left: 0; top: var(--cord); width: 100%; height: auto; display: block; }
+.lights.starCurtain .scOnImg { opacity: 0; transition: opacity .6s ease; }
+.lights.starCurtain.on .scOnImg { opacity: 1; }
+.lights.starCurtain .scHalo { position: absolute; left: 50%; top: var(--cord); width: 300%; aspect-ratio: 1; transform: translate(-50%, -33%); border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255,214,140,.42), rgba(255,180,100,.18) 45%, rgba(255,160,90,.06) 70%, rgba(255,150,80,0)); opacity: 0; transition: opacity .6s ease; }
+.lights.starCurtain.on .scHalo { opacity: 1; }
+@keyframes scSway { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
+@media (prefers-reduced-motion: reduce) { .lights.starCurtain .scLan { animation: none; } }
