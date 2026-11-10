@@ -249,13 +249,64 @@
     return el;
   }
 
+
+  // ------------------------------------------------------------------ starry night: a curtain of lights and a star trim
+  // osamu's idea (2026-11-10, from their photo): strands of tiny warm lights hanging close together from under the shelf
+  // like a curtain, little paper stars dangling among them, and along the shelf's front a scalloped trim in the shelf's
+  // own wood with a star cut into every scallop, the stars glowing when the lights are on. Drawn as one SVG; the
+  // twinkle is four groups fading in turn, and switching only fades opacity.
+  D.LIGHT_STYLES.starCurtain = "Light curtain";
+  const rnd = (seed) => { let x = seed >>> 0 || 1; return () => { x ^= x << 13; x ^= x >>> 17; x ^= x << 5; return ((x >>> 0) % 10000) / 10000; }; };
+  const starPts = (cx, cy, r, n = 5, inner = 0.45, rot = -Math.PI / 2) => {
+    const p = []; for (let i = 0; i < n * 2; i++) { const a = rot + (i * Math.PI) / n, rr = i % 2 ? r * inner : r; p.push(f1(cx + Math.cos(a) * rr) + "," + f1(cy + Math.sin(a) * rr)); } return p.join(" ");
+  };
+  function curtainEl(w, cfg) {
+    const R = rnd(7919 + Math.round(w)), unit = Math.min(w, 430);
+    const gap = 15, n = Math.floor(w / gap), top = 16; // strands start behind the trim
+    const lines = [], dots = [[], [], [], []], offd = [], stars = [];
+    let maxY = 0;
+    for (let i = 0; i < n; i++) {
+      const x = (i + 0.5) * (w / n) + (R() - 0.5) * 3;
+      // lengths wave gently along the shelf, with every strand a little different
+      const L = unit * (0.34 + 0.12 * Math.sin(i * 0.37 + 1.3) + 0.08 * Math.sin(i * 1.71) + R() * 0.1);
+      const sway = (R() - 0.5) * 2.2, y1 = top + L;
+      maxY = Math.max(maxY, y1);
+      lines.push(`<path d="M${f1(x)} ${top} Q${f1(x + sway)} ${f1(top + L / 2)} ${f1(x + sway * 0.4)} ${f1(y1)}"/>`);
+      for (let y = top + 6 + R() * 10; y < y1; y += 12 + R() * 4) {
+        const t = (y - top) / L, dx = sway * 2 * t * (1 - t) + sway * 0.4 * t * t;
+        const c = `<circle cx="${f1(x + dx)}" cy="${f1(y)}" r="${(1.3 + R() * 0.6).toFixed(1)}"/>`;
+        dots[Math.floor(R() * 4)].push(c); offd.push(c);
+      }
+      // a little paper star on some strands, at the end or part way down
+      if (R() < 0.22) {
+        const sy = R() < 0.6 ? y1 + 5 : top + L * (0.45 + R() * 0.4), sr = 4.5 + R() * 4;
+        stars.push(`<polygon points="${starPts(x + sway * 0.3, sy, sr)}"/>`);
+        maxY = Math.max(maxY, sy + sr);
+      }
+    }
+    const H = Math.ceil(maxY + 8);
+    const el = document.createElement("div");
+    el.className = "lights starCurtain" + (cfg.on ? " on" : "");
+    el.style.height = H + "px";
+    el.innerHTML = `<svg class="scSvg" width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true">`
+      + `<defs><radialGradient id="scDot"><stop offset="0" stop-color="#fffdf2"/><stop offset=".3" stop-color="#ffeab0"/><stop offset=".5" stop-color="rgba(255,205,120,.35)"/><stop offset="1" stop-color="rgba(255,190,100,0)"/></radialGradient></defs>`
+      + `<g class="scWire">${lines.join("")}</g>`
+      + `<g class="scOff">${offd.join("")}</g>`
+      + `<g class="scStars">${stars.join("")}</g>`
+      + `<g class="scLit">${dots.map((g, k) => `<g class="scTw scTw${k}">${g.join("").replace(/r="([\d.]+)"/g, (m, r) => `r="${(r * 2.2).toFixed(1)}"`)}</g>`).join("")}</g>`
+      + `</svg><div class="starTrimGlow"></div><div class="starTrim"></div>`;
+    return el;
+  }
+
   const baseLights = D.lightsEl;
-  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : baseLights(w, cfg));
+  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : baseLights(w, cfg));
   // the vampire room hangs them under every shelf, lit
   if (D.LOOKS && D.LOOKS.vampire) D.LOOKS.vampire.set.lights = { style: "vampDrapes", colour: "warm", on: true };
   // and the cottage hangs its flower lamps under every shelf, lit
   if (D.LOOKS && D.LOOKS.cottage) D.LOOKS.cottage.set.lights = { style: "cottageLotus", colour: "warm", on: true };
   // the enchanted forest's wisteria becomes the painted garland with suncatchers, fireflies still drifting about
   if (D.LOOKS && D.LOOKS.forest) D.LOOKS.forest.set.lights = { style: "forestCatchers", styles: ["forestCatchers", "fireflies"], colour: "warm", on: true };
-  D.LIGHT_SWAP = { forest: { wisteria: "forestCatchers" } };
+  // starry night: the light curtain and star trim instead of the old string of stars
+  if (D.LOOKS && D.LOOKS.starry) D.LOOKS.starry.set.lights = { style: "starCurtain", colour: "warm", on: true };
+  D.LIGHT_SWAP = { forest: { wisteria: "forestCatchers" }, starry: { stars: "starCurtain" } };
 })();

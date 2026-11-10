@@ -1704,3 +1704,26 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.forestCatchers.on .fGlint::before, .lights.forestCatchers.on .fGlint::after { animation: fGlint var(--t) ease-in-out infinite; animation-delay: calc(var(--d) * -1); }
 @keyframes fGlint { 0%, 55%, 100% { transform: translate(-50%, -50%) scale(0) rotate(0deg); } 70% { transform: translate(-50%, -50%) scale(var(--z)) rotate(30deg); } 82% { transform: translate(-50%, -50%) scale(calc(var(--z) * .4)) rotate(45deg); } }
 @media (prefers-reduced-motion: reduce) { .lights.forestCatchers.on .fGlint::before, .lights.forestCatchers.on .fGlint::after { animation: none; transform: translate(-50%, -50%) scale(calc(var(--z) * .6)); } }
+/* starry night's light curtain and star trim (vamp.js curtainEl) */
+.shelf.hasLights[data-lights="starCurtain"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.lights.starCurtain { overflow-x: clip; }
+.lights.starCurtain .scSvg { position: absolute; left: 0; top: 0; display: block; overflow: visible; }
+.lights.starCurtain .scWire { fill: none; stroke: rgba(150,140,120,.25); stroke-width: .6; }
+.lights.starCurtain .scOff { fill: rgba(225,215,190,.28); }
+.lights.starCurtain .scStars { fill: #efe6cf; stroke: rgba(120,100,70,.5); stroke-width: .5; filter: drop-shadow(0 0 0 transparent); opacity: .7; transition: opacity .5s ease; }
+.lights.starCurtain.on .scStars { opacity: 1; }
+.lights.starCurtain .scLit { fill: url(#scDot); opacity: 0; transition: opacity .6s ease; }
+.lights.starCurtain.on .scLit { opacity: 1; }
+.lights.starCurtain.on .scTw { animation: scTw 2.8s ease-in-out infinite alternate; }
+.lights.starCurtain.on .scTw1 { animation-delay: -.7s; animation-duration: 3.3s; }
+.lights.starCurtain.on .scTw2 { animation-delay: -1.5s; animation-duration: 2.4s; }
+.lights.starCurtain.on .scTw3 { animation-delay: -2.1s; animation-duration: 3.8s; }
+@keyframes scTw { 0% { opacity: 1; } 55% { opacity: .9; } 100% { opacity: .35; } }
+.lights.starCurtain .starTrim, .lights.starCurtain .starTrimGlow { position: absolute; left: 0; right: 0; top: -1px; height: 24px; pointer-events: none;
+  -webkit-mask-repeat: repeat-x; mask-repeat: repeat-x; -webkit-mask-size: 31px 24px; mask-size: 31px 24px; }
+.lights.starCurtain .starTrim { background: var(--plank-bg); background-size: 100% 100%; filter: brightness(1.15); -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2220%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M0%200H26V8A13.0%2011.96%200%200%201%200%208Z%20M13.00%205.90%20L14.22%208.83%20L17.37%209.08%20L14.97%2011.14%20L15.70%2014.22%20L13.00%2012.57%20L10.30%2014.22%20L11.03%2011.14%20L8.63%209.08%20L11.78%208.83Z%22%20fill%3D%22%23000%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2220%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M0%200H26V8A13.0%2011.96%200%200%201%200%208Z%20M13.00%205.90%20L14.22%208.83%20L17.37%209.08%20L14.97%2011.14%20L15.70%2014.22%20L13.00%2012.57%20L10.30%2014.22%20L11.03%2011.14%20L8.63%209.08%20L11.78%208.83Z%22%20fill%3D%22%23000%22/%3E%3C/svg%3E"); }
+.lights.starCurtain .starTrimGlow { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2220%22%3E%3Cpath%20d%3D%22M0%200H26V8A13.0%2011.96%200%200%201%200%208Z%22%20fill%3D%22%23000%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2220%22%3E%3Cpath%20d%3D%22M0%200H26V8A13.0%2011.96%200%200%201%200%208Z%22%20fill%3D%22%23000%22/%3E%3C/svg%3E"); background: rgba(8,10,24,.85); }
+.lights.starCurtain .starTrimGlow::after { content: ""; position: absolute; inset: 0; background: linear-gradient(#fff4cf, #ffd88a); opacity: 0; transition: opacity .6s ease; }
+.lights.starCurtain.on .starTrimGlow::after { opacity: 1; }
+.shelf[data-lights="starCurtain"] .plank { box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .lights.starCurtain.on .scTw { animation: none; } }
