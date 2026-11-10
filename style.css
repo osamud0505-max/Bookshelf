@@ -1625,3 +1625,6 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.vampDrapes.on .vSwag img { filter: drop-shadow(0 4px 4px rgba(10,0,4,.45)) brightness(.95); }
 @keyframes vGlow { 0% { opacity: .75; transform: translate(-50%, -50%) scale(.92); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); } }
 @media (prefers-reduced-motion: reduce) { .lights.vampDrapes.on .vHalo { animation: none; } }
+.lights.vampDrapes .vKnot { position: absolute; pointer-events: none; }
+.lights.vampDrapes .vKnot img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; filter: brightness(.86); }
+.lights.vampDrapes.on .vKnot img { filter: brightness(.95); }

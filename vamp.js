@@ -1,43 +1,38 @@
-/* Velvet drapes: the vampire room's lights. osamu's Gemini velvet drapes, red with gold rope, fringe and tassels,
-   are tied up in the two corners under each shelf, and between them hang ruby crystal drops in gold caps, each on its
-   own gold chain that runs up behind the velvet to the shelf's underside. Each drop is a pendulum on its chain: a tap
-   pushes the one under the finger, a finger drawn across brushes every drop it passes and stirs the velvet. With the
-   shelf's light on, the crystals glow red from inside. */
+/* Velvet drapes: the vampire room's lights. osamu's Gemini velvet drape, red with gold rope, fringe and tassels,
+   hangs in two halves under each shelf that meet in the middle under a gold knot, and between them hang ruby crystal
+   drops in gold caps, each on its own gold chain that runs up behind the velvet to the shelf's underside. Each drop is
+   a pendulum on its chain: a tap pushes the one under the finger, a finger drawn across brushes every drop it passes
+   and stirs the velvet. With the shelf's light on, the crystals glow red from inside. */
 (function () {
   const D = window.Decor;
   if (!D) return;
   const f1 = (n) => Math.round(n * 10) / 10;
   D.LIGHT_STYLES.vampDrapes = "Velvet drapes";
 
-  // the corner drapes as stored (the right one is the left one's mirror), and the ruby drop
-  const CO = { w: 706, h: 1148, tuck: 0.03 };
+  // the left half of the drape as stored (the right half is its mirror), the knot and tassel where the two halves
+  // meet (cut from the same painting, at the same scale), and the ruby drop
+  const CO = { w: 1361, h: 2296, tuck: 0.03 };
+  const KN = { w: 108, h: 449, cx: 50, cy: 35 };
   const DR = { w: 212, h: 877 };
-  // the left drape's lowest edge across its width, every 2.5% (fraction of its height): the tail at the outer side,
-  // the swag rising toward the knot and tassel at the inner corner
-  const EDGE = [0.999, 0.991, 0.975, 0.96, 0.943, 0.924, 0.892, 0.818, 0.801, 0.782, 0.64, 0.612, 0.567, 0.546, 0.506,
-    0.435, 0.426, 0.423, 0.42, 0.415, 0.408, 0.399, 0.386, 0.373, 0.365, 0.354, 0.339, 0.322, 0.301, 0.29, 0.277,
-    0.263, 0.247, 0.227, 0.205, 0.18, 0.152, 0.196, 0.2, 0.199, 0.193];
-  const edgeAt = (u) => { if (u <= 0 || u >= 1) return 0; const t = u * 40, i = Math.floor(t); return EDGE[i] + (EDGE[i + 1] - EDGE[i]) * (t - i); };
   const reduce = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
 
-  // osamu's corner drapes (2026-11-10): a velvet drape tied up in each corner under the shelf, and between them ruby
-  // drops, every one on a gold chain that runs up behind the velvet to somewhere under the shelf nobody can see.
+  // osamu's picture (2026-11-10): the two halves of a velvet drape meet in the middle of the shelf under a gold knot
+  // and tassel, their tails falling at the shelf's ends. Seven ruby drops hang between them, each on its own gold chain
+  // that runs up behind the velvet to somewhere under the shelf nobody can see. [across the pair, the crystal's top
+  // below the shelf] in pair widths, read off their picture: the middle one lowest, the two outer ones over the tails.
+  const DROPS = [[0.125, 0.54], [0.25, 0.367], [0.385, 0.452], [0.5, 0.64], [0.615, 0.452], [0.75, 0.367], [0.875, 0.54]];
   function drapesEl(w, cfg) {
-    const cw = Math.min(0.4 * w, 175), ch = cw * CO.h / CO.w, lift = CO.tuck * ch;
-    // how low the velvet reaches at x (px below the shelf)
-    const under = (x) => Math.max(edgeAt(x / cw), edgeAt((w - x) / cw)) * ch - lift;
-    const parts = [
-      `<div class="vSwag" style="left:0;top:${f1(-lift)}px;width:${f1(cw)}px;height:${f1(ch)}px;transform-origin:0 0"><img src="obj/vamp-cornerL.webp" alt="" draggable="false" decoding="async"></div>`,
-      `<div class="vSwag" style="left:${f1(w - cw)}px;top:${f1(-lift)}px;width:${f1(cw)}px;height:${f1(ch)}px;transform-origin:100% 0"><img src="obj/vamp-cornerR.webp" alt="" draggable="false" decoding="async"></div>`];
-    // the drops run from just inside one tail to just inside the other, about one every 50px on a phone, wider apart on a big screen
-    const x0 = 0.3 * cw, x1 = w - 0.3 * cw, n = Math.max(5, Math.round((x1 - x0) / (w < 600 ? 50 : 72)) + 1);
-    const dh = Math.min(w, 430) * 0.19, dw = dh * DR.w / DR.h;
-    const drops = [];
-    for (let i = 0; i < n; i++) {
-      const cx = x0 + (x1 - x0) * i / (n - 1), m = Math.abs(i / (n - 1) - 0.5) * 2; // m: 0 middle, 1 ends
-      // each crystal hangs clear below the velvet, alternating long and short, the middle one longest
-      const top = Math.max(under(cx) + 4, 0) + 10 + (1 - m) * dh * 0.55 + (i % 2) * dh * 0.22;
-      drops.push({ cx, top, dh, len: top + dh, th: 0, om: 0, els: [] });
+    // a phone's shelf takes one pair; a wide one hangs as many phone-sized pairs side by side
+    const n = Math.max(1, Math.round(w / 430)), cell = w / n;
+    const cw = cell / 2, ch = cw * CO.h / CO.w, k = cw / CO.w, lift = CO.tuck * ch;
+    const dh = 0.2 * cell, dw = dh * DR.w / DR.h;
+    const parts = [], knots = [], drops = [];
+    for (let c = 0; c < n; c++) {
+      const x = c * cell;
+      parts.push(`<div class="vSwag" style="left:${f1(x)}px;top:${f1(-lift)}px;width:${f1(cw)}px;height:${f1(ch)}px;transform-origin:0 0"><img src="obj/vamp-drapeL.webp" alt="" draggable="false" decoding="async"></div>`,
+        `<div class="vSwag" style="left:${f1(x + cw)}px;top:${f1(-lift)}px;width:${f1(cw)}px;height:${f1(ch)}px;transform-origin:100% 0"><img src="obj/vamp-drapeR.webp" alt="" draggable="false" decoding="async"></div>`);
+      knots.push(`<div class="vKnot" style="left:${f1(x + cw - KN.cx * k)}px;top:${f1(-lift + 0.006 * ch - KN.cy * k + 6)}px;width:${f1(KN.w * k)}px;height:${f1(KN.h * k)}px"><img src="obj/vamp-knot.webp" alt="" draggable="false" decoding="async"></div>`);
+      DROPS.forEach(([u, v]) => { const top = v * cell; drops.push({ cx: x + u * cell, top, dh, len: top + dh, th: 0, om: 0, els: [] }); });
     }
     const box = (d, i, cls) => `<div class="${cls}" data-n="${i}" style="left:${f1(d.cx - dw / 2)}px;top:0;width:${f1(dw)}px;height:${f1(d.top + d.dh)}px;transform-origin:50% 0;--i:${i}">`;
     // the chains go behind the velvet, the crystals in front of it
@@ -49,10 +44,10 @@
     el.className = "lights vampDrapes" + (cfg.on ? " on" : "");
     const bottom = Math.max(ch - lift, ...drops.map((d) => d.top + d.dh)) + 8;
     el.style.height = Math.ceil(bottom) + "px";
-    el.innerHTML = `<div class="vIn">${back}${parts.join("")}${front}</div>`;
+    el.innerHTML = `<div class="vIn">${back}${parts.join("")}${knots.join("")}${front}</div>`;
     const bEls = el.querySelectorAll(".vDrop:not(.vDropF)"), fEls = el.querySelectorAll(".vDropF");
     drops.forEach((d, i) => { d.els = [bEls[i], fEls[i]]; });
-    const swags = [...el.querySelectorAll(".vSwag")].map((s, i) => ({ el: s, b: 0, bv: 0, side: i ? -1 : 1 }));
+    const swags = [...el.querySelectorAll(".vSwag")].map((s) => ({ el: s, b: 0, bv: 0 }));
     touch(el, drops, swags);
     return el;
   }
