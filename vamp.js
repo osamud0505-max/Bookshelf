@@ -405,8 +405,65 @@
     return el;
   }
 
+  // ------------------------------------------------------------------ the brick loft's Edison spider
+  // osamu's idea (2026-11-10, from their photo): a spider pendant whose canopy hides under the shelf. Black cords come
+  // out from under the board, sag across to little hooks along its underside and drop to bare globe Edison bulbs at
+  // different heights. All drawn here. Tapping a bulb is the light switch; a finger brushing past sets them swinging.
+  D.LIGHT_STYLES.loftSpider = "Edison spider";
+  function spiderEl(w, cfg) {
+    const R = rnd(9173 + Math.round(w));
+    const nc = Math.max(1, Math.round(w / 430)), cell = w / nc, hy = 3;
+    const drops = [], drapes = [], hooks = [];
+    const LEN = [52, 112, 34, 86, 128, 46, 96, 64]; // drop below each hook, left to right
+    for (let c = 0; c < nc; c++) {
+      const sx = (c + 0.5) * cell, k = 8;
+      for (let i = 0; i < k; i++) {
+        // hooks spread across the cell, a little irregular
+        const u = 0.07 + 0.86 * (i + 0.5) / k + (R() - 0.5) * 0.04, hx = c * cell + u * cell;
+        // the cord leaves the hidden canopy, sags, and rises to its hook
+        const sxo = sx + (i - (k - 1) / 2) * 2.2, dist = Math.abs(hx - sxo), sag = 22 + dist * (0.42 + R() * 0.22);
+        const dir = Math.sign(hx - sxo) || 1;
+        drapes.push(`M${f1(sxo)} -4 C${f1(sxo + dir * 2)} ${f1(sag * 0.9)} ${f1(hx - dir * dist * 0.45)} ${f1(sag * 1.05)} ${f1(hx - dir * 1.5)} ${f1(hy + 2)}`);
+        hooks.push(`<path d="M${f1(hx - 3)} -1 L${f1(hx + 3)} -1 M${f1(hx)} -1 L${f1(hx)} ${f1(hy + 1)} Q${f1(hx)} ${f1(hy + 4)} ${f1(hx - dir * 2.4)} ${f1(hy + 3)}"/>`);
+        const len = LEN[(i + c * 3) % LEN.length] * (0.9 + R() * 0.2), r = 10 + R() * 3.5;
+        drops.push({ cx: hx, py: hy, chain: len, top: hy + len, dh: 13 + r * 2, r, hw: r + 4, len: len + r, th: 0, om: 0, els: [] });
+      }
+    }
+    const bulb = (d, i) => {
+      const bw = d.r * 2 + 8, c = bw / 2, y0 = d.chain, gy = y0 + 13 + d.r * 0.92, r = d.r;
+      // one filament cage: a few loops between two posts
+      // a squirrel-cage filament: thin wires looping between the top and bottom of a little frame
+      let fil = "";
+      for (let q = -2; q <= 2; q++) { const x = c + q * r * 0.13; fil += `M${f1(x)} ${f1(gy - r * 0.5)} Q${f1(x + r * 0.09)} ${f1(gy)} ${f1(x)} ${f1(gy + r * 0.45)} `; }
+      fil += `M${f1(c)} ${f1(gy - r * 0.86)} L${f1(c)} ${f1(gy - r * 0.5)}`;
+      return `<div class="vDrop sDrop" data-n="${i}" style="left:${f1(d.cx - c)}px;top:${f1(d.py)}px;width:${f1(bw)}px;height:${f1(d.chain + d.dh)}px;transform-origin:50% 0;--i:${i}">`
+        + `<i class="vHalo" style="top:${f1(gy)}px;width:${f1(r * 13)}px;height:${f1(r * 13)}px"></i>`
+        + `<i class="vChain sCord" style="left:${f1(c - 0.8)}px;height:${f1(y0 + 2)}px"></i>`
+        + `<svg class="sBulb" width="${f1(bw)}" height="${f1(y0 + 15 + r * 2)}" viewBox="0 0 ${f1(bw)} ${f1(y0 + 15 + r * 2)}" aria-hidden="true">`
+        + `<circle class="sGlass" cx="${f1(c)}" cy="${f1(gy)}" r="${f1(r)}"/>`
+        + `<circle class="sGlow" cx="${f1(c)}" cy="${f1(gy)}" r="${f1(r)}"/>`
+        + `<path class="sFil" d="${fil}"/><path class="sFilLit" d="${fil}"/>`
+        + `<path class="sNeck" d="M${f1(c - 3.2)} ${f1(y0 + 12)} L${f1(c + 3.2)} ${f1(y0 + 12)} L${f1(c + 2.4)} ${f1(gy - r * 0.86)} L${f1(c - 2.4)} ${f1(gy - r * 0.86)}Z"/>`
+        + `<rect class="sSock" x="${f1(c - 4.2)}" y="${f1(y0)}" width="8.4" height="13" rx="1.6"/><rect class="sSockHi" x="${f1(c - 2.6)}" y="${f1(y0 + 1.5)}" width="1.3" height="10" rx=".6"/>`
+        + `<path class="sShine" d="M${f1(c - r * 0.62)} ${f1(gy - r * 0.15)} Q${f1(c - r * 0.6)} ${f1(gy - r * 0.62)} ${f1(c - r * 0.18)} ${f1(gy - r * 0.74)}"/>`
+        + `</svg></div>`;
+    };
+    const el = document.createElement("div");
+    el.className = "lights loftSpider" + (cfg.on ? " on" : "");
+    const H = Math.ceil(Math.max(...drops.map((d) => d.top + d.dh)) + 10);
+    el.style.height = H + "px";
+    el.innerHTML = `<div class="vIn"><svg class="sDrape" width="${w}" height="${H}" viewBox="0 -6 ${w} ${H}" fill="none" aria-hidden="true">`
+      + `<defs><radialGradient id="sGlowG" cx=".5" cy=".55" r=".55"><stop offset="0" stop-color="#fff2cc" stop-opacity=".95"/><stop offset=".3" stop-color="#ffcf80" stop-opacity=".7"/><stop offset=".7" stop-color="#e9963f" stop-opacity=".38"/><stop offset="1" stop-color="#c97a30" stop-opacity=".5"/></radialGradient></defs>`
+      + `<g class="sCords">${drapes.map((d) => `<path d="${d}"/>`).join("")}</g><g class="sHooks">${hooks.join("")}</g></svg>`
+      + drops.map(bulb).join("") + `</div>`;
+    const dEls = el.querySelectorAll(".sDrop");
+    drops.forEach((d, i) => { d.els = [dEls[i]]; });
+    touch(el, drops, [], { quiet: true });
+    return el;
+  }
+
   const baseLights = D.lightsEl;
-  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : baseLights(w, cfg));
+  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : cfg && cfg.style === "loftSpider" ? spiderEl(w, cfg) : baseLights(w, cfg));
   // the vampire room hangs them under every shelf, lit
   if (D.LOOKS && D.LOOKS.vampire) D.LOOKS.vampire.set.lights = { style: "vampDrapes", colour: "warm", on: true };
   // and the cottage hangs its flower lamps under every shelf, lit
@@ -416,6 +473,6 @@
   // starry night: the light curtain and star trim instead of the old string of stars
   if (D.LOOKS && D.LOOKS.starry) D.LOOKS.starry.set.lights = { style: "starCurtain", colour: "warm", on: true };
   // the brick loft: the bamboo pole with cage lamps instead of the old globe string
-  if (D.LOOKS && D.LOOKS.loft) D.LOOKS.loft.set.lights = { style: "loftCages", colour: "warm", on: true };
-  D.LIGHT_SWAP = { forest: { wisteria: "forestCatchers" }, starry: { stars: "starCurtain" }, loft: { globe: "loftCages" } };
+  if (D.LOOKS && D.LOOKS.loft) D.LOOKS.loft.set.lights = { style: "loftSpider", colour: "warm", on: true };
+  D.LIGHT_SWAP = { forest: { wisteria: "forestCatchers" }, starry: { stars: "starCurtain" }, loft: { globe: "loftSpider", loftCages: "loftSpider" } };
 })();

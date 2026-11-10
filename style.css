@@ -1820,3 +1820,32 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.loftCages .vDrop.yank .lRope { animation: vChainPull 1s ease both; }
 .lights.loftCages .lPole, .lights.loftCages .vDrop { will-change: transform; backface-visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .lights.loftCages.on .vHalo { animation: none; } .lights.loftCages .vDrop.yank * { animation: none !important; } }
+/* v250 loft (osamu's photo): an Edison spider pendant, its canopy hidden under the shelf; cords, hooks and bulbs drawn */
+.shelf.hasLights[data-lights="loftSpider"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.shelf[data-lights="loftSpider"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="loftSpider"] .pullCord:focus-visible { opacity: 1; }
+.lights.loftSpider { overflow-x: clip; -webkit-user-select: none; user-select: none; }
+.lights.loftSpider .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.lights.loftSpider .sDrape { position: absolute; left: 0; top: -6px; overflow: visible; }
+.lights.loftSpider .sCords path { stroke: #141210; stroke-width: 1.9; stroke-linecap: round; }
+.lights.loftSpider .sHooks path { stroke: #26221e; stroke-width: 1.6; stroke-linecap: round; fill: none; }
+.lights.loftSpider .vDrop { position: absolute; pointer-events: none; will-change: transform; backface-visibility: hidden; }
+.lights.loftSpider .sCord { position: absolute; top: 0; width: 1.9px; background: #141210; transform-origin: 50% 0; }
+.lights.loftSpider .sBulb { position: absolute; left: 0; top: 0; overflow: visible; }
+.lights.loftSpider .sSock { fill: #17140f; } .lights.loftSpider .sSockHi { fill: rgba(255,255,255,.18); }
+.lights.loftSpider .sNeck { fill: rgba(190,175,150,.35); }
+.lights.loftSpider .sGlass { fill: rgba(210,200,180,.16); stroke: rgba(235,225,205,.45); stroke-width: .7; }
+.lights.loftSpider .sShine { fill: none; stroke: rgba(255,255,255,.7); stroke-width: 1.3; stroke-linecap: round; }
+.lights.loftSpider .sFil { fill: none; stroke: rgba(80,62,40,.8); stroke-width: .55; }
+/* lit: warm amber glass, a hot filament and a wide, soft, moody pool of light (opacity only) */
+.lights.loftSpider .sGlow, .lights.loftSpider .sFilLit, .lights.loftSpider .vHalo { opacity: 0; transition: opacity .6s ease; }
+.lights.loftSpider .sGlow { fill: url(#sGlowG); }
+.lights.loftSpider .sFilLit { fill: none; stroke: #fff6d6; stroke-width: .9; filter: drop-shadow(0 0 1.5px rgba(255,200,110,.95)); }
+.lights.loftSpider .vHalo { position: absolute; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255,198,120,.5), rgba(255,170,90,.24) 22%, rgba(240,140,70,.09) 52%, rgba(220,120,60,.025) 78%, rgba(220,120,60,0)); }
+.lights.loftSpider.on .sGlow, .lights.loftSpider.on .sFilLit { opacity: 1; }
+.lights.loftSpider.on .vHalo { opacity: 1; animation: vGlow 5s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -1.3s); }
+.lights.loftSpider .vDrop.yank .sBulb, .lights.loftSpider .vDrop.yank .vHalo { animation: vPull 1s ease both; }
+.lights.loftSpider.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
+.lights.loftSpider .vDrop.yank .sCord { animation: vChainPull 1s ease both; }
+@media (prefers-reduced-motion: reduce) { .lights.loftSpider.on .vHalo { animation: none; } .lights.loftSpider .vDrop.yank * { animation: none !important; } }
