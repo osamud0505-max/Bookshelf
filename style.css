@@ -1640,3 +1640,23 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 @keyframes vPullHalo { 0% { translate: 0 0; opacity: 1; } 14% { translate: 0 var(--pull); } 20% { translate: 0 calc(var(--pull) * .88); } 30% { translate: 0 calc(var(--pull) * -.12); } 40%, 100% { translate: 0 0; opacity: 1; } }
 @keyframes vChainPull { 0% { transform: scaleY(1); } 14% { transform: scaleY(var(--cs)); } 20% { transform: scaleY(calc(1 + (var(--cs) - 1) * .88)); } 30% { transform: scaleY(.99); } 40%, 100% { transform: scaleY(1); } }
 @media (prefers-reduced-motion: reduce) { .lights.vampDrapes .vDrop.yank * { animation: none !important; } }
+/* the cottage's flower lamps (vamp.js lotusEl): ivy cords behind, lotus shades, the driftwood branch on the shelf front */
+.shelf.hasLights[data-lights="cottageLotus"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.shelf[data-lights="cottageLotus"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="cottageLotus"] .pullCord:focus-visible { opacity: 1; }
+.lights.cottageLotus .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.lights.cottageLotus .lBranch { position: absolute; pointer-events: none; }
+.lights.cottageLotus .lBranch img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 3px 3px rgba(60,35,15,.35)); -webkit-user-drag: none; user-select: none; }
+.lights.cottageLotus .vDrop { position: absolute; pointer-events: none; }
+.lights.cottageLotus .vChain { position: absolute; top: 0; overflow: hidden; transform-origin: 50% 0; }
+.lights.cottageLotus .vChain img { position: absolute; left: 0; display: block; }
+.lights.cottageLotus .vDrop > img { position: absolute; left: 0; width: 100%; -webkit-user-drag: none; user-select: none;
+  filter: brightness(.94) saturate(.92) drop-shadow(0 4px 4px rgba(60,30,30,.28)); transition: filter .45s ease; }
+.lights.cottageLotus.on .vDrop > img { filter: brightness(1.12) saturate(1.18) drop-shadow(0 0 5px rgba(255,170,205,.95)) drop-shadow(0 0 16px rgba(255,120,175,.55)); }
+.lights.cottageLotus .vHalo { position: absolute; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255,190,215,.55), rgba(255,150,190,.22) 55%, transparent); opacity: 0; transition: opacity .45s ease; }
+.lights.cottageLotus.on .vHalo { opacity: 1; animation: vGlow 4.6s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -1.1s); }
+.lights.cottageLotus .vDrop.yank > img, .lights.cottageLotus .vDrop.yank .vHalo { animation: vPull 1s ease both; }
+.lights.cottageLotus.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
+.lights.cottageLotus .vDrop.yank .vChain { animation: vChainPull 1s ease both; }
+@media (prefers-reduced-motion: reduce) { .lights.cottageLotus.on .vHalo { animation: none; } .lights.cottageLotus .vDrop.yank * { animation: none !important; } }

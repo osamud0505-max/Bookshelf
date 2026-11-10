@@ -53,12 +53,14 @@
   }
 
   // ------------------------------------------------------------------ touching them
-  function touch(el, drops, swags) {
+  function touch(el, drops, swags, opt) {
+    opt = opt || {};
     el.style.pointerEvents = "auto";
     el.style.touchAction = "pan-y";
     let raf = 0, last = 0, down = null, lastSound = 0;
     const KL = 1500, Z = 0.06, MAX = 0.55; // a crystal on a long chain swings slowly and keeps going a while
     const clink = (d, v) => {
+      if (opt.quiet) return;
       const now = performance.now(); if (now - lastSound < 70) return; lastSound = now;
       try { window.ShelfSfx && window.ShelfSfx.clink && window.ShelfSfx.clink(2600 + (d.cx % 7) * 90, Math.min(1, 0.25 + v * 0.5), (d.cx / innerWidth - 0.5) * 1.2); } catch (e) { /* no sound */ }
     };
@@ -91,7 +93,7 @@
       const cord = el.parentNode && el.parentNode.querySelector(".pullCord");
       if (d.yanking) return; d.yanking = true;
       const p = Math.max(8, d.dh * 0.16);
-      d.els.forEach((e) => { e.style.setProperty("--pull", p + "px"); e.style.setProperty("--cs", ((d.top + p) / d.top).toFixed(4)); e.classList.remove("yank"); void e.offsetWidth; e.classList.add("yank"); });
+      d.els.forEach((e) => { e.style.setProperty("--pull", p + "px"); e.style.setProperty("--cs", (((d.chain || d.top) + p) / (d.chain || d.top)).toFixed(4)); e.classList.remove("yank"); void e.offsetWidth; e.classList.add("yank"); });
       if (cord) cord.click();
       setTimeout(() => { push(d, side * 0.3); }, reduce() ? 0 : 280);
       setTimeout(() => { d.yanking = false; d.els.forEach((e) => e.classList.remove("yank")); }, 1000);
@@ -115,7 +117,7 @@
       return m.a[(py * m.w + px) * 4 + 3] > 60;
     });
     swags.forEach((s) => maskOf(s.el.querySelector("img").getAttribute("src")));
-    const nearDrop = (x, y) => onVelvet(x, y) ? null : drops.find((d) => Math.abs(x - d.cx) < Math.max(14, d.dh * 0.16) && y > d.top - 6 && y < d.top + d.dh + 4);
+    const nearDrop = (x, y) => onVelvet(x, y) ? null : drops.find((d) => Math.abs(x - d.cx) < (d.hw || Math.max(14, d.dh * 0.16)) && y > d.top - 6 && y < d.top + d.dh + 4);
     el.addEventListener("pointerdown", (ev) => {
       const [x, y] = local(ev);
       down = { x, y, t: performance.now(), lx: x, lt: performance.now(), moved: false };
@@ -147,8 +149,54 @@
     el.addEventListener("pointercancel", () => { down = null; });
   }
 
+
+  // ------------------------------------------------------------------ the cottage's flower lamps
+  // osamu's idea (2026-11-10, from their photo): a driftwood branch with ivy fixed along the front of the shelf, and
+  // pink lotus pendant lamps hanging from it on ivy-wound cords, at two heights so six fit on a phone. Tapping a
+  // flower is the light switch, as with the vampire room's crystals.
+  D.LIGHT_STYLES.cottageLotus = "Flower lamps";
+  const BR = { w: 1240, h: 179, mid: 0.45 };
+  // the branch's centre line across its length, every 2.5% (fraction of its height)
+  const BMID = [0.472, 0.527, 0.522, 0.471, 0.472, 0.45, 0.401, 0.432, 0.426, 0.472, 0.492, 0.507, 0.56, 0.508, 0.56,
+    0.55, 0.547, 0.483, 0.433, 0.39, 0.349, 0.342, 0.342, 0.3, 0.316, 0.293, 0.27, 0.288, 0.337, 0.374, 0.344, 0.395,
+    0.47, 0.53, 0.56, 0.55, 0.538, 0.496, 0.383, 0.352, 0.288];
+  const bmid = (u) => { const t = Math.max(0, Math.min(40, u * 40)), i = Math.min(39, Math.floor(t)); return BMID[i] + (BMID[i + 1] - BMID[i]) * (t - i); };
+  const LO = { w: 400, h: 411 }, IVY = { w: 94, h: 686, cx: 41.1 };
+  const DROPS_L = [50, 12, 62, 20, 54, 8]; // how far below the branch each lamp hangs, repeating
+  function lotusEl(w, cfg) {
+    const phone = w < 600;
+    const nb = Math.max(1, Math.round(w / 700)), bw = w / nb, bk = Math.min(bw, 640) / BR.w, bh = BR.h * bk;
+    // the branch sits on the shelf's front edge (the plank is 16px thick, the lights hang from its bottom)
+    const by = -8 - BR.mid * bh;
+    const branches = [];
+    for (let i = 0; i < nb; i++) branches.push(`<div class="lBranch" style="left:${f1(i * bw - 2)}px;top:${f1(by)}px;width:${f1(bw + 4)}px;height:${f1(bh)}px"><img src="obj/cottage-branch.webp" alt="" draggable="false" decoding="async"></div>`);
+    const pivotAt = (x) => { const i = Math.min(nb - 1, Math.floor(x / bw)); return by + bmid((x - i * bw) / bw) * bh; };
+    const lw = phone ? 74 : 84, lh = lw * LO.h / LO.w, iw = phone ? 24 : 27, ik = iw / IVY.w;
+    const x0 = 0.1 * w, x1 = 0.9 * w, n = phone ? 6 : Math.max(6, Math.round((x1 - x0) / 95) + 1);
+    const drops = [];
+    for (let i = 0; i < n; i++) {
+      const cx = x0 + (x1 - x0) * i / (n - 1), py = pivotAt(cx), chain = DROPS_L[i % DROPS_L.length] * (phone ? 1 : 1.15) + 14;
+      drops.push({ cx, py, chain, top: py + chain, dh: lh, hw: lw * 0.42, len: chain + lh * 0.5, th: 0, om: 0, els: [] });
+    }
+    const box = (d, i, cls) => `<div class="${cls}" data-n="${i}" style="left:${f1(d.cx - lw / 2)}px;top:${f1(d.py)}px;width:${f1(lw)}px;height:${f1(d.chain + d.dh)}px;transform-origin:50% 0;--i:${i}">`;
+    const back = drops.map((d, i) => box(d, i, "vDrop") + `<i class="vChain" style="left:${f1(lw / 2 - IVY.cx * ik)}px;width:${f1(iw)}px;height:${f1(d.chain + 3)}px"><img src="obj/cottage-ivy.webp" alt="" draggable="false" decoding="async" style="width:${f1(iw)}px;top:${f1(-((i * 37) % 120))}px"></i></div>`).join("");
+    const front = drops.map((d, i) => box(d, i, "vDrop vDropF")
+      + `<i class="vHalo" style="top:${f1(d.chain + d.dh * 0.55)}px;width:${f1(lw * 1.7)}px;height:${f1(lw * 1.7)}px"></i>`
+      + `<img src="obj/cottage-lotus.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(d.dh)}px"></div>`).join("");
+    const el = document.createElement("div");
+    el.className = "lights cottageLotus" + (cfg.on ? " on" : "");
+    el.style.height = Math.ceil(Math.max(...drops.map((d) => d.top + d.dh)) + 10) + "px";
+    el.innerHTML = `<div class="vIn">${back}${front}${branches.join("")}</div>`;
+    const bEls = el.querySelectorAll(".vDrop:not(.vDropF)"), fEls = el.querySelectorAll(".vDropF");
+    drops.forEach((d, i) => { d.els = [bEls[i], fEls[i]]; });
+    touch(el, drops, [], { quiet: true });
+    return el;
+  }
+
   const baseLights = D.lightsEl;
-  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : baseLights(w, cfg));
+  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : baseLights(w, cfg));
   // the vampire room hangs them under every shelf, lit
   if (D.LOOKS && D.LOOKS.vampire) D.LOOKS.vampire.set.lights = { style: "vampDrapes", colour: "warm", on: true };
+  // and the cottage hangs its flower lamps under every shelf, lit
+  if (D.LOOKS && D.LOOKS.cottage) D.LOOKS.cottage.set.lights = { style: "cottageLotus", colour: "warm", on: true };
 })();
