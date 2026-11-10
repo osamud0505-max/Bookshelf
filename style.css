@@ -1927,15 +1927,15 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
    behind; when the lights are on, the bottom of the snow picks up their warm glow (opacity only) */
 .lights.cabinSwags { z-index: 1; }
 .lights.cabinSwags .cSnow { position: absolute; left: 0; right: 0; top: -21px; height: 125px; pointer-events: none;
-  background: url(obj/cabin-snow-trim.webp) 0 0 / 389px 125px repeat-x; filter: drop-shadow(0 4px 3px rgba(20,10,4,.45)); }
+  background: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; filter: drop-shadow(0 4px 3px rgba(20,10,4,.45)); }
 .lights.cabinSwags .cSnowLit { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; mix-blend-mode: multiply;
   background: linear-gradient(180deg, rgba(255,255,255,0) 0, rgba(255,255,255,0) 30px, rgba(255,244,228,1) 60px, rgba(255,232,205,1) 100%);
-  -webkit-mask: url(obj/cabin-snow-trim.webp) 0 0 / 389px 125px repeat-x; mask: url(obj/cabin-snow-trim.webp) 0 0 / 389px 125px repeat-x; }
+  -webkit-mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
 .lights.cabinSwags.on .cSnowLit { opacity: 1; }
 /* v259 (osamu: "in the image the whole shelf top is covered"): a snow layer over the shelf's top face too, from the
    books' feet to the front edge (they stand a little sunk into it), lighter where it faces up */
 .lights.cabinSwags .cSnowTop { position: absolute; left: 0; right: 0; top: -38px; height: 22px; pointer-events: none;
-  background: url(obj/cabin-snow-top.webp) 0 0 / 389px 22px repeat-x; filter: brightness(1.04); }
+  background: none; filter: brightness(1.04); }
 .lights.cabinSwags .cSnow { top: -25px; }
 /* v260 (osamu: "it looks horrible... I like the snow hanging and that's it, the shelf is still wood, the lights are
    horrible"): no snow on the shelf top, no drawn strands; bigger ornaments on hangers (painted fairy-light hangers to come) */
@@ -1977,3 +1977,11 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.cabinSwags .cSnow { top: -17px; }
 .lights.cabinSwags::after { content: ""; position: absolute; left: 0; right: 0; top: -19.5px; height: 8px; pointer-events: none;
   background: linear-gradient(180deg, rgba(240,242,246,0), rgba(239,242,246,.96) 45%, rgba(236,240,245,.5) 75%, rgba(236,240,245,0)); }
+/* v265 (osamu's one-piece "snow over the edge" painting): the top face and the lip + icicles are cut from the same
+   strip at the plank's top edge. The top part rides on the sticky stage (behind the books, never scrolls), the lip part
+   on the plank, both from the same x, so the join stays seamless while the row scrolls */
+.shelf[data-lights="cabinSwags"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d); background: url(obj/cabin-snowedge-top.webp) 0 0 / 352.33px 100% repeat-x; }
+.lights.cabinSwags .cSnow { top: -16px; height: 96.33px; background: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
+.lights.cabinSwags .cSnowLit { -webkit-mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
+.lights.cabinSwags::after { display: none; }
