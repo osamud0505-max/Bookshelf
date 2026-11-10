@@ -204,6 +204,9 @@
   // osamu's mock-up (2026-11-10): six small suncatchers per arch, [across, the hook's depth below the shelf] in arch
   // widths, at uneven heights
   const CATCHERS = [[0.143, 0.434], [0.318, 0.375], [0.459, 0.272], [0.587, 0.381], [0.721, 0.277], [0.82, 0.461]];
+  // where the glass beads and crystals catch the light on the suncatcher picture (fractions of it)
+  const GLINTS = [[0.456, 0.836], [0.815, 0.33], [0.649, 0.325], [0.653, 0.599], [0.793, 0.642], [0.197, 0.391], [0.241, 0.853],
+    [0.468, 0.475], [0.643, 0.856], [0.487, 0.282], [0.671, 0.446], [0.478, 0.17], [0.143, 0.629], [0.426, 0.703], [0.271, 0.542], [0.091, 0.558]];
   const SPOTS = ["255,120,200", "255,210,120", "160,140,255", "130,230,255", "255,160,120", "200,255,160"];
   function forestEl(w, cfg) {
     // the garland is a little wider than the shelf, so its long side tails are cut off by the screen's edges, and its
@@ -230,7 +233,10 @@
     const front = drops.map((d, i) => box(d, i, "vDrop vDropF")
       + `<i class="vHalo" style="top:${f1(d.top + d.dh * 0.42)}px;width:${f1(sw * 2)}px;height:${f1(sw * 2)}px"></i>`
       + `<img class="fGlow" src="obj/forest-catcher.webp" alt="" draggable="false" decoding="async" style="left:${f1(sw / 2 - SC.chainX * k)}px;width:${f1(SC.w * k)}px;top:${f1(d.top)}px;height:${f1(d.dh)}px">`
-      + `<img src="obj/forest-catcher.webp" alt="" draggable="false" decoding="async" style="left:${f1(sw / 2 - SC.chainX * k)}px;width:${f1(SC.w * k)}px;top:${f1(d.top)}px;height:${f1(d.dh)}px"></div>`).join("");
+      + `<img src="obj/forest-catcher.webp" alt="" draggable="false" decoding="async" style="left:${f1(sw / 2 - SC.chainX * k)}px;width:${f1(SC.w * k)}px;top:${f1(d.top)}px;height:${f1(d.dh)}px">`
+      // little star glints that twinkle on the glass, each in its own rhythm
+      + GLINTS.map(([gx, gy], g) => `<i class="fGlint" style="left:${f1(sw / 2 - SC.chainX * k + gx * SC.w * k)}px;top:${f1(d.top + gy * d.dh)}px;--t:${(1.6 + ((g * 7 + i * 3) % 9) * 0.22).toFixed(2)}s;--d:${(((g * 0.61 + i * 0.37) % 2.4)).toFixed(2)}s;--z:${(0.6 + ((g + i) % 4) * 0.18).toFixed(2)}"></i>`).join("")
+      + "</div>").join("");
     const el = document.createElement("div");
     el.className = "lights forestCatchers" + (cfg.on ? " on" : "");
     el.style.height = Math.ceil(Math.max(wh - lift, ...drops.map((d) => d.top + d.dh)) + 10) + "px";

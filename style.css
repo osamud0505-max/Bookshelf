@@ -1672,7 +1672,7 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.forestCatchers .vDrop { position: absolute; pointer-events: none; }
 .lights.forestCatchers .vChain { position: absolute; top: 0; background: url(obj/forest-chain.webp) center bottom repeat-y; transform-origin: 50% 0; }
 .lights.forestCatchers .vDrop > img { position: absolute; -webkit-user-drag: none; user-select: none; }
-.lights.forestCatchers .vDrop > img.fGlow { filter: drop-shadow(0 0 3px rgba(205,160,255,.95)) drop-shadow(0 0 9px rgba(175,120,255,.7)) drop-shadow(0 0 18px rgba(150,110,255,.4)); opacity: 0; transition: opacity .5s ease; }
+.lights.forestCatchers .vDrop > img.fGlow { filter: drop-shadow(0 0 1.5px rgba(230,200,255,.95)) drop-shadow(0 0 5px rgba(180,130,255,.45)); opacity: 0; transition: opacity .5s ease; }
 .lights.forestCatchers.on .vDrop > img.fGlow { opacity: 1; }
 .lights.forestCatchers .vHalo { position: absolute; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
   background: radial-gradient(closest-side, rgba(185,140,255,.2), rgba(150,110,240,.08) 55%, transparent); opacity: 0; transition: opacity .5s ease; }
@@ -1692,3 +1692,14 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.vampDrapes .vSwag, .lights.vampDrapes .vKnot, .lights.vampDrapes .vDrop,
 .lights.cottageLotus .lBranch, .lights.cottageLotus .vDrop,
 .lights.forestCatchers .vSwag, .lights.forestCatchers .vDrop, .lights.forestCatchers .fSpots { will-change: transform; backface-visibility: hidden; }
+/* the suncatchers' sparkle: tiny four-point stars that flare and fade on the glass beads while the light is on */
+.lights.forestCatchers .fGlint { position: absolute; width: 0; height: 0; opacity: 0; transition: opacity .4s ease; pointer-events: none; }
+.lights.forestCatchers .fGlint::before, .lights.forestCatchers .fGlint::after { content: ""; position: absolute; left: 0; top: 0; width: 11px; height: 11px; transform: translate(-50%, -50%) scale(0); }
+.lights.forestCatchers .fGlint::before { background:
+  linear-gradient(rgba(255,255,255,0), #fff 50%, rgba(255,255,255,0)) center / 1.3px 100% no-repeat,
+  linear-gradient(90deg, rgba(255,255,255,0), #fff 50%, rgba(255,255,255,0)) center / 100% 1.3px no-repeat; }
+.lights.forestCatchers .fGlint::after { width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(closest-side, #fff, rgba(235,210,255,.8) 45%, rgba(200,160,255,0)); }
+.lights.forestCatchers.on .fGlint { opacity: 1; }
+.lights.forestCatchers.on .fGlint::before, .lights.forestCatchers.on .fGlint::after { animation: fGlint var(--t) ease-in-out infinite; animation-delay: calc(var(--d) * -1); }
+@keyframes fGlint { 0%, 55%, 100% { transform: translate(-50%, -50%) scale(0) rotate(0deg); } 70% { transform: translate(-50%, -50%) scale(var(--z)) rotate(30deg); } 82% { transform: translate(-50%, -50%) scale(calc(var(--z) * .4)) rotate(45deg); } }
+@media (prefers-reduced-motion: reduce) { .lights.forestCatchers.on .fGlint::before, .lights.forestCatchers.on .fGlint::after { animation: none; transform: translate(-50%, -50%) scale(calc(var(--z) * .6)); } }
