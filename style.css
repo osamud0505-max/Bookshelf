@@ -1383,11 +1383,10 @@ html { touch-action: pan-x pan-y; }
               radial-gradient(ellipse 30% 34% at 0% 66%, rgba(3,2,3,.8), rgba(3,2,3,.35) 55%, transparent 85%),
               radial-gradient(ellipse 30% 34% at 100% 66%, rgba(3,2,3,.8), rgba(3,2,3,.35) 55%, transparent 85%); }
 /* black steel shelf (the loft): a blackened flat bar. A bright arris along the top edge where it catches the light,
-   a brushed front face that darkens downward, fine mill scale streaks, and a slotted bolt every so often */
+   a brushed front face that darkens downward, fine mill scale streaks (no bolts: osamu asked for the dot to go, v254) */
 html[data-mat="steel"] .plank {
   background:
     linear-gradient(to bottom, rgba(255,236,210,.42) 0, rgba(255,236,210,.12) 1px, transparent 2px),
-    radial-gradient(circle at 50% 55%, #6c6e72 0 1.1px, #34363a 1.7px, #0d0e10 2.6px, rgba(0,0,0,.35) 3.2px, transparent 3.8px) 46px 0 / 230px 100% repeat-x,
     repeating-linear-gradient(to bottom, rgba(255,255,255,.035) 0 1px, transparent 1px 3px),
     linear-gradient(90deg, rgba(255,255,255,0) 0, rgba(255,255,255,.05) 18%, rgba(255,255,255,0) 32%, rgba(255,255,255,.04) 61%, rgba(255,255,255,0) 78%),
     linear-gradient(to bottom, #4a4c51 0, #2f3135 2px, #222327 5px, #191a1d 11px, #101113 100%);
@@ -1868,11 +1867,10 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.loftSpider .spTrimLit { opacity: 0; transition: opacity .6s ease; }
 .lights.loftSpider.on .spTrimLit { opacity: 1; }
 .lights.loftSpider .spTrimFace {
+  /* v254: the same blackened flat bar as the shelf front (html[data-mat="steel"] .plank), so it reads as one piece */
   background:
-    linear-gradient(180deg, rgba(0,0,0,.55) 0, rgba(0,0,0,0) 3px, rgba(0,0,0,0) 15px, rgba(255,255,255,.16) 16.4px, rgba(255,255,255,.05) 17px, rgba(0,0,0,.6) 18px),
-    repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 1px, rgba(0,0,0,.02) 1px 3px, rgba(255,255,255,.012) 3px 4px),
-    linear-gradient(180deg, #222326 0, #1a1b1d 45%, #141516 100%);
+    linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 15px, rgba(255,236,210,.14) 16.5px, rgba(255,236,210,.04) 17.2px, rgba(0,0,0,.55) 18px),
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.035) 0 1px, transparent 1px 3px),
+    linear-gradient(90deg, rgba(255,255,255,0) 0, rgba(255,255,255,.05) 18%, rgba(255,255,255,0) 32%, rgba(255,255,255,.04) 61%, rgba(255,255,255,0) 78%),
+    linear-gradient(to bottom, #101113 0, #0e0f11 100%);
   -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2218%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M0%200H12V18H0Z%20M1.65%207a1.35%201.35%200%201%200%202.7%200a1.35%201.35%200%201%200%20-2.7%200Z%20M7.65%2011.5a1.35%201.35%200%201%200%202.7%200a1.35%201.35%200%201%200%20-2.7%200Z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E") 0 0 / 12px 18px repeat-x; mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2218%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M0%200H12V18H0Z%20M1.65%207a1.35%201.35%200%201%200%202.7%200a1.35%201.35%200%201%200%20-2.7%200Z%20M7.65%2011.5a1.35%201.35%200%201%200%202.7%200a1.35%201.35%200%201%200%20-2.7%200Z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E") 0 0 / 12px 18px repeat-x; }
-.lights.loftSpider.on .spTrimFace { background-color: transparent; }
-.lights.loftSpider .spTrim::after { content: ""; position: absolute; left: 0; right: 0; top: 18px; height: 6px;
-  background: linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0)); }

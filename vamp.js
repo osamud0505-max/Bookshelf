@@ -426,7 +426,7 @@
         // the cord leaves the hidden canopy, sags, and rises to its hook
         const sxo = sx + (i - (k - 1) / 2) * 2.2, dist = Math.abs(hx - sxo), sag = 22 + dist * (0.42 + R() * 0.22);
         const dir = Math.sign(hx - sxo) || 1;
-        drapes.push(`M${f1(sxo)} -4 C${f1(sxo + dir * 2)} ${f1(sag * 0.9)} ${f1(hx - dir * dist * 0.45)} ${f1(sag * 1.05)} ${f1(hx - dir * 1.5)} ${f1(hy + 2)}`);
+        drapes.push(`M${f1(sxo)} 8 C${f1(sxo + dir * 2)} ${f1(sag * 0.9)} ${f1(hx - dir * dist * 0.45)} ${f1(sag * 1.05)} ${f1(hx - dir * 1.5)} ${f1(hy + 2)}`);
         const len = LEN[(i + c * 3) % LEN.length] * (0.9 + R() * 0.2), kind = KINDS[(i + c * 5) % KINDS.length];
         const bw = kind.w * (0.92 + R() * 0.16), bh = bw * kind.h / kind.iw;
         drops.push({ cx: hx, py: hy, chain: len, top: hy + len, dh: bh, kind, bw, hw: bw * 0.6, len: len + bh * 0.6, th: 0, om: 0, els: [] });
