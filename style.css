@@ -1524,5 +1524,3 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
 .slot::before { left: -2px; right: -2px; bottom: -8px; height: 14px; border-radius: 40% / 50%;
   background: rgba(0,0,0,.8); filter: blur(1.2px); box-shadow: 0 1px 6px 3px rgba(0,0,0,.42); }
 html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow: 0 1px 6px 3px rgba(28,0,16,.42); }
-/* v200: the lamp stands on the books' line, so its shadow has the same floor in front of it as theirs and never reaches the shelf's front edge */
-.ornament[data-kind="lipstickLamp"] { bottom: calc(var(--top-d) * -.16); }
