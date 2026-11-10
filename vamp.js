@@ -495,30 +495,32 @@
         x0 = x1 - row.span * (0.04 + R() * 0.08);
       }
     }
-    // ornaments: about 7 baubles and 2 stars per phone width, spread out, on red ribbons from the wires
-    const nOrn = Math.max(4, Math.round(w / 430 * 9)), drops = [], orn = [];
-    const used = [];
+    // ornaments (osamu's Gemini paintings): red baubles and stars on red ribbons, clear acrylic icicles and shapes on
+    // fine clear threads, mixed here and there. h = height in px on screen, hx = where the loop sits across the picture
+    const ORN = {
+      gloss: { src: "cabin-bauble-gloss", ar: 0.841, h: 24, hx: 0.5, red: 1 }, matte: { src: "cabin-bauble-matte", ar: 0.859, h: 22, hx: 0.5, red: 1 },
+      star: { src: "cabin-star", ar: 0.982, h: 27, hx: 0.497, red: 1 },
+      snow: { src: "cabin-snow", ar: 0.825, h: 30, hx: 0.497 }, tree: { src: "cabin-tree", ar: 0.635, h: 31, hx: 0.5 }, deer: { src: "cabin-deer", ar: 0.635, h: 31, hx: 0.437 },
+      twist: { src: "cabin-ice-twist", ar: 0.2, h: 50, hx: 0.548 }, drop: { src: "cabin-ice-drop", ar: 0.296, h: 46, hx: 0.448 },
+      ice: { src: "cabin-ice-plain", ar: 0.146, h: 48, hx: 0.434 }, bead: { src: "cabin-ice-bead", ar: 0.215, h: 46, hx: 0.455 },
+    };
+    const CYCLE = ["gloss", "twist", "snow", "matte", "drop", "star", "ice", "gloss", "tree", "bead", "matte", "deer", "twist", "star"];
+    const nOrn = Math.max(5, Math.round(w / 430 * 11)), drops = [], used = [];
     for (let i = 0; i < nOrn; i++) {
       const tx = (i + 0.5) / nOrn * w + (R() - 0.5) * (w / nOrn) * 0.5;
-      const cand = pts.filter((p) => Math.abs(p.x - tx) < 18 && !used.some((u) => Math.abs(u - p.x) < 18));
+      const cand = pts.filter((p) => Math.abs(p.x - tx) < 16 && !used.some((u) => Math.abs(u - p.x) < 14));
       if (!cand.length) continue;
       const p = cand[Math.floor(R() * cand.length)]; used.push(p.x);
-      const star = i % 4 === 2, s = star ? 26 + R() * 8 : (p.d === "f" ? 18 : 14) + R() * 10, rib = 6 + R() * 22;
-      drops.push({ cx: p.x, py: p.y, chain: rib, top: p.y + rib, dh: s, hw: s * 0.6, len: rib + s * 0.6, th: 0, om: 0, els: [], star, s });
-      maxY = Math.max(maxY, p.y + rib + s);
+      const o = ORN[CYCLE[(i + Math.floor(w / 97)) % CYCLE.length]], hh = o.h * (0.88 + R() * 0.24) * (p.d === "f" ? 1.08 : 0.94), ww = hh * o.ar, rib = 5 + R() * 20;
+      drops.push({ cx: p.x, py: p.y, chain: rib, top: p.y + rib, dh: hh, hw: Math.max(9, ww * 0.6), len: rib + hh * 0.6, th: 0, om: 0, els: [], o, hh, ww });
+      maxY = Math.max(maxY, p.y + rib + hh);
     }
     const bauble = (d, i) => {
-      const s = d.s, c = s / 2 + 3, box = c * 2;
-      const body = d.star
-        ? `<svg class="cOrn" viewBox="-50 -50 100 100" style="left:${f1(c - s / 2)}px;top:${f1(d.chain)}px;width:${f1(s)}px;height:${f1(s)}px">`
-          + `<polygon class="cSt" points="${starPts(0, 4, 46)}"/>${[0, 1, 2, 3, 4].map((k) => { const a = -Math.PI / 2 + k * 2 * Math.PI / 5, P = (an, r) => `${f1(Math.cos(an) * r)},${f1(4 + Math.sin(an) * r)}`; return `<polygon class="cStF1" points="0,4 ${P(a, 46)} ${P(a + Math.PI / 5, 20.7)}"/><polygon class="cStF0" points="0,4 ${P(a, 46)} ${P(a - Math.PI / 5, 20.7)}"/>`; }).join("")}`
-          + `<circle class="cGl" cx="-12" cy="-10" r="5"/></svg>`
-        : `<svg class="cOrn" viewBox="-50 -62 100 112" style="left:${f1(c - s / 2)}px;top:${f1(d.chain - s * 0.12)}px;width:${f1(s)}px;height:${f1(s * 1.12)}px">`
-          + `<circle cx="0" cy="0" r="46" fill="url(#cbBody)"/><circle cx="0" cy="0" r="46" fill="url(#cbRim)"/>`
-          + `<ellipse class="cSpec" cx="-17" cy="-19" rx="11" ry="7" transform="rotate(-35 -17 -19)"/><circle class="cGl" cx="13" cy="15" r="4"/>`
-          + `<rect x="-9" y="-55" width="18" height="11" rx="2" fill="url(#cbCap)"/><path d="M-4 -55 a4 5 0 1 1 8 0" fill="none" stroke="#b8933f" stroke-width="2.4"/></svg>`;
-      return `<div class="vDrop cDrop" data-n="${i}" style="left:${f1(d.cx - c)}px;top:${f1(d.py)}px;width:${f1(box)}px;height:${f1(d.chain + d.s * 1.12)}px;transform-origin:50% 0;--i:${i}">`
-        + `<i class="vChain cRib" style="left:${f1(c - 0.9)}px;height:${f1(d.chain + 1)}px"></i>${body}</div>`;
+      const c = Math.max(d.ww * Math.max(d.o.hx, 1 - d.o.hx), 6) + 2, box = c * 2, src = `obj/${d.o.src}.webp`;
+      return `<div class="vDrop cDrop${d.o.red ? "" : " cClear"}" data-n="${i}" style="left:${f1(d.cx - c)}px;top:${f1(d.py)}px;width:${f1(box)}px;height:${f1(d.chain + d.hh)}px;transform-origin:50% 0;--i:${i}">`
+        + `<i class="vChain cRib" style="left:${f1(c - 0.8)}px;height:${f1(d.chain + 2)}px"></i>`
+        + `<div class="cOrn" style="left:${f1(c - d.ww * d.o.hx)}px;top:${f1(d.chain)}px;width:${f1(d.ww)}px;height:${f1(d.hh)}px">`
+        + `<img class="cDim" src="${src}" alt="" draggable="false" decoding="async"><img class="cOn" src="${src}" alt="" draggable="false" decoding="async"></div></div>`;
     };
     const H = Math.ceil(maxY + 10);
     const el = document.createElement("div");
@@ -528,10 +530,7 @@
       + `<g class="cLit">${g.lit.map((d, j) => `<g class="cTw cTw${j}">${d.join("")}</g>`).join("")}</g></svg>`; };
     el.innerHTML = `<div class="vIn"><svg class="cDefs" width="0" height="0" aria-hidden="true"><defs>`
       + `<radialGradient id="cbDot"><stop offset="0" stop-color="#fffbe8"/><stop offset=".28" stop-color="#ffe3a6"/><stop offset=".55" stop-color="rgba(255,196,110,.3)"/><stop offset="1" stop-color="rgba(255,180,90,0)"/></radialGradient>`
-      + `<radialGradient id="cbBody" cx=".38" cy=".34" r=".75"><stop offset="0" stop-color="#e2434a"/><stop offset=".35" stop-color="#b3141f"/><stop offset=".75" stop-color="#6e0610"/><stop offset="1" stop-color="#3a0208"/></radialGradient>`
-      + `<radialGradient id="cbRim" cx=".62" cy=".72" r=".5"><stop offset="0" stop-color="rgba(255,170,110,.35)"/><stop offset="1" stop-color="rgba(255,170,110,0)"/></radialGradient>`
-      + `<linearGradient id="cbCap" x1="0" x2="1"><stop offset="0" stop-color="#6d5420"/><stop offset=".45" stop-color="#e9cf86"/><stop offset="1" stop-color="#7a5e24"/></linearGradient>`
-      + `</defs></svg>${layer("b")}<div class="cShade"></div>${layer("m")}${drops.filter((d) => !d.front).map(bauble).join("")}${layer("f")}</div>`;
+      + `</defs></svg>${layer("b")}<div class="cShade"></div>${layer("m")}${drops.map(bauble).join("")}${layer("f")}</div>`;
     const dEls = el.querySelectorAll(".cDrop");
     drops.forEach((d, i) => { d.els = [dEls[i]]; });
     touch(el, drops, [], { quiet: true });
