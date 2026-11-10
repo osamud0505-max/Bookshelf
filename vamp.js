@@ -262,27 +262,36 @@
   };
   function curtainEl(w, cfg) {
     const R = rnd(7919 + Math.round(w)), unit = Math.min(w, 430);
-    const gap = 15, n = Math.floor(w / gap), top = 16; // strands start behind the trim
+    const top = 16; // strands start behind the trim
     const lines = [], dots = [[], [], [], []], offd = [], stars = [];
     let maxY = 0;
-    for (let i = 0; i < n; i++) {
-      const x = (i + 0.5) * (w / n) + (R() - 0.5) * 3;
-      // lengths wave gently along the shelf, with every strand a little different
-      const L = unit * (0.34 + 0.12 * Math.sin(i * 0.37 + 1.3) + 0.08 * Math.sin(i * 1.71) + R() * 0.1);
-      const sway = (R() - 0.5) * 2.2, y1 = top + L;
-      maxY = Math.max(maxY, y1);
-      lines.push(`<path d="M${f1(x)} ${top} Q${f1(x + sway)} ${f1(top + L / 2)} ${f1(x + sway * 0.4)} ${f1(y1)}"/>`);
-      for (let y = top + 6 + R() * 10; y < y1; y += 12 + R() * 4) {
-        const t = (y - top) / L, dx = sway * 2 * t * (1 - t) + sway * 0.4 * t * t;
-        const c = `<circle cx="${f1(x + dx)}" cy="${f1(y)}" r="${(1.3 + R() * 0.6).toFixed(1)}"/>`;
-        dots[Math.floor(R() * 4)].push(c); offd.push(c);
+    // three depths of strands, packed close: the back ones fainter and finer, every length different,
+    // short and long mixed in clumps, a whole tumble of light
+    const LAYERS = [{ gap: 9, k: 0.6, r: 0.9, cls: "b" }, { gap: 10, k: 0.8, r: 1.15, cls: "m" }, { gap: 13, k: 1, r: 1.4, cls: "f" }];
+    for (const ly of LAYERS) {
+      const n = Math.floor(w / ly.gap), lo = [], dl = [[], [], [], []], of = [], st = [];
+      for (let i = 0; i < n; i++) {
+        const x = (i + 0.5) * (w / n) + (R() - 0.5) * ly.gap * 0.8;
+        const wave = 0.3 + 0.14 * Math.sin(i * ly.gap * 0.021 + ly.k * 5) + 0.1 * Math.sin(i * ly.gap * 0.11 + ly.k);
+        const L = unit * Math.max(0.1, R() < 0.18 ? 0.12 + R() * 0.14 : R() < 0.15 ? wave + 0.25 + R() * 0.2 : wave + (R() - 0.3) * 0.22);
+        const sway = (R() - 0.5) * 2.2, y1 = top + L;
+        maxY = Math.max(maxY, y1);
+        lo.push(`<path d="M${f1(x)} ${top} Q${f1(x + sway)} ${f1(top + L / 2)} ${f1(x + sway * 0.4)} ${f1(y1)}"/>`);
+        for (let y = top + 4 + R() * 10; y < y1; y += 9 + R() * 6) {
+          const t = (y - top) / L, dx = sway * 2 * t * (1 - t) + sway * 0.4 * t * t;
+          const c = `<circle cx="${f1(x + dx)}" cy="${f1(y)}" r="${(ly.r * (0.85 + R() * 0.4)).toFixed(1)}"/>`;
+          dl[Math.floor(R() * 4)].push(c); of.push(c);
+        }
+        // little paper stars all through it, at the ends and part way down
+        if (R() < (ly.cls === "b" ? 0.12 : 0.24)) {
+          const sy = R() < 0.55 ? y1 + 4 : top + L * (0.3 + R() * 0.6), sr = (3.5 + R() * 4) * (0.7 + ly.k * 0.3);
+          st.push(`<polygon points="${starPts(x + sway * 0.3, sy, sr)}"/>`);
+          maxY = Math.max(maxY, sy + sr);
+        }
       }
-      // a little paper star on some strands, at the end or part way down
-      if (R() < 0.22) {
-        const sy = R() < 0.6 ? y1 + 5 : top + L * (0.45 + R() * 0.4), sr = 4.5 + R() * 4;
-        stars.push(`<polygon points="${starPts(x + sway * 0.3, sy, sr)}"/>`);
-        maxY = Math.max(maxY, sy + sr);
-      }
+      lines.push(`<g class="scL${ly.cls}">${lo.join("")}</g>`); offd.push(`<g class="scL${ly.cls}">${of.join("")}</g>`);
+      stars.push(`<g class="scL${ly.cls}">${st.join("")}</g>`);
+      dl.forEach((g, k) => dots[k].push(`<g class="scL${ly.cls}">${g.join("")}</g>`));
     }
     // the big paper star lanterns: three to a shelf's width, on cords of different lengths
     const groups = Math.max(1, Math.round(w / unit)), lan = [];
