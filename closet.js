@@ -445,7 +445,7 @@
   const contact = (g, cx, rx) => `<defs><radialGradient id="${g}cs" cx=".5" cy="1" r="1"><stop offset="0" stop-color="#2a0418" stop-opacity=".5"/><stop offset=".5" stop-color="#2a0418" stop-opacity=".22"/><stop offset="1" stop-color="#2a0418" stop-opacity="0"/></radialGradient><radialGradient id="${g}cc"><stop offset="0" stop-color="#1a0210" stop-opacity=".75"/><stop offset=".7" stop-color="#1a0210" stop-opacity=".35"/><stop offset="1" stop-color="#1a0210" stop-opacity="0"/></radialGradient></defs>`
     + `<ellipse cx="${cx}" cy="197.5" rx="${f1(rx * 1.08)}" ry="5" fill="url(#${g}cc)" style="filter:blur(1.5px)"/>`;
   // footprint shadows made from each picture's own bottom edge (scratchpad shadowgen.py): x, width, height in picture units
-  const FOOT = { "handbag": [-9.07, 208.24, 203.3], "pencilcup-small": [-23.06, 267.99, 211.93], "giftboxes2": [-14.57, 334.0, 204.86, "2"], "bags2": [-14.29, 370.86, 204.86, "2"], "calla": [-14.57, 112.86, 204.86], "lily": [-14.57, 169.43, 204.86] };
+  const FOOT = { "handbag": [-9.07, 208.24, 203.3], "pencilcup-small": [-23.06, 267.99, 211.93], "giftboxes2": [-14.57, 334.0, 204.86, "2"], "bags2": [-14.29, 370.86, 204.86, "2"] };
   const painted = (label, name, W, H, scale, shadows) => {
     const vw = f1(200 * W / H);
     return { label, scale, vw, still: true, flat: true, img: pic(name),
@@ -502,21 +502,20 @@
     } catch (e) { /* no sound */ }
   }
 
-  // v210: osamu's lily pen holder (a still object) and calla lily candle. The candle's flame is drawn fresh every frame:
+  // v211: osamu's calla lily candle and lily pen holder, ONE object laid out as in their picture, with the floor shadow
+  // from their painting baked into the picture (it runs a little below the bases, so the picture is 203.65 units tall). The candle's flame is drawn fresh every frame:
   // a teardrop whose height, width and lean come from smooth layered noise plus slow drafts that push it over and let it
   // spring back, the tip swaying more than the root, a white-hot core, a blue root, and light that brightens and dims with it.
-  D.ORNAMENTS.lilyPens = painted("Lily pen holder", "lily", 491, 700, 0.74, [[0.5, 0.4]]);
-  const CAL_VW = 83.7, CAL_X = 48.7, CAL_Y = 21.2, CAL_H = 13.5, CAL_W = 3.2;   // flame root and size, picture units
+  const CAL_VW = 206.0, CAL_PH = 203.65, CAL_X = 55.1, CAL_Y = 21.1, CAL_H = 13, CAL_W = 3.07;   // flame root and size, picture units
   D.ORNAMENTS.callaCandle = {
-    label: "Calla lily candle", scale: 0.74, startOff: true, vw: CAL_VW, flat: true, img: pic("calla"), glow: "rgba(255,170,90,.5)",
-    draw: (g) => `<image href="obj/closet-calla-shadow.png" x="${FOOT.calla[0]}" y="0" width="${FOOT.calla[1]}" height="${FOOT.calla[2]}" preserveAspectRatio="none"/>`
-      + `<defs><mask id="${g}cm" maskUnits="userSpaceOnUse" x="0" y="0" width="${CAL_VW}" height="200" style="mask-type:alpha"><image href="${pic("calla")}" x="0" y="0" width="${CAL_VW}" height="200" preserveAspectRatio="none"/></mask>`
+    label: "Calla candle & lily pens", scale: 0.756, startOff: true, vw: CAL_VW, flat: true, img: pic("lilypair"), glow: "rgba(255,170,90,.5)",
+    draw: (g) => `<defs><mask id="${g}cm" maskUnits="userSpaceOnUse" x="0" y="0" width="${CAL_VW}" height="200" style="mask-type:alpha"><image href="${pic("lilypair")}" x="0" y="0" width="${CAL_VW}" height="${CAL_PH}" preserveAspectRatio="none"/></mask>`
       + `<radialGradient id="${g}cl" gradientUnits="userSpaceOnUse" cx="${CAL_X}" cy="${CAL_Y - 5}" r="46"><stop offset="0" stop-color="#ffd9a0" stop-opacity=".75"/><stop offset=".18" stop-color="#ffb070" stop-opacity=".42"/><stop offset=".45" stop-color="#ff9a70" stop-opacity=".14"/><stop offset="1" stop-color="#ff9a70" stop-opacity="0"/></radialGradient>`
       + `<radialGradient id="${g}bl"><stop offset="0" stop-color="#ffe7b0" stop-opacity=".55"/><stop offset=".4" stop-color="#ffb35c" stop-opacity=".2"/><stop offset="1" stop-color="#ff9a40" stop-opacity="0"/></radialGradient>`
       + `<linearGradient id="${g}fo" gradientUnits="userSpaceOnUse" x1="0" y1="${CAL_Y + 1}" x2="0" y2="${CAL_Y - CAL_H * 1.25}"><stop offset="0" stop-color="#ffb24a" stop-opacity=".35"/><stop offset=".14" stop-color="#ffc35c" stop-opacity=".9"/><stop offset=".5" stop-color="#ffd36e" stop-opacity="1"/><stop offset=".82" stop-color="#ffa340" stop-opacity=".92"/><stop offset="1" stop-color="#f0702a" stop-opacity=".55"/></linearGradient>`
       + `<linearGradient id="${g}fc" gradientUnits="userSpaceOnUse" x1="0" y1="${CAL_Y}" x2="0" y2="${CAL_Y - CAL_H * 0.8}"><stop offset="0" stop-color="#fff6d6" stop-opacity=".35"/><stop offset=".25" stop-color="#fffdf6" stop-opacity="1"/><stop offset=".75" stop-color="#fff2c4" stop-opacity=".95"/><stop offset="1" stop-color="#ffe2a0" stop-opacity=".5"/></linearGradient>`
       + `<filter id="${g}fs" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation=".35"/></filter></defs>`
-      + `<image href="${pic("calla")}" x="0" y="0" width="${CAL_VW}" height="200" preserveAspectRatio="none"/>`
+      + `<image href="${pic("lilypair")}" x="0" y="0" width="${CAL_VW}" height="${CAL_PH}" preserveAspectRatio="none"/>`
       + `<g class="clLight litOnly" mask="url(#${g}cm)" style="mix-blend-mode:screen"><rect x="0" y="0" width="${CAL_VW}" height="80" fill="url(#${g}cl)"/></g>`
       + `<g class="clFlame" data-x="${CAL_X}" data-y="${CAL_Y}"><ellipse class="clBloom" cx="${CAL_X}" cy="${CAL_Y - 6}" rx="11" ry="14" fill="url(#${g}bl)" style="mix-blend-mode:screen"/>`
       + `<path class="clOuter" fill="url(#${g}fo)" filter="url(#${g}fs)"/><path class="clCore" fill="url(#${g}fc)" filter="url(#${g}fs)"/>`

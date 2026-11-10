@@ -1565,14 +1565,14 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 .ornament[data-kind="lipstickLamp"].lit .lpRed { filter: brightness(1.45) saturate(1.25); }
 @media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .ornGlow { animation: none; } }
 
-/* v210: lily pen holder and calla lily candle stand flush like the other closet pieces, with their own base shadows */
-.ornament[data-kind="callaCandle"], .ornament[data-kind="lilyPens"] { bottom: calc(var(--top-d) * -.42); }
-.ornament:is([data-kind="callaCandle"], [data-kind="lilyPens"])::after { display: none; }
-.ornament:is([data-kind="callaCandle"], [data-kind="lilyPens"]) svg { filter: none; }
+/* v210/211: the calla candle & lily pens pair stands flush like the other closet pieces, with their own base shadows */
+.ornament[data-kind="callaCandle"] { bottom: calc(var(--top-d) * -.42); }
+.ornament[data-kind="callaCandle"]::after { display: none; }
+.ornament[data-kind="callaCandle"] svg { filter: none; }
 .ornament[data-kind="callaCandle"] .clFlame, .ornament[data-kind="callaCandle"] .clLight { display: none; }
 .ornament[data-kind="callaCandle"].lit .clFlame { display: inline; }
 .ornament[data-kind="callaCandle"].lit .clLight { display: inline; opacity: var(--fi, 1); }
-.ornament[data-kind="callaCandle"] .ornGlow { left: 58.2%; top: 6%; width: 300px; height: 300px; transition: none;
+.ornament[data-kind="callaCandle"] .ornGlow { left: 26.8%; top: 6%; width: 300px; height: 300px; transition: none;
   background: radial-gradient(closest-side, rgba(255,214,150,.55), rgba(255,170,90,.3) 18%, rgba(255,140,70,.12) 40%, rgba(255,120,60,.04) 65%, transparent) !important; }
 .ornament[data-kind="callaCandle"].lit .ornGlow { animation: none; opacity: var(--fi, 1); }
 .ornament[data-kind="callaCandle"] .ornPool { display: none; }
