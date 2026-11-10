@@ -87,6 +87,15 @@
     const kick = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } };
     const k = reduce() ? 0.35 : 1;
     const push = (d, v) => { const dv = Math.max(-MAX, Math.min(MAX, v)) * k * Math.min(1, 90 / d.len); d.om += dv; clink(d, Math.abs(dv) / MAX); kick(); };
+    const pull = (d, side) => {
+      const cord = el.parentNode && el.parentNode.querySelector(".pullCord");
+      if (d.yanking) return; d.yanking = true;
+      const p = Math.max(8, d.dh * 0.16);
+      d.els.forEach((e) => { e.style.setProperty("--pull", p + "px"); e.style.setProperty("--cs", ((d.top + p) / d.top).toFixed(4)); e.classList.remove("yank"); void e.offsetWidth; e.classList.add("yank"); });
+      if (cord) cord.click();
+      setTimeout(() => { push(d, side * 0.3); }, reduce() ? 0 : 280);
+      setTimeout(() => { d.yanking = false; d.els.forEach((e) => e.classList.remove("yank")); }, 1000);
+    };
     const local = (ev) => { const r = el.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
     const nearDrop = (x, y) => drops.find((d) => Math.abs(x - d.cx) < Math.max(14, d.dh * 0.16) && y > d.top - 6 && y < d.top + d.dh + 4);
     el.addEventListener("pointerdown", (ev) => {
@@ -109,7 +118,9 @@
       if (!down.moved) {
         const d = nearDrop(x, y);
         // a tap pushes the crystal away from the side it was touched on
-        if (d) push(d, (x < d.cx ? 1 : -1) * 0.42);
+        // a tap on a crystal is this room's light switch: it's pulled down on its chain like the pull cord, the
+        // shelf's lights click over, and it swings as it's let go
+        if (d) pull(d, x < d.cx ? 1 : -1);
         else swags.forEach((s) => { const r = s.el.getBoundingClientRect(), er = el.getBoundingClientRect(); const sx = r.left - er.left; if (x > sx && x < sx + r.width) { s.bv += (x < sx + r.width / 2 ? 1 : -1) * 0.4 * k; kick(); } });
       }
       down = null;

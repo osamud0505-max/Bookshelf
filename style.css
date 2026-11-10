@@ -1628,3 +1628,15 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.vampDrapes .vKnot { position: absolute; pointer-events: none; }
 .lights.vampDrapes .vKnot img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; filter: brightness(.86); }
 .lights.vampDrapes.on .vKnot img { filter: brightness(.95); }
+/* the vampire room's switch is the crystals themselves: the cord is kept for keyboards and screen readers only */
+.shelf[data-lights="vampDrapes"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="vampDrapes"] .pullCord:focus-visible { opacity: 1; }
+.lights.vampDrapes .vDrop img { transition: filter .45s ease; }
+.lights.vampDrapes .vHalo { transition: opacity .45s ease; }
+.lights.vampDrapes .vDrop.yank img, .lights.vampDrapes .vDrop.yank .vHalo { animation: vPull 1s ease both; }
+.lights.vampDrapes .vDrop.yank .vChain { transform-origin: 50% 0; animation: vChainPull 1s ease both; }
+.lights.vampDrapes.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
+@keyframes vPull { 0% { translate: 0 0; } 14% { translate: 0 var(--pull); } 20% { translate: 0 calc(var(--pull) * .88); } 30% { translate: 0 calc(var(--pull) * -.12); } 40%, 100% { translate: 0 0; } }
+@keyframes vPullHalo { 0% { translate: 0 0; opacity: 1; } 14% { translate: 0 var(--pull); } 20% { translate: 0 calc(var(--pull) * .88); } 30% { translate: 0 calc(var(--pull) * -.12); } 40%, 100% { translate: 0 0; opacity: 1; } }
+@keyframes vChainPull { 0% { transform: scaleY(1); } 14% { transform: scaleY(var(--cs)); } 20% { transform: scaleY(calc(1 + (var(--cs) - 1) * .88)); } 30% { transform: scaleY(.99); } 40%, 100% { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .lights.vampDrapes .vDrop.yank * { animation: none !important; } }
