@@ -1501,7 +1501,7 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
 
 /* v188: one light for the whole room, from the front and upper left. Every book and object casts the same soft shadow back
    and to the right onto the wall behind it, and has a thin dark line where it touches the floor. Nothing spreads in front. */
-:root { --cast: drop-shadow(7px -4px 5px rgba(25, 5, 18, .45)); }
+:root { --cast: none; }
 .slot .book { filter: var(--cast); }
 .slot.lying .book { filter: none; }
 .ornament svg { filter: var(--cast); }
@@ -1510,3 +1510,4 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
   /* a soft black shadow tucked right under the base, its top half hidden behind the book, so there is never a gap */
   background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(0,0,0,.7), rgba(0,0,0,.4) 55%, rgba(0,0,0,0) 100%); }
 .slot.lying::before, .addSlot::before { display: none; }
+.ornament[data-kind="lipstickLamp"] svg { filter: none; }
