@@ -445,7 +445,7 @@
   const contact = (g, cx, rx) => `<defs><radialGradient id="${g}cs" cx=".5" cy="1" r="1"><stop offset="0" stop-color="#2a0418" stop-opacity=".5"/><stop offset=".5" stop-color="#2a0418" stop-opacity=".22"/><stop offset="1" stop-color="#2a0418" stop-opacity="0"/></radialGradient><radialGradient id="${g}cc"><stop offset="0" stop-color="#1a0210" stop-opacity=".75"/><stop offset=".7" stop-color="#1a0210" stop-opacity=".35"/><stop offset="1" stop-color="#1a0210" stop-opacity="0"/></radialGradient></defs>`
     + `<ellipse cx="${cx}" cy="197.5" rx="${f1(rx * 1.08)}" ry="5" fill="url(#${g}cc)" style="filter:blur(1.5px)"/>`;
   // footprint shadows made from each picture's own bottom edge (scratchpad shadowgen.py): x, width, height in picture units
-  const FOOT = { "handbag": [-9.07, 208.24, 203.3], "pencilcup-small": [-23.06, 267.99, 211.93], "giftboxes2": [-14.57, 334.0, 204.86, "2"], "bags2": [-14.29, 370.86, 204.86, "2"] };
+  const FOOT = { "handbag": [-9.07, 208.24, 203.3], "pencilcup-small": [-23.06, 267.99, 211.93], "giftboxes2": [-14.57, 334.0, 204.86, "2"], "bags2": [-14.29, 370.86, 204.86, "2"], "calla": [-14.57, 112.86, 204.86], "lily": [-14.57, 169.43, 204.86] };
   const painted = (label, name, W, H, scale, shadows) => {
     const vw = f1(200 * W / H);
     return { label, scale, vw, still: true, flat: true, img: pic(name),
@@ -499,6 +499,112 @@
         gn.gain.setValueAtTime(0.0001, t + dt); gn.gain.exponentialRampToValueAtTime(0.006 * lvl, t + dt + 0.003); gn.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.035);
         o.connect(gn).connect(actx.destination); o.start(t + dt); o.stop(t + dt + 0.05);
       }
+    } catch (e) { /* no sound */ }
+  }
+
+  // v210: osamu's lily pen holder (a still object) and calla lily candle. The candle's flame is drawn fresh every frame:
+  // a teardrop whose height, width and lean come from smooth layered noise plus slow drafts that push it over and let it
+  // spring back, the tip swaying more than the root, a white-hot core, a blue root, and light that brightens and dims with it.
+  D.ORNAMENTS.lilyPens = painted("Lily pen holder", "lily", 491, 700, 0.74, [[0.5, 0.4]]);
+  const CAL_VW = 83.7, CAL_X = 48.7, CAL_Y = 21.2, CAL_H = 13.5, CAL_W = 3.2;   // flame root and size, picture units
+  D.ORNAMENTS.callaCandle = {
+    label: "Calla lily candle", scale: 0.74, startOff: true, vw: CAL_VW, flat: true, img: pic("calla"), glow: "rgba(255,170,90,.5)",
+    draw: (g) => `<image href="obj/closet-calla-shadow.png" x="${FOOT.calla[0]}" y="0" width="${FOOT.calla[1]}" height="${FOOT.calla[2]}" preserveAspectRatio="none"/>`
+      + `<defs><mask id="${g}cm" maskUnits="userSpaceOnUse" x="0" y="0" width="${CAL_VW}" height="200" style="mask-type:alpha"><image href="${pic("calla")}" x="0" y="0" width="${CAL_VW}" height="200" preserveAspectRatio="none"/></mask>`
+      + `<radialGradient id="${g}cl" gradientUnits="userSpaceOnUse" cx="${CAL_X}" cy="${CAL_Y - 5}" r="46"><stop offset="0" stop-color="#ffd9a0" stop-opacity=".75"/><stop offset=".18" stop-color="#ffb070" stop-opacity=".42"/><stop offset=".45" stop-color="#ff9a70" stop-opacity=".14"/><stop offset="1" stop-color="#ff9a70" stop-opacity="0"/></radialGradient>`
+      + `<radialGradient id="${g}bl"><stop offset="0" stop-color="#ffe7b0" stop-opacity=".55"/><stop offset=".4" stop-color="#ffb35c" stop-opacity=".2"/><stop offset="1" stop-color="#ff9a40" stop-opacity="0"/></radialGradient>`
+      + `<linearGradient id="${g}fo" gradientUnits="userSpaceOnUse" x1="0" y1="${CAL_Y + 1}" x2="0" y2="${CAL_Y - CAL_H * 1.25}"><stop offset="0" stop-color="#ffb24a" stop-opacity=".35"/><stop offset=".14" stop-color="#ffc35c" stop-opacity=".9"/><stop offset=".5" stop-color="#ffd36e" stop-opacity="1"/><stop offset=".82" stop-color="#ffa340" stop-opacity=".92"/><stop offset="1" stop-color="#f0702a" stop-opacity=".55"/></linearGradient>`
+      + `<linearGradient id="${g}fc" gradientUnits="userSpaceOnUse" x1="0" y1="${CAL_Y}" x2="0" y2="${CAL_Y - CAL_H * 0.8}"><stop offset="0" stop-color="#fff6d6" stop-opacity=".35"/><stop offset=".25" stop-color="#fffdf6" stop-opacity="1"/><stop offset=".75" stop-color="#fff2c4" stop-opacity=".95"/><stop offset="1" stop-color="#ffe2a0" stop-opacity=".5"/></linearGradient>`
+      + `<filter id="${g}fs" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation=".35"/></filter></defs>`
+      + `<image href="${pic("calla")}" x="0" y="0" width="${CAL_VW}" height="200" preserveAspectRatio="none"/>`
+      + `<g class="clLight litOnly" mask="url(#${g}cm)" style="mix-blend-mode:screen"><rect x="0" y="0" width="${CAL_VW}" height="80" fill="url(#${g}cl)"/></g>`
+      + `<g class="clFlame" data-x="${CAL_X}" data-y="${CAL_Y}"><ellipse class="clBloom" cx="${CAL_X}" cy="${CAL_Y - 6}" rx="11" ry="14" fill="url(#${g}bl)" style="mix-blend-mode:screen"/>`
+      + `<path class="clOuter" fill="url(#${g}fo)" filter="url(#${g}fs)"/><path class="clCore" fill="url(#${g}fc)" filter="url(#${g}fs)"/>`
+      + `<path class="clBlue" d="M${CAL_X - 2.6} ${CAL_Y - 1.6} Q${CAL_X - 2.4} ${CAL_Y + 0.5} ${CAL_X} ${CAL_Y + 0.5} Q${CAL_X + 2.4} ${CAL_Y + 0.5} ${CAL_X + 2.6} ${CAL_Y - 1.6} Q${CAL_X} ${CAL_Y - 0.2} ${CAL_X - 2.6} ${CAL_Y - 1.6}Z" fill="#6f8cff" opacity=".38" filter="url(#${g}fs)"/></g>`,
+    toggle: (el, out) => {
+      el._cl = el._cl || {};
+      if (out) { candleSound(false); el._cl.dying = performance.now(); setTimeout(() => { el.classList.remove("lit"); el._cl.dying = 0; calSmoke(el); }, 330); }
+      else { candleSound(true); el._cl.dying = 0; el._cl.born = performance.now(); el.classList.add("lit"); }
+      calLoop();
+    },
+  };
+  // smooth 1-D value noise, so nothing repeats on a visible beat
+  const nz = (() => { const r = []; for (let i = 0; i < 256; i++) r.push(Math.random() * 2 - 1);
+    return (t) => { const i = Math.floor(t), f = t - i, u = f * f * (3 - 2 * f); return r[i & 255] * (1 - u) + r[(i + 1) & 255] * u; }; })();
+  // one teardrop: round at the root, tapering to a tip that leans by `lean` (picture units) and wavers along its height
+  function flamePath(x, y, h, w, lean, wav, ph) {
+    const L = [], R = [], n = 14;
+    for (let k = 0; k <= n; k++) {
+      const t = k / n;
+      const r = t < 0.22 ? w * Math.sqrt(1 - Math.pow((0.22 - t) / 0.22, 2)) * 0.97 + w * 0.03 : w * Math.pow(1 - (t - 0.22) / 0.78, 1.25);
+      const cx = x + lean * t * t + wav * Math.sin(t * 5.5 - ph) * t * t;
+      const cy = y - h * t;
+      L.push([cx - r, cy]); R.push([cx + r, cy]);
+    }
+    const pts = L.concat(R.reverse());
+    return "M" + pts.map((p) => p[0].toFixed(2) + " " + p[1].toFixed(2)).join("L") + "Z";
+  }
+  let calRaf = 0;
+  function calLoop() { if (!calRaf) calRaf = requestAnimationFrame(calTick); }
+  function calTick(now) {
+    calRaf = 0;
+    const els = document.querySelectorAll('.ornament[data-kind="callaCandle"].lit, .ornGhost[data-kind="callaCandle"].lit');
+    if (!els.length) return;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    els.forEach((el) => {
+      const st = el._cl = el._cl || {};
+      if (st.seed == null) { st.seed = Math.random() * 200; st.lean = 0; st.v = 0; st.gust = 0; st.next = now + 1500; st.born = st.born || now - 2000; }
+      const t = now / 1000 + st.seed, dt = Math.min(0.05, ((now - (st.last || now)) / 1000) || 0.016); st.last = now;
+      // drafts: every few seconds the air shifts and the flame is pushed over, then springs back with a little overshoot
+      if (now > st.next) { st.gust = (Math.random() < 0.35 ? (Math.random() * 2 - 1) * 2.6 : 0); st.next = now + 900 + Math.random() * 3200; }
+      const target = st.gust + nz(t * 0.7) * 0.9;
+      st.v += ((target - st.lean) * 38 - st.v * 7) * dt; st.lean += st.v * dt;
+      let hk = 1 + nz(t * 2.1 + 40) * 0.07 + nz(t * 7.3 + 90) * 0.035 - Math.abs(st.lean) * 0.03;
+      let wk = 1 + nz(t * 3.1 + 15) * 0.05;
+      // lighting: a flare that overshoots then settles; blowing out: it shrinks and lies down
+      const age = (now - st.born) / 1000;
+      if (age < 0.9) { const p = age / 0.9; hk *= p < 0.25 ? 0.2 + 4.4 * p : 1 + 0.32 * Math.exp(-(p - 0.25) * 6) * Math.cos((p - 0.25) * 9); wk *= Math.min(1, 0.4 + p * 2); }
+      let lean = st.lean, a = 1;
+      if (st.dying) { const p = Math.min(1, (now - st.dying) / 330); hk *= 1 - p * 0.85; lean += p * 3.5; a = 1 - p; }
+      if (reduce) { hk = 1; wk = 1; lean = 0; }
+      const fl = el.querySelector(".clFlame"); if (!fl) return;
+      const x = +fl.dataset.x, y = +fl.dataset.y, H = CAL_H * hk, W = CAL_W * wk;
+      const wav = reduce ? 0 : 0.55 + nz(t * 1.3 + 7) * 0.4, ph = t * 9;
+      fl.querySelector(".clOuter").setAttribute("d", flamePath(x, y, H, W, lean, wav, ph));
+      fl.querySelector(".clCore").setAttribute("d", flamePath(x, y - 0.9, H * 0.68, W * 0.62, lean * 0.6, wav * 0.55, ph));
+      const bl = fl.querySelector(".clBloom"); bl.setAttribute("cx", (x + lean * 0.4).toFixed(2)); bl.setAttribute("cy", (y - H * 0.42).toFixed(2));
+      const fi = Math.max(0, Math.min(1.15, (0.82 + (hk - 1) * 1.6))) * a;
+      fl.style.opacity = a; el.style.setProperty("--fi", fi.toFixed(3));
+    });
+    calLoop();
+  }
+  // rebuilt shelves can come back already lit
+  setInterval(() => { if (document.querySelector('.ornament[data-kind="callaCandle"].lit')) calLoop(); }, 700);
+  // a curl of smoke from the wick after it is blown out
+  function calSmoke(el) {
+    const fl = el.querySelector(".clFlame"), svg = el.querySelector("svg"); if (!fl || !svg) return;
+    const x = +fl.dataset.x - 0.6, y = +fl.dataset.y - 3;
+    for (let k = 0; k < 2; k++) {
+      const p = document.createElementNS("http://www.w3.org/2000/svg", "path"), sw = k ? -1 : 1;
+      p.setAttribute("d", `M${x} ${y} c${-2.5 * sw} -5 ${2.5 * sw} -9 0 -14 c${-2.5 * sw} -5 ${3 * sw} -9 ${0.5 * sw} -15 c${-2 * sw} -4 ${2 * sw} -8 ${-0.5 * sw} -12`);
+      p.setAttribute("pathLength", "1"); p.setAttribute("class", "smoke clSmoke"); p.style.animationDelay = (0.05 + k * 0.22) + "s";
+      svg.append(p); setTimeout(() => p.remove(), 3400);
+    }
+  }
+  // a match strike when it is lit, a soft breath when it is blown out
+  function candleSound(on) {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === "suspended") actx.resume();
+      const lvl = window.ShelfSfxLevel ? window.ShelfSfxLevel() : 1; if (!lvl) return;
+      const t = actx.currentTime, len = on ? 0.5 : 0.45, buf = actx.createBuffer(1, Math.floor(actx.sampleRate * len), actx.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = actx.createBufferSource(), f = actx.createBiquadFilter(), gn = actx.createGain(); src.buffer = buf;
+      f.type = on ? "bandpass" : "lowpass"; f.frequency.value = on ? 2600 : 900; f.Q.value = on ? 0.8 : 0.5;
+      gn.gain.setValueAtTime(0.0001, t);
+      if (on) { gn.gain.exponentialRampToValueAtTime(0.05 * lvl, t + 0.02); gn.gain.exponentialRampToValueAtTime(0.012 * lvl, t + 0.12); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.48); }
+      else { gn.gain.exponentialRampToValueAtTime(0.04 * lvl, t + 0.08); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.44); }
+      src.connect(f).connect(gn).connect(actx.destination); src.start(t); src.stop(t + len);
     } catch (e) { /* no sound */ }
   }
 
