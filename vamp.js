@@ -498,8 +498,8 @@
     // ornaments (osamu's Gemini paintings): red baubles and stars on red ribbons, clear acrylic icicles and shapes on
     // fine clear threads, mixed here and there. h = height in px on screen, hx = where the loop sits across the picture
     const ORN = {
-      gloss: { src: "cabin-bauble-gloss", ar: 0.841, h: 24, hx: 0.5, red: 1 }, matte: { src: "cabin-bauble-matte", ar: 0.859, h: 22, hx: 0.5, red: 1 },
-      star: { src: "cabin-star", ar: 0.982, h: 27, hx: 0.497, red: 1 },
+      gloss: { src: "cabin-red-gloss", ar: 0.829, h: 25, hx: 0.486 }, matte: { src: "cabin-red-swirl", ar: 0.829, h: 25, hx: 0.486 },
+      star: { src: "cabin-red-star", ar: 0.894, h: 28, hx: 0.503 },
       snow: { src: "cabin-snow", ar: 0.825, h: 30, hx: 0.497 }, tree: { src: "cabin-tree", ar: 0.635, h: 31, hx: 0.5 }, deer: { src: "cabin-deer", ar: 0.635, h: 31, hx: 0.437 },
       twist: { src: "cabin-ice-twist", ar: 0.2, h: 50, hx: 0.548 }, drop: { src: "cabin-ice-drop", ar: 0.296, h: 46, hx: 0.448 },
       ice: { src: "cabin-ice-plain", ar: 0.146, h: 48, hx: 0.434 }, bead: { src: "cabin-ice-bead", ar: 0.215, h: 46, hx: 0.455 },
