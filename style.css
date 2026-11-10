@@ -1707,7 +1707,8 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 /* starry night's light curtain and star trim (vamp.js curtainEl) */
 .shelf.hasLights[data-lights="starCurtain"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
 .lights.starCurtain { overflow-x: clip; }
-.lights.starCurtain .scSvg { position: absolute; left: 0; top: 0; display: block; overflow: visible; }
+.lights.starCurtain .scBand { position: absolute; top: 0; display: block; overflow: visible; transform-origin: 50% 16px; will-change: transform; }
+.lights.starCurtain .scDefs { position: absolute; }
 .lights.starCurtain .scWire { fill: none; stroke: rgba(150,140,120,.25); stroke-width: .6; }
 .lights.starCurtain .scOff { fill: rgba(225,215,190,.28); }
 .lights.starCurtain .scStars { fill: #efe6cf; stroke: rgba(120,100,70,.5); stroke-width: .5; filter: drop-shadow(0 0 0 transparent); opacity: .7; transition: opacity .5s ease; }
@@ -1723,12 +1724,19 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
   -webkit-mask-repeat: repeat-x; mask-repeat: repeat-x; -webkit-mask-size: 31px 24px; mask-size: 31px 24px; }
 .lights.starCurtain .starTrim { background: linear-gradient(180deg, rgba(0,0,0,.42) 0, rgba(0,0,0,.2) 35%, rgba(0,0,0,.3) 100%), var(--plank-top); -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2220%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M0%200H26V8A13.0%2011.96%200%200%201%200%208Z%20M13.00%205.90%20L14.22%208.83%20L17.37%209.08%20L14.97%2011.14%20L15.70%2014.22%20L13.00%2012.57%20L10.30%2014.22%20L11.03%2011.14%20L8.63%209.08%20L11.78%208.83Z%22%20fill%3D%22%23000%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2220%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M0%200H26V8A13.0%2011.96%200%200%201%200%208Z%20M13.00%205.90%20L14.22%208.83%20L17.37%209.08%20L14.97%2011.14%20L15.70%2014.22%20L13.00%2012.57%20L10.30%2014.22%20L11.03%2011.14%20L8.63%209.08%20L11.78%208.83Z%22%20fill%3D%22%23000%22/%3E%3C/svg%3E"); }
 .lights.starCurtain .starTrimGlow { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2220%22%3E%3Cpath%20d%3D%22M0%200H26V8A13.0%2011.96%200%200%201%200%208Z%22%20fill%3D%22%23000%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2220%22%3E%3Cpath%20d%3D%22M0%200H26V8A13.0%2011.96%200%200%201%200%208Z%22%20fill%3D%22%23000%22/%3E%3C/svg%3E"); background: rgba(8,10,24,.85); }
-.lights.starCurtain .starTrimGlow::after { content: ""; position: absolute; inset: 0; background: linear-gradient(#fff4cf, #ffd88a); opacity: 0; transition: opacity .6s ease; }
+.lights.starCurtain .starTrimGlow::after, .lights.starCurtain .starTrimGlow::before { content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; }
+/* the light comes up from the strands hanging behind: brightest at each star's lower points, uneven from star to star */
+.lights.starCurtain .starTrimGlow::after { background:
+  radial-gradient(ellipse 22px 18px at 50% 110%, rgba(255,232,170,1), rgba(255,205,125,.55) 55%, rgba(255,190,110,0)) 0 0 / 23px 24px repeat-x,
+  linear-gradient(0deg, rgba(255,200,120,.85), rgba(255,185,105,.45) 55%, rgba(255,170,90,.2)); }
+.lights.starCurtain .starTrimGlow::before { background: radial-gradient(ellipse 12px 11px at 50% 100%, rgba(255,246,215,1), rgba(255,215,145,0)) 7px 0 / 37px 24px repeat-x; }
 .lights.starCurtain.on .starTrimGlow::after { opacity: 1; }
+.lights.starCurtain.on .starTrimGlow::before { opacity: 1; animation: scTw 3.1s ease-in-out -1.2s infinite alternate; }
 .shelf[data-lights="starCurtain"] .plank { box-shadow: none; }
 @media (prefers-reduced-motion: reduce) { .lights.starCurtain.on .scTw { animation: none; } }
 /* v242 starry: big paper star lanterns hanging in the curtain, glowing warm through their punched stars */
-.lights.starCurtain .scLan { position: absolute; transform-origin: 50% 0; animation: scSway var(--sw) ease-in-out var(--sd) infinite alternate; pointer-events: none; }
+.lights.starCurtain .scLan { position: absolute; transform-origin: 50% 0; will-change: transform; }
+.lights.starCurtain .scLanIn { position: absolute; inset: 0; transform-origin: 50% 0; animation: scSway var(--sw) ease-in-out var(--sd) infinite alternate; }
 .lights.starCurtain .scCord { position: absolute; left: 50%; top: 0; width: 1px; margin-left: -.5px; height: calc(var(--cord) + 2px); background: rgba(190,175,150,.55); }
 .lights.starCurtain .scLan img { position: absolute; left: 0; top: var(--cord); width: 100%; height: auto; display: block; }
 .lights.starCurtain .scOnImg { opacity: 0; transition: opacity .6s ease; }
@@ -1737,7 +1745,15 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
   background: radial-gradient(closest-side, rgba(255,214,140,.42), rgba(255,180,100,.18) 45%, rgba(255,160,90,.06) 70%, rgba(255,150,80,0)); opacity: 0; transition: opacity .6s ease; }
 .lights.starCurtain.on .scHalo { opacity: 1; }
 @keyframes scSway { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
-@media (prefers-reduced-motion: reduce) { .lights.starCurtain .scLan { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .lights.starCurtain .scLanIn { animation: none; } .lights.starCurtain .scLan.yank * { animation: none !important; } }
 /* v243 starry: three depths of strands, the back ones fainter */
 .lights.starCurtain .scLb { opacity: .45; }
 .lights.starCurtain .scLm { opacity: .72; }
+/* v244 starry: the lanterns are the switch, pulled down on their cords like the others */
+.shelf[data-lights="starCurtain"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="starCurtain"] .pullCord:focus-visible { opacity: 1; }
+.lights.starCurtain .scLan.yank img, .lights.starCurtain .scLan.yank .scHalo { animation: vPull 1s ease both; }
+.lights.starCurtain.on .scLan.yank .scHalo { animation: vPullHalo 1s ease both; }
+.lights.starCurtain .scLan.yank .scCord { transform-origin: 50% 0; animation: vChainPull 1s ease both; }
+.lights.starCurtain { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.lights.starCurtain img { -webkit-user-drag: none; }

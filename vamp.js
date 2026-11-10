@@ -55,6 +55,7 @@
   // ------------------------------------------------------------------ touching them
   function touch(el, drops, swags, opt) {
     opt = opt || {};
+    const bands = opt.bands || [];
     el.style.pointerEvents = "auto";
     el.style.touchAction = "pan-y";
     let raf = 0, last = 0, down = null, lastSound = 0;
@@ -72,6 +73,13 @@
         const h = Math.min(1 / 120, dt); dt -= h;
         for (const d of drops) { const K = KL / d.len; d.om += (-K * Math.sin(d.th) - 2 * Z * Math.sqrt(K) * d.om) * h; d.th += d.om * h; }
         for (const s of swags) { s.bv += (-9 * s.b - 2 * 0.7 * Math.sqrt(9) * s.bv) * h; s.b += s.bv * h; }
+        // light strands of fairy lights: they swing freely and take a while to settle
+        for (const s of bands) { s.bv += (-14 * s.b - 2 * 0.11 * Math.sqrt(14) * s.bv) * h; s.b += s.bv * h; }
+      }
+      for (const s of bands) {
+        const live = Math.abs(s.b) > 3e-4 || Math.abs(s.bv) > 3e-3;
+        if (live) moving = true; else { s.b = s.bv = 0; }
+        s.el.style.transform = live ? `skewX(${s.b.toFixed(4)}rad)` : "";
       }
       for (const d of drops) {
         const live = Math.abs(d.th) > 1e-3 || Math.abs(d.om) > 5e-3;
@@ -129,6 +137,10 @@
       if (Math.abs(x - down.x) > 6) down.moved = true;
       // brush every drop the finger crosses, and stir the velvet it passes under
       for (const d of drops) if ((down.lx - d.cx) * (x - d.cx) <= 0 && down.lx !== x) push(d, vx * 0.5);
+      if (bands.length && down.lx !== x) {
+        const a = Math.min(down.lx, x), b = Math.max(down.lx, x);
+        for (const s of bands) if (s.x1 > a && s.x0 < b) { s.bv = Math.max(-0.7, Math.min(0.7, s.bv + vx * 0.28 * k)); kick(); }
+      }
       swags.forEach((s) => { const r = s.el.getBoundingClientRect(), er = el.getBoundingClientRect(); const sx = r.left - er.left; if (x > sx && x < sx + r.width) { s.bv = Math.max(-0.25, Math.min(0.25, s.bv + vx * 0.06 * k)); kick(); } });
       down.lx = x; down.lt = now;
     });
@@ -263,58 +275,63 @@
   function curtainEl(w, cfg) {
     const R = rnd(7919 + Math.round(w)), unit = Math.min(w, 430);
     const top = 16; // strands start behind the trim
-    const lines = [], dots = [[], [], [], []], offd = [], stars = [];
+    // the strands are kept in narrow bands, each its own little picture, so a finger brushing across them can set
+    // each band swinging on its own
+    const BW = 34, nb = Math.ceil(w / BW), bands = [];
+    for (let i = 0; i < nb; i++) bands.push({ b: {}, lo: 1e9, hi: 0 });
     let maxY = 0;
     // three depths of strands, packed close: the back ones fainter and finer, every length different,
     // short and long mixed in clumps, a whole tumble of light
     const LAYERS = [{ gap: 9, k: 0.6, r: 0.9, cls: "b" }, { gap: 10, k: 0.8, r: 1.15, cls: "m" }, { gap: 13, k: 1, r: 1.4, cls: "f" }];
     for (const ly of LAYERS) {
-      const n = Math.floor(w / ly.gap), lo = [], dl = [[], [], [], []], of = [], st = [];
+      const n = Math.floor(w / ly.gap);
       for (let i = 0; i < n; i++) {
         const x = (i + 0.5) * (w / n) + (R() - 0.5) * ly.gap * 0.8;
+        const bd = bands[Math.max(0, Math.min(nb - 1, Math.floor(x / BW)))];
+        const g = bd.b[ly.cls] || (bd.b[ly.cls] = { lo: [], of: [], st: [], dl: [[], [], [], []] });
         const wave = 0.3 + 0.14 * Math.sin(i * ly.gap * 0.021 + ly.k * 5) + 0.1 * Math.sin(i * ly.gap * 0.11 + ly.k);
         const L = unit * Math.max(0.1, R() < 0.18 ? 0.12 + R() * 0.14 : R() < 0.15 ? wave + 0.25 + R() * 0.2 : wave + (R() - 0.3) * 0.22);
         const sway = (R() - 0.5) * 2.2, y1 = top + L;
         maxY = Math.max(maxY, y1);
-        lo.push(`<path d="M${f1(x)} ${top} Q${f1(x + sway)} ${f1(top + L / 2)} ${f1(x + sway * 0.4)} ${f1(y1)}"/>`);
+        g.lo.push(`<path d="M${f1(x)} ${top} Q${f1(x + sway)} ${f1(top + L / 2)} ${f1(x + sway * 0.4)} ${f1(y1)}"/>`);
         for (let y = top + 4 + R() * 10; y < y1; y += 9 + R() * 6) {
-          const t = (y - top) / L, dx = sway * 2 * t * (1 - t) + sway * 0.4 * t * t;
-          const c = `<circle cx="${f1(x + dx)}" cy="${f1(y)}" r="${(ly.r * (0.85 + R() * 0.4)).toFixed(1)}"/>`;
-          dl[Math.floor(R() * 4)].push(c); of.push(c);
+          const t = (y - top) / L, dx = sway * 2 * t * (1 - t) + sway * 0.4 * t * t, r = ly.r * (0.85 + R() * 0.4);
+          const at = `cx="${f1(x + dx)}" cy="${f1(y)}"`;
+          g.dl[Math.floor(R() * 4)].push(`<circle ${at} r="${(r * 2.2).toFixed(1)}"/>`); g.of.push(`<circle ${at} r="${r.toFixed(1)}"/>`);
         }
         // little paper stars all through it, at the ends and part way down
         if (R() < (ly.cls === "b" ? 0.12 : 0.24)) {
           const sy = R() < 0.55 ? y1 + 4 : top + L * (0.3 + R() * 0.6), sr = (3.5 + R() * 4) * (0.7 + ly.k * 0.3);
-          st.push(`<polygon points="${starPts(x + sway * 0.3, sy, sr)}"/>`);
+          g.st.push(`<polygon points="${starPts(x + sway * 0.3, sy, sr)}"/>`);
           maxY = Math.max(maxY, sy + sr);
         }
       }
-      lines.push(`<g class="scL${ly.cls}">${lo.join("")}</g>`); offd.push(`<g class="scL${ly.cls}">${of.join("")}</g>`);
-      stars.push(`<g class="scL${ly.cls}">${st.join("")}</g>`);
-      dl.forEach((g, k) => dots[k].push(`<g class="scL${ly.cls}">${g.join("")}</g>`));
     }
-    // the big paper star lanterns: three to a shelf's width, on cords of different lengths
-    const groups = Math.max(1, Math.round(w / unit)), lan = [];
+    // the big paper star lanterns: three to a shelf's width, on cords of different lengths. They're the light switch.
+    const groups = Math.max(1, Math.round(w / unit)), lan = [], drops = [];
     const SPOT = [[0.18, 0.3], [0.5, 0.12], [0.8, 0.36]];
     for (let k = 0; k < groups * 3; k++) {
       const sp = SPOT[k % 3], s = Math.round(unit * (0.2 + R() * 0.05));
       const x = Math.min(w - s / 2 - 4, Math.max(s / 2 + 4, (Math.floor(k / 3) + sp[0] + (R() - 0.5) * 0.05) * (w / groups)));
       const cord = Math.round(top + unit * sp[1] + R() * unit * 0.06);
-      lan.push(`<div class="scLan" style="left:${f1(x - s / 2)}px;top:${top}px;width:${s}px;--cord:${cord - top}px;--sw:${(2.6 + R() * 1.4).toFixed(1)}s;--sd:${(-R() * 3).toFixed(1)}s">`
-        + `<i class="scCord"></i><b class="scHalo"></b><img class="scOffImg" src="obj/star-lantern.webp" alt=""><img class="scOnImg" src="obj/star-lantern-lit.webp" alt=""></div>`);
+      lan.push(`<div class="scLan" style="left:${f1(x - s / 2)}px;top:${top}px;width:${s}px;height:${cord - top + s}px;--cord:${cord - top}px;--sw:${(2.6 + R() * 1.4).toFixed(1)}s;--sd:${(-R() * 3).toFixed(1)}s"><div class="scLanIn">`
+        + `<i class="scCord"></i><b class="scHalo"></b><img class="scOffImg" src="obj/star-lantern.webp" alt="" draggable="false"><img class="scOnImg" src="obj/star-lantern-lit.webp" alt="" draggable="false"></div></div>`);
+      drops.push({ cx: x, top: cord, dh: s, hw: s * 0.42, chain: cord - top, len: cord - top + s * 0.5, th: 0, om: 0, els: [] });
       maxY = Math.max(maxY, cord + s);
     }
     const H = Math.ceil(maxY + 8);
     const el = document.createElement("div");
     el.className = "lights starCurtain" + (cfg.on ? " on" : "");
     el.style.height = H + "px";
-    el.innerHTML = `<svg class="scSvg" width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true">`
-      + `<defs><radialGradient id="scDot"><stop offset="0" stop-color="#fffdf2"/><stop offset=".3" stop-color="#ffeab0"/><stop offset=".5" stop-color="rgba(255,205,120,.35)"/><stop offset="1" stop-color="rgba(255,190,100,0)"/></radialGradient></defs>`
-      + `<g class="scWire">${lines.join("")}</g>`
-      + `<g class="scOff">${offd.join("")}</g>`
-      + `<g class="scStars">${stars.join("")}</g>`
-      + `<g class="scLit">${dots.map((g, k) => `<g class="scTw scTw${k}">${g.join("").replace(/r="([\d.]+)"/g, (m, r) => `r="${(r * 2.2).toFixed(1)}"`)}</g>`).join("")}</g>`
-      + `</svg>${lan.join("")}<div class="starTrimGlow"></div><div class="starTrim"></div>`;
+    const layer = (g, cls) => !g ? "" : `<g class="scL${cls}"><g class="scWire">${g.lo.join("")}</g><g class="scOff">${g.of.join("")}</g><g class="scStars">${g.st.join("")}</g>`
+      + `<g class="scLit">${g.dl.map((d, k) => `<g class="scTw scTw${k}">${d.join("")}</g>`).join("")}</g></g>`;
+    el.innerHTML = `<svg class="scDefs" width="0" height="0" aria-hidden="true"><defs><radialGradient id="scDot"><stop offset="0" stop-color="#fffdf2"/><stop offset=".3" stop-color="#ffeab0"/><stop offset=".5" stop-color="rgba(255,205,120,.35)"/><stop offset="1" stop-color="rgba(255,190,100,0)"/></radialGradient></defs></svg>`
+      + bands.map((bd, i) => `<svg class="scBand" style="left:${i * BW}px" width="${BW}" height="${H}" viewBox="${i * BW} 0 ${BW} ${H}" aria-hidden="true">${layer(bd.b.b, "b")}${layer(bd.b.m, "m")}${layer(bd.b.f, "f")}</svg>`).join("")
+      + `${lan.join("")}<div class="starTrimGlow"></div><div class="starTrim"></div>`;
+    const lEls = el.querySelectorAll(".scLan");
+    drops.forEach((d, i) => { d.els = [lEls[i]]; });
+    const bEls = el.querySelectorAll(".scBand");
+    touch(el, drops, [], { quiet: true, bands: bands.map((bd, i) => ({ el: bEls[i], x0: i * BW, x1: (i + 1) * BW, b: 0, bv: 0 })) });
     return el;
   }
 
