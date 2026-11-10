@@ -1063,7 +1063,6 @@
     function dragFrame() {
       const o = drag.o, sr = stage.getBoundingClientRect();
       const left = drag.cx - sr.left - drag.gx, mid = left + o.vis / 2;
-      drag.ghost.style.transform = `translate3d(${drag.cx - drag.gx}px,${drag.cy - drag.gy}px,0)`;
       // the gap goes before the first book whose middle is still to the right of the object
       let idx = 0, top = false;
       // held over a pile it goes on top; beside a pile it stands on the shelf
@@ -1079,6 +1078,9 @@
       bin.classList.toggle("over", drag.over);
       drag.ghost.classList.toggle("binning", drag.over);
       layout();
+      // it slides along the shelf and never leaves it: only the finger's x moves it, and it stands where it would land
+      const y = o.el.getBoundingClientRect().top;
+      drag.ghost.style.transform = `translate3d(${drag.cx - drag.gx}px,${y}px,0)`;
     }
     function drop(cancelled) {
       const o = drag.o, ghost = drag.ghost; cancelAnimationFrame(drag.raf);

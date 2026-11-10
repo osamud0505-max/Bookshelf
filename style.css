@@ -1513,3 +1513,9 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
 .ornament[data-kind="lipstickLamp"] svg { filter: none; }
 /* v191: the lamp draws its own footprint shadow; no second blob */
 .ornament[data-kind="lipstickLamp"]::after, .slot:has(> .ornament[data-kind="lipstickLamp"])::before { display: none; }
+/* v192: objects slide along the shelf instead of being lifted */
+.ornGhost.up > svg { transform: none; filter: var(--cast); }
+.ornament[data-kind="lipstickLamp"].ornGhost.up > svg { filter: none; }
+.ornGhost.up::after { opacity: 1; transform: none; }
+.ornGhost.up.lit .ornPool { opacity: .9; }
+.ornGhost.binning > svg { opacity: .45; transform: scale(.94); }
