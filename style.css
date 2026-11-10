@@ -1763,3 +1763,21 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
   background: linear-gradient(180deg, rgba(4,5,14,.78) 0, rgba(4,5,14,.62) 22px, rgba(4,5,14,.42) 38px, rgba(4,5,14,.24) 60px, rgba(4,5,14,.1) 90px, rgba(4,5,14,.03) 120px, rgba(4,5,14,0) 150px); }
 .lights.starCurtain .scShade::after { content: ""; position: absolute; left: 0; right: 0; top: 14px; height: 18px;
   background: radial-gradient(ellipse 18px 9px at 50% 0, rgba(0,0,0,.55), rgba(0,0,0,0)) 0 0 / 31px 18px repeat-x; }
+/* v246 (osamu: "not moody, just bright"): the room around the lit lamp falls into deep shadow and the lamp's light
+   is a low amber that warms what it touches (overlay, no white core) instead of brightening the pink wall */
+.ornament[data-kind="lipstickLamp"] .ornGlow { mix-blend-mode: overlay;
+  background: radial-gradient(closest-side, rgba(255,170,90,.95), rgba(255,140,70,.8) 14%, rgba(240,110,60,.55) 30%, rgba(200,80,50,.3) 48%, rgba(160,55,45,.12) 68%, rgba(130,40,40,.04) 85%, transparent) !important; }
+.ornament[data-kind="lipstickLamp"] .ornGlowIn::before { width: 1700px; height: 1300px;
+  background: radial-gradient(closest-side, rgba(28,4,12,0) 0, rgba(28,4,12,.08) 9%, rgba(28,4,12,.32) 20%, rgba(24,3,10,.55) 34%, rgba(20,2,8,.66) 55%, rgba(20,2,8,.62) 85%, rgba(20,2,8,0)); }
+.ornament[data-kind="lipstickLamp"] .ornPool { --pc: rgba(255,140,80,.6) !important; }
+.lpMood { position: absolute; left: calc(-1 * var(--gutter)); right: calc(-1 * var(--gutter)); top: 100%; height: 360px; z-index: 3; pointer-events: none;
+  background: radial-gradient(circle at var(--lx, 50%) var(--ly, 50%), rgba(22,3,9,0) 0, rgba(22,3,9,.1) 55px, rgba(22,3,9,.4) 125px, rgba(20,2,8,.64) 215px, rgba(16,2,7,.77) 330px, rgba(14,2,6,.8) 600px);
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 200px), transparent); mask-image: linear-gradient(#000 calc(100% - 200px), transparent);
+  opacity: 0; transition: opacity .6s ease; }
+/* the half inside the row sits over the books but under the lamp, and fades out up behind the heading */
+.lpMood.lpMoodIn { z-index: 2; right: auto; -webkit-mask-image: linear-gradient(transparent, #000 120px); mask-image: linear-gradient(transparent, #000 120px); }
+.lpMood.on { opacity: 1; transition: opacity 1.4s ease 1.6s; }
+/* the lamp's warm light, cast onto everything around it */
+.lpMood::before { content: ""; position: absolute; inset: 0; mix-blend-mode: overlay;
+  background: radial-gradient(circle at var(--lx, 50%) var(--ly, 50%), rgba(255,165,95,.9) 0, rgba(255,140,80,.62) 45px, rgba(235,110,65,.36) 100px, rgba(200,80,55,.16) 170px, rgba(160,55,45,.05) 250px, rgba(150,50,45,0) 330px); }
+.ornament[data-kind="lipstickLamp"] .ornGlow { display: none; }

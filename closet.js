@@ -499,6 +499,34 @@
       clearTimeout(el._tw); el._tw = setTimeout(() => el.classList.remove("twistUp", "twistDown"), 2600);
     },
   };
+  // v246 (osamu: "not moody, just bright"): a lit lipstick lamp sinks its shelf into shadow, deepest far from the lamp,
+  // so its warm light reads as the only light around. The shade lives on the shelf (outside the scroller, so it is not
+  // cut off) and follows the lamp as the row slides. It only ever fades by opacity.
+  function moodSync() {
+    document.querySelectorAll(".shelf").forEach((sh) => {
+      const lamp = sh.querySelector('.ornament[data-kind="lipstickLamp"].lit');
+      const stage = sh.querySelector(".stage"), sc = sh.querySelector(".scroller");
+      let m = sh.querySelector(":scope > .lpMood"), mi = stage && stage.querySelector(":scope > .lpMoodIn");
+      if (!lamp || !stage) { if (m) m.classList.remove("on"); if (mi) mi.classList.remove("on"); return; }
+      // two halves of one shade: inside the row (over the books, under the lamp itself) and below the shelf's floor
+      if (!m) { m = document.createElement("div"); m.className = "lpMood"; m.setAttribute("aria-hidden", "true"); sh.appendChild(m); }
+      if (!mi) { mi = document.createElement("div"); mi.className = "lpMood lpMoodIn"; mi.setAttribute("aria-hidden", "true"); stage.appendChild(mi); }
+      const r = lamp.getBoundingClientRect(), sr = sc.getBoundingClientRect(), st = stage.getBoundingClientRect(), hr = sh.getBoundingClientRect();
+      const lx = r.left + r.width * 0.387, ly = r.top + r.height * 0.3;
+      Object.assign(mi.style, { left: (sr.left - st.left).toFixed(1) + "px", top: (sr.top - st.top).toFixed(1) + "px", width: sr.width.toFixed(1) + "px", height: sr.height.toFixed(1) + "px" });
+      mi.style.setProperty("--lx", (lx - sr.left).toFixed(1) + "px"); mi.style.setProperty("--ly", (ly - sr.top).toFixed(1) + "px");
+      m.style.top = (sr.bottom - hr.top).toFixed(1) + "px";
+      const mr = m.getBoundingClientRect();
+      m.style.setProperty("--lx", (lx - mr.left).toFixed(1) + "px"); m.style.setProperty("--ly", (ly - mr.top).toFixed(1) + "px");
+      [m, mi].forEach((e) => { if (!e.classList.contains("on")) { void e.offsetWidth; e.classList.add("on"); } });
+    });
+  }
+  let moodRaf = 0;
+  const moodKick = () => { if (!moodRaf) moodRaf = requestAnimationFrame(() => { moodRaf = 0; moodSync(); }); };
+  addEventListener("scroll", moodKick, { capture: true, passive: true });
+  addEventListener("resize", moodKick);
+  setInterval(moodKick, 400);
+
   // the soft ratchet of a lipstick being turned: little clicks, slowing as it reaches the end
   function lipTwist(dur) {
     try {
