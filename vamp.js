@@ -440,13 +440,22 @@
         + `<div class="sBulb" style="left:${f1(c - bw / 2)}px;top:${f1(y0)}px;width:${f1(bw)}px;height:${f1(d.dh)}px">`
         + `<img src="obj/${k.src}.webp" alt="" draggable="false" decoding="async"><img class="sLit" src="obj/${k.src}-lit.webp" alt="" draggable="false" decoding="async"></div></div>`;
     };
+    // modern loft trim: a matte black steel fascia under the plank, perforated in a staggered dot band;
+    // the bulbs below light the space behind it, so the holes glow dimly (brighter over the shorter drops)
+    const trim = (w, ds) => {
+      const g = ds.map((d) => {
+        const a = (0.34 + 0.5 * Math.max(0, 1 - d.chain / 150)).toFixed(2);
+        return `radial-gradient(ellipse ${f1(d.bw * 3.2)}px 26px at ${f1(d.cx)}px 120%, rgba(255,214,150,${a}), rgba(255,170,80,0))`;
+      }).join(",");
+      return `<div class="spTrim" aria-hidden="true"><i class="spTrimBack"></i><i class="spTrimLit" style="background:${g},rgba(120,64,18,.32)"></i><i class="spTrimFace"></i></div>`;
+    };
     const el = document.createElement("div");
     el.className = "lights loftSpider" + (cfg.on ? " on" : "");
     const H = Math.ceil(Math.max(...drops.map((d) => d.top + d.dh)) + 10);
     el.style.height = H + "px";
     el.innerHTML = `<div class="vIn"><svg class="sDrape" width="${w}" height="${H}" viewBox="0 -6 ${w} ${H}" fill="none" aria-hidden="true">`
       + `<g class="sCords">${drapes.map((d) => `<path d="${d}"/>`).join("")}</g><g class="sCordsHi">${drapes.map((d) => `<path d="${d}"/>`).join("")}</g></svg><div class="sShade"></div>`
-      + drops.map(bulb).join("") + `</div>`;
+      + drops.map(bulb).join("") + trim(w, drops) + `</div>`;
     const dEls = el.querySelectorAll(".sDrop");
     drops.forEach((d, i) => { d.els = [dEls[i]]; });
     touch(el, drops, [], { quiet: true });
