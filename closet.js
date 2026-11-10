@@ -443,18 +443,18 @@
   D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags-detail", 768, 521, 1.1, [[0.5, 0.49]]);
 
   // the lipstick lamp: three layers from osamu's pictures (the empty case, the bullet, and where the bullet may show
-  // above the case's front lip). Tapping it twists the bullet slowly up out of the case, light running round the ribbed
-  // base as it turns, then it lights up; tapping again winds it back down. The bullet only ever moves; nothing is redrawn.
+  // above the case's front lip). Tapping it twists the bullet slowly up out of the case, light running round the gold
+  // tube as it turns (where a real lipstick turns), then it lights up; tapping again winds it back down. The bullet only ever moves; nothing is redrawn.
   const LIP_VW = 95.3, LIP_REST = 38.5;
   D.ORNAMENTS.lipstickLamp = {
     label: "Lipstick lamp", scale: 1.0, startOff: true, vw: LIP_VW, soft: true, flat: true, glow: "rgba(255,70,95,.5)", img: "obj/closet-lipstick-case-cosy.webp",
     draw: (g) => `<defs><mask id="${g}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-clip.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
-      + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-rings.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
-      + `<linearGradient id="${g}s" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d8" stop-opacity=".75"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`
+      + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-turn.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
+      + `<linearGradient id="${g}s" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d8" stop-opacity=".5"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`
       + contact(g, f1(0.31 * LIP_VW), f1(0.3 * LIP_VW))
       + `<image href="obj/closet-lipstick-case-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       + `<g mask="url(#${g}m)"><g class="lpBullet" style="--rest:${LIP_REST}px"><image class="lpRed" href="obj/closet-lipstick-bullet-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></g></g>`
-      + `<g mask="url(#${g}r)"><rect class="lpShine" x="${f1(-0.3 * LIP_VW)}" y="120" width="${f1(0.3 * LIP_VW)}" height="80" fill="url(#${g}s)" style="--run:${f1(0.95 * LIP_VW)}px"/></g>`,
+      + `<g mask="url(#${g}r)"><rect class="lpShine" x="${f1(-0.16 * LIP_VW)}" y="50" width="${f1(0.16 * LIP_VW)}" height="96" fill="url(#${g}s)" style="--run:${f1(0.8 * LIP_VW)}px;mix-blend-mode:screen"/></g>`,
     toggle: (el, out) => {
       el.classList.remove("twistUp", "twistDown");
       void el.offsetWidth;
