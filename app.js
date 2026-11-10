@@ -606,6 +606,19 @@
   bin.className = "decorBin"; bin.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg><span>Drop here to remove</span>`;
   document.body.append(bin);
   function showBin(on) { bin.classList.toggle("show", on); document.body.classList.toggle("arrangingDecor", on); if (!on) bin.classList.remove("over"); }
+  // after a hold the bin stays, so an object can be removed with a tap; a tap anywhere else puts it away
+  const binLabel = bin.querySelector("span");
+  let binPending = null;
+  function askBin(removeFn) {
+    binPending = removeFn; binLabel.textContent = "Tap to remove"; bin.classList.add("ask"); showBin(true);
+  }
+  function clearBin() {
+    if (!binPending) return;
+    binPending = null; bin.classList.remove("ask"); showBin(false);
+    setTimeout(() => { if (!binPending) binLabel.textContent = "Drop here to remove"; }, 220);
+  }
+  bin.addEventListener("click", (e) => { e.stopPropagation(); const f = binPending; clearBin(); if (f) f(); });
+  document.addEventListener("pointerdown", (e) => { if (binPending && !bin.contains(e.target)) clearBin(); }, true);
   function binHit(x, y) { if (!bin.classList.contains("show")) return false; const r = bin.getBoundingClientRect(); return x > r.left - 16 && x < r.right + 16 && y > r.top - 24 && y < r.bottom + 16; }
 
   // ---------------------------------------------------------------- candle sounds (made on the fly, no files)
@@ -991,7 +1004,8 @@
           e.stopPropagation();
           const od = D.ORNAMENTS[kind];
           if (od && od.hourglass) { if (D.hourglassFlip(el)) soundHourglass(); return; }
-          if (od && od.still) { el.classList.remove("nudge"); void el.offsetWidth; el.classList.add("nudge"); return; }
+          // an object that does nothing stays still when tapped; only hanging clothes swing
+          if (od && od.still) { if (hang) { el.classList.remove("nudge"); void el.offsetWidth; el.classList.add("nudge"); } return; }
           if (el.classList.contains("snuffing")) return;
           it.on = !el.classList.contains("lit"); if (D.ORNAMENTS[kind].startOff) it.lit = it.on;
           toggleFlame(el, !it.on);
@@ -1094,6 +1108,13 @@
         if (navigator.vibrate) navigator.vibrate(8);
       } else {
         o.it.after = o.idx === 0 ? null : o.idx >= books.length ? "end" : books[o.idx - 1].id;
+        if (!cancelled) askBin(() => {
+          if (!orns.includes(o)) return;
+          o.el.style.pointerEvents = "none";
+          const an = o.el.animate([{ opacity: 1, scale: 1 }, { opacity: 0, scale: 0.6 }], { duration: 260, easing: "ease-in" });
+          an.onfinish = () => { orns = orns.filter((x) => x !== o); o.el.remove(); sortOrns(); saveItems(); layout(); };
+          if (navigator.vibrate) navigator.vibrate(8);
+        });
       }
       saveItems();
       layout();
@@ -1180,7 +1201,11 @@
       let ornTotal = 0;
       for (const o of orns) { openAt += ornW(o) * Math.max(0, Math.min(1, f - (o.idx - 1))); ornTotal += ornW(o); }
       const total = widths.reduce((s, v) => s + v, 0) + ornTotal;
-      const maxOff = Math.max(0, total - (viewW - PAD * 2)), off0 = Math.max(0, Math.min(maxOff, openAt - viewW * 0.3));
+      const maxOff = Math.max(0, total - (viewW - PAD * 2));
+      // over the last step of the scroll the row slides on until the last object is in view, so objects standing after
+      // the last book can always be reached without the row scrolling past the end of the shelf
+      const endT = Math.max(0, Math.min(1, g - (count - 1)));
+      let off0 = Math.max(0, Math.min(maxOff, openAt - viewW * 0.3)); off0 += (maxOff - off0) * endT;
       const offset = Math.max(0, Math.min(maxOff, off0 + panX));
       panX = offset - off0; curOffset = offset;
       let x = 0, k = 0;

@@ -1537,3 +1537,7 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 @keyframes cDustFall { 0% { transform: translate(0, 0); opacity: 0; } 12% { opacity: 1; } 50% { transform: translate(var(--sway), calc(var(--fall) * .5)); } 85% { opacity: .9; } 100% { transform: translate(calc(var(--sway) * -.4), var(--fall)); opacity: 0; } }
 @keyframes cDustTw { from { scale: .55; } to { scale: 1.15; } }
 @media (prefers-reduced-motion: reduce) { #backdrop .cDust { animation: none; opacity: .7; } }
+/* v205: objects that run off the right of the screen must not make the row scrollable past the end of the shelf's
+   floor (there was bare wall beyond it). The stage is the screen-wide window everything is placed in; clip it sideways only. */
+.stage { overflow-x: clip; overflow-y: visible; }
+.decorBin.ask { pointer-events: auto; cursor: pointer; }
