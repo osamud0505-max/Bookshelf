@@ -1,58 +1,58 @@
-/* Velvet drapes: the vampire room's lights. osamu's Gemini swag of burgundy velvet and cream lace hangs in loops
-   under the shelf, knot to knot, and a ruby crystal drop in a gold cap hangs below the middle of each loop.
-   Each drop is a pendulum on its chain: a tap pushes the one under the finger, a finger drawn across the drapes
-   brushes every drop it passes and makes the velvet stir. With the shelf's light on, the crystals glow red from
-   inside and wash the lace with a warm red light. */
+/* Velvet drapes: the vampire room's lights. osamu's Gemini velvet drapes, red with gold rope, fringe and tassels,
+   are tied up in the two corners under each shelf, and between them hang ruby crystal drops in gold caps, each on its
+   own gold chain that runs up behind the velvet to the shelf's underside. Each drop is a pendulum on its chain: a tap
+   pushes the one under the finger, a finger drawn across brushes every drop it passes and stirs the velvet. With the
+   shelf's light on, the crystals glow red from inside. */
 (function () {
   const D = window.Decor;
   if (!D) return;
   const f1 = (n) => Math.round(n * 10) / 10;
   D.LIGHT_STYLES.vampDrapes = "Velvet drapes";
 
-  // the pictures, at the size they are stored: the swag's knot centres, how far its lace and tails reach, and the
-  // drop's ring
-  const SW = { w: 1066, h: 772, k0: 92.5, k1: 970, top: 6, lace: 558 };
-  const DR = { w: 212, h: 877, ring: 106 };
+  // the corner drapes as stored (the right one is the left one's mirror), and the ruby drop
+  const CO = { w: 706, h: 1148, tuck: 0.03 };
+  const DR = { w: 212, h: 877 };
+  // the left drape's lowest edge across its width, every 2.5% (fraction of its height): the tail at the outer side,
+  // the swag rising toward the knot and tassel at the inner corner
+  const EDGE = [0.999, 0.991, 0.975, 0.96, 0.943, 0.924, 0.892, 0.818, 0.801, 0.782, 0.64, 0.612, 0.567, 0.546, 0.506,
+    0.435, 0.426, 0.423, 0.42, 0.415, 0.408, 0.399, 0.386, 0.373, 0.365, 0.354, 0.339, 0.322, 0.301, 0.29, 0.277,
+    0.263, 0.247, 0.227, 0.205, 0.18, 0.152, 0.196, 0.2, 0.199, 0.193];
+  const edgeAt = (u) => { if (u <= 0 || u >= 1) return 0; const t = u * 40, i = Math.floor(t); return EDGE[i] + (EDGE[i + 1] - EDGE[i]) * (t - i); };
   const reduce = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
 
-  // osamu's layout (their mock-up, 2026-11-10): ONE big swag per shelf, knot to knot across its whole front, with
-  // seven ruby drops hung straight from the lace hem and the tails at different heights, the middle one lowest on a
-  // short chain. Each drop: [across the swag (0 = left knot, 1 = right knot), its ring's depth below the knots
-  // (in knot spans), its length (in knot spans), the lace hem it hangs from, if lower on a chain]
-  const DROPS = [[0.084, 0.559, 0.233], [0.218, 0.485, 0.2], [0.378, 0.569, 0.233], [0.535, 0.718, 0.233, 0.6],
-    [0.661, 0.55, 0.233], [0.812, 0.457, 0.2], [0.926, 0.559, 0.233]];
-  const KNOT_Y = 17; // the knots' centres in the picture
+  // osamu's corner drapes (2026-11-10): a velvet drape tied up in each corner under the shelf, and between them ruby
+  // drops, every one on a gold chain that runs up behind the velvet to somewhere under the shelf nobody can see.
   function drapesEl(w, cfg) {
-    // a phone's shelf takes one swag; a wide one hangs as many phone-sized swags side by side
-    const n = Math.max(1, Math.round(w / 430)), cell = w / n;
-    const margin = 0.045 * cell, span = cell - 2 * margin, k = span / (SW.k1 - SW.k0);
-    // the knots tuck up under the shelf's front edge
-    const lift = SW.top * k + 3;
-    const parts = [], drops = [];
+    const cw = Math.min(0.4 * w, 175), ch = cw * CO.h / CO.w, lift = CO.tuck * ch;
+    // how low the velvet reaches at x (px below the shelf)
+    const under = (x) => Math.max(edgeAt(x / cw), edgeAt((w - x) / cw)) * ch - lift;
+    const parts = [
+      `<div class="vSwag" style="left:0;top:${f1(-lift)}px;width:${f1(cw)}px;height:${f1(ch)}px;transform-origin:0 0"><img src="obj/vamp-cornerL.webp" alt="" draggable="false" decoding="async"></div>`,
+      `<div class="vSwag" style="left:${f1(w - cw)}px;top:${f1(-lift)}px;width:${f1(cw)}px;height:${f1(ch)}px;transform-origin:100% 0"><img src="obj/vamp-cornerR.webp" alt="" draggable="false" decoding="async"></div>`];
+    // the drops run from just inside one tail to just inside the other, about one every 50px on a phone, wider apart on a big screen
+    const x0 = 0.3 * cw, x1 = w - 0.3 * cw, n = Math.max(5, Math.round((x1 - x0) / (w < 600 ? 50 : 72)) + 1);
+    const dh = Math.min(w, 430) * 0.19, dw = dh * DR.w / DR.h;
+    const drops = [];
     for (let i = 0; i < n; i++) {
-      const kx = i * cell + margin, ky = KNOT_Y * k - lift;
-      parts.push(`<div class="vSwag" style="left:${f1(kx - SW.k0 * k)}px;top:${f1(-lift)}px;width:${f1(SW.w * k)}px;height:${f1(SW.h * k)}px"><img src="obj/vamp-swag.webp" alt="" draggable="false" decoding="async"></div>`);
-      DROPS.forEach(([u, v, len, hem]) => {
-        const dh = len * span, top = ky + v * span, from = hem ? ky + hem * span : top;
-        drops.push({ cx: kx + u * span, top, from, dh, th: 0, om: 0 });
-      });
+      const cx = x0 + (x1 - x0) * i / (n - 1), m = Math.abs(i / (n - 1) - 0.5) * 2; // m: 0 middle, 1 ends
+      // each crystal hangs clear below the velvet, alternating long and short, the middle one longest
+      const top = Math.max(under(cx) + 4, 0) + 10 + (1 - m) * dh * 0.55 + (i % 2) * dh * 0.22;
+      drops.push({ cx, top, dh, len: top + dh, th: 0, om: 0, els: [] });
     }
-    const dropHtml = drops.map((d, i) => {
-      const dw = (d.dh * DR.w) / DR.h, ch = d.top - d.from;
-      return `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - dw / 2)}px;top:${f1(d.from)}px;width:${f1(dw)}px;height:${f1(ch + d.dh)}px;transform-origin:50% 0;--i:${i}">`
-        + (ch > 1 ? `<i class="vChain" style="height:${f1(ch + d.dh * 0.03)}px"></i>` : "")
-        + `<i class="vHalo" style="top:${f1(ch + d.dh * 0.6)}px;width:${f1(d.dh * 1.3)}px;height:${f1(d.dh * 1.3)}px"></i>`
-        + `<img src="obj/vamp-drop.webp" alt="" draggable="false" decoding="async" style="top:${f1(ch)}px;height:${f1(d.dh)}px"></div>`;
-    }).join("");
+    const box = (d, i, cls) => `<div class="${cls}" data-n="${i}" style="left:${f1(d.cx - dw / 2)}px;top:0;width:${f1(dw)}px;height:${f1(d.top + d.dh)}px;transform-origin:50% 0;--i:${i}">`;
+    // the chains go behind the velvet, the crystals in front of it
+    const back = drops.map((d, i) => box(d, i, "vDrop") + `<i class="vChain" style="height:${f1(d.top + d.dh * 0.03)}px"></i></div>`).join("");
+    const front = drops.map((d, i) => box(d, i, "vDrop vDropF")
+      + `<i class="vHalo" style="top:${f1(d.top + d.dh * 0.6)}px;width:${f1(d.dh * 1.3)}px;height:${f1(d.dh * 1.3)}px"></i>`
+      + `<img src="obj/vamp-drop.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.top)}px;height:${f1(d.dh)}px"></div>`).join("");
     const el = document.createElement("div");
     el.className = "lights vampDrapes" + (cfg.on ? " on" : "");
-    const bottom = Math.max(SW.h * k - lift, ...drops.map((d) => d.top + d.dh)) + 8;
+    const bottom = Math.max(ch - lift, ...drops.map((d) => d.top + d.dh)) + 8;
     el.style.height = Math.ceil(bottom) + "px";
-    // the crystals hang in front of the lace
-    el.innerHTML = `<div class="vIn">${parts.join("")}${dropHtml}</div>`;
-    const dEls = el.querySelectorAll(".vDrop"), sEls = el.querySelectorAll(".vSwag");
-    drops.forEach((d, i) => { d.el = dEls[i]; });
-    const swags = [...sEls].map((s) => ({ el: s, b: 0, bv: 0 }));
+    el.innerHTML = `<div class="vIn">${back}${parts.join("")}${front}</div>`;
+    const bEls = el.querySelectorAll(".vDrop:not(.vDropF)"), fEls = el.querySelectorAll(".vDropF");
+    drops.forEach((d, i) => { d.els = [bEls[i], fEls[i]]; });
+    const swags = [...el.querySelectorAll(".vSwag")].map((s, i) => ({ el: s, b: 0, bv: 0, side: i ? -1 : 1 }));
     touch(el, drops, swags);
     return el;
   }
@@ -62,7 +62,7 @@
     el.style.pointerEvents = "auto";
     el.style.touchAction = "pan-y";
     let raf = 0, last = 0, down = null, lastSound = 0;
-    const K = 16, Z = 0.06, MAX = 0.55; // a crystal on a chain swings slowly and keeps going a while
+    const KL = 1500, Z = 0.06, MAX = 0.55; // a crystal on a long chain swings slowly and keeps going a while
     const clink = (d, v) => {
       const now = performance.now(); if (now - lastSound < 70) return; lastSound = now;
       try { window.ShelfSfx && window.ShelfSfx.clink && window.ShelfSfx.clink(2600 + (d.cx % 7) * 90, Math.min(1, 0.25 + v * 0.5), (d.cx / innerWidth - 0.5) * 1.2); } catch (e) { /* no sound */ }
@@ -73,27 +73,27 @@
       let moving = false;
       while (dt > 0) {
         const h = Math.min(1 / 120, dt); dt -= h;
-        for (const d of drops) { d.om += (-K * Math.sin(d.th) - 2 * Z * Math.sqrt(K) * d.om) * h; d.th += d.om * h; }
+        for (const d of drops) { const K = KL / d.len; d.om += (-K * Math.sin(d.th) - 2 * Z * Math.sqrt(K) * d.om) * h; d.th += d.om * h; }
         for (const s of swags) { s.bv += (-30 * s.b - 2 * 0.2 * Math.sqrt(30) * s.bv) * h; s.b += s.bv * h; }
       }
       for (const d of drops) {
         const live = Math.abs(d.th) > 1e-3 || Math.abs(d.om) > 5e-3;
         if (live) moving = true; else { d.th = d.om = 0; }
-        d.el.style.transform = live ? `rotate(${d.th.toFixed(4)}rad)` : "";
+        const tf = live ? `rotate(${d.th.toFixed(4)}rad)` : ""; d.els.forEach((e) => { e.style.transform = tf; });
       }
       for (const s of swags) {
         const live = Math.abs(s.b) > 2e-4 || Math.abs(s.bv) > 2e-3;
         if (live) moving = true; else { s.b = s.bv = 0; }
         // the loop of velvet lifts and settles a touch, its tails trailing
-        s.el.style.transform = live ? `skewX(${(s.b * 0.6).toFixed(4)}rad) scaleY(${(1 - Math.abs(s.b) * 0.12).toFixed(4)})` : "";
+        s.el.style.transform = live ? `skewX(${(s.b * 0.35).toFixed(4)}rad) scaleY(${(1 - Math.abs(s.b) * 0.08).toFixed(4)})` : "";
       }
       if (moving && el.isConnected) raf = requestAnimationFrame(frame);
     }
     const kick = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } };
     const k = reduce() ? 0.35 : 1;
-    const push = (d, v) => { const dv = Math.max(-MAX, Math.min(MAX, v)) * k; d.om += dv; clink(d, Math.abs(dv) / MAX); kick(); };
+    const push = (d, v) => { const dv = Math.max(-MAX, Math.min(MAX, v)) * k * Math.min(1, 90 / d.len); d.om += dv; clink(d, Math.abs(dv) / MAX); kick(); };
     const local = (ev) => { const r = el.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
-    const nearDrop = (x, y) => drops.find((d) => Math.abs(x - d.cx) < Math.max(14, d.dh * 0.16) && y > d.top - 4 && y < d.top + d.dh + 4);
+    const nearDrop = (x, y) => drops.find((d) => Math.abs(x - d.cx) < Math.max(14, d.dh * 0.16) && y > d.top - 6 && y < d.top + d.dh + 4);
     el.addEventListener("pointerdown", (ev) => {
       const [x, y] = local(ev);
       down = { x, y, t: performance.now(), lx: x, lt: performance.now(), moved: false };
