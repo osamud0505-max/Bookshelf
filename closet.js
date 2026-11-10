@@ -81,12 +81,23 @@
     catch (e) { roomUrl = `url('data:image/svg+xml,${encodeURIComponent(svg).replace(/'/g, "%27").replace(/\(/g, "%28").replace(/\)/g, "%29")}')`; }
     return roomUrl;
   };
-  D.BACKDROPS.closet = { label: "Princess closet", tone: "dark", fx: "closetGlints", css: () => `${closetRoom()} center / cover no-repeat, #5a0b3a` };
+  // v204: osamu's painted closet (bg/closet.jpg, 1376x3072 source), pinned to the top so the ceiling light always shows
+  D.BACKDROPS.closet = { label: "Princess closet", tone: "dark", fx: "closetDust", css: () => `url('bg/closet.jpg?v=1') center top / cover no-repeat, #5a0b3a` };
   D.PALETTES.closet = { label: "Closet", t: ["#2a0820", "#fde8f3", "#360b2a", "#3b0d2e", "#421033", "#d29abb", "#561845", "#511541", "#6e2259", "dark"] };
   D.MATERIALS.pinkLacquer = { sheen: 1, label: "Pink lacquer", base: "#e0408f", tex: () => ["linear-gradient(180deg, transparent 4.8px, rgba(255,240,248,.45) 5.3px, rgba(255,240,248,.1) 6.6px, transparent 9px)", "linear-gradient(90deg, rgba(255,255,255,0), rgba(255,230,244,.22) 30%, rgba(255,255,255,0) 50%, rgba(255,230,244,.12) 78%, rgba(255,255,255,0))"] };
   // glints on the lacquer that come and go
   const baseFx = D.backdropFx;
   D.backdropFx = (kinds) => String(kinds).split(" ").map((k) => {
+    if (k === "closetDust") {
+      // a little magic glitter drifting down in the beam of the ceiling light; positions are fractions of the picture,
+      // inside a box shaped and pinned like the picture itself
+      const R = rng(311); let o = "";
+      for (let i = 0; i < 16; i++) {
+        const y = 0.08 + R() * 0.3, spread = 0.05 + (y - 0.065) * 0.42, x = 0.5035 + (R() * 2 - 1) * spread;
+        o += `<i class="cDust${R() < 0.35 ? " star" : ""}" style="left:${f1(x * 100)}%;top:${f1(y * 100)}%;--s:${f1(2.6 + R() * 3)}px;--fall:${f1(50 + R() * 70)}px;--sway:${f1((R() * 2 - 1) * 14)}px;--t:${f1(9 + R() * 8)}s;--tw:${f1(1.6 + R() * 2.2)}s;--d:-${f1(R() * 17)}s"></i>`;
+      }
+      return `<div class="paintBox pinTop" style="--r:0.4479">${o}</div>`;
+    }
     if (k !== "closetGlints") return baseFx(k);
     const R = rng(77); let o = "";
     for (let i = 0; i < 16; i++) {

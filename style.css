@@ -1527,3 +1527,13 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 /* v202: the closet's painted objects draw their own footprint shadow, so the generic blob under them goes */
 .ornament:is([data-kind="handbag"], [data-kind="pencilCup"], [data-kind="giftBoxes"], [data-kind="shoppingBags"])::after { display: none; }
 .ornament:is([data-kind="handbag"], [data-kind="pencilCup"], [data-kind="giftBoxes"], [data-kind="shoppingBags"]) svg { filter: none; }
+/* v204: glitter floating in the closet's ceiling light */
+#backdrop .paintBox.pinTop { top: 0; transform: translateX(-50%); }
+#backdrop .cDust { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, #fff 0 30%, rgba(255,214,240,.85) 45%, rgba(255,180,225,0) 72%);
+  filter: drop-shadow(0 0 3px rgba(255,190,232,.9));
+  animation: cDustFall var(--t) linear var(--d) infinite, cDustTw var(--tw) ease-in-out var(--d) infinite alternate; will-change: transform, opacity; }
+#backdrop .cDust.star { border-radius: 0; background: #fff; clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); --s: 9px; }
+@keyframes cDustFall { 0% { transform: translate(0, 0); opacity: 0; } 12% { opacity: 1; } 50% { transform: translate(var(--sway), calc(var(--fall) * .5)); } 85% { opacity: .9; } 100% { transform: translate(calc(var(--sway) * -.4), var(--fall)); opacity: 0; } }
+@keyframes cDustTw { from { scale: .55; } to { scale: 1.15; } }
+@media (prefers-reduced-motion: reduce) { #backdrop .cDust { animation: none; opacity: .7; } }
