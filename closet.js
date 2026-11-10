@@ -442,8 +442,47 @@
   D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes-detail", 451, 700, 1.2, [[0.5, 0.49]]);
   D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags-detail", 768, 521, 1.1, [[0.5, 0.49]]);
 
+  // the lipstick lamp: three layers from osamu's pictures (the empty case, the bullet, and where the bullet may show
+  // above the case's front lip). Tapping it twists the bullet slowly up out of the case, light running round the ribbed
+  // base as it turns, then it lights up; tapping again winds it back down. The bullet only ever moves; nothing is redrawn.
+  const LIP_VW = 95.3, LIP_REST = 38.5;
+  D.ORNAMENTS.lipstickLamp = {
+    label: "Lipstick lamp", scale: 1.0, startOff: true, vw: LIP_VW, soft: true, flat: true, glow: "rgba(255,70,95,.5)", img: "obj/closet-lipstick-case-cosy.webp",
+    draw: (g) => `<defs><mask id="${g}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-clip.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
+      + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-rings.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
+      + `<linearGradient id="${g}s" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d8" stop-opacity=".75"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`
+      + contact(g, f1(0.31 * LIP_VW), f1(0.3 * LIP_VW))
+      + `<image href="obj/closet-lipstick-case-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
+      + `<g mask="url(#${g}m)"><g class="lpBullet" style="--rest:${LIP_REST}px"><image class="lpRed" href="obj/closet-lipstick-bullet-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></g></g>`
+      + `<g mask="url(#${g}r)"><rect class="lpShine" x="${f1(-0.3 * LIP_VW)}" y="120" width="${f1(0.3 * LIP_VW)}" height="80" fill="url(#${g}s)" style="--run:${f1(0.95 * LIP_VW)}px"/></g>`,
+    toggle: (el, out) => {
+      el.classList.remove("twistUp", "twistDown");
+      void el.offsetWidth;
+      el.classList.add(out ? "twistDown" : "twistUp");
+      el.classList.toggle("lit", !out);
+      lipTwist(out ? 1.3 : 2.2);
+      clearTimeout(el._tw); el._tw = setTimeout(() => el.classList.remove("twistUp", "twistDown"), 2600);
+    },
+  };
+  // the soft ratchet of a lipstick being turned: little clicks, slowing as it reaches the end
+  function lipTwist(dur) {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === "suspended") actx.resume();
+      const lvl = window.ShelfSfxLevel ? window.ShelfSfxLevel() : 1; if (!lvl) return;
+      const t = actx.currentTime, n = 11;
+      for (let i = 0; i < n; i++) {
+        const k = i / (n - 1), dt = dur * (0.08 + 0.85 * (1 - Math.pow(1 - k, 1.6)));
+        const o = actx.createOscillator(), gn = actx.createGain();
+        o.type = "triangle"; o.frequency.value = 2200 + Math.random() * 500;
+        gn.gain.setValueAtTime(0.0001, t + dt); gn.gain.exponentialRampToValueAtTime(0.006 * lvl, t + dt + 0.003); gn.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.035);
+        o.connect(gn).connect(actx.destination); o.start(t + dt); o.stop(t + dt + 0.05);
+      }
+    } catch (e) { /* no sound */ }
+  }
+
   // each closet shelf gets two of these, taking turns down the room
-  D.ORNAMENTS.pencilCup.cycle = ["pencilCup", "shoppingBags", "handbag", "giftBoxes"];
+  D.ORNAMENTS.pencilCup.cycle = ["pencilCup", "lipstickLamp", "shoppingBags", "handbag", "giftBoxes"];
   D.LOOKS.closet = { label: "Princess closet", set: { theme: "closet", accent: "#f2c76b", shelfMat: "pinkLacquer", backdrop: "closet", lights: { style: "closetRod", colour: "warm", on: false }, headFont: "playfair", ornament: { kind: "pencilCup", pos: "end" } } };
   if (D.READER_PAGES) D.READER_PAGES.closet = { bg: "#fbeef4", fg: "#3b1830" };
 })();

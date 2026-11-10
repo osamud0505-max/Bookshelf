@@ -981,7 +981,7 @@
     }
     function makeOrn(it) {
         const kind = resolveKind(it.kind, shelfIdx);
-        const el = kind && D.ornamentEl(kind, H, it.on !== false);
+        const el = kind && D.ornamentEl(kind, H, (D.ORNAMENTS[kind] || {}).startOff ? it.lit === true : it.on !== false);
         if (!el) return null;
         const hang = !!D.ORNAMENTS[kind].hang, vis = parseFloat(el.style.width);
         // a hanging thing takes no room in the row: it hangs at the gap between two books
@@ -993,7 +993,7 @@
           if (od && od.hourglass) { if (D.hourglassFlip(el)) soundHourglass(); return; }
           if (od && od.still) { el.classList.remove("nudge"); void el.offsetWidth; el.classList.add("nudge"); return; }
           if (el.classList.contains("snuffing")) return;
-          it.on = it.on === false;
+          it.on = !el.classList.contains("lit"); if (D.ORNAMENTS[kind].startOff) it.lit = it.on;
           toggleFlame(el, !it.on);
           saveItems();
         };

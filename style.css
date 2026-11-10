@@ -1481,3 +1481,20 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
 /* v183: osamu wants the books flat as before (no lean, no visible top). The lean code stays but is switched off. */
 .slot .book, html[data-bdk="closet"] .slot .book { --tilt: 0; }
 .top { display: none; }
+
+/* v184: the lipstick lamp. Off, the bullet sits down in the case with only its tip showing; tapped, it twists slowly up
+   (light runs round the ribbed base as it turns), then the lipstick lights up. Tapped again it winds back down. */
+.ornament[data-kind="lipstickLamp"] .lpBullet { transform: translateY(var(--rest)); transition: transform 1.5s cubic-bezier(.55,0,.35,1); }
+.ornament[data-kind="lipstickLamp"].lit .lpBullet { transform: translateY(0); transition: transform 2.3s cubic-bezier(.45,.05,.25,1); }
+.ornament[data-kind="lipstickLamp"] .lpRed { transition: filter .6s ease; }
+.ornament[data-kind="lipstickLamp"].lit .lpRed { filter: brightness(1.3) saturate(1.2); transition: filter 1.1s ease 1.7s; }
+.ornament[data-kind="lipstickLamp"] .lpShine { opacity: 0; }
+.ornament[data-kind="lipstickLamp"].twistUp .lpShine { animation: lpShine .75s ease-in-out 3; }
+.ornament[data-kind="lipstickLamp"].twistDown .lpShine { animation: lpShineBack .65s ease-in-out 2; }
+@keyframes lpShine { 0% { transform: translateX(0); opacity: 0; } 25%, 75% { opacity: 1; } 100% { transform: translateX(var(--run)); opacity: 0; } }
+@keyframes lpShineBack { 0% { transform: translateX(var(--run)); opacity: 0; } 25%, 75% { opacity: 1; } 100% { transform: translateX(0); opacity: 0; } }
+.ornament[data-kind="lipstickLamp"] .ornGlow { top: 12%; transition: opacity .6s ease; }
+.ornament[data-kind="lipstickLamp"].lit .ornGlow { transition: opacity 1.2s ease 1.8s; animation: none; }
+.ornament[data-kind="lipstickLamp"] .ornPool { transition-delay: 0s; }
+.ornament[data-kind="lipstickLamp"].lit .ornPool { transition-delay: 1.8s; }
+@media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"] .lpBullet, .ornament[data-kind="lipstickLamp"] .lpRed { transition-duration: .01s !important; transition-delay: 0s !important; } .ornament[data-kind="lipstickLamp"] .lpShine { animation: none !important; } }
