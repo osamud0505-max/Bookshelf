@@ -1519,3 +1519,4 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
 .ornGhost.up::after { opacity: 1; transform: none; }
 .ornGhost.up.lit .ornPool { opacity: .9; }
 .ornGhost.binning > svg { opacity: .45; transform: scale(.94); }
+.ornament.landed > svg { animation: none; }

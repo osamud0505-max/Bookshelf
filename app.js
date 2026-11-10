@@ -1100,7 +1100,7 @@
       if (!remove) {
         // the copy glides down into its gap, then the real one takes over
         const sr = stage.getBoundingClientRect(), h = parseFloat(o.el.style.height);
-        const top = o.hang ? o.el.getBoundingClientRect().top : sr.bottom - h - (o.lift || 0);
+        const top = o.el.getBoundingClientRect().top;
         ghost.classList.add("settle");
         ghost.style.transform = `translate3d(${sr.left + o.x}px,${top}px,0)`;
         setTimeout(() => { o.el.classList.remove("placeholder"); ghost.remove(); o.el.classList.add("landed"); setTimeout(() => o.el.classList.remove("landed"), 360); }, 300);
