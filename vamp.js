@@ -530,7 +530,7 @@
       + `<g class="cLit">${g.lit.map((d, j) => `<g class="cTw cTw${j}">${d.join("")}</g>`).join("")}</g></svg>`; };
     el.innerHTML = `<div class="vIn"><svg class="cDefs" width="0" height="0" aria-hidden="true"><defs>`
       + `<radialGradient id="cbDot"><stop offset="0" stop-color="#fffbe8"/><stop offset=".28" stop-color="#ffe3a6"/><stop offset=".55" stop-color="rgba(255,196,110,.3)"/><stop offset="1" stop-color="rgba(255,180,90,0)"/></radialGradient>`
-      + `</defs></svg>${layer("b")}<div class="cShade"></div>${layer("m")}${drops.map(bauble).join("")}${layer("f")}</div>`;
+      + `</defs></svg>${layer("b")}<div class="cShade"></div>${layer("m")}${drops.map(bauble).join("")}${layer("f")}<div class="cSnowTop" aria-hidden="true"></div><div class="cSnow" aria-hidden="true"><i class="cSnowLit"></i></div></div>`;
     const dEls = el.querySelectorAll(".cDrop");
     drops.forEach((d, i) => { d.els = [dEls[i]]; });
     touch(el, drops, [], { quiet: true });
