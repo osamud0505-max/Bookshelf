@@ -340,40 +340,66 @@
   // full width, with black wire cage lamps and Edison bulbs hanging on thick jute rope at different heights and trailing
   // vines between them. Tapping a lamp is the light switch; a finger brushing past sets lamps and vines swaying.
   D.LIGHT_STYLES.loftCages = "Bamboo cage lamps";
-  const PO = { w: 1600, h: 221, mid: 0.507 }, LC = { w: 240, h: 457, rope: 0.152 }, RP = { w: 60, h: 798, vis: 0.88 }, VN = { w: 120, h: 743, cx: 0.5 };
-  const DROPS_C = [34, 92, 50, 110, 40, 84]; // rope lengths below the pole, repeating
+  const PO = { w: 1600, h: 221, mid: 0.507 }, LC = { w: 200, h: 314 }, VN = { w: 120, h: 743 };
+  const DROPS_C = [40, 96, 62, 104, 36, 78]; // rope lengths below the pole, repeating (photo: high, low, mid, low, high)
+  // a thin twisted jute rope, drawn: a tan core, darker twist marks along it and a soft highlight
+  const ropePath = (d, wd, id) => `<defs><pattern id="${id}" patternUnits="userSpaceOnUse" width="3.4" height="3.4" patternTransform="rotate(38)">`
+    + `<rect width="3.4" height="3.4" fill="#c29a68"/><rect width="1.25" height="3.4" fill="#8a6338"/><rect x="1.9" width=".7" height="3.4" fill="#e6cc9c" opacity=".8"/></pattern></defs>`
+    + `<path d="${d}" stroke="#6e4f2e" stroke-width="${wd + 1.1}"/><path d="${d}" stroke="url(#${id})" stroke-width="${wd}"/>`;
+  let ropeN = 0;
   function loftEl(w, cfg) {
-    const phone = w < 600;
-    // one pole the whole width; its thickness follows a phone-sized shelf so a wide one isn't a log
-    const ph = Math.round(PO.h * Math.min(w, 480) / PO.w * 1.25), py = -8 - PO.mid * ph;
-    const lw = phone ? 64 : 72, lh = lw * LC.h / LC.w, rw = lw * LC.rope / RP.vis, rh = rw * RP.h / RP.w;
-    const x0 = 0.1 * w, x1 = 0.9 * w, n = phone ? 5 : Math.max(5, Math.round((x1 - x0) / 92) + 1);
+    const phone = w < 600, R = rnd(4243 + Math.round(w));
+    const ph = Math.round(PO.h * Math.min(w, 480) / PO.w * 1.25), py = -8 - PO.mid * ph, pTop = py + ph * 0.32;
+    const lw = phone ? 40 : 44, lh = lw * LC.h / LC.w, rw = 4.6;
+    const x0 = 0.1 * w, x1 = 0.9 * w, n = phone ? 5 : Math.max(5, Math.round((x1 - x0) / 110) + 1);
     const drops = [];
     for (let i = 0; i < n; i++) {
-      const cx = x0 + (x1 - x0) * i / (n - 1), chain = DROPS_C[i % DROPS_C.length] * (phone ? 1 : 1.12);
-      drops.push({ cx, py: -8, chain, top: -8 + chain, dh: lh, hw: lw * 0.4, len: chain + lh * 0.5, th: 0, om: 0, els: [] });
+      const cx = x0 + (x1 - x0) * i / (n - 1) + (R() - 0.5) * 10, chain = DROPS_C[i % DROPS_C.length] * (phone ? 1 : 1.1);
+      drops.push({ cx, py: pTop, chain: chain - pTop - 8, top: chain - 8, dh: lh, hw: lw * 0.55, len: chain + lh * 0.5, th: 0, om: 0, els: [] });
     }
-    // vines trail between the lamps, each a different length
+    const vimg = (x, y, vw, stretch, flip, cls) => `<img class="${cls || ""}" src="obj/loft-vine.webp" alt="" draggable="false" decoding="async" style="left:${f1(x - vw / 2)}px;top:${f1(y)}px;width:${f1(vw)}px;height:${f1(vw * VN.h / VN.w * stretch)}px;${flip ? "transform:scaleX(-1);" : ""}">`;
+    // each lamp: its rope comes over the pole (drawn in front of it), some with a loose loop hanging beside, a vine
+    // wound down the rope and spilling over the cage, then the cage and its bulb
+    const lamps = drops.map((d, i) => {
+      const bw = lw * 2.4, c = bw / 2, L = d.chain + 4;
+      let rope = `M${f1(c)} 0 C${f1(c + 1.2)} ${f1(L * 0.35)} ${f1(c - 1.2)} ${f1(L * 0.7)} ${f1(c)} ${f1(L)}`;
+      const loop = i % 2 === 0 || R() < 0.3, side = R() < 0.5 ? -1 : 1, ld = 18 + R() * 16, lwid = 7 + R() * 5;
+      if (loop) rope += ` M${f1(c)} 2 C${f1(c + side * lwid * 1.6)} ${f1(ld * 0.5)} ${f1(c + side * lwid * 1.5)} ${f1(ld * 1.15)} ${f1(c + side * lwid * 0.6)} ${f1(ld)} C${f1(c + side * lwid * 0.1)} ${f1(ld * 0.9)} ${f1(c)} ${f1(ld * 0.7)} ${f1(c)} ${f1(ld * 0.5)}`;
+      const svg = `<svg class="vChain lRope" width="${f1(bw)}" height="${f1(L + 2)}" viewBox="0 0 ${f1(bw)} ${f1(L + 2)}" fill="none" stroke-linecap="round" aria-hidden="true">${ropePath(rope, rw, "lrp" + (ropeN++))}</svg>`;
+      // about half the ropes carry a vine wound partway down, ending somewhere on the rope or just over the cage
+      const vOn = R() < 0.55, vw = 16 + R() * 5, vs = Math.max(0.5, (L * (0.5 + R() * 0.55)) / (vw * VN.h / VN.w));
+      return `<div class="vDrop vDropF" data-n="${i}" style="left:${f1(d.cx - bw / 2)}px;top:${f1(d.py)}px;width:${f1(bw)}px;height:${f1(d.chain + d.dh)}px;transform-origin:50% 0;--i:${i}">`
+        + `<i class="vHalo" style="top:${f1(d.chain + lh * 0.62)}px;width:${f1(lw * 5)}px;height:${f1(lw * 5)}px"></i>`
+        + svg
+        + `<i class="lBulb" style="left:${f1(c - lw * 0.2)}px;width:${f1(lw * 0.4)}px;top:${f1(d.chain + lh * 0.3)}px;height:${f1(lh * 0.48)}px"></i>`
+        + `<img class="lCage" src="obj/loft-lamp2.webp" alt="" draggable="false" decoding="async" style="left:${f1(c - lw / 2)}px;width:${f1(lw)}px;top:${f1(d.chain)}px;height:${f1(lh)}px">`
+        + `<i class="lFil" style="left:${f1(c - lw * 0.09)}px;width:${f1(lw * 0.18)}px;top:${f1(d.chain + lh * 0.38)}px;height:${f1(lh * 0.3)}px"></i>`
+        + (vOn ? vimg(c + (R() - 0.5) * 4, -6, vw, vs, R() < 0.5, "lRv") : "") + `</div>`;
+    }).join("");
+    // long trailing vines between the lamps, two or three in each gap, some reaching past the lamps
     const vines = [];
-    for (let i = 0; i < n - 1; i++) {
-      const cx = (drops[i].cx + drops[i + 1].cx) / 2 + ((i * 37) % 13 - 6), vw = (phone ? 24 : 28) * (0.8 + ((i * 53) % 9) / 20);
-      const vh = vw * VN.h / VN.w;
-      vines.push({ cx, py: -8, chain: 0, top: -8, dh: vh, vw, len: vh * 0.5, th: 0, om: 0, els: [], noTap: true });
+    for (let i = 0; i < n + 1; i++) {
+      const a = i === 0 ? 4 : drops[i - 1].cx, b2 = i === n ? w - 4 : drops[i].cx, k = 1 + (R() < 0.45 ? 1 : 0);
+      for (let j = 0; j < k; j++) {
+        const cx = a + (b2 - a) * (j + 0.5 + (R() - 0.5) * 0.5) / k, vw = 17 + R() * 8, vh = vw * VN.h / VN.w * (0.35 + R() * 0.6);
+        vines.push({ cx, py: py + ph * 0.35, chain: 0, top: py + ph * 0.35, dh: vh, vw, flip: R() < 0.5, len: vh * 0.5, th: 0, om: 0, els: [], noTap: true });
+      }
     }
-    const box = (d, i, cls, bw) => `<div class="${cls}" data-n="${i}" style="left:${f1(d.cx - bw / 2)}px;top:${f1(d.py)}px;width:${f1(bw)}px;height:${f1(d.chain + d.dh)}px;transform-origin:50% 0;--i:${i}">`;
-    const ropes = drops.map((d, i) => box(d, i, "vDrop", lw) + `<i class="vChain" style="left:${f1(lw / 2 - rw / 2)}px;width:${f1(rw)}px;height:${f1(d.chain + lh * 0.1)}px"><img src="obj/loft-rope.webp" alt="" draggable="false" decoding="async" style="width:${f1(rw)}px;top:${f1(-((i * 41) % Math.max(1, rh - d.chain - 20)))}px"></i></div>`).join("");
-    const vin = vines.map((v, i) => box(v, i, "vDrop lVine", v.vw) + `<img src="obj/loft-vine.webp" alt="" draggable="false" decoding="async" style="top:-4px;height:${f1(v.dh)}px"></div>`).join("");
-    const lamps = drops.map((d, i) => box(d, i, "vDrop vDropF", lw)
-      + `<i class="vHalo" style="top:${f1(d.chain + lh * 0.63)}px;width:${f1(lw * 4.2)}px;height:${f1(lw * 4.2)}px"></i>`
-      + `<i class="lBulb" style="top:${f1(d.chain + lh * 0.45)}px;height:${f1(lh * 0.38)}px"></i>`
-      + `<img src="obj/loft-lamp.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px">`
-      + `<i class="lFil" style="top:${f1(d.chain + lh * 0.5)}px;height:${f1(lh * 0.24)}px"></i></div>`).join("");
+    const vin = vines.map((v, i) => `<div class="vDrop lVine" style="left:${f1(v.cx - v.vw / 2)}px;top:${f1(v.py)}px;width:${f1(v.vw)}px;height:${f1(v.dh)}px;transform-origin:50% 0">`
+      + `<img src="obj/loft-vine.webp" alt="" draggable="false" decoding="async" style="height:${f1(v.dh)}px;${v.flip ? "transform:scaleX(-1);" : ""}"></div>`).join("");
+    // short sprigs tumbling over the front of the pole so it reads leafy all along, like the photo
+    const sprigs = [];
+    for (let x = 6 + R() * 14; x < w - 4; x += 30 + R() * 26) {
+      const vw = 16 + R() * 8;
+      sprigs.push(vimg(x, py + ph * (0.12 + R() * 0.2), vw, 0.18 + R() * 0.22, R() < 0.5, "lSprig"));
+    }
     const el = document.createElement("div");
     el.className = "lights loftCages" + (cfg.on ? " on" : "");
     el.style.height = Math.ceil(Math.max(...drops.map((d) => d.top + d.dh), ...vines.map((v) => v.top + v.dh)) + 10) + "px";
-    el.innerHTML = `<div class="vIn">${ropes}${vin}<div class="lPole" style="left:-2px;top:${f1(py)}px;width:${f1(w + 4)}px;height:${f1(ph)}px"><img src="obj/loft-pole.webp" alt="" draggable="false" decoding="async"></div>${lamps}</div>`;
-    const bEls = el.querySelectorAll(".vDrop:not(.vDropF):not(.lVine)"), fEls = el.querySelectorAll(".vDropF"), vEls = el.querySelectorAll(".lVine");
-    drops.forEach((d, i) => { d.els = [bEls[i], fEls[i]]; });
+    el.innerHTML = `<div class="vIn">${vin}<div class="lPole" style="left:-2px;top:${f1(py)}px;width:${f1(w + 4)}px;height:${f1(ph)}px"><img src="obj/loft-pole2.webp" alt="" draggable="false" decoding="async"></div>`
+      + `<div class="lSprigs">${sprigs.join("")}</div>${lamps}</div>`;
+    const fEls = el.querySelectorAll(".vDropF"), vEls = el.querySelectorAll(".lVine");
+    drops.forEach((d, i) => { d.els = [fEls[i]]; });
     vines.forEach((v, i) => { v.els = [vEls[i]]; });
     touch(el, drops.concat(vines), [], { quiet: true });
     return el;
