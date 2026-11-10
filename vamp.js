@@ -525,14 +525,19 @@
     }
     const bauble = (d, i) => {
       const c = Math.max(d.ww * Math.max(d.o.hx, 1 - d.o.hx), 9) + 2, box = c * 2, src = `obj/${d.o.src}.webp`;
+      // v264 (osamu: the ornaments looked unattached): the bow is tied right over the ornament's glass loop, so its knot
+      // covers the loop; the chain runs down into the loop and ends in a small gold jump ring through it
+      const L = d.hh * 0.035 + 0.6, ly = d.chain + L;
+      const ring = (cls, dd) => `<svg class="${cls}" viewBox="-4 -5 8 10" style="left:${f1(c - 4)}px;top:${f1(ly - 5)}px"><path d="${dd}"/></svg>`;
       const hang = d.gold
-        ? `<i class="cChain" style="left:${f1(c - 1.5)}px;height:${f1(d.chain + 2)}px"></i>`
-        : `<i class="cRibbon" style="left:${f1(c - 1.67)}px;height:${f1(d.chain - 3)}px"></i><i class="cBow" style="left:${f1(c - 9)}px;top:${f1(d.chain - 10)}px"></i>`;
+        ? `<i class="cChain" style="left:${f1(c - 1.5)}px;height:${f1(ly - 1.8)}px"></i>` + ring("cRingB", "M0 -2.6 A1.8 2.6 0 1 1 0 2.6 A1.8 2.6 0 1 1 0 -2.6")
+        : `<i class="cRibbon" style="left:${f1(c - 1.67)}px;height:${f1(ly - 2)}px"></i>`;
+      const front = d.gold ? ring("cRingF", "M0 -2.6 A1.8 2.6 0 0 0 0 2.6") : `<i class="cBow" style="left:${f1(c - 9)}px;top:${f1(ly - 5.6)}px"></i>`;
       return `<div class="vDrop cDrop${d.o.red ? " cRed" : " cClear"}" data-n="${i}" style="left:${f1(d.cx - c)}px;top:${f1(d.py)}px;width:${f1(box)}px;height:${f1(d.chain + d.hh)}px;transform-origin:50% 0;--i:${i}">`
         + `<i class="cHalo" style="top:${f1(d.chain + d.hh * 0.55)}px;width:${f1(d.ww * 4)}px;height:${f1(d.hh * 3)}px"></i>${hang}`
         + `<div class="cOrn" style="left:${f1(c - d.ww * d.o.hx)}px;top:${f1(d.chain)}px;width:${f1(d.ww)}px;height:${f1(d.hh)}px">`
         + `<img class="cDim" src="${src}" alt="" draggable="false" decoding="async"><img class="cOn" src="${src}" alt="" draggable="false" decoding="async">`
-        + `<i class="cIn" style="-webkit-mask-image:url(${src});mask-image:url(${src})"></i></div></div>`;
+        + `<i class="cIn" style="-webkit-mask-image:url(${src});mask-image:url(${src})"></i></div>${front}</div>`;
     };
     const H = Math.ceil(maxY + 10);
     const el = document.createElement("div");

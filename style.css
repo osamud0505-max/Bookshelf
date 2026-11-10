@@ -1968,3 +1968,12 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .shelf[data-lights="cabinSwags"] .plank::after { display: none; }
 .lights.cabinSwags .cRed .cOrn { filter: none; }
 .lights.cabinSwags .cRed .cOrn .cDim { filter: brightness(.6) saturate(.9); opacity: .9; }
+/* v264: bow over the loop, chain through it on a gold jump ring; the snow trim sits lower so its fringe starts right
+   at the front edge of the snowy shelf top, with no line between them */
+.lights.cabinSwags .cRingB, .lights.cabinSwags .cRingF { position: absolute; width: 8px; height: 10px; overflow: visible; }
+.lights.cabinSwags .cRingB path, .lights.cabinSwags .cRingF path { fill: none; stroke: #c9a24a; stroke-width: .85; }
+.lights.cabinSwags .cRingF path { stroke: #e6c46c; }
+.lights.cabinSwags .cBow { z-index: 2; }
+.lights.cabinSwags .cSnow { top: -17px; }
+.lights.cabinSwags::after { content: ""; position: absolute; left: 0; right: 0; top: -19.5px; height: 8px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(240,242,246,0), rgba(239,242,246,.96) 45%, rgba(236,240,245,.5) 75%, rgba(236,240,245,0)); }
