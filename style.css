@@ -1520,3 +1520,7 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
 .ornGhost.up.lit .ornPool { opacity: .9; }
 .ornGhost.binning > svg { opacity: .45; transform: scale(.94); }
 .ornament.landed > svg { animation: none; }
+/* v196: books get the lamp's footprint shadow, a dark band the shape of the book's base with a soft edge */
+.slot::before { left: -2px; right: -2px; bottom: -8px; height: 14px; border-radius: 40% / 50%;
+  background: rgba(0,0,0,.8); filter: blur(1.2px); box-shadow: 0 1px 6px 3px rgba(0,0,0,.42); }
+html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow: 0 1px 6px 3px rgba(28,0,16,.42); }
