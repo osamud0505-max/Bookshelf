@@ -411,7 +411,7 @@
   // different heights. All drawn here. Tapping a bulb is the light switch; a finger brushing past sets them swinging.
   D.LIGHT_STYLES.loftSpider = "Edison spider";
   // osamu's Gemini bulbs (round globe and teardrop), each with a lit twin; the cord stub at their top meets the cord
-  const BULBS = { g: { src: "loft-globe", iw: 120, h: 225, w: 24, cy: 0.72 }, t: { src: "loft-tear", iw: 90, h: 262, w: 17, cy: 0.72 } };
+  const BULBS = { g: { src: "loft-globe2", iw: 120, h: 199, w: 24, cy: 0.683, sw: 8 }, t: { src: "loft-tear2", iw: 90, h: 230, w: 17, cy: 0.681, sw: 10 } };
   const KINDS = ["g", "t", "g", "g", "t", "g", "t", "g"].map((k) => BULBS[k]);
   function spiderEl(w, cfg) {
     const R = rnd(9173 + Math.round(w));
@@ -433,10 +433,10 @@
       }
     }
     const bulb = (d, i) => {
-      const bw = d.bw, c = Math.max(bw, 8) / 2 + 2, box = c * 2, y0 = d.chain, k = d.kind;
+      const bw = d.bw, c = Math.max(bw, 8) / 2 + 2, box = c * 2, y0 = d.chain, k = d.kind, cw = Math.max(1.5, k.sw * bw / k.iw);
       return `<div class="vDrop sDrop" data-n="${i}" style="left:${f1(d.cx - c)}px;top:${f1(d.py)}px;width:${f1(box)}px;height:${f1(d.chain + d.dh)}px;transform-origin:50% 0;--i:${i}">`
         + `<i class="vHalo" style="top:${f1(y0 + d.dh * k.cy)}px;width:${f1(bw * 6)}px;height:${f1(bw * 6)}px"></i>`
-        + `<i class="vChain sCord" style="left:${f1(c - 1.3)}px;height:${f1(y0 + 3)}px"></i>`
+        + `<i class="vChain sCord" style="left:${f1(c - cw / 2)}px;width:${f1(cw)}px;height:${f1(y0 + 2)}px"></i>`
         + `<div class="sBulb" style="left:${f1(c - bw / 2)}px;top:${f1(y0)}px;width:${f1(bw)}px;height:${f1(d.dh)}px">`
         + `<img src="obj/${k.src}.webp" alt="" draggable="false" decoding="async"><img class="sLit" src="obj/${k.src}-lit.webp" alt="" draggable="false" decoding="async"></div></div>`;
     };
