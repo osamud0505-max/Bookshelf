@@ -1604,3 +1604,4 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.42); box-shado
 /* herbalist board: its two herb bunches hang down over the shelf's front edge, so that shelf's row lets them show below the floor */
 .scroller:has(.ornament[data-kind="lavender"]) { padding-bottom: 44px; margin-bottom: -44px; }
 .stage:has(.ornament[data-kind="lavender"]) { z-index: 4; }
+html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornament .shTint { display: none; }

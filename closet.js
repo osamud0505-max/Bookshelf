@@ -460,7 +460,11 @@
   D.ORNAMENTS.handbag = baked("Handbags", "handbags3", 1854, 1157, 1177, 1.2);   // osamu: "a bit bigger"
   D.ORNAMENTS.flowerVase = baked("Bouquet vase", "bouquet", 1373, 1606, 1626);
   // osamu's Gemini herbalist board replaces the old drawn lavender; the herb bunches hang past the floor's front edge
-  D.ORNAMENTS.lavender = baked("Herbalist board", "herbalist3", 1610, 1192, 1476, 1.1735);
+  D.ORNAMENTS.lavender = baked("Herbalist board", "herbalist4", 1610, 1192, 1476, 1.1735);
+  {  // its shadow is baked in the closet's plum tint; the other rooms get the same picture with a black shadow, like their books
+    const o = D.ORNAMENTS.lavender, hb = o.draw();
+    o.draw = () => hb.replace("<image ", '<image class="shTint" ') + hb.replace("<image ", '<image class="shBlack" ').replace("herbalist4-cosy", "herbalist4k-cosy");
+  }
   D.ORNAMENTS.vanityMirror = baked("Vanity mirror", "mirror", 1083, 1675, 1695, 0.85);   // osamu: "a bit smaller"
   D.ORNAMENTS.pencilCup = painted("Pencil cup & lipstick", "pencilcup-small", 558, 503, 0.55, [[0.43, 0.3], [0.84, 0.16]]);
   D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes2", 1067, 700, 0.74, [[0.5, 0.49]]);
