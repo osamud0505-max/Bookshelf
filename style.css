@@ -1757,3 +1757,9 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.starCurtain .scLan.yank .scCord { transform-origin: 50% 0; animation: vChainPull 1s ease both; }
 .lights.starCurtain { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .lights.starCurtain img { -webkit-user-drag: none; }
+/* v245 starry: the shelf overhead shades the top of the curtain and the lanterns, deepest right under the board,
+   with a soft contact shadow under each scallop of the trim */
+.lights.starCurtain .scShade { position: absolute; left: 0; right: 0; top: 0; height: 150px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(4,5,14,.78) 0, rgba(4,5,14,.62) 22px, rgba(4,5,14,.42) 38px, rgba(4,5,14,.24) 60px, rgba(4,5,14,.1) 90px, rgba(4,5,14,.03) 120px, rgba(4,5,14,0) 150px); }
+.lights.starCurtain .scShade::after { content: ""; position: absolute; left: 0; right: 0; top: 14px; height: 18px;
+  background: radial-gradient(ellipse 18px 9px at 50% 0, rgba(0,0,0,.55), rgba(0,0,0,0)) 0 0 / 31px 18px repeat-x; }

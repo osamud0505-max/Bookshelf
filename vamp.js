@@ -327,7 +327,7 @@
       + `<g class="scLit">${g.dl.map((d, k) => `<g class="scTw scTw${k}">${d.join("")}</g>`).join("")}</g></g>`;
     el.innerHTML = `<svg class="scDefs" width="0" height="0" aria-hidden="true"><defs><radialGradient id="scDot"><stop offset="0" stop-color="#fffdf2"/><stop offset=".3" stop-color="#ffeab0"/><stop offset=".5" stop-color="rgba(255,205,120,.35)"/><stop offset="1" stop-color="rgba(255,190,100,0)"/></radialGradient></defs></svg>`
       + bands.map((bd, i) => `<svg class="scBand" style="left:${i * BW}px" width="${BW}" height="${H}" viewBox="${i * BW} 0 ${BW} ${H}" aria-hidden="true">${layer(bd.b.b, "b")}${layer(bd.b.m, "m")}${layer(bd.b.f, "f")}</svg>`).join("")
-      + `${lan.join("")}<div class="starTrimGlow"></div><div class="starTrim"></div>`;
+      + `${lan.join("")}<div class="scShade"></div><div class="starTrimGlow"></div><div class="starTrim"></div>`;
     const lEls = el.querySelectorAll(".scLan");
     drops.forEach((d, i) => { d.els = [lEls[i]]; });
     const bEls = el.querySelectorAll(".scBand");
