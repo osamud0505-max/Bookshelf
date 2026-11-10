@@ -1781,3 +1781,13 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lpMood::before { content: ""; position: absolute; inset: 0; mix-blend-mode: overlay;
   background: radial-gradient(circle at var(--lx, 50%) var(--ly, 50%), rgba(255,165,95,.9) 0, rgba(255,140,80,.62) 45px, rgba(235,110,65,.36) 100px, rgba(200,80,55,.16) 170px, rgba(160,55,45,.05) 250px, rgba(150,50,45,0) 330px); }
 .ornament[data-kind="lipstickLamp"] .ornGlow { display: none; }
+/* v247: the lamp's light falls on the things around it: shadows on the wall away from it, lit faces towards it */
+.lpFx { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
+.lpFx.on { opacity: 1; transition: opacity 1.4s ease 1.6s; }
+.lpFaces { z-index: 2; }
+.lpFx i { position: absolute; display: block; }
+.lpShadows i { border-radius: 6px; background: rgb(26,3,10); filter: blur(7px); }
+.lpFaces i { mix-blend-mode: overlay; border-radius: 2px; }
+.lpFaces i.fL { background: linear-gradient(90deg, rgba(255,170,100,.95) 0, rgba(255,150,90,.5) 18%, rgba(255,140,80,.18) 45%, rgba(255,140,80,0) 75%); }
+.lpFaces i.fR { background: linear-gradient(270deg, rgba(255,170,100,.95) 0, rgba(255,150,90,.5) 18%, rgba(255,140,80,.18) 45%, rgba(255,140,80,0) 75%); }
+.lpShadows i.fl { border-radius: 50%; filter: blur(3px); }

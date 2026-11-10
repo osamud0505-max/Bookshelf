@@ -507,7 +507,7 @@
       const lamp = sh.querySelector('.ornament[data-kind="lipstickLamp"].lit');
       const stage = sh.querySelector(".stage"), sc = sh.querySelector(".scroller");
       let m = sh.querySelector(":scope > .lpMood"), mi = stage && stage.querySelector(":scope > .lpMoodIn");
-      if (!lamp || !stage) { if (m) m.classList.remove("on"); if (mi) mi.classList.remove("on"); return; }
+      if (!lamp || !stage) { if (m) m.classList.remove("on"); if (stage) stage.querySelectorAll(":scope > .lpMoodIn, :scope > .lpFx").forEach((e) => e.classList.remove("on")); return; }
       // two halves of one shade: inside the row (over the books, under the lamp itself) and below the shelf's floor
       if (!m) { m = document.createElement("div"); m.className = "lpMood"; m.setAttribute("aria-hidden", "true"); sh.appendChild(m); }
       if (!mi) { mi = document.createElement("div"); mi.className = "lpMood lpMoodIn"; mi.setAttribute("aria-hidden", "true"); stage.appendChild(mi); }
@@ -518,7 +518,34 @@
       m.style.top = (sr.bottom - hr.top).toFixed(1) + "px";
       const mr = m.getBoundingClientRect();
       m.style.setProperty("--lx", (lx - mr.left).toFixed(1) + "px"); m.style.setProperty("--ly", (ly - mr.top).toFixed(1) + "px");
-      [m, mi].forEach((e) => { if (!e.classList.contains("on")) { void e.offsetWidth; e.classList.add("on"); } });
+      // v247 (osamu: the light has to fall like a lamp's among all the things around it): each book or object nearby
+      // is lit on the side facing the lamp and throws a soft shadow onto the wall away from it; the first thing on each
+      // side takes the light, the ones behind it sit mostly in its shadow
+      let sw = stage.querySelector(":scope > .lpShadows"), fc = stage.querySelector(":scope > .lpFaces");
+      if (!sw) { sw = document.createElement("div"); sw.className = "lpFx lpShadows"; sw.setAttribute("aria-hidden", "true"); stage.prepend(sw); }
+      if (!fc) { fc = document.createElement("div"); fc.className = "lpFx lpFaces"; fc.setAttribute("aria-hidden", "true"); }
+      if (fc.previousElementSibling !== mi) mi.after(fc);
+      const things = [...stage.querySelectorAll(":scope > .slot, :scope > .ornament")].filter((e) => e !== lamp)
+        .map((e) => ({ e, r: e.getBoundingClientRect(), book: e.classList.contains("slot") }))
+        .filter((t) => t.r.width > 2 && t.r.right > sr.left - 200 && t.r.left < sr.right + 200);
+      const sh2 = [], fa = [], seen = { "-1": 0, "1": 0 };
+      things.map((t) => { const side = t.r.left + t.r.width / 2 < lx ? -1 : 1; return { ...t, side, d: side < 0 ? lx - t.r.right : t.r.left - lx }; })
+        .sort((a, b) => a.d - b.d).forEach((t) => {
+          const d = Math.max(0, t.d), fall = Math.max(0, 1 - d / 320), block = seen[t.side] > 0 ? 0.35 : 1;
+          seen[t.side]++;
+          if (fall <= 0) return;
+          const x = t.r.left - st.left, y = t.r.top - st.top, w = t.r.width, hh = t.r.height;
+          // the shadow on the wall: the thing's own outline, pushed away from the lamp and a little up (the bullet sits low)
+          const off = (14 + d * 0.28) * t.side, a = (0.62 * fall * (0.55 + 0.45 * block)).toFixed(3);
+          sh2.push(`<i style="left:${(x + off).toFixed(1)}px;top:${(y - 4 - d * 0.03).toFixed(1)}px;width:${(w * (1.05 + d * 0.0015)).toFixed(1)}px;height:${hh.toFixed(1)}px;opacity:${a}"></i>`);
+          // and along the shelf floor, from its far foot outwards
+          const fl = 18 + d * 0.22, fx = t.side < 0 ? x - fl + 6 : x + w - 6;
+          sh2.push(`<i class="fl" style="left:${fx.toFixed(1)}px;top:${(y + hh - 7).toFixed(1)}px;width:${fl.toFixed(1)}px;height:7px;opacity:${(a * 0.9).toFixed(3)}"></i>`);
+          // warm light on the face that looks at the lamp (books only: their outline is their box)
+          if (t.book) fa.push(`<i class="${t.side < 0 ? "fR" : "fL"}" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;width:${w.toFixed(1)}px;height:${hh.toFixed(1)}px;opacity:${(fall * block).toFixed(3)}"></i>`);
+        });
+      sw.innerHTML = sh2.join(""); fc.innerHTML = fa.join("");
+      [m, mi, sw, fc].forEach((e) => { if (!e.classList.contains("on")) { void e.offsetWidth; e.classList.add("on"); } });
     });
   }
   let moodRaf = 0;
