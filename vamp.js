@@ -1,6 +1,6 @@
 /* Velvet drapes: the vampire room's lights. osamu's Gemini velvet drape, red with gold rope, fringe and tassels,
    hangs in two halves under each shelf that meet in the middle under a gold knot, and between them hang ruby crystal
-   drops in gold caps, each on its own gold chain that runs up behind the velvet to the shelf's underside. Each drop is
+   drops in gold caps, each on its own gold chain from the shelf's underside, hanging behind the velvet. Each drop is
    a pendulum on its chain: a tap pushes the one under the finger, a finger drawn across brushes every drop it passes
    and stirs the velvet. With the shelf's light on, the crystals glow red from inside. */
 (function () {
@@ -35,7 +35,7 @@
       DROPS.forEach(([u, v]) => { const top = v * cell; drops.push({ cx: x + u * cell, top, dh, len: top + dh, th: 0, om: 0, els: [] }); });
     }
     const box = (d, i, cls) => `<div class="${cls}" data-n="${i}" style="left:${f1(d.cx - dw / 2)}px;top:0;width:${f1(dw)}px;height:${f1(d.top + d.dh)}px;transform-origin:50% 0;--i:${i}">`;
-    // the chains go behind the velvet, the crystals in front of it
+    // the drops hang behind the velvet, chains and crystals both (osamu: they're under the drape)
     const back = drops.map((d, i) => box(d, i, "vDrop") + `<i class="vChain" style="height:${f1(d.top + d.dh * 0.03)}px"></i></div>`).join("");
     const front = drops.map((d, i) => box(d, i, "vDrop vDropF")
       + `<i class="vHalo" style="top:${f1(d.top + d.dh * 0.6)}px;width:${f1(d.dh * 1.3)}px;height:${f1(d.dh * 1.3)}px"></i>`
@@ -44,7 +44,7 @@
     el.className = "lights vampDrapes" + (cfg.on ? " on" : "");
     const bottom = Math.max(ch - lift, ...drops.map((d) => d.top + d.dh)) + 8;
     el.style.height = Math.ceil(bottom) + "px";
-    el.innerHTML = `<div class="vIn">${back}${parts.join("")}${knots.join("")}${front}</div>`;
+    el.innerHTML = `<div class="vIn">${back}${front}${parts.join("")}${knots.join("")}</div>`;
     const bEls = el.querySelectorAll(".vDrop:not(.vDropF)"), fEls = el.querySelectorAll(".vDropF");
     drops.forEach((d, i) => { d.els = [bEls[i], fEls[i]]; });
     const swags = [...el.querySelectorAll(".vSwag")].map((s) => ({ el: s, b: 0, bv: 0 }));
@@ -69,7 +69,7 @@
       while (dt > 0) {
         const h = Math.min(1 / 120, dt); dt -= h;
         for (const d of drops) { const K = KL / d.len; d.om += (-K * Math.sin(d.th) - 2 * Z * Math.sqrt(K) * d.om) * h; d.th += d.om * h; }
-        for (const s of swags) { s.bv += (-30 * s.b - 2 * 0.2 * Math.sqrt(30) * s.bv) * h; s.b += s.bv * h; }
+        for (const s of swags) { s.bv += (-9 * s.b - 2 * 0.7 * Math.sqrt(9) * s.bv) * h; s.b += s.bv * h; }
       }
       for (const d of drops) {
         const live = Math.abs(d.th) > 1e-3 || Math.abs(d.om) > 5e-3;
@@ -79,8 +79,8 @@
       for (const s of swags) {
         const live = Math.abs(s.b) > 2e-4 || Math.abs(s.bv) > 2e-3;
         if (live) moving = true; else { s.b = s.bv = 0; }
-        // the loop of velvet lifts and settles a touch, its tails trailing
-        s.el.style.transform = live ? `skewX(${(s.b * 0.35).toFixed(4)}rad) scaleY(${(1 - Math.abs(s.b) * 0.08).toFixed(4)})` : "";
+        // heavy velvet: it shifts a little, slowly, and settles without bouncing
+        s.el.style.transform = live ? `skewX(${(s.b * 0.22).toFixed(4)}rad) scaleY(${(1 - Math.abs(s.b) * 0.03).toFixed(4)})` : "";
       }
       if (moving && el.isConnected) raf = requestAnimationFrame(frame);
     }
@@ -97,7 +97,25 @@
       setTimeout(() => { d.yanking = false; d.els.forEach((e) => e.classList.remove("yank")); }, 1000);
     };
     const local = (ev) => { const r = el.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
-    const nearDrop = (x, y) => drops.find((d) => Math.abs(x - d.cx) < Math.max(14, d.dh * 0.16) && y > d.top - 6 && y < d.top + d.dh + 4);
+    // where the velvet is, read from the pictures' own alpha, so a tap on the drape never counts as a crystal
+    const masks = {};
+    const maskOf = (src) => {
+      if (masks[src] !== undefined) return masks[src];
+      masks[src] = null;
+      const im = new Image();
+      im.onload = () => { try { const c = document.createElement("canvas"); c.width = 170; c.height = Math.round(170 * im.naturalHeight / im.naturalWidth); const g = c.getContext("2d"); g.drawImage(im, 0, 0, c.width, c.height); masks[src] = { w: c.width, h: c.height, a: g.getImageData(0, 0, c.width, c.height).data }; } catch (e) { /* no mask: count it as open */ } };
+      im.src = src; return null;
+    };
+    const onVelvet = (x, y) => swags.some((s) => {
+      const r = s.el.getBoundingClientRect(), er = el.getBoundingClientRect(), img = s.el.querySelector("img");
+      const lx = x - (r.left - er.left), ly = y - (r.top - er.top);
+      if (lx < 0 || ly < 0 || lx >= r.width || ly >= r.height) return false;
+      const m = maskOf(img.getAttribute("src")); if (!m) return false;
+      const px = Math.floor(lx / r.width * m.w), py = Math.floor(ly / r.height * m.h);
+      return m.a[(py * m.w + px) * 4 + 3] > 60;
+    });
+    swags.forEach((s) => maskOf(s.el.querySelector("img").getAttribute("src")));
+    const nearDrop = (x, y) => onVelvet(x, y) ? null : drops.find((d) => Math.abs(x - d.cx) < Math.max(14, d.dh * 0.16) && y > d.top - 6 && y < d.top + d.dh + 4);
     el.addEventListener("pointerdown", (ev) => {
       const [x, y] = local(ev);
       down = { x, y, t: performance.now(), lx: x, lt: performance.now(), moved: false };
@@ -109,7 +127,7 @@
       if (Math.abs(x - down.x) > 6) down.moved = true;
       // brush every drop the finger crosses, and stir the velvet it passes under
       for (const d of drops) if ((down.lx - d.cx) * (x - d.cx) <= 0 && down.lx !== x) push(d, vx * 0.5);
-      swags.forEach((s) => { const r = s.el.getBoundingClientRect(), er = el.getBoundingClientRect(); const sx = r.left - er.left; if (x > sx && x < sx + r.width) { s.bv += vx * 0.25 * k; kick(); } });
+      swags.forEach((s) => { const r = s.el.getBoundingClientRect(), er = el.getBoundingClientRect(); const sx = r.left - er.left; if (x > sx && x < sx + r.width) { s.bv = Math.max(-0.25, Math.min(0.25, s.bv + vx * 0.06 * k)); kick(); } });
       down.lx = x; down.lt = now;
     });
     const up = (ev) => {
@@ -121,7 +139,7 @@
         // a tap on a crystal is this room's light switch: it's pulled down on its chain like the pull cord, the
         // shelf's lights click over, and it swings as it's let go
         if (d) pull(d, x < d.cx ? 1 : -1);
-        else swags.forEach((s) => { const r = s.el.getBoundingClientRect(), er = el.getBoundingClientRect(); const sx = r.left - er.left; if (x > sx && x < sx + r.width) { s.bv += (x < sx + r.width / 2 ? 1 : -1) * 0.4 * k; kick(); } });
+        else swags.forEach((s) => { const r = s.el.getBoundingClientRect(), er = el.getBoundingClientRect(); const sx = r.left - er.left; if (x > sx && x < sx + r.width) { s.bv += (x < sx + r.width / 2 ? 1 : -1) * 0.12 * k; kick(); } });
       }
       down = null;
     };
