@@ -445,7 +445,7 @@
   const contact = (g, cx, rx) => `<defs><radialGradient id="${g}cs" cx=".5" cy="1" r="1"><stop offset="0" stop-color="#2a0418" stop-opacity=".5"/><stop offset=".5" stop-color="#2a0418" stop-opacity=".22"/><stop offset="1" stop-color="#2a0418" stop-opacity="0"/></radialGradient><radialGradient id="${g}cc"><stop offset="0" stop-color="#1a0210" stop-opacity=".75"/><stop offset=".7" stop-color="#1a0210" stop-opacity=".35"/><stop offset="1" stop-color="#1a0210" stop-opacity="0"/></radialGradient></defs>`
     + `<ellipse cx="${cx}" cy="197.5" rx="${f1(rx * 1.08)}" ry="5" fill="url(#${g}cc)" style="filter:blur(1.5px)"/>`;
   // footprint shadows made from each picture's own bottom edge (scratchpad shadowgen.py): x, width, height in picture units
-  const FOOT = { "pencilcup-small": [-23.06, 267.99, 211.93], "giftboxes2": [-14.57, 334.0, 204.86, "2"], "bags2": [-14.29, 370.86, 204.86, "2"] };
+  const FOOT = { "pencilcup-small": [-23.06, 267.99, 211.93, "3"], "giftboxes2": [-14.57, 334.0, 204.86, "3"], "bags2": [-14.29, 370.86, 204.86, "3"] };
   const painted = (label, name, W, H, scale, shadows) => {
     const vw = f1(200 * W / H);
     return { label, scale, vw, still: true, flat: true, img: pic(name),
@@ -473,7 +473,7 @@
     draw: (g) => `<defs><mask id="${g}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-clip.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-turn2.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<linearGradient id="${g}s" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d8" stop-opacity=".5"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`
-      + `<radialGradient id="${g}fp"><stop offset="0" stop-color="rgb(28,0,16)" stop-opacity=".8"/><stop offset=".8" stop-color="rgb(28,0,16)" stop-opacity=".8"/><stop offset=".9" stop-color="rgb(28,0,16)" stop-opacity=".4"/><stop offset="1" stop-color="rgb(28,0,16)" stop-opacity="0"/></radialGradient><ellipse cx="36.9" cy="187" rx="44" ry="15.4" fill="url(#${g}fp)"/>`
+      + `<radialGradient id="${g}fp"><stop offset="0" stop-color="rgb(28,0,16)" stop-opacity=".42"/><stop offset=".8" stop-color="rgb(28,0,16)" stop-opacity=".42"/><stop offset=".9" stop-color="rgb(28,0,16)" stop-opacity=".21"/><stop offset="1" stop-color="rgb(28,0,16)" stop-opacity="0"/></radialGradient><ellipse cx="36.9" cy="187" rx="44" ry="15.4" fill="url(#${g}fp)"/>`
       + `<g class="lpHalo" style="mix-blend-mode:screen"><g class="lpBullet" style="--rest:${LIP_REST}px"><image href="obj/closet-lipstick-bullet2-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none" filter="url(#${g}h)"/></g></g>`
       + `<image href="obj/closet-lipstick-case2-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       + `<g class="lpCast" mask="url(#${g}c)" style="mix-blend-mode:screen"><rect x="0" y="40" width="${LIP_VW}" height="130" fill="url(#${g}cl)"/><rect x="0" y="40" width="${LIP_VW}" height="60" fill="url(#${g}cr)"/></g>`
