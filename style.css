@@ -1568,9 +1568,9 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 @media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .ornGlow { animation: none; } }
 
 /* v210/211: the calla candle & lily pens pair stands flush like the other closet pieces, with their own base shadows */
-.ornament[data-kind="callaCandle"], .ornament[data-kind="flowerVase"], .ornament[data-kind="vanityMirror"] { bottom: calc(var(--top-d) * -.42); }
-.ornament:is([data-kind="callaCandle"], [data-kind="flowerVase"], [data-kind="vanityMirror"])::after { display: none; }
-.ornament:is([data-kind="callaCandle"], [data-kind="flowerVase"], [data-kind="vanityMirror"]) svg { filter: none; }
+.ornament[data-kind="callaCandle"], .ornament[data-kind="flowerVase"], .ornament[data-kind="vanityMirror"], .ornament[data-kind="lavender"] { bottom: calc(var(--top-d) * -.42); }
+.ornament:is([data-kind="callaCandle"], [data-kind="flowerVase"], [data-kind="vanityMirror"], [data-kind="lavender"])::after { display: none; }
+.ornament:is([data-kind="callaCandle"], [data-kind="flowerVase"], [data-kind="vanityMirror"], [data-kind="lavender"]) svg { filter: none; }
 .ornament[data-kind="callaCandle"] .clFlame, .ornament[data-kind="callaCandle"] .clLight { display: none; }
 .ornament[data-kind="callaCandle"].lit .clFlame { display: inline; }
 .ornament[data-kind="callaCandle"].lit .clLight { display: inline; opacity: var(--fi, 1); }
@@ -1600,3 +1600,7 @@ body.sheetOpen #backdrop *, body.sheetOpen #backdrop *::before, body.sheetOpen #
 /* v221: book shadows lighter too, the same ~.42 shade as the objects (osamu) */
 .slot::before { background: rgba(0,0,0,.42); box-shadow: 0 1px 6px 3px rgba(0,0,0,.22); }
 html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.42); box-shadow: 0 1px 6px 3px rgba(28,0,16,.22); }
+
+/* herbalist board: its two herb bunches hang down over the shelf's front edge, so that shelf's row lets them show below the floor */
+.scroller:has(.ornament[data-kind="lavender"]) { padding-bottom: 44px; margin-bottom: -44px; }
+.stage:has(.ornament[data-kind="lavender"]) { z-index: 4; }
