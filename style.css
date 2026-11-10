@@ -1916,3 +1916,8 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.cabinSwags.on .cOrn .cOn { opacity: 1; }
 .lights.cabinSwags .cClear .cRib { width: .8px; background: rgba(235,240,245,.38); }
 .lights.cabinSwags .vDrop.yank .cRib { animation: vChainPull 1s ease both; }
+/* v258 (osamu: "the second the lipstick lamp turns on everything goes dark... the room already has light"): no more
+   darkening around the lit lamp, and so no hard edge where that shade was clipped under the header. The warm light
+   pool, the lit book faces and the soft cast shadows stay. */
+.ornament[data-kind="lipstickLamp"] .ornGlowIn::before { display: none; }
+.lpMood { background: none; }
