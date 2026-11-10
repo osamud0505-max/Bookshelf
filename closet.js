@@ -450,12 +450,12 @@
   D.ORNAMENTS.lipstickLamp = {
     label: "Lipstick lamp", scale: 1.0, startOff: true, vw: LIP_VW, soft: true, flat: true, glow: "rgba(255,70,95,.5)", img: "obj/closet-lipstick-case2-cosy.webp",
     draw: (g) => `<defs><mask id="${g}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-clip.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
-      + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-turn.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
+      + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-turn2.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<linearGradient id="${g}s" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d8" stop-opacity=".5"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`
       + `<radialGradient id="${g}fp"><stop offset="0" stop-color="rgb(28,0,16)" stop-opacity=".8"/><stop offset=".84" stop-color="rgb(28,0,16)" stop-opacity=".8"/><stop offset=".91" stop-color="rgb(28,0,16)" stop-opacity=".42"/><stop offset="1" stop-color="rgb(28,0,16)" stop-opacity="0"/></radialGradient><ellipse cx="36.9" cy="187.4" rx="42.5" ry="18.8" fill="url(#${g}fp)"/>`
       + `<image href="obj/closet-lipstick-case2-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       + `<g mask="url(#${g}m)"><g class="lpBullet" style="--rest:${LIP_REST}px"><image class="lpRed" href="obj/closet-lipstick-bullet-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></g></g>`
-      + `<g mask="url(#${g}r)"><rect class="lpShine" x="${f1(-0.16 * LIP_VW)}" y="50" width="${f1(0.16 * LIP_VW)}" height="96" fill="url(#${g}s)" style="--run:${f1(0.8 * LIP_VW)}px;mix-blend-mode:screen"/></g>`,
+      + `<g mask="url(#${g}r)"><rect class="lpShine" x="${f1(-0.16 * LIP_VW)}" y="44" width="${f1(0.16 * LIP_VW)}" height="104" fill="url(#${g}s)" style="--run:${f1(0.8 * LIP_VW)}px;mix-blend-mode:screen"/></g>`,
     toggle: (el, out) => {
       el.classList.remove("twistUp", "twistDown");
       void el.offsetWidth;
