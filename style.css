@@ -1524,3 +1524,6 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
 .slot::before { left: -2px; right: -2px; bottom: -8px; height: 14px; border-radius: 40% / 50%;
   background: rgba(0,0,0,.8); filter: blur(1.2px); box-shadow: 0 1px 6px 3px rgba(0,0,0,.42); }
 html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow: 0 1px 6px 3px rgba(28,0,16,.42); }
+/* v202: the closet's painted objects draw their own footprint shadow, so the generic blob under them goes */
+.ornament:is([data-kind="handbag"], [data-kind="pencilCup"], [data-kind="giftBoxes"], [data-kind="shoppingBags"])::after { display: none; }
+.ornament:is([data-kind="handbag"], [data-kind="pencilCup"], [data-kind="giftBoxes"], [data-kind="shoppingBags"]) svg { filter: none; }

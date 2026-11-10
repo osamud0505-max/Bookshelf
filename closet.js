@@ -433,15 +433,17 @@
   // cosy game art pictures standing on y = 200, the top of the shelf, with a soft contact shadow where they meet it
   const contact = (g, cx, rx) => `<defs><radialGradient id="${g}cs" cx=".5" cy="1" r="1"><stop offset="0" stop-color="#2a0418" stop-opacity=".5"/><stop offset=".5" stop-color="#2a0418" stop-opacity=".22"/><stop offset="1" stop-color="#2a0418" stop-opacity="0"/></radialGradient><radialGradient id="${g}cc"><stop offset="0" stop-color="#1a0210" stop-opacity=".75"/><stop offset=".7" stop-color="#1a0210" stop-opacity=".35"/><stop offset="1" stop-color="#1a0210" stop-opacity="0"/></radialGradient></defs>`
     + `<ellipse cx="${cx}" cy="197.5" rx="${f1(rx * 1.08)}" ry="5" fill="url(#${g}cc)" style="filter:blur(1.5px)"/>`;
+  // footprint shadows made from each picture's own bottom edge (scratchpad shadowgen.py): x, width, height in picture units
+  const FOOT = { "handbag": [-9.07, 208.24, 203.3], "pencilcup-small": [-23.06, 267.99, 211.93], "giftboxes2": [-14.57, 334.0, 204.86], "bags2": [-14.29, 370.86, 204.86] };
   const painted = (label, name, W, H, scale, shadows) => {
     const vw = f1(200 * W / H);
     return { label, scale, vw, still: true, flat: true, img: pic(name),
-      draw: (g) => shadows.map(([cx, rx]) => contact(g, f1(cx * vw), f1(rx * vw))).join("") + `<image href="${pic(name)}" x="0" y="0" width="${vw}" height="200" preserveAspectRatio="none"/>` };
+      draw: (g) => (FOOT[name] ? `<image href="obj/closet-${name}-shadow.png" x="${FOOT[name][0]}" y="0" width="${FOOT[name][1]}" height="${FOOT[name][2]}" preserveAspectRatio="none"/>` : shadows.map(([cx, rx]) => contact(g, f1(cx * vw), f1(rx * vw))).join("")) + `<image href="${pic(name)}" x="0" y="0" width="${vw}" height="200" preserveAspectRatio="none"/>` };
   };
   D.ORNAMENTS.handbag = painted("Handbag", "handbag", 692, 728, 1.2, [[0.5, 0.48]]);
   D.ORNAMENTS.pencilCup = painted("Pencil cup & lipstick", "pencilcup-small", 558, 503, 0.55, [[0.43, 0.3], [0.84, 0.16]]);
-  D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes-detail", 451, 700, 1.2, [[0.5, 0.49]]);
-  D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags-detail", 768, 521, 1.1, [[0.5, 0.49]]);
+  D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes2", 1067, 700, 0.74, [[0.5, 0.49]]);
+  D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags2", 1198, 700, 0.745, [[0.5, 0.49]]);
 
   // the lipstick lamp: three layers from osamu's pictures (the empty case, the bullet, and where the bullet may show
   // above the case's front lip). Tapping it twists the bullet slowly up out of the case, light running round the gold
