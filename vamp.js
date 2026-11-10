@@ -15,41 +15,50 @@
   const DR = { w: 212, h: 877, ring: 106 };
   const reduce = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
 
+  // osamu's layout (their mock-up, 2026-11-10): ONE big swag per shelf, knot to knot across its whole front, with
+  // seven ruby drops hung straight from the lace hem and the tails at different heights, the middle one lowest on a
+  // short chain. Each drop: [across the swag (0 = left knot, 1 = right knot), its ring's depth below the knots
+  // (in knot spans), its length (in knot spans), the lace hem it hangs from, if lower on a chain]
+  const DROPS = [[0.084, 0.559, 0.233], [0.218, 0.485, 0.2], [0.378, 0.569, 0.233], [0.535, 0.718, 0.233, 0.6],
+    [0.661, 0.55, 0.233], [0.812, 0.457, 0.2], [0.926, 0.559, 0.233]];
+  const KNOT_Y = 17; // the knots' centres in the picture
   function drapesEl(w, cfg) {
-    const bookH = w < 560 ? 196 : 246, inset = 4;
-    // loops about three quarters of a book tall apart, a whole number of them across the shelf
-    const n = Math.max(2, Math.round((w - 2 * inset) / (bookH * 0.75)));
-    const span = (w - 2 * inset) / n, k = span / (SW.k1 - SW.k0);
+    // a phone's shelf takes one swag; a wide one hangs as many phone-sized swags side by side
+    const n = Math.max(1, Math.round(w / 430)), cell = w / n;
+    const margin = 0.045 * cell, span = cell - 2 * margin, k = span / (SW.k1 - SW.k0);
     // the knots tuck up under the shelf's front edge
-    const lift = SW.top * k + 4;
-    const dh = bookH * 0.3, dw = (dh * DR.w) / DR.h;
-    const chain = 7; // gold chain from the lace down to the drop's ring
+    const lift = SW.top * k + 3;
     const parts = [], drops = [];
     for (let i = 0; i < n; i++) {
-      const kx = inset + i * span;
-      parts.push(`<div class="vSwag" style="left:${f1(kx - SW.k0 * k)}px;top:${f1(-lift)}px;width:${f1(SW.w * k)}px;height:${f1(SW.h * k)}px;z-index:${i % 2 ? 2 : 1}"><img src="obj/vamp-swag.webp" alt="" draggable="false" decoding="async"></div>`);
-      // the drop hangs on a fine chain that comes down behind the velvet and out under the lace
-      const cx = kx + span / 2, top = SW.lace * k - lift - 6;
-      drops.push({ cx, top, len: chain + dh * 0.62, th: 0, om: 0 });
+      const kx = i * cell + margin, ky = KNOT_Y * k - lift;
+      parts.push(`<div class="vSwag" style="left:${f1(kx - SW.k0 * k)}px;top:${f1(-lift)}px;width:${f1(SW.w * k)}px;height:${f1(SW.h * k)}px"><img src="obj/vamp-swag.webp" alt="" draggable="false" decoding="async"></div>`);
+      DROPS.forEach(([u, v, len, hem]) => {
+        const dh = len * span, top = ky + v * span, from = hem ? ky + hem * span : top;
+        drops.push({ cx: kx + u * span, top, from, dh, th: 0, om: 0 });
+      });
     }
-    const dropHtml = drops.map((d, i) => `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - dw / 2)}px;top:${f1(-lift + 2)}px;width:${f1(dw)}px;height:${f1(d.top + lift - 2 + chain + dh)}px;transform-origin:50% 0;--i:${i}">`
-      + `<i class="vChain" style="height:${f1(d.top + lift - 2 + chain + dh * 0.04)}px"></i>`
-      + `<i class="vHalo" style="top:${f1(d.top + lift - 2 + chain + dh * 0.58)}px"></i>`
-      + `<img src="obj/vamp-drop.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.top + lift - 2 + chain)}px;height:${f1(dh)}px"></div>`).join("");
+    const dropHtml = drops.map((d, i) => {
+      const dw = (d.dh * DR.w) / DR.h, ch = d.top - d.from;
+      return `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - dw / 2)}px;top:${f1(d.from)}px;width:${f1(dw)}px;height:${f1(ch + d.dh)}px;transform-origin:50% 0;--i:${i}">`
+        + (ch > 1 ? `<i class="vChain" style="height:${f1(ch + d.dh * 0.03)}px"></i>` : "")
+        + `<i class="vHalo" style="top:${f1(ch + d.dh * 0.6)}px;width:${f1(d.dh * 1.3)}px;height:${f1(d.dh * 1.3)}px"></i>`
+        + `<img src="obj/vamp-drop.webp" alt="" draggable="false" decoding="async" style="top:${f1(ch)}px;height:${f1(d.dh)}px"></div>`;
+    }).join("");
     const el = document.createElement("div");
     el.className = "lights vampDrapes" + (cfg.on ? " on" : "");
-    const bottom = Math.max(SW.h * k - lift, ...drops.map((d) => d.top + chain + dh)) + 6;
+    const bottom = Math.max(SW.h * k - lift, ...drops.map((d) => d.top + d.dh)) + 8;
     el.style.height = Math.ceil(bottom) + "px";
-    el.innerHTML = `<div class="vIn">${dropHtml}${parts.join("")}</div>`;
+    // the crystals hang in front of the lace
+    el.innerHTML = `<div class="vIn">${parts.join("")}${dropHtml}</div>`;
     const dEls = el.querySelectorAll(".vDrop"), sEls = el.querySelectorAll(".vSwag");
     drops.forEach((d, i) => { d.el = dEls[i]; });
     const swags = [...sEls].map((s) => ({ el: s, b: 0, bv: 0 }));
-    touch(el, drops, swags, dh);
+    touch(el, drops, swags);
     return el;
   }
 
   // ------------------------------------------------------------------ touching them
-  function touch(el, drops, swags, dh) {
+  function touch(el, drops, swags) {
     el.style.pointerEvents = "auto";
     el.style.touchAction = "pan-y";
     let raf = 0, last = 0, down = null, lastSound = 0;
@@ -84,7 +93,7 @@
     const k = reduce() ? 0.35 : 1;
     const push = (d, v) => { const dv = Math.max(-MAX, Math.min(MAX, v)) * k; d.om += dv; clink(d, Math.abs(dv) / MAX); kick(); };
     const local = (ev) => { const r = el.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
-    const nearDrop = (x, y) => drops.find((d) => Math.abs(x - d.cx) < Math.max(14, dh * 0.2) && y > d.top - 4);
+    const nearDrop = (x, y) => drops.find((d) => Math.abs(x - d.cx) < Math.max(14, d.dh * 0.16) && y > d.top - 4 && y < d.top + d.dh + 4);
     el.addEventListener("pointerdown", (ev) => {
       const [x, y] = local(ev);
       down = { x, y, t: performance.now(), lx: x, lt: performance.now(), moved: false };
