@@ -1503,7 +1503,7 @@
     if (el.id !== "bookSheet" && el.id !== "customizeSheet") redrawOpen = null;
     el.classList.remove("closing"); scrim.classList.remove("closing");
     openSheet = el; el.hidden = false; scrim.hidden = false; el.scrollTop = 0;
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = "hidden"; document.body.classList.add("sheetOpen");
   }
   let sheetGuard = null; // the book page uses this to stop closing with unsaved changes
   function closeSheet(force) {
@@ -1517,8 +1517,8 @@
       el.classList.remove("closing"); scrim.classList.remove("closing");
       if (openSheet === el) return; // opened again meanwhile
       el.hidden = true; el.replaceChildren();
-      if (!openSheet) scrim.hidden = true;
-    }, 340);
+      if (!openSheet) { scrim.hidden = true; document.body.classList.remove("sheetOpen"); }
+    }, 270);
     document.body.style.overflow = "";
   }
   scrim.onclick = closeSheet;
@@ -2057,7 +2057,12 @@
     else if (coarse && !vvSeen && !rsSeen) kb = Math.round(innerHeight * 0.42);   // only guess when the viewer never reports the keyboard
 
     document.documentElement.style.setProperty("--kb", kb + "px");
+    const was = sheet.classList.contains("kb"), top0 = sheet.getBoundingClientRect().top;
     sheet.classList.toggle("kb", kb > 0);
+    if (!was && kb > 0 && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const dy = top0 - sheet.getBoundingClientRect().top;
+      if (dy > 4) sheet.animate([{ transform: `translate3d(0,${dy}px,0)`, borderRadius: "18px 18px 0 0" }, { transform: "none", borderRadius: "0" }], { duration: 300, easing: "cubic-bezier(.22,1,.36,1)" });
+    }
     const f = document.activeElement;
     if (isField(f) && sheet.contains(f)) requestAnimationFrame(() => { const r = (f.closest(".field") || f).getBoundingClientRect(), room = innerHeight - kb; if (r.bottom > room - 12) sheet.scrollTop += r.bottom - (room - 12) + 8; });
   }

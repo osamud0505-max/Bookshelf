@@ -1543,7 +1543,6 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 .decorBin.ask { pointer-events: auto; cursor: pointer; }
 
 /* v207: sheet lifted above the on-screen keyboard while typing */
-.sheet { transition: bottom .22s ease, max-height .22s ease; }
 @media (max-width: 767px) {
   /* v218: osamu wants the panel BIG while typing: it fills the screen, and its own bottom padding (the keyboard's height)
      lets the field being typed in and the search results scroll up above the keyboard */
@@ -1580,3 +1579,20 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 .ornament[data-kind="callaCandle"].lit .ornGlow { animation: none; opacity: var(--fi, 1); }
 .ornament[data-kind="callaCandle"] .ornPool { display: none; }
 .ornament[data-kind="callaCandle"] .clSmoke { stroke-width: 1.2; }
+
+/* v219: smoother panels. The panel slides as one GPU layer (transform only, nothing that re-lays out the page), the
+   dimming is a plain fade, and while a panel is open the room's backdrop effects (glitter, fog...) pause so the phone
+   only has the panel to draw. */
+.sheet { will-change: transform; animation: sheetUp .34s cubic-bezier(.22,1,.36,1); }
+@keyframes sheetUp { from { transform: translate3d(0, 100%, 0); } }
+.sheet.closing { animation: sheetDown2 .26s cubic-bezier(.55,0,.75,.35) forwards; }
+@keyframes sheetDown2 { to { transform: translate3d(0, 100%, 0); } }
+.scrim { will-change: opacity; animation: fade .3s ease; }
+.scrim.closing { animation: scrimOut .26s ease forwards; }
+@media (min-width: 768px) {
+  .sheet { animation: sheetSide .3s cubic-bezier(.22,1,.36,1); }
+  @keyframes sheetSide { from { transform: translate3d(100%, 0, 0); } }
+  .sheet.closing { animation: sheetOutSide .24s cubic-bezier(.55,0,.75,.35) forwards; }
+}
+body.sheetOpen #backdrop *, body.sheetOpen #backdrop *::before, body.sheetOpen #backdrop *::after { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) { .sheet, .sheet.closing, .scrim, .scrim.closing { animation-duration: .01s !important; } }
