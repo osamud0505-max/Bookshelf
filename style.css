@@ -1506,7 +1506,7 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
 .slot.lying .book { filter: none; }
 .ornament svg { filter: var(--cast); }
 .slot::after { display: none; }
-.slot::before { content: ""; position: absolute; pointer-events: none; left: 2%; right: 2%; bottom: -7px; height: 4px; filter: blur(.6px);
-  /* the spine stands out towards you in 3D, so its bottom edge shows about 5px below the slot */
-  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(0,0,0,.55), rgba(0,0,0,.3) 60%, rgba(0,0,0,0) 100%); }
+.slot::before { content: ""; position: absolute; pointer-events: none; left: -4%; right: -4%; bottom: -9px; height: 16px; filter: blur(3px);
+  /* a soft black shadow tucked right under the base, its top half hidden behind the book, so there is never a gap */
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(0,0,0,.7), rgba(0,0,0,.4) 55%, rgba(0,0,0,0) 100%); }
 .slot.lying::before, .addSlot::before { display: none; }
