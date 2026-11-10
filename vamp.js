@@ -201,24 +201,26 @@
   D.LIGHT_STYLES.forestCatchers = "Wisteria & suncatchers";
   const WI = { w: 1400, h: 774, tuck: 0.035 };
   const SC = { w: 360, h: 845, chainX: 170.1, hook: 170, tileL: 147.6, tileW: 47, tileH: 92 };
-  // [across the arch, the hook's depth below the shelf] in arch widths: left, middle (lowest), right
-  const CATCHERS = [[0.3, 0.3], [0.5, 0.37], [0.7, 0.26]];
+  // osamu's mock-up (2026-11-10): six small suncatchers per arch, [across, the hook's depth below the shelf] in arch
+  // widths, at uneven heights
+  const CATCHERS = [[0.143, 0.434], [0.318, 0.375], [0.459, 0.272], [0.587, 0.381], [0.721, 0.277], [0.82, 0.461]];
   const SPOTS = ["255,120,200", "255,210,120", "160,140,255", "130,230,255", "255,160,120", "200,255,160"];
   function forestEl(w, cfg) {
-    const n = Math.max(1, Math.round(w / 430)), cell = w / n, wh = cell * WI.h / WI.w, lift = WI.tuck * wh;
-    const sw = 0.17 * cell, k = sw / SC.w, sh = SC.h * k;
+    // the garland is a little wider than the shelf, so its long side tails are cut off by the screen's edges, and its
+    // leaves start at the top of the shelf's front edge and cover it (the plank is 16px thick)
+    const n = Math.max(1, Math.round(w / 430)), cell = w / n, gw = cell * 1.15, wh = gw * WI.h / WI.w, lift = WI.tuck * wh + 16;
+    const sw = 0.095 * cell, k = sw / SC.w, sh = SC.h * k;
     const garlands = [], drops = [], spots = [];
     for (let c = 0; c < n; c++) {
       const x = c * cell;
-      // neighbouring garlands overlap a touch so their leafy tops join up
-      garlands.push(`<div class="vSwag fWis" style="left:${f1(x - (c ? 0.03 * cell : 1))}px;top:${f1(-lift)}px;width:${f1(cell + (c ? 0.03 * cell : 1) + (c < n - 1 ? 0.03 * cell : 1))}px;height:${f1(wh)}px;transform-origin:50% 0"><img src="obj/forest-wisteria.webp" alt="" draggable="false" decoding="async"></div>`);
+      garlands.push(`<div class="vSwag fWis" style="left:${f1(x + (cell - gw) / 2)}px;top:${f1(-lift)}px;width:${f1(gw)}px;height:${f1(wh)}px;transform-origin:50% 0"><img src="obj/forest-wisteria.webp" alt="" draggable="false" decoding="async"></div>`);
       CATCHERS.forEach(([u, v], j) => {
         const cx = x + u * cell, hook = v * cell, top = hook - SC.hook * k;
-        drops.push({ cx, chain: Math.max(4, top), top, dh: sh, hw: sw * 0.48, len: hook + sh * 0.35, th: 0, om: 0, els: [] });
+        drops.push({ cx, chain: Math.max(4, top), top, dh: sh, hw: sw * 0.55, len: hook + sh * 0.35, th: 0, om: 0, els: [] });
         // rainbow spots thrown on the wall around it
-        for (let s2 = 0; s2 < 5; s2++) {
-          const a = (j * 2.1 + s2 * 1.37 + c) % (Math.PI * 2), r = sw * (0.75 + ((s2 * 37 + j * 11) % 10) / 12);
-          spots.push(`<i class="fSpot" style="left:${f1(cx + Math.cos(a) * r)}px;top:${f1(top + sh * 0.42 + Math.sin(a) * r * 0.8)}px;--c:${SPOTS[(s2 + j * 2) % SPOTS.length]};--d:${((s2 * 0.7 + j * 1.3) % 3).toFixed(2)}s;--s:${(0.7 + (s2 % 3) * 0.25).toFixed(2)}"></i>`);
+        for (let s2 = 0; s2 < 3; s2++) {
+          const a = (j * 2.1 + s2 * 2.09 + c) % (Math.PI * 2), r = sw * (0.9 + ((s2 * 37 + j * 11) % 10) / 10);
+          spots.push(`<i class="fSpot" style="left:${f1(cx + Math.cos(a) * r)}px;top:${f1(top + sh * 0.42 + Math.sin(a) * r * 0.8)}px;--c:${SPOTS[(s2 + j * 2) % SPOTS.length]};--d:${((s2 * 0.7 + j * 1.3) % 3).toFixed(2)}s;--s:${(0.6 + (s2 % 3) * 0.2).toFixed(2)}"></i>`);
         }
       });
     }
@@ -227,6 +229,7 @@
     const back = drops.map((d, i) => box(d, i, "vDrop") + (d.top > 0 ? `<i class="vChain" style="left:${f1(sw / 2 - (SC.chainX - SC.tileL) * k)}px;width:${f1(SC.tileW * k)}px;height:${f1(d.top + 1)}px;background-size:${f1(SC.tileW * k)}px ${f1(SC.tileH * k)}px"></i>` : "") + "</div>").join("");
     const front = drops.map((d, i) => box(d, i, "vDrop vDropF")
       + `<i class="vHalo" style="top:${f1(d.top + d.dh * 0.42)}px;width:${f1(sw * 2)}px;height:${f1(sw * 2)}px"></i>`
+      + `<img class="fGlow" src="obj/forest-catcher.webp" alt="" draggable="false" decoding="async" style="left:${f1(sw / 2 - SC.chainX * k)}px;width:${f1(SC.w * k)}px;top:${f1(d.top)}px;height:${f1(d.dh)}px">`
       + `<img src="obj/forest-catcher.webp" alt="" draggable="false" decoding="async" style="left:${f1(sw / 2 - SC.chainX * k)}px;width:${f1(SC.w * k)}px;top:${f1(d.top)}px;height:${f1(d.dh)}px"></div>`).join("");
     const el = document.createElement("div");
     el.className = "lights forestCatchers" + (cfg.on ? " on" : "");
