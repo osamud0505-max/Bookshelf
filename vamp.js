@@ -213,7 +213,7 @@
     const garlands = [], drops = [], spots = [];
     for (let c = 0; c < n; c++) {
       const x = c * cell;
-      garlands.push(`<div class="vSwag fWis" style="left:${f1(x + (cell - gw) / 2)}px;top:${f1(-lift)}px;width:${f1(gw)}px;height:${f1(wh)}px;transform-origin:50% 0"><img src="obj/forest-wisteria.webp" alt="" draggable="false" decoding="async"></div>`);
+      garlands.push(`<div class="vSwag fWis" style="left:${f1(x + (cell - gw) / 2)}px;top:${f1(-lift)}px;width:${f1(gw)}px;height:${f1(wh)}px;transform-origin:50% 0"><img src="obj/forest-wisteria2.webp" alt="" draggable="false" decoding="async"></div>`);
       CATCHERS.forEach(([u, v], j) => {
         const cx = x + u * cell, hook = v * cell, top = hook - SC.hook * k;
         drops.push({ cx, chain: Math.max(4, top), top, dh: sh, hw: sw * 0.55, len: hook + sh * 0.35, th: 0, om: 0, els: [] });
