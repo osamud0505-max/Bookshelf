@@ -193,10 +193,60 @@
     return el;
   }
 
+
+  // ------------------------------------------------------------------ the enchanted forest's wisteria and suncatchers
+  // osamu's idea (2026-11-10): a wisteria garland across each shelf, long at the ends and short in the middle like an
+  // arch, and three wire-spiral suncatchers hanging at different heights on beaded brass chains from behind the
+  // flowers. The suncatchers are the light: lit, they glow and throw little rainbow spots; tapping one is the switch.
+  D.LIGHT_STYLES.forestCatchers = "Wisteria & suncatchers";
+  const WI = { w: 1400, h: 774, tuck: 0.035 };
+  const SC = { w: 360, h: 845, chainX: 170.1, hook: 170, tileL: 147.6, tileW: 47, tileH: 92 };
+  // [across the arch, the hook's depth below the shelf] in arch widths: left, middle (lowest), right
+  const CATCHERS = [[0.3, 0.3], [0.5, 0.37], [0.7, 0.26]];
+  const SPOTS = ["255,120,200", "255,210,120", "160,140,255", "130,230,255", "255,160,120", "200,255,160"];
+  function forestEl(w, cfg) {
+    const n = Math.max(1, Math.round(w / 430)), cell = w / n, wh = cell * WI.h / WI.w, lift = WI.tuck * wh;
+    const sw = 0.17 * cell, k = sw / SC.w, sh = SC.h * k;
+    const garlands = [], drops = [], spots = [];
+    for (let c = 0; c < n; c++) {
+      const x = c * cell;
+      // neighbouring garlands overlap a touch so their leafy tops join up
+      garlands.push(`<div class="vSwag fWis" style="left:${f1(x - (c ? 0.03 * cell : 1))}px;top:${f1(-lift)}px;width:${f1(cell + (c ? 0.03 * cell : 1) + (c < n - 1 ? 0.03 * cell : 1))}px;height:${f1(wh)}px;transform-origin:50% 0"><img src="obj/forest-wisteria.webp" alt="" draggable="false" decoding="async"></div>`);
+      CATCHERS.forEach(([u, v], j) => {
+        const cx = x + u * cell, hook = v * cell, top = hook - SC.hook * k;
+        drops.push({ cx, chain: Math.max(4, top), top, dh: sh, hw: sw * 0.48, len: hook + sh * 0.35, th: 0, om: 0, els: [] });
+        // rainbow spots thrown on the wall around it
+        for (let s2 = 0; s2 < 5; s2++) {
+          const a = (j * 2.1 + s2 * 1.37 + c) % (Math.PI * 2), r = sw * (0.75 + ((s2 * 37 + j * 11) % 10) / 12);
+          spots.push(`<i class="fSpot" style="left:${f1(cx + Math.cos(a) * r)}px;top:${f1(top + sh * 0.42 + Math.sin(a) * r * 0.8)}px;--c:${SPOTS[(s2 + j * 2) % SPOTS.length]};--d:${((s2 * 0.7 + j * 1.3) % 3).toFixed(2)}s;--s:${(0.7 + (s2 % 3) * 0.25).toFixed(2)}"></i>`);
+        }
+      });
+    }
+    const box = (d, i, cls) => `<div class="${cls}" data-n="${i}" style="left:${f1(d.cx - sw / 2)}px;top:0;width:${f1(sw)}px;height:${f1(d.top + d.dh)}px;transform-origin:50% 0;--i:${i}">`;
+    // the chain from under the shelf down to the suncatcher's own chain, its links repeating
+    const back = drops.map((d, i) => box(d, i, "vDrop") + (d.top > 0 ? `<i class="vChain" style="left:${f1(sw / 2 - (SC.chainX - SC.tileL) * k)}px;width:${f1(SC.tileW * k)}px;height:${f1(d.top + 1)}px;background-size:${f1(SC.tileW * k)}px ${f1(SC.tileH * k)}px"></i>` : "") + "</div>").join("");
+    const front = drops.map((d, i) => box(d, i, "vDrop vDropF")
+      + `<i class="vHalo" style="top:${f1(d.top + d.dh * 0.42)}px;width:${f1(sw * 2)}px;height:${f1(sw * 2)}px"></i>`
+      + `<img src="obj/forest-catcher.webp" alt="" draggable="false" decoding="async" style="left:${f1(sw / 2 - SC.chainX * k)}px;width:${f1(SC.w * k)}px;top:${f1(d.top)}px;height:${f1(d.dh)}px"></div>`).join("");
+    const el = document.createElement("div");
+    el.className = "lights forestCatchers" + (cfg.on ? " on" : "");
+    el.style.height = Math.ceil(Math.max(wh - lift, ...drops.map((d) => d.top + d.dh)) + 10) + "px";
+    // the suncatchers hang behind the wisteria; their light spots fall on the wall over everything
+    el.innerHTML = `<div class="vIn">${back}${front}${garlands.join("")}<div class="fSpots">${spots.join("")}</div></div>`;
+    const bEls = el.querySelectorAll(".vDrop:not(.vDropF)"), fEls = el.querySelectorAll(".vDropF");
+    drops.forEach((d, i) => { d.els = [bEls[i], fEls[i]]; });
+    const swags = [...el.querySelectorAll(".vSwag")].map((s2) => ({ el: s2, b: 0, bv: 0 }));
+    touch(el, drops, swags);
+    return el;
+  }
+
   const baseLights = D.lightsEl;
-  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : baseLights(w, cfg));
+  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : baseLights(w, cfg));
   // the vampire room hangs them under every shelf, lit
   if (D.LOOKS && D.LOOKS.vampire) D.LOOKS.vampire.set.lights = { style: "vampDrapes", colour: "warm", on: true };
   // and the cottage hangs its flower lamps under every shelf, lit
   if (D.LOOKS && D.LOOKS.cottage) D.LOOKS.cottage.set.lights = { style: "cottageLotus", colour: "warm", on: true };
+  // the enchanted forest's wisteria becomes the painted garland with suncatchers, fireflies still drifting about
+  if (D.LOOKS && D.LOOKS.forest) D.LOOKS.forest.set.lights = { style: "forestCatchers", styles: ["forestCatchers", "fireflies"], colour: "warm", on: true };
+  D.LIGHT_SWAP = { forest: { wisteria: "forestCatchers" } };
 })();

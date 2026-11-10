@@ -842,7 +842,7 @@
   // which lights hang under a shelf: each shelf picks its own in the ✦ menu (kept per look); until then it shows the look's.
   // several can be on at once, e.g. wisteria with fireflies drifting around it
   const NO_SWITCH = ["fireflies", "closetRod"]; // always alive, no cord needed
-  const TALLEST = ["closetRod", "vampDrapes", "cottageLotus", "wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
+  const TALLEST = ["closetRod", "vampDrapes", "cottageLotus", "forestCatchers", "wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
   // the look's own lights; a save made before a look got its lights (cottage, vampire) still says "none"
   function lookLights() {
     const s = state.settings.lights || {}, L = D.LOOKS[lookId()], def = L && L.set && L.set.lights;
@@ -853,6 +853,9 @@
     const pick = mine || base;
     let styles = Array.isArray(pick.styles) ? pick.styles : pick.style && pick.style !== "none" ? [pick.style] : [];
     if (!mine && sd.noLights) styles = [];
+    // a look whose lights were redrawn swaps the old style for the new one, in old saves too
+    const swap = (D.LIGHT_SWAP || {})[lookId()];
+    if (swap) styles = [...new Set(styles.map((k) => swap[k] || k))];
     styles = styles.filter((k) => D.LIGHT_STYLES[k] && k !== "none");
     return { styles, colour: pick.colour || base.colour || "warm" };
   }
@@ -1419,7 +1422,7 @@
               setShelfLights(key, { styles }); keepOpen(); render();
             }));
             menu.append(lc);
-            if (L.styles.some((k) => !["wisteria", "chinese", "closetRod", "vampDrapes", "cottageLotus"].includes(k))) {
+            if (L.styles.some((k) => !["wisteria", "chinese", "closetRod", "vampDrapes", "cottageLotus", "forestCatchers"].includes(k))) {
               const cc = h(`<div class="colors small">${Object.entries(D.LIGHT_COLOURS).map(([k, [l, c]]) => `<button class="colorItem" data-v="${k}" aria-pressed="${L.colour === k}"><span class="dot ${L.colour === k ? "on" : ""}" style="background:${c || "conic-gradient(#ff6b6b,#ffd166,#5be3a5,#5cc8f5,#c792ff,#ff6b6b)"};box-shadow:0 0 10px ${c || "#ffd166"}88"></span>${esc(l)}</button>`).join("")}</div>`);
               cc.querySelectorAll("button").forEach((b) => (b.onclick = () => { setShelfLights(key, { colour: b.dataset.v }); keepOpen(); render(); }));
               menu.append(cc);
