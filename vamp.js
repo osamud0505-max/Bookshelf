@@ -454,7 +454,7 @@
     el.style.height = H + "px";
     el.innerHTML = `<div class="vIn"><svg class="sDrape" width="${w}" height="${H}" viewBox="0 -6 ${w} ${H}" fill="none" aria-hidden="true">`
       + `<defs><radialGradient id="sGlowG" cx=".5" cy=".55" r=".55"><stop offset="0" stop-color="#fff2cc" stop-opacity=".95"/><stop offset=".3" stop-color="#ffcf80" stop-opacity=".7"/><stop offset=".7" stop-color="#e9963f" stop-opacity=".38"/><stop offset="1" stop-color="#c97a30" stop-opacity=".5"/></radialGradient></defs>`
-      + `<g class="sCords">${drapes.map((d) => `<path d="${d}"/>`).join("")}</g><g class="sHooks">${hooks.join("")}</g></svg>`
+      + `<g class="sCords">${drapes.map((d) => `<path d="${d}"/>`).join("")}</g></svg><div class="sShade"></div>`
       + drops.map(bulb).join("") + `</div>`;
     const dEls = el.querySelectorAll(".sDrop");
     drops.forEach((d, i) => { d.els = [dEls[i]]; });

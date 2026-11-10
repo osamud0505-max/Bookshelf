@@ -1849,3 +1849,6 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.loftSpider.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
 .lights.loftSpider .vDrop.yank .sCord { animation: vChainPull 1s ease both; }
 @media (prefers-reduced-motion: reduce) { .lights.loftSpider.on .vHalo { animation: none; } .lights.loftSpider .vDrop.yank * { animation: none !important; } }
+/* the hooks sit up under the board, lost in the shelf's shadow (osamu) */
+.lights.loftSpider .sShade { position: absolute; left: 0; right: 0; top: 0; height: 70px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(10,6,4,.72) 0, rgba(10,6,4,.45) 14px, rgba(10,6,4,.2) 34px, rgba(10,6,4,.06) 54px, rgba(10,6,4,0) 70px); }
