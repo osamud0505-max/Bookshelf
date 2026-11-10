@@ -1937,3 +1937,8 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.cabinSwags .cSnowTop { position: absolute; left: 0; right: 0; top: -38px; height: 22px; pointer-events: none;
   background: url(obj/cabin-snow-top.webp) 0 0 / 389px 22px repeat-x; filter: brightness(1.04); }
 .lights.cabinSwags .cSnow { top: -25px; }
+/* v260 (osamu: "it looks horrible... I like the snow hanging and that's it, the shelf is still wood, the lights are
+   horrible"): no snow on the shelf top, no drawn strands; bigger ornaments on hangers (painted fairy-light hangers to come) */
+.lights.cabinSwags .cSnowTop { display: none; }
+.lights.cabinSwags .cSnow { top: -21px; }
+.lights.cabinSwags .cRib, .lights.cabinSwags .cClear .cRib { width: 1.1px; background: #1c2118; }

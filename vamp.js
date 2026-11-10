@@ -505,15 +505,15 @@
       ice: { src: "cabin-ice-plain", ar: 0.146, h: 48, hx: 0.434 }, bead: { src: "cabin-ice-bead", ar: 0.215, h: 46, hx: 0.455 },
     };
     const CYCLE = ["gloss", "twist", "snow", "matte", "drop", "star", "ice", "gloss", "tree", "bead", "matte", "deer", "twist", "star"];
-    const nOrn = Math.max(5, Math.round(w / 430 * 11)), drops = [], used = [];
+    // v260 (osamu): no drawn light strands; bigger ornaments, each on its own hanger from behind the snow, at mixed lengths
+    const nOrn = Math.max(4, Math.round(w / 430 * 7)), drops = [], BIG = 1.6;
+    maxY = 0;
     for (let i = 0; i < nOrn; i++) {
-      const tx = (i + 0.5) / nOrn * w + (R() - 0.5) * (w / nOrn) * 0.5;
-      const cand = pts.filter((p) => Math.abs(p.x - tx) < 16 && !used.some((u) => Math.abs(u - p.x) < 14));
-      if (!cand.length) continue;
-      const p = cand[Math.floor(R() * cand.length)]; used.push(p.x);
-      const o = ORN[CYCLE[(i + Math.floor(w / 97)) % CYCLE.length]], hh = o.h * (0.88 + R() * 0.24) * (p.d === "f" ? 1.08 : 0.94), ww = hh * o.ar, rib = 5 + R() * 20;
-      drops.push({ cx: p.x, py: p.y, chain: rib, top: p.y + rib, dh: hh, hw: Math.max(9, ww * 0.6), len: rib + hh * 0.6, th: 0, om: 0, els: [], o, hh, ww });
-      maxY = Math.max(maxY, p.y + rib + hh);
+      const x = (i + 0.5) / nOrn * w + (R() - 0.5) * (w / nOrn) * 0.35;
+      const o = ORN[CYCLE[(i + Math.floor(w / 97)) % CYCLE.length]], hh = o.h * BIG * (0.9 + R() * 0.2), ww = hh * o.ar;
+      const py = -6, rib = [104, 142, 118, 152, 110, 134, 124][i % 7] * (0.9 + R() * 0.2);
+      drops.push({ cx: x, py, chain: rib, top: py + rib, dh: hh, hw: Math.max(12, ww * 0.6), len: rib + hh * 0.6, th: 0, om: 0, els: [], o, hh, ww });
+      maxY = Math.max(maxY, py + rib + hh);
     }
     const bauble = (d, i) => {
       const c = Math.max(d.ww * Math.max(d.o.hx, 1 - d.o.hx), 6) + 2, box = c * 2, src = `obj/${d.o.src}.webp`;
@@ -530,7 +530,7 @@
       + `<g class="cLit">${g.lit.map((d, j) => `<g class="cTw cTw${j}">${d.join("")}</g>`).join("")}</g></svg>`; };
     el.innerHTML = `<div class="vIn"><svg class="cDefs" width="0" height="0" aria-hidden="true"><defs>`
       + `<radialGradient id="cbDot"><stop offset="0" stop-color="#fffbe8"/><stop offset=".28" stop-color="#ffe3a6"/><stop offset=".55" stop-color="rgba(255,196,110,.3)"/><stop offset="1" stop-color="rgba(255,180,90,0)"/></radialGradient>`
-      + `</defs></svg>${layer("b")}<div class="cShade"></div>${layer("m")}${drops.map(bauble).join("")}${layer("f")}<div class="cSnowTop" aria-hidden="true"></div><div class="cSnow" aria-hidden="true"><i class="cSnowLit"></i></div></div>`;
+      + `</defs></svg><div class="cShade"></div>${drops.map(bauble).join("")}<div class="cSnow" aria-hidden="true"><i class="cSnowLit"></i></div></div>`;
     const dEls = el.querySelectorAll(".cDrop");
     drops.forEach((d, i) => { d.els = [dEls[i]]; });
     touch(el, drops, [], { quiet: true });
