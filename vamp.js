@@ -462,8 +462,84 @@
     return el;
   }
 
+  // ---- Cozy cabin (osamu's hallway photo, lights and hung ornaments only): overlapping swags of warm icicle fairy
+  // lights in several rows and depths, with red glass baubles and red stars hanging here and there. Tap an ornament
+  // to switch; a swipe swings them.
+  D.LIGHT_STYLES.cabinSwags = "Baubles & swags";
+  function cabinEl(w, cfg) {
+    const R = rnd(4409 + Math.round(w)), top = 3;
+    // rows of swags: each row has its own span and depth and starts at its own offset, so the loops overlap and cross
+    const ROWS = [{ span: 118, sag: 22, d: "b" }, { span: 150, sag: 40, d: "b" }, { span: 132, sag: 60, d: "m" }, { span: 176, sag: 84, d: "m" }, { span: 104, sag: 30, d: "f" }, { span: 160, sag: 104, d: "f" }];
+    const L = { b: { wire: [], off: [], lit: [[], [], [], []] }, m: { wire: [], off: [], lit: [[], [], [], []] }, f: { wire: [], off: [], lit: [[], [], [], []] } };
+    const pts = []; let maxY = 0;
+    for (const row of ROWS) {
+      const g = L[row.d], rr = row.d === "b" ? 0.75 : row.d === "m" ? 0.95 : 1.15;
+      let x0 = -R() * row.span;
+      while (x0 < w) {
+        const span = row.span * (0.85 + R() * 0.3), sag = row.sag * (0.85 + R() * 0.3), x1 = x0 + span;
+        g.wire.push(`<path d="M${f1(x0)} ${top} Q${f1((x0 + x1) / 2)} ${f1(top + sag * 2)} ${f1(x1)} ${top}"/>`);
+        // icicle drops hang off the wire every few px, each with a couple of tiny bulbs
+        for (let t = 0.03 + R() * 0.04; t < 0.98; t += (5.5 + R() * 3) / span) {
+          const x = x0 + span * t, y = top + 4 * sag * t * (1 - t);
+          if (x < -4 || x > w + 4) continue;
+          const dl = 3 + R() * (row.d === "f" ? 13 : 10), n = dl > 9 ? 2 : 1;
+          g.wire.push(`<path d="M${f1(x)} ${f1(y)}v${f1(dl)}"/>`);
+          for (let k = 0; k <= n; k++) {
+            const by = y + (k === 0 ? 0.6 : dl * k / n), r = rr * (0.8 + R() * 0.4), at = `cx="${f1(x)}" cy="${f1(by)}"`;
+            g.off.push(`<circle ${at} r="${r.toFixed(2)}"/>`);
+            g.lit[Math.floor(R() * 4)].push(`<circle ${at} r="${(r * 2.6).toFixed(2)}"/>`);
+            maxY = Math.max(maxY, by + r * 2.6);
+          }
+          if (row.d !== "b" && t > 0.12 && t < 0.88) pts.push({ x, y, d: row.d });
+        }
+        x0 = x1 - row.span * (0.04 + R() * 0.08);
+      }
+    }
+    // ornaments: about 7 baubles and 2 stars per phone width, spread out, on red ribbons from the wires
+    const nOrn = Math.max(4, Math.round(w / 430 * 9)), drops = [], orn = [];
+    const used = [];
+    for (let i = 0; i < nOrn; i++) {
+      const tx = (i + 0.5) / nOrn * w + (R() - 0.5) * (w / nOrn) * 0.5;
+      const cand = pts.filter((p) => Math.abs(p.x - tx) < 18 && !used.some((u) => Math.abs(u - p.x) < 18));
+      if (!cand.length) continue;
+      const p = cand[Math.floor(R() * cand.length)]; used.push(p.x);
+      const star = i % 4 === 2, s = star ? 26 + R() * 8 : (p.d === "f" ? 18 : 14) + R() * 10, rib = 6 + R() * 22;
+      drops.push({ cx: p.x, py: p.y, chain: rib, top: p.y + rib, dh: s, hw: s * 0.6, len: rib + s * 0.6, th: 0, om: 0, els: [], star, s });
+      maxY = Math.max(maxY, p.y + rib + s);
+    }
+    const bauble = (d, i) => {
+      const s = d.s, c = s / 2 + 3, box = c * 2;
+      const body = d.star
+        ? `<svg class="cOrn" viewBox="-50 -50 100 100" style="left:${f1(c - s / 2)}px;top:${f1(d.chain)}px;width:${f1(s)}px;height:${f1(s)}px">`
+          + `<polygon class="cSt" points="${starPts(0, 4, 46)}"/>${[0, 1, 2, 3, 4].map((k) => { const a = -Math.PI / 2 + k * 2 * Math.PI / 5, P = (an, r) => `${f1(Math.cos(an) * r)},${f1(4 + Math.sin(an) * r)}`; return `<polygon class="cStF1" points="0,4 ${P(a, 46)} ${P(a + Math.PI / 5, 20.7)}"/><polygon class="cStF0" points="0,4 ${P(a, 46)} ${P(a - Math.PI / 5, 20.7)}"/>`; }).join("")}`
+          + `<circle class="cGl" cx="-12" cy="-10" r="5"/></svg>`
+        : `<svg class="cOrn" viewBox="-50 -62 100 112" style="left:${f1(c - s / 2)}px;top:${f1(d.chain - s * 0.12)}px;width:${f1(s)}px;height:${f1(s * 1.12)}px">`
+          + `<circle cx="0" cy="0" r="46" fill="url(#cbBody)"/><circle cx="0" cy="0" r="46" fill="url(#cbRim)"/>`
+          + `<ellipse class="cSpec" cx="-17" cy="-19" rx="11" ry="7" transform="rotate(-35 -17 -19)"/><circle class="cGl" cx="13" cy="15" r="4"/>`
+          + `<rect x="-9" y="-55" width="18" height="11" rx="2" fill="url(#cbCap)"/><path d="M-4 -55 a4 5 0 1 1 8 0" fill="none" stroke="#b8933f" stroke-width="2.4"/></svg>`;
+      return `<div class="vDrop cDrop" data-n="${i}" style="left:${f1(d.cx - c)}px;top:${f1(d.py)}px;width:${f1(box)}px;height:${f1(d.chain + d.s * 1.12)}px;transform-origin:50% 0;--i:${i}">`
+        + `<i class="vChain cRib" style="left:${f1(c - 0.9)}px;height:${f1(d.chain + 1)}px"></i>${body}</div>`;
+    };
+    const H = Math.ceil(maxY + 10);
+    const el = document.createElement("div");
+    el.className = "lights cabinSwags" + (cfg.on ? " on" : "");
+    el.style.height = H + "px";
+    const layer = (k) => { const g = L[k]; return `<svg class="cRow cRow${k}" width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" aria-hidden="true"><g class="cWire">${g.wire.join("")}</g><g class="cOff">${g.off.join("")}</g>`
+      + `<g class="cLit">${g.lit.map((d, j) => `<g class="cTw cTw${j}">${d.join("")}</g>`).join("")}</g></svg>`; };
+    el.innerHTML = `<div class="vIn"><svg class="cDefs" width="0" height="0" aria-hidden="true"><defs>`
+      + `<radialGradient id="cbDot"><stop offset="0" stop-color="#fffbe8"/><stop offset=".28" stop-color="#ffe3a6"/><stop offset=".55" stop-color="rgba(255,196,110,.3)"/><stop offset="1" stop-color="rgba(255,180,90,0)"/></radialGradient>`
+      + `<radialGradient id="cbBody" cx=".38" cy=".34" r=".75"><stop offset="0" stop-color="#e2434a"/><stop offset=".35" stop-color="#b3141f"/><stop offset=".75" stop-color="#6e0610"/><stop offset="1" stop-color="#3a0208"/></radialGradient>`
+      + `<radialGradient id="cbRim" cx=".62" cy=".72" r=".5"><stop offset="0" stop-color="rgba(255,170,110,.35)"/><stop offset="1" stop-color="rgba(255,170,110,0)"/></radialGradient>`
+      + `<linearGradient id="cbCap" x1="0" x2="1"><stop offset="0" stop-color="#6d5420"/><stop offset=".45" stop-color="#e9cf86"/><stop offset="1" stop-color="#7a5e24"/></linearGradient>`
+      + `</defs></svg>${layer("b")}<div class="cShade"></div>${layer("m")}${drops.filter((d) => !d.front).map(bauble).join("")}${layer("f")}</div>`;
+    const dEls = el.querySelectorAll(".cDrop");
+    drops.forEach((d, i) => { d.els = [dEls[i]]; });
+    touch(el, drops, [], { quiet: true });
+    return el;
+  }
+
   const baseLights = D.lightsEl;
-  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : cfg && cfg.style === "loftSpider" ? spiderEl(w, cfg) : baseLights(w, cfg));
+  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : cfg && cfg.style === "loftSpider" ? spiderEl(w, cfg) : cfg && cfg.style === "cabinSwags" ? cabinEl(w, cfg) : baseLights(w, cfg));
   // the vampire room hangs them under every shelf, lit
   if (D.LOOKS && D.LOOKS.vampire) D.LOOKS.vampire.set.lights = { style: "vampDrapes", colour: "warm", on: true };
   // and the cottage hangs its flower lamps under every shelf, lit
@@ -474,5 +550,6 @@
   if (D.LOOKS && D.LOOKS.starry) D.LOOKS.starry.set.lights = { style: "starCurtain", colour: "warm", on: true };
   // the brick loft: the bamboo pole with cage lamps instead of the old globe string
   if (D.LOOKS && D.LOOKS.loft) D.LOOKS.loft.set.lights = { style: "loftSpider", colour: "warm", on: true };
-  D.LIGHT_SWAP = { forest: { wisteria: "forestCatchers" }, starry: { stars: "starCurtain" }, loft: { globe: "loftSpider", loftCages: "loftSpider" } };
+  if (D.LOOKS && D.LOOKS.cabin) D.LOOKS.cabin.set.lights = { style: "cabinSwags", colour: "warm", on: true };
+  D.LIGHT_SWAP = { forest: { wisteria: "forestCatchers" }, starry: { stars: "starCurtain" }, loft: { globe: "loftSpider", loftCages: "loftSpider" }, cabin: { fairy: "cabinSwags" } };
 })();

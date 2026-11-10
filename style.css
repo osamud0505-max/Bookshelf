@@ -1879,3 +1879,39 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
    cord runs straight into the socket's strain relief; the cord is the stub's own width and neutral black with its left-side sheen */
 .lights.loftSpider .sCord { background: linear-gradient(90deg, #0e0e10 0, #1f1f21 14%, #48484b 30%, #3a3a3c 45%, #262628 70%, #1c1c1e 88%, #0c0c0e 100%); }
 .lights.loftSpider .sCords path { stroke: #232325; stroke-width: 1.8; }
+
+/* v256 cabin (osamu's hallway photo: "only the lights and hung ornaments, overlapping lights and some ornaments here and there"):
+   rows of warm icicle swags at three depths, red glass baubles and red stars on short ribbons. Tap an ornament = switch. */
+.shelf.hasLights[data-lights="cabinSwags"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.shelf[data-lights="cabinSwags"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="cabinSwags"] .pullCord:focus-visible { opacity: 1; }
+.lights.cabinSwags { overflow-x: clip; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.lights.cabinSwags .vIn { position: absolute; inset: 0; }
+.lights.cabinSwags .cDefs { position: absolute; }
+.lights.cabinSwags .cRow { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.lights.cabinSwags .cWire { fill: none; stroke: #1f2a1c; stroke-width: .8; stroke-linecap: round; }
+.lights.cabinSwags .cRowb .cWire { stroke: #1a2117; stroke-width: .6; opacity: .8; }
+.lights.cabinSwags .cOff { fill: #f4ead0; opacity: .55; transition: opacity .6s ease; }
+.lights.cabinSwags.on .cOff { opacity: 1; fill: #fff6dc; }
+.lights.cabinSwags .cRowb .cOff { opacity: .35; }
+.lights.cabinSwags.on .cRowb .cOff { opacity: .8; }
+.lights.cabinSwags .cLit { fill: url(#cbDot); opacity: 0; transition: opacity .6s ease; }
+.lights.cabinSwags.on .cLit { opacity: 1; }
+.lights.cabinSwags .cRowb .cLit { filter: none; }
+.lights.cabinSwags.on .cRowb .cLit { opacity: .7; }
+.lights.cabinSwags.on .cTw { animation: scTw 2.8s ease-in-out infinite alternate; }
+.lights.cabinSwags.on .cTw1 { animation-delay: -.7s; animation-duration: 3.3s; }
+.lights.cabinSwags.on .cTw2 { animation-delay: -1.5s; animation-duration: 2.4s; }
+.lights.cabinSwags.on .cTw3 { animation-delay: -2.1s; animation-duration: 3.8s; }
+.lights.cabinSwags .cShade { position: absolute; left: 0; right: 0; top: 0; height: 40px; pointer-events: none; background: linear-gradient(180deg, rgba(10,6,3,.55), rgba(10,6,3,0)); }
+.lights.cabinSwags .cDrop { position: absolute; will-change: transform; }
+.lights.cabinSwags .cRib { position: absolute; top: 0; width: 1.8px; background: linear-gradient(90deg, #4a0a10, #9c1c26 50%, #4a0a10); }
+.lights.cabinSwags .cOrn { position: absolute; display: block; overflow: visible; filter: drop-shadow(0 2px 2px rgba(0,0,0,.45)); }
+.lights.cabinSwags .cSt { fill: #8e1420; }
+.lights.cabinSwags .cStF0 { fill: #a3172a; }
+.lights.cabinSwags .cStF1 { fill: #6a0a14; }
+.lights.cabinSwags .cSpec { fill: rgba(255,235,225,.55); }
+.lights.cabinSwags .cGl { fill: #fff3d0; opacity: 0; transition: opacity .6s ease; }
+.lights.cabinSwags.on .cGl { opacity: .85; }
+.lights.cabinSwags.on .cSpec { fill: rgba(255,240,210,.8); }
+.lights.cabinSwags .vDrop.yank .cRib { animation: vChainPull 1s ease both; }
