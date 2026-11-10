@@ -1942,3 +1942,9 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.cabinSwags .cSnowTop { display: none; }
 .lights.cabinSwags .cSnow { top: -21px; }
 .lights.cabinSwags .cRib, .lights.cabinSwags .cClear .cRib { width: 1.1px; background: #1c2118; }
+/* v261: each ornament hangs on osamu's painted fairy-light strand (cut from the top, so it comes out from behind the
+   snow), ending in a hook through the ornament's loop. The strands are the lights: lit twin fades in by opacity */
+.lights.cabinSwags .cHang { position: absolute; top: 0; width: 36.3px; background: url(obj/cabin-hanger.webp) center bottom / 36.3px 550.3px no-repeat; }
+.lights.cabinSwags .cHang b { position: absolute; inset: 0; background: url(obj/cabin-hanger-lit.webp) center bottom / 36.3px 550.3px no-repeat; opacity: 0; transition: opacity .6s ease; }
+.lights.cabinSwags.on .cHang b { opacity: 1; }
+.lights.cabinSwags .cDrop { overflow: visible; }

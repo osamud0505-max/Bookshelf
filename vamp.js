@@ -518,7 +518,7 @@
     const bauble = (d, i) => {
       const c = Math.max(d.ww * Math.max(d.o.hx, 1 - d.o.hx), 6) + 2, box = c * 2, src = `obj/${d.o.src}.webp`;
       return `<div class="vDrop cDrop${d.o.red ? "" : " cClear"}" data-n="${i}" style="left:${f1(d.cx - c)}px;top:${f1(d.py)}px;width:${f1(box)}px;height:${f1(d.chain + d.hh)}px;transform-origin:50% 0;--i:${i}">`
-        + `<i class="vChain cRib" style="left:${f1(c - 0.8)}px;height:${f1(d.chain + 2)}px"></i>`
+        + `<i class="cHang" style="left:${f1(c - 19)}px;height:${f1(d.chain + 3)}px"><b></b></i>`
         + `<div class="cOrn" style="left:${f1(c - d.ww * d.o.hx)}px;top:${f1(d.chain)}px;width:${f1(d.ww)}px;height:${f1(d.hh)}px">`
         + `<img class="cDim" src="${src}" alt="" draggable="false" decoding="async"><img class="cOn" src="${src}" alt="" draggable="false" decoding="async"></div></div>`;
     };
