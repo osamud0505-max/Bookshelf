@@ -1498,3 +1498,18 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
 .ornament[data-kind="lipstickLamp"] .ornPool { transition-delay: 0s; }
 .ornament[data-kind="lipstickLamp"].lit .ornPool { transition-delay: 1.8s; }
 @media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"] .lpBullet, .ornament[data-kind="lipstickLamp"] .lpRed { transition-duration: .01s !important; transition-delay: 0s !important; } .ornament[data-kind="lipstickLamp"] .lpShine { animation: none !important; } }
+
+/* v187: shadows that sit, not float. A book's shadow falls back across the floor behind it (from its base to the back of
+   the floor) and spreads a little to each side, instead of spreading out in front of it, with a tight dark line where it meets the floor. */
+.slot::after { display: none; }
+.slot::before { content: ""; position: absolute; pointer-events: none;
+  /* the book's spine stands out towards you in 3D, so its bottom edge shows about 5px below the slot: the contact line sits there */
+  left: 0; right: 0; bottom: -10px; height: calc(var(--top-d) * .5 + 10px); border-radius: 0; filter: blur(.7px);
+  background:
+    linear-gradient(0deg, rgba(0,0,0,0) 0, rgba(0,0,0,0) 3px, rgba(0,0,0,.4) 4.5px, rgba(0,0,0,.6) 5.5px, rgba(0,0,0,.25) 8px, rgba(0,0,0,0) 12px),
+    radial-gradient(ellipse 52% 100% at 50% calc(100% - 5px), rgba(0,0,0,.45), rgba(0,0,0,.18) 60%, rgba(0,0,0,0) 100%);
+}
+.slot.front::before { left: -3%; right: -3%; background:
+    linear-gradient(0deg, rgba(0,0,0,0) 0, rgba(0,0,0,0) 3px, rgba(0,0,0,.45) 4.5px, rgba(0,0,0,.65) 5.5px, rgba(0,0,0,.28) 8px, rgba(0,0,0,0) 12px),
+    radial-gradient(ellipse 52% 100% at 50% calc(100% - 5px), rgba(0,0,0,.5), rgba(0,0,0,.2) 60%, rgba(0,0,0,0) 100%); }
+.slot.lying::before, .addSlot::before { display: none; }

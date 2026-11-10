@@ -431,7 +431,9 @@
 
   // ------------------------------------------------------------------ things on the shelves
   // cosy game art pictures standing on y = 200, the top of the shelf, with a soft contact shadow where they meet it
-  const contact = (g, cx, rx) => `<defs><radialGradient id="${g}cs"><stop offset="0" stop-color="#2a0418" stop-opacity=".55"/><stop offset=".55" stop-color="#2a0418" stop-opacity=".25"/><stop offset="1" stop-color="#2a0418" stop-opacity="0"/></radialGradient></defs><ellipse cx="${cx}" cy="199.2" rx="${rx}" ry="3.2"/>`.replace("<ellipse", `<ellipse fill="url(#${g}cs)"`);
+  const contact = (g, cx, rx) => `<defs><radialGradient id="${g}cs" cx=".5" cy="1" r="1"><stop offset="0" stop-color="#2a0418" stop-opacity=".5"/><stop offset=".5" stop-color="#2a0418" stop-opacity=".22"/><stop offset="1" stop-color="#2a0418" stop-opacity="0"/></radialGradient><radialGradient id="${g}cc"><stop offset="0" stop-color="#1a0210" stop-opacity=".75"/><stop offset=".7" stop-color="#1a0210" stop-opacity=".35"/><stop offset="1" stop-color="#1a0210" stop-opacity="0"/></radialGradient></defs>`
+    + `<path d="M${f1(cx - rx * 1.12)} 200 C${f1(cx - rx * 1.1)} 190 ${f1(cx - rx * 0.8)} 185 ${cx} 185 C${f1(cx + rx * 0.8)} 185 ${f1(cx + rx * 1.1)} 190 ${f1(cx + rx * 1.12)} 200Z" fill="url(#${g}cs)"/>`
+    + `<ellipse cx="${cx}" cy="199.2" rx="${f1(rx * 1.02)}" ry="1.7" fill="url(#${g}cc)"/>`;
   const painted = (label, name, W, H, scale, shadows) => {
     const vw = f1(200 * W / H);
     return { label, scale, vw, still: true, flat: true, img: pic(name),
@@ -447,12 +449,13 @@
   // tube as it turns (where a real lipstick turns), then it lights up; tapping again winds it back down. The bullet only ever moves; nothing is redrawn.
   const LIP_VW = 95.3, LIP_REST = 38.5;
   D.ORNAMENTS.lipstickLamp = {
-    label: "Lipstick lamp", scale: 1.0, startOff: true, vw: LIP_VW, soft: true, flat: true, glow: "rgba(255,70,95,.5)", img: "obj/closet-lipstick-case-cosy.webp",
+    label: "Lipstick lamp", scale: 1.0, startOff: true, vw: LIP_VW, soft: true, flat: true, glow: "rgba(255,70,95,.5)", img: "obj/closet-lipstick-case2-cosy.webp",
     draw: (g) => `<defs><mask id="${g}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-clip.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-turn.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<linearGradient id="${g}s" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d8" stop-opacity=".5"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`
       + contact(g, f1(0.31 * LIP_VW), f1(0.3 * LIP_VW))
-      + `<image href="obj/closet-lipstick-case-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
+      + `<path d="M70.5 181.5 C78 182 84 186.5 88 191.5 C91.5 196 93.5 200 95 206" stroke="#1d1712" stroke-width="2.9" fill="none" stroke-linecap="round"/><path d="M70.5 181.5 C78 182 84 186.5 88 191.5 C91.5 196 93.5 200 95 206" stroke="#3a302a" stroke-width="1.7" fill="none" stroke-linecap="round"/><path d="M75 181.4 C80 182.4 84.5 185.6 87.5 189.5" stroke="#8a7a6a" stroke-width=".5" fill="none" opacity=".7" stroke-linecap="round"/>`
+      + `<image href="obj/closet-lipstick-case2-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       + `<g mask="url(#${g}m)"><g class="lpBullet" style="--rest:${LIP_REST}px"><image class="lpRed" href="obj/closet-lipstick-bullet-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></g></g>`
       + `<g mask="url(#${g}r)"><rect class="lpShine" x="${f1(-0.16 * LIP_VW)}" y="50" width="${f1(0.16 * LIP_VW)}" height="96" fill="url(#${g}s)" style="--run:${f1(0.8 * LIP_VW)}px;mix-blend-mode:screen"/></g>`,
     toggle: (el, out) => {
