@@ -1791,3 +1791,31 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lpFaces i.fL { background: linear-gradient(90deg, rgba(255,170,100,.95) 0, rgba(255,150,90,.5) 18%, rgba(255,140,80,.18) 45%, rgba(255,140,80,0) 75%); }
 .lpFaces i.fR { background: linear-gradient(270deg, rgba(255,170,100,.95) 0, rgba(255,150,90,.5) 18%, rgba(255,140,80,.18) 45%, rgba(255,140,80,0) 75%); }
 .lpShadows i.fl { border-radius: 50%; filter: blur(3px); }
+/* v248 loft: osamu's bamboo pole with cage lamps on jute rope and trailing pothos (Gemini pictures) */
+.shelf.hasLights[data-lights="loftCages"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.shelf[data-lights="loftCages"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="loftCages"] .pullCord:focus-visible { opacity: 1; }
+.lights.loftCages { overflow-x: clip; -webkit-user-select: none; user-select: none; }
+.lights.loftCages .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.lights.loftCages .lPole { position: absolute; pointer-events: none; }
+.lights.loftCages .lPole img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 4px 4px rgba(0,0,0,.4)); -webkit-user-drag: none; }
+.lights.loftCages .vDrop { position: absolute; pointer-events: none; }
+.lights.loftCages .vChain { position: absolute; top: 0; overflow: hidden; transform-origin: 50% 0; }
+.lights.loftCages .vChain img, .lights.loftCages .lVine img { position: absolute; left: 0; display: block; -webkit-user-drag: none; }
+.lights.loftCages .lVine img { width: 100%; }
+.lights.loftCages .vDrop > img { position: absolute; left: 0; width: 100%; -webkit-user-drag: none; }
+/* lit: a warm Edison glow inside the glass, a hot filament, and a wide soft warm light around each lamp (opacity only) */
+.lights.loftCages .lBulb, .lights.loftCages .lFil, .lights.loftCages .vHalo { position: absolute; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
+.lights.loftCages .lBulb { left: 30%; width: 40%; border-radius: 45% 45% 50% 50% / 40% 40% 60% 60%;
+  background: radial-gradient(ellipse 60% 55% at 50% 52%, rgba(255,236,180,1), rgba(255,196,110,.9) 40%, rgba(255,160,70,.55) 75%, rgba(255,140,60,0)); }
+.lights.loftCages .lFil { left: 41%; width: 18%; border-radius: 40%; mix-blend-mode: screen;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255,250,225,1), rgba(255,215,140,.75) 50%, rgba(255,180,90,0)); }
+.lights.loftCages .vHalo { left: 50%; transform: translate(-50%, -50%); border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255,200,125,.55), rgba(255,170,90,.28) 30%, rgba(240,140,70,.11) 60%, rgba(220,120,60,.03) 82%, rgba(220,120,60,0)); }
+.lights.loftCages.on .lBulb, .lights.loftCages.on .lFil { opacity: 1; }
+.lights.loftCages.on .vHalo { opacity: 1; animation: vGlow 5s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -1.3s); }
+.lights.loftCages .vDrop.yank > img, .lights.loftCages .vDrop.yank .lBulb, .lights.loftCages .vDrop.yank .lFil, .lights.loftCages .vDrop.yank .vHalo { animation: vPull 1s ease both; }
+.lights.loftCages.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
+.lights.loftCages .vDrop.yank .vChain { animation: vChainPull 1s ease both; }
+.lights.loftCages .lPole, .lights.loftCages .vDrop { will-change: transform; backface-visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { .lights.loftCages.on .vHalo { animation: none; } .lights.loftCages .vDrop.yank * { animation: none !important; } }
