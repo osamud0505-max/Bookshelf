@@ -452,12 +452,12 @@
       draw: (g) => (FOOT[name] ? `<image href="obj/closet-${name}-shadow${FOOT[name][3] || ""}.png" x="${FOOT[name][0]}" y="0" width="${FOOT[name][1]}" height="${FOOT[name][2]}" preserveAspectRatio="none"/>` : shadows.map(([cx, rx]) => contact(g, f1(cx * vw), f1(rx * vw))).join("")) + `<image href="${pic(name)}" x="0" y="0" width="${vw}" height="200" preserveAspectRatio="none"/>` };
   };
   // v212: osamu's three handbags, one picture with its own painted floor shadow baked in (it runs a few px below the bases)
-  const baked = (label, name, W, Hobj, Htot) => {
+  const baked = (label, name, W, Hobj, Htot, grow = 1) => {
     const vw = f1(200 * W / Hobj), ph = f1(200 * Htot / Hobj);
-    return { label, scale: +(Hobj / 1448).toFixed(3), vw, still: true, flat: true, img: pic(name),
+    return { label, scale: +(grow * Hobj / 1448).toFixed(3), vw, still: true, flat: true, img: pic(name),
       draw: () => `<image href="${pic(name)}" x="0" y="0" width="${vw}" height="${ph}" preserveAspectRatio="none"/>` };
   };
-  D.ORNAMENTS.handbag = baked("Handbags", "handbags3", 1854, 1157, 1177);
+  D.ORNAMENTS.handbag = baked("Handbags", "handbags3", 1854, 1157, 1177, 1.2);   // osamu: "a bit bigger"
   D.ORNAMENTS.pencilCup = painted("Pencil cup & lipstick", "pencilcup-small", 558, 503, 0.55, [[0.43, 0.3], [0.84, 0.16]]);
   D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes2", 1067, 700, 0.74, [[0.5, 0.49]]);
   D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags2", 1198, 700, 0.745, [[0.5, 0.49]]);
