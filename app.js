@@ -842,7 +842,7 @@
   // which lights hang under a shelf: each shelf picks its own in the ✦ menu (kept per look); until then it shows the look's.
   // several can be on at once, e.g. wisteria with fireflies drifting around it
   const NO_SWITCH = ["fireflies", "closetRod"]; // always alive, no cord needed
-  const TALLEST = ["closetRod", "wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
+  const TALLEST = ["closetRod", "vampDrapes", "wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
   function shelfLights(key) {
     const sd = shelfDecor(key), mine = (sd.lightsBy || {})[lookId()], base = state.settings.lights || {};
     const pick = mine || base;
@@ -1414,7 +1414,7 @@
               setShelfLights(key, { styles }); keepOpen(); render();
             }));
             menu.append(lc);
-            if (L.styles.some((k) => !["wisteria", "chinese", "closetRod"].includes(k))) {
+            if (L.styles.some((k) => !["wisteria", "chinese", "closetRod", "vampDrapes"].includes(k))) {
               const cc = h(`<div class="colors small">${Object.entries(D.LIGHT_COLOURS).map(([k, [l, c]]) => `<button class="colorItem" data-v="${k}" aria-pressed="${L.colour === k}"><span class="dot ${L.colour === k ? "on" : ""}" style="background:${c || "conic-gradient(#ff6b6b,#ffd166,#5be3a5,#5cc8f5,#c792ff,#ff6b6b)"};box-shadow:0 0 10px ${c || "#ffd166"}88"></span>${esc(l)}</button>`).join("")}</div>`);
               cc.querySelectorAll("button").forEach((b) => (b.onclick = () => { setShelfLights(key, { colour: b.dataset.v }); keepOpen(); render(); }));
               menu.append(cc);

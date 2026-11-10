@@ -1605,3 +1605,23 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.42); box-shado
 .scroller:has(.ornament[data-kind="lavender"]) { padding-bottom: 44px; margin-bottom: -44px; }
 .stage:has(.ornament[data-kind="lavender"]) { z-index: 4; }
 html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornament .shTint { display: none; }
+
+/* velvet drapes (vamp.js): swags of velvet and lace under the shelf, a ruby drop below each loop */
+.shelf.hasLights[data-lights="vampDrapes"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.lights.vampDrapes .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.lights.vampDrapes .vSwag { position: absolute; pointer-events: none; transform-origin: 50% 2%; }
+.lights.vampDrapes .vSwag img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none;
+  filter: drop-shadow(0 4px 4px rgba(10,0,4,.45)) brightness(.86); transition: filter 1.2s ease; }
+.lights.vampDrapes .vDrop { position: absolute; pointer-events: none; }
+.lights.vampDrapes .vDrop img { position: absolute; left: 0; width: 100%; -webkit-user-drag: none; user-select: none;
+  filter: brightness(.72) saturate(.9) drop-shadow(0 3px 3px rgba(10,0,4,.5)); transition: filter 1s ease; }
+.lights.vampDrapes .vChain { position: absolute; left: calc(50% - .6px); top: 0; width: 1.2px;
+  background: repeating-linear-gradient(180deg, #d9b66a 0 1.6px, #6b4a1c 1.6px 2.6px); opacity: .9; }
+.lights.vampDrapes .vHalo { position: absolute; left: 50%; width: 120px; height: 120px; transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side, rgba(255,40,60,.55), rgba(200,10,40,.22) 45%, transparent 100%);
+  mix-blend-mode: screen; opacity: 0; transition: opacity 1.1s ease; pointer-events: none; }
+.lights.vampDrapes.on .vDrop img { filter: brightness(1.18) saturate(1.25) drop-shadow(0 0 6px rgba(255,40,60,.85)) drop-shadow(0 0 14px rgba(220,10,40,.5)); }
+.lights.vampDrapes.on .vHalo { opacity: 1; animation: vGlow 4.2s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -1.3s); }
+.lights.vampDrapes.on .vSwag img { filter: drop-shadow(0 4px 4px rgba(10,0,4,.45)) brightness(.95); }
+@keyframes vGlow { 0% { opacity: .75; transform: translate(-50%, -50%) scale(.92); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .lights.vampDrapes.on .vHalo { animation: none; } }
