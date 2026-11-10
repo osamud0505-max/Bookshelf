@@ -1541,3 +1541,22 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
    floor (there was bare wall beyond it). The stage is the screen-wide window everything is placed in; clip it sideways only. */
 .stage { overflow-x: clip; overflow-y: visible; }
 .decorBin.ask { pointer-events: auto; cursor: pointer; }
+
+/* v207: sheet lifted above the on-screen keyboard while typing */
+.sheet { transition: bottom .22s ease, max-height .22s ease; }
+@media (max-width: 767px) {
+  .sheet.kb { bottom: var(--kb, 0px); max-height: calc(100dvh - var(--kb, 0px) - 8px); border-radius: 18px; padding-bottom: 0; }
+}
+
+/* v207: lipstick lamp light brighter and moodier: hot pink core, deep magenta falloff, slow breathing */
+.ornament[data-kind="lipstickLamp"] .ornGlow { width: 420px; height: 300px; top: 14%; mix-blend-mode: screen;
+  background: radial-gradient(closest-side, rgba(255,215,225,1), rgba(255,90,140,.85) 16%, rgba(235,20,90,.55) 38%, rgba(150,0,70,.28) 66%, transparent) !important; }
+/* moodier: the wall around the lit lamp sinks into a deep berry shadow, so the light reads warmer and stronger */
+.ornament[data-kind="lipstickLamp"] .ornGlowIn::before { content: ""; position: absolute; left: 50%; top: 30%; width: 760px; height: 520px; transform: translate(-50%, -50%); pointer-events: none;
+  background: radial-gradient(closest-side, transparent 22%, rgba(40,0,25,.32) 60%, transparent); opacity: 0; transition: opacity .6s ease; }
+.ornament[data-kind="lipstickLamp"].lit .ornGlowIn::before { opacity: 1; transition: opacity 1.4s ease 1.8s; }
+.ornament[data-kind="lipstickLamp"].lit .ornGlow { animation: lpBreathe 6s ease-in-out 3s infinite alternate; }
+@keyframes lpBreathe { from { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: .82; transform: translate(-50%, -50%) scale(.94); } }
+.ornament[data-kind="lipstickLamp"] .ornPool { --pc: rgba(255,90,140,.95) !important; width: 220%; height: 16px; }
+.ornament[data-kind="lipstickLamp"].lit .lpRed { filter: brightness(1.5) saturate(1.3) drop-shadow(0 0 6px rgba(255,80,130,.8)); }
+@media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .ornGlow { animation: none; } }

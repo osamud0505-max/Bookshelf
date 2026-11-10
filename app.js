@@ -603,7 +603,7 @@
   }
   // the bin that shows while a decoration is lifted
   const bin = document.createElement("div");
-  bin.className = "decorBin"; bin.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg><span>Drop here to remove</span>`;
+  bin.className = "decorBin"; bin.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg><span>Tap to remove</span>`;
   document.body.append(bin);
   function showBin(on) { bin.classList.toggle("show", on); document.body.classList.toggle("arrangingDecor", on); if (!on) bin.classList.remove("over"); }
   // after a hold the bin stays, so an object can be removed with a tap; a tap anywhere else puts it away
@@ -615,7 +615,7 @@
   function clearBin() {
     if (!binPending) return;
     binPending = null; bin.classList.remove("ask"); showBin(false);
-    setTimeout(() => { if (!binPending) binLabel.textContent = "Drop here to remove"; }, 220);
+    
   }
   bin.addEventListener("click", (e) => { e.stopPropagation(); const f = binPending; clearBin(); if (f) f(); });
   document.addEventListener("pointerdown", (e) => { if (binPending && !bin.contains(e.target)) clearBin(); }, true);
@@ -1052,7 +1052,7 @@
           drag = { o, id, ghost, gx: sx - r.left, gy: sy - r.top, cx: sx, cy: sy, raf: 0, over: false };
           root.classList.add("arranging"); el.classList.add("placeholder");
           if (navigator.vibrate) navigator.vibrate(12);
-          showBin(true);
+          document.body.classList.add("arrangingDecor");   // no drop-to-remove: the bin only offers "Tap to remove" after letting go
           const move = (m) => { if (m.pointerId !== id) return; drag.cx = m.clientX; drag.cy = m.clientY; dragFrame(); };
           const end = (m) => {
             if (m.pointerId !== id) return;
@@ -1088,9 +1088,6 @@
         if (p) idx = mid < (p.L + p.R) / 2 ? p.s : p.e + 1;
       }
       if (idx !== o.idx || top !== o.it.top) { o.idx = idx; o.it.top = top; sortOrns(); }
-      drag.over = binHit(drag.cx, drag.cy);
-      bin.classList.toggle("over", drag.over);
-      drag.ghost.classList.toggle("binning", drag.over);
       layout();
       // it slides along the shelf and never leaves it: only the finger's x moves it, and it stands where it would land
       const y = o.el.getBoundingClientRect().top;
@@ -2041,4 +2038,37 @@
   // Shared helpers for music.js
   window.Shelf = { settings: () => state.settings, books: () => state.books, lookKey: () => state.settings.lookKey || (Object.entries(D.LOOKS).find(([, L]) => L.set.backdrop === state.settings.backdrop && L.set.theme === state.settings.theme) || [""])[0], h, esc, toast, showSheet, closeSheet, closeBtn, spineInk, byId, save, render, undo, redo, undoPair, recentRow, rememberColor };
   document.querySelector(".headerActions").prepend(undoPair("headerUndo"));
+})();
+
+// on-screen keyboard: lift the open sheet so the field being typed in stays above the keyboard (v207).
+// Some in-app viewers lay the keyboard over the page without telling it, so on touch screens we assume it
+// covers the lower 45% when neither the window nor the visual viewport shrank.
+(function () {
+  const coarse = matchMedia("(pointer: coarse)").matches;
+  const vv = window.visualViewport;
+  let baseH = innerHeight, sheet = null, t = 0;
+  const isField = (el) => el && el.matches && el.matches("input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]), textarea, [contenteditable=true]");
+  function apply() {
+    if (!sheet) return;
+    let kb = 0;
+    if (baseH - innerHeight > 80) kb = 0;                        // the window itself shrank: the sheet already sits above the keyboard
+    else if (vv && innerHeight - (vv.height + vv.offsetTop) > 80) kb = innerHeight - (vv.height + vv.offsetTop);
+    else if (coarse) kb = Math.round(innerHeight * 0.45);
+    document.documentElement.style.setProperty("--kb", kb + "px");
+    sheet.classList.toggle("kb", kb > 0);
+    const f = document.activeElement;
+    if (isField(f) && sheet.contains(f)) requestAnimationFrame(() => f.scrollIntoView({ block: "nearest" }));
+  }
+  function drop() { if (sheet) sheet.classList.remove("kb"); sheet = null; document.documentElement.style.removeProperty("--kb"); }
+  document.addEventListener("focusin", (e) => {
+    const s = e.target.closest && e.target.closest(".sheet");
+    if (!s || !isField(e.target) || innerWidth >= 768) return;
+    clearTimeout(t); if (sheet && sheet !== s) drop(); sheet = s; apply(); setTimeout(apply, 350);
+  });
+  document.addEventListener("focusout", () => {
+    clearTimeout(t);
+    t = setTimeout(() => { const f = document.activeElement; if (!(isField(f) && sheet && sheet.contains(f))) drop(); }, 80);
+  });
+  addEventListener("resize", () => { if (!sheet) baseH = innerHeight; else apply(); });
+  if (vv) vv.addEventListener("resize", apply);
 })();
