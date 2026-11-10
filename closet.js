@@ -459,6 +459,7 @@
   };
   D.ORNAMENTS.handbag = baked("Handbags", "handbags3", 1854, 1157, 1177, 1.2);   // osamu: "a bit bigger"
   D.ORNAMENTS.flowerVase = baked("Bouquet vase", "bouquet", 1373, 1606, 1626);
+  D.ORNAMENTS.vanityMirror = baked("Vanity mirror", "mirror", 1083, 1675, 1695);
   D.ORNAMENTS.pencilCup = painted("Pencil cup & lipstick", "pencilcup-small", 558, 503, 0.55, [[0.43, 0.3], [0.84, 0.16]]);
   D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes2", 1067, 700, 0.74, [[0.5, 0.49]]);
   D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags2", 1198, 700, 0.745, [[0.5, 0.49]]);

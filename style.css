@@ -1566,9 +1566,9 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 @media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .ornGlow { animation: none; } }
 
 /* v210/211: the calla candle & lily pens pair stands flush like the other closet pieces, with their own base shadows */
-.ornament[data-kind="callaCandle"], .ornament[data-kind="flowerVase"] { bottom: calc(var(--top-d) * -.42); }
-.ornament:is([data-kind="callaCandle"], [data-kind="flowerVase"])::after { display: none; }
-.ornament:is([data-kind="callaCandle"], [data-kind="flowerVase"]) svg { filter: none; }
+.ornament[data-kind="callaCandle"], .ornament[data-kind="flowerVase"], .ornament[data-kind="vanityMirror"] { bottom: calc(var(--top-d) * -.42); }
+.ornament:is([data-kind="callaCandle"], [data-kind="flowerVase"], [data-kind="vanityMirror"])::after { display: none; }
+.ornament:is([data-kind="callaCandle"], [data-kind="flowerVase"], [data-kind="vanityMirror"]) svg { filter: none; }
 .ornament[data-kind="callaCandle"] .clFlame, .ornament[data-kind="callaCandle"] .clLight { display: none; }
 .ornament[data-kind="callaCandle"].lit .clFlame { display: inline; }
 .ornament[data-kind="callaCandle"].lit .clLight { display: inline; opacity: var(--fi, 1); }
