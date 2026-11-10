@@ -2016,3 +2016,8 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.cabinSwags.switchOn .vDrop:not(.yank) .cOrn { transform-origin: 50% 2px; animation: cJingle 1s ease-out both; animation-delay: calc(var(--o) * .8s); }
 @keyframes cJingle { 0% { rotate: 0deg; } 18% { rotate: 7deg; } 40% { rotate: -5deg; } 62% { rotate: 2.5deg; } 82% { rotate: -1deg; } 100% { rotate: 0deg; } }
 @media (prefers-reduced-motion: reduce) { .lights.cabinSwags.switchOn .cOrn { animation: none; } }
+/* v267 (osamu: unlit, the ornaments were so see-through they vanished against the wood): unlit glass is no longer
+   darkened; it keeps its own colour plus a fine pale rim of reflected room light, so its outline always reads */
+.lights.cabinSwags .cOrn .cDim, .lights.cabinSwags .cRed .cOrn .cDim { opacity: 1;
+  filter: brightness(.82) contrast(1.1) drop-shadow(0 0 .6px rgba(255,248,236,.55)) drop-shadow(0 1px 1.5px rgba(0,0,0,.35)); }
+.lights.cabinSwags .cClear .cOrn .cDim { filter: brightness(1.05) contrast(1.15) drop-shadow(0 0 .7px rgba(255,255,255,.7)) drop-shadow(0 1px 1.5px rgba(0,0,0,.4)); }
