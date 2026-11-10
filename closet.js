@@ -475,7 +475,7 @@
   // tube as it turns (where a real lipstick turns), then it lights up; tapping again winds it back down. The bullet only ever moves; nothing is redrawn.
   const LIP_VW = 95.3, LIP_REST = 38.5;
   D.ORNAMENTS.lipstickLamp = {
-    label: "Lipstick lamp", scale: 1.0, startOff: true, vw: LIP_VW, soft: true, flat: true, glow: "rgba(255,70,95,.5)", img: "obj/closet-lipstick-case2-cosy.webp",
+    label: "Lipstick lamp", scale: 1.0, startOff: true, vw: LIP_VW, soft: true, flat: true, glow: "rgba(255,150,95,.42)", img: "obj/closet-lipstick-case2-cosy.webp",
     draw: (g) => `<defs><mask id="${g}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-clip.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-turn2.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<linearGradient id="${g}s" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d8" stop-opacity=".5"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`
@@ -485,10 +485,10 @@
       + `<g class="lpCast" mask="url(#${g}c)" style="mix-blend-mode:screen"><rect x="0" y="40" width="${LIP_VW}" height="130" fill="url(#${g}cl)"/><rect x="0" y="40" width="${LIP_VW}" height="60" fill="url(#${g}cr)"/></g>`
       + `<g mask="url(#${g}m)"><g class="lpBullet" style="--rest:${LIP_REST}px"><image class="lpRed" href="obj/closet-lipstick-bullet2-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></g></g>`
       // lit: a soft halo that follows the bullet's own shape, and its light falling on the gold case (strongest at the lip, fading down the tube)
-      + `<filter id="${g}h" filterUnits="userSpaceOnUse" x="-25" y="-25" width="${f1(LIP_VW + 50)}" height="160"><feGaussianBlur stdDeviation="3.2"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 .5  0 0 0 0 .66  0 0 0 .95 0"/></filter>`
+      + `<filter id="${g}h" filterUnits="userSpaceOnUse" x="-25" y="-25" width="${f1(LIP_VW + 50)}" height="160"><feGaussianBlur stdDeviation="3.2"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 .58  0 0 0 0 .4  0 0 0 .95 0"/></filter>`
       + `<mask id="${g}c" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200" style="mask-type:alpha"><image href="obj/closet-lipstick-case2-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
-      + `<linearGradient id="${g}cl" gradientUnits="userSpaceOnUse" x1="0" y1="43" x2="0" y2="165"><stop offset="0" stop-color="#ff86ad" stop-opacity=".9"/><stop offset=".1" stop-color="#ff6f9d" stop-opacity=".6"/><stop offset=".28" stop-color="#f05a8c" stop-opacity=".28"/><stop offset=".55" stop-color="#d8487a" stop-opacity=".1"/><stop offset="1" stop-color="#c03a6c" stop-opacity="0"/></linearGradient>`
-      + `<radialGradient id="${g}cr" gradientUnits="userSpaceOnUse" cx="36.6" cy="40" r="40"><stop offset="0" stop-color="#ffd0dc" stop-opacity=".8"/><stop offset=".35" stop-color="#ff7aa5" stop-opacity=".2"/><stop offset="1" stop-color="#ff7aa5" stop-opacity="0"/></radialGradient>`
+      + `<linearGradient id="${g}cl" gradientUnits="userSpaceOnUse" x1="0" y1="43" x2="0" y2="165"><stop offset="0" stop-color="#ffb488" stop-opacity=".9"/><stop offset=".1" stop-color="#ff9a76" stop-opacity=".6"/><stop offset=".28" stop-color="#f08062" stop-opacity=".28"/><stop offset=".55" stop-color="#d86a58" stop-opacity=".1"/><stop offset="1" stop-color="#c05a50" stop-opacity="0"/></linearGradient>`
+      + `<radialGradient id="${g}cr" gradientUnits="userSpaceOnUse" cx="36.6" cy="40" r="40"><stop offset="0" stop-color="#ffe2c8" stop-opacity=".8"/><stop offset=".35" stop-color="#ffa078" stop-opacity=".2"/><stop offset="1" stop-color="#ffa078" stop-opacity="0"/></radialGradient>`
       + `<g mask="url(#${g}r)"><rect class="lpShine" x="${f1(-0.16 * LIP_VW)}" y="44" width="${f1(0.16 * LIP_VW)}" height="104" fill="url(#${g}s)" style="--run:${f1(0.8 * LIP_VW)}px;mix-blend-mode:screen"/></g>`,
     toggle: (el, out) => {
       el.classList.remove("twistUp", "twistDown");
