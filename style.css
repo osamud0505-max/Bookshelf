@@ -1944,7 +1944,27 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.cabinSwags .cRib, .lights.cabinSwags .cClear .cRib { width: 1.1px; background: #1c2118; }
 /* v261: each ornament hangs on osamu's painted fairy-light strand (cut from the top, so it comes out from behind the
    snow), ending in a hook through the ornament's loop. The strands are the lights: lit twin fades in by opacity */
-.lights.cabinSwags .cHang { position: absolute; top: 0; width: 36.3px; background: url(obj/cabin-hanger.webp) center bottom / 36.3px 550.3px no-repeat; }
-.lights.cabinSwags .cHang b { position: absolute; inset: 0; background: url(obj/cabin-hanger-lit.webp) center bottom / 36.3px 550.3px no-repeat; opacity: 0; transition: opacity .6s ease; }
-.lights.cabinSwags.on .cHang b { opacity: 1; }
+
+
+
 .lights.cabinSwags .cDrop { overflow: visible; }
+
+/* v263 cabin (osamu): ribbon/chain hangers, more ornaments that are themselves the lights, and a snowy shelf */
+.lights.cabinSwags .cChain { position: absolute; top: 0; width: 3px; background: url(obj/cabin-chain.webp) center bottom / 3px 275.3px no-repeat; }
+.lights.cabinSwags .cRibbon { position: absolute; top: 0; width: 3.33px; background: url(obj/cabin-ribbon.webp) center bottom / 3.33px 106.7px repeat-y; }
+.lights.cabinSwags .cBow { position: absolute; width: 18px; height: 16.7px; background: url(obj/cabin-bow.webp) center / 100% 100% no-repeat; z-index: 1; }
+.lights.cabinSwags .cHalo { position: absolute; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; opacity: 0; transition: opacity .6s ease;
+  background: radial-gradient(closest-side, rgba(255,205,135,.42), rgba(255,180,110,.16) 50%, rgba(255,170,100,0)); }
+.lights.cabinSwags .cRed .cHalo { background: radial-gradient(closest-side, rgba(255,120,90,.42), rgba(230,70,60,.15) 50%, rgba(200,40,40,0)); }
+.lights.cabinSwags.on .cHalo { opacity: 1; }
+.lights.cabinSwags .cIn { position: absolute; inset: 0; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; mix-blend-mode: screen; opacity: 0; transition: opacity .6s ease;
+  background: radial-gradient(ellipse 48% 42% at 50% 58%, rgba(255,226,170,.85), rgba(255,190,120,.35) 55%, rgba(255,170,100,0)); }
+.lights.cabinSwags .cRed .cIn { background: radial-gradient(ellipse 48% 42% at 50% 58%, rgba(255,170,120,.8), rgba(255,90,70,.35) 55%, rgba(255,60,50,0)); }
+.lights.cabinSwags.on .cIn { opacity: 1; }
+.lights.cabinSwags .cDrop .cOrn { isolation: isolate; }
+/* the shelf itself is snow: the top face and the front take osamu's snow texture, lighter at the front edge */
+.shelf[data-lights="cabinSwags"] .track::before { background: linear-gradient(0deg, rgba(255,255,255,.35) 0, rgba(255,255,255,.12) 3px, rgba(255,255,255,0) 40%, rgba(90,110,140,.12) 80%, rgba(60,75,100,.28) 100%), url(obj/cabin-snow-tex.webp) 0 0 / 220px 220px; }
+.shelf[data-lights="cabinSwags"] .plank { background: url(obj/cabin-snow-tex.webp) 0 0 / 220px 220px; }
+.shelf[data-lights="cabinSwags"] .plank::after { display: none; }
+.lights.cabinSwags .cRed .cOrn { filter: none; }
+.lights.cabinSwags .cRed .cOrn .cDim { filter: brightness(.6) saturate(.9); opacity: .9; }

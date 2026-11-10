@@ -498,29 +498,41 @@
     // ornaments (osamu's Gemini paintings): red baubles and stars on red ribbons, clear acrylic icicles and shapes on
     // fine clear threads, mixed here and there. h = height in px on screen, hx = where the loop sits across the picture
     const ORN = {
-      gloss: { src: "cabin-red-gloss", ar: 0.829, h: 25, hx: 0.486 }, matte: { src: "cabin-red-swirl", ar: 0.829, h: 25, hx: 0.486 },
-      star: { src: "cabin-red-star", ar: 0.894, h: 28, hx: 0.503 },
-      snow: { src: "cabin-snow", ar: 0.825, h: 30, hx: 0.497 }, tree: { src: "cabin-tree", ar: 0.635, h: 31, hx: 0.5 }, deer: { src: "cabin-deer", ar: 0.635, h: 31, hx: 0.437 },
-      twist: { src: "cabin-ice-twist", ar: 0.2, h: 50, hx: 0.548 }, drop: { src: "cabin-ice-drop", ar: 0.296, h: 46, hx: 0.448 },
-      ice: { src: "cabin-ice-plain", ar: 0.146, h: 48, hx: 0.434 }, bead: { src: "cabin-ice-bead", ar: 0.215, h: 46, hx: 0.455 },
+      gloss: { src: "cabin-red-gloss", ar: 0.829, h: 25, hx: 0.486, red: 1 }, swirl: { src: "cabin-red-swirl", ar: 0.829, h: 25, hx: 0.486, red: 1 },
+      star: { src: "cabin-red-star", ar: 0.894, h: 27, hx: 0.503, red: 1 }, rheart: { src: "cabin-red-heart", ar: 0.947, h: 23, hx: 0.5, red: 1 },
+      spire: { src: "cabin-red-spire", ar: 0.28, h: 44, hx: 0.491, red: 1 }, ribbed: { src: "cabin-red-ribbed", ar: 0.806, h: 25, hx: 0.5, red: 1 },
+      ronion: { src: "cabin-red-onion", ar: 0.606, h: 30, hx: 0.495, red: 1 },
+      snow: { src: "cabin-snow", ar: 0.825, h: 28, hx: 0.497 }, tree: { src: "cabin-tree", ar: 0.635, h: 29, hx: 0.5 }, deer: { src: "cabin-deer", ar: 0.635, h: 29, hx: 0.437 },
+      twist: { src: "cabin-ice-twist", ar: 0.2, h: 46, hx: 0.548 }, drop: { src: "cabin-ice-drop", ar: 0.296, h: 42, hx: 0.448 },
+      ice: { src: "cabin-ice-plain", ar: 0.146, h: 44, hx: 0.434 }, bead: { src: "cabin-ice-bead", ar: 0.215, h: 42, hx: 0.455 },
+      bell: { src: "cabin-clear-bell", ar: 0.818, h: 24, hx: 0.496 }, cheart: { src: "cabin-clear-heart", ar: 0.988, h: 23, hx: 0.497 },
+      cone: { src: "cabin-clear-cone", ar: 0.571, h: 29, hx: 0.49 }, conion: { src: "cabin-clear-onion", ar: 0.505, h: 36, hx: 0.45 },
     };
-    const CYCLE = ["gloss", "twist", "snow", "matte", "drop", "star", "ice", "gloss", "tree", "bead", "matte", "deer", "twist", "star"];
-    // v260 (osamu): no drawn light strands; bigger ornaments, each on its own hanger from behind the snow, at mixed lengths
-    const nOrn = Math.max(4, Math.round(w / 430 * 7)), drops = [], BIG = 1.6;
+    // red and clear take turns; shapes are spread so the same one rarely sits close to itself
+    const CYCLE = ["gloss", "bell", "spire", "snow", "rheart", "twist", "ribbed", "cone", "star", "drop", "ronion", "cheart", "swirl", "deer",
+      "spire", "conion", "gloss", "tree", "rheart", "ice", "ribbed", "bead", "star", "bell", "swirl", "cheart", "ronion", "cone", "gloss", "snow"];
+    // v263 (osamu): more ornaments, each on a thin red satin ribbon tied in a bow or a fine gold chain; the ornaments are
+    // the lights, glowing warm from inside when switched on
+    const nOrn = Math.max(5, Math.round(w / 430 * 10)), drops = [], BIG = 1.6;
+    const LENS = [96, 150, 120, 176, 106, 140, 160, 112, 132, 168];
     maxY = 0;
     for (let i = 0; i < nOrn; i++) {
-      const x = (i + 0.5) / nOrn * w + (R() - 0.5) * (w / nOrn) * 0.35;
+      const x = (i + 0.5) / nOrn * w + (R() - 0.5) * (w / nOrn) * 0.3;
       const o = ORN[CYCLE[(i + Math.floor(w / 97)) % CYCLE.length]], hh = o.h * BIG * (0.9 + R() * 0.2), ww = hh * o.ar;
-      const py = -6, rib = [104, 142, 118, 152, 110, 134, 124][i % 7] * (0.9 + R() * 0.2);
-      drops.push({ cx: x, py, chain: rib, top: py + rib, dh: hh, hw: Math.max(12, ww * 0.6), len: rib + hh * 0.6, th: 0, om: 0, els: [], o, hh, ww });
+      const py = -6, rib = LENS[i % LENS.length] * (0.92 + R() * 0.16);
+      drops.push({ cx: x, py, chain: rib, top: py + rib, dh: hh, hw: Math.max(12, ww * 0.6), len: rib + hh * 0.6, th: 0, om: 0, els: [], o, hh, ww, gold: i % 3 === 1 });
       maxY = Math.max(maxY, py + rib + hh);
     }
     const bauble = (d, i) => {
-      const c = Math.max(d.ww * Math.max(d.o.hx, 1 - d.o.hx), 6) + 2, box = c * 2, src = `obj/${d.o.src}.webp`;
-      return `<div class="vDrop cDrop${d.o.red ? "" : " cClear"}" data-n="${i}" style="left:${f1(d.cx - c)}px;top:${f1(d.py)}px;width:${f1(box)}px;height:${f1(d.chain + d.hh)}px;transform-origin:50% 0;--i:${i}">`
-        + `<i class="cHang" style="left:${f1(c - 19)}px;height:${f1(d.chain + 3)}px"><b></b></i>`
+      const c = Math.max(d.ww * Math.max(d.o.hx, 1 - d.o.hx), 9) + 2, box = c * 2, src = `obj/${d.o.src}.webp`;
+      const hang = d.gold
+        ? `<i class="cChain" style="left:${f1(c - 1.5)}px;height:${f1(d.chain + 2)}px"></i>`
+        : `<i class="cRibbon" style="left:${f1(c - 1.67)}px;height:${f1(d.chain - 3)}px"></i><i class="cBow" style="left:${f1(c - 9)}px;top:${f1(d.chain - 10)}px"></i>`;
+      return `<div class="vDrop cDrop${d.o.red ? " cRed" : " cClear"}" data-n="${i}" style="left:${f1(d.cx - c)}px;top:${f1(d.py)}px;width:${f1(box)}px;height:${f1(d.chain + d.hh)}px;transform-origin:50% 0;--i:${i}">`
+        + `<i class="cHalo" style="top:${f1(d.chain + d.hh * 0.55)}px;width:${f1(d.ww * 4)}px;height:${f1(d.hh * 3)}px"></i>${hang}`
         + `<div class="cOrn" style="left:${f1(c - d.ww * d.o.hx)}px;top:${f1(d.chain)}px;width:${f1(d.ww)}px;height:${f1(d.hh)}px">`
-        + `<img class="cDim" src="${src}" alt="" draggable="false" decoding="async"><img class="cOn" src="${src}" alt="" draggable="false" decoding="async"></div></div>`;
+        + `<img class="cDim" src="${src}" alt="" draggable="false" decoding="async"><img class="cOn" src="${src}" alt="" draggable="false" decoding="async">`
+        + `<i class="cIn" style="-webkit-mask-image:url(${src});mask-image:url(${src})"></i></div></div>`;
     };
     const H = Math.ceil(maxY + 10);
     const el = document.createElement("div");
