@@ -1577,3 +1577,14 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 .ornament[data-kind="callaCandle"].lit .ornGlow { animation: none; opacity: var(--fi, 1); }
 .ornament[data-kind="callaCandle"] .ornPool { display: none; }
 .ornament[data-kind="callaCandle"] .clSmoke { stroke-width: 1.2; }
+
+/* v217: with the keyboard up, the add-book panel drops what isn't needed for the field being typed in, so it all fits */
+@media (max-width: 767px) {
+  .sheet.kb .sheetBody.padded { gap: 10px; padding-top: 14px; padding-bottom: 14px; }
+  .sheet.kb .sheetBody > div:first-child .hint { display: none; }
+  .sheet.kb[data-kbf="search"] .sheetBody > label.btn, .sheet.kb[data-kbf="search"] .sheetBody > details,
+  .sheet.kb[data-kbf="search"] .sheetBody > label.field { display: none; }
+  .sheet.kb[data-kbf="manual"] .sheetBody > .row, .sheet.kb[data-kbf="manual"] .sheetBody > .results,
+  .sheet.kb[data-kbf="manual"] .sheetBody > label.btn, .sheet.kb[data-kbf="manual"] details > summary { display: none; }
+  .sheet.kb[data-kbf="manual"] details .field { margin-top: 0 !important; }
+}

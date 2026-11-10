@@ -2046,20 +2046,24 @@
 (function () {
   const coarse = matchMedia("(pointer: coarse)").matches;
   const vv = window.visualViewport;
-  let baseH = innerHeight, sheet = null, t = 0;
+  let baseH = innerHeight, sheet = null, t = 0, vvSeen = false, rsSeen = false;   // has this viewer ever told us about the keyboard?
   const isField = (el) => el && el.matches && el.matches("input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]), textarea, [contenteditable=true]");
   function apply() {
     if (!sheet) return;
     let kb = 0;
-    if (baseH - innerHeight > 80) kb = 0;                        // the window itself shrank: the sheet already sits above the keyboard
-    else if (vv && innerHeight - (vv.height + vv.offsetTop) > 80) kb = innerHeight - (vv.height + vv.offsetTop);
-    else if (coarse) kb = Math.round(innerHeight * 0.45);
+    const vk = vv ? innerHeight - (vv.height + vv.offsetTop) : 0;
+    if (baseH - innerHeight > 80) { kb = 0; rsSeen = true; }     // the window itself shrank: the sheet already sits above the keyboard
+    else if (vk > 80) { kb = vk; vvSeen = true; }
+    else if (coarse && !vvSeen && !rsSeen) kb = Math.round(innerHeight * 0.42);   // only guess when the viewer never reports the keyboard
+    // v217: while typing, keep only what that field needs so the panel fits above the keyboard without scrolling
+    const ff = document.activeElement;
+    sheet.dataset.kbf = kb > 0 && ff && sheet.contains(ff) ? (ff.id === "mTitle" || ff.id === "mAuthor" ? "manual" : ff.id === "q" ? "search" : "other") : "";
     document.documentElement.style.setProperty("--kb", kb + "px");
     sheet.classList.toggle("kb", kb > 0);
     const f = document.activeElement;
     if (isField(f) && sheet.contains(f)) requestAnimationFrame(() => f.scrollIntoView({ block: "nearest" }));
   }
-  function drop() { if (sheet) sheet.classList.remove("kb"); sheet = null; document.documentElement.style.removeProperty("--kb"); }
+  function drop() { if (sheet) { sheet.classList.remove("kb"); sheet.dataset.kbf = ""; } sheet = null; document.documentElement.style.removeProperty("--kb"); }
   document.addEventListener("focusin", (e) => {
     const s = e.target.closest && e.target.closest(".sheet");
     if (!s || !isField(e.target) || innerWidth >= 768) return;
