@@ -1852,3 +1852,11 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 /* the hooks sit up under the board, lost in the shelf's shadow (osamu) */
 .lights.loftSpider .sShade { position: absolute; left: 0; right: 0; top: 0; height: 70px; pointer-events: none;
   background: linear-gradient(180deg, rgba(10,6,4,.72) 0, rgba(10,6,4,.45) 14px, rgba(10,6,4,.2) 34px, rgba(10,6,4,.06) 54px, rgba(10,6,4,0) 70px); }
+/* v252: osamu's painted bulbs and cord; the lit twin fades in over the unlit one (opacity only) */
+.lights.loftSpider .sBulb { position: absolute; }
+.lights.loftSpider .sBulb img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; -webkit-user-drag: none; }
+.lights.loftSpider .sBulb .sLit { opacity: 0; transition: opacity .6s ease; }
+.lights.loftSpider.on .sBulb .sLit { opacity: 1; }
+.lights.loftSpider .sCord { width: 2.6px; background: url(obj/loft-cord.webp) center top / 100% auto repeat-y; }
+.lights.loftSpider .sCords path { stroke: #1b1a19; stroke-width: 2.3; }
+.lights.loftSpider .sCordsHi path { fill: none; stroke: rgba(255,255,255,.13); stroke-width: .55; transform: translate(-.5px, -.4px); }
