@@ -1545,7 +1545,10 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 /* v207: sheet lifted above the on-screen keyboard while typing */
 .sheet { transition: bottom .22s ease, max-height .22s ease; }
 @media (max-width: 767px) {
-  .sheet.kb { bottom: var(--kb, 0px); max-height: calc(100dvh - var(--kb, 0px) - 8px); border-radius: 18px; padding-bottom: 0; }
+  /* v218: osamu wants the panel BIG while typing: it fills the screen, and its own bottom padding (the keyboard's height)
+     lets the field being typed in and the search results scroll up above the keyboard */
+  .sheet.kb { top: 0; bottom: 0; max-height: none; border-radius: 0; padding-bottom: 0; }
+  .sheet.kb > .sheetBody { padding-bottom: calc(var(--kb, 0px) + 24px); }
 }
 
 /* v207: lipstick lamp light brighter and moodier: hot pink core, deep magenta falloff, slow breathing */
@@ -1577,14 +1580,3 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 .ornament[data-kind="callaCandle"].lit .ornGlow { animation: none; opacity: var(--fi, 1); }
 .ornament[data-kind="callaCandle"] .ornPool { display: none; }
 .ornament[data-kind="callaCandle"] .clSmoke { stroke-width: 1.2; }
-
-/* v217: with the keyboard up, the add-book panel drops what isn't needed for the field being typed in, so it all fits */
-@media (max-width: 767px) {
-  .sheet.kb .sheetBody.padded { gap: 10px; padding-top: 14px; padding-bottom: 14px; }
-  .sheet.kb .sheetBody > div:first-child .hint { display: none; }
-  .sheet.kb[data-kbf="search"] .sheetBody > label.btn, .sheet.kb[data-kbf="search"] .sheetBody > details,
-  .sheet.kb[data-kbf="search"] .sheetBody > label.field { display: none; }
-  .sheet.kb[data-kbf="manual"] .sheetBody > .row, .sheet.kb[data-kbf="manual"] .sheetBody > .results,
-  .sheet.kb[data-kbf="manual"] .sheetBody > label.btn, .sheet.kb[data-kbf="manual"] details > summary { display: none; }
-  .sheet.kb[data-kbf="manual"] details .field { margin-top: 0 !important; }
-}
