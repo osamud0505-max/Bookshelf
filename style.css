@@ -1596,3 +1596,7 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 }
 body.sheetOpen #backdrop *, body.sheetOpen #backdrop *::before, body.sheetOpen #backdrop *::after { animation-play-state: paused !important; }
 @media (prefers-reduced-motion: reduce) { .sheet, .sheet.closing, .scrim, .scrim.closing { animation-duration: .01s !important; } }
+
+/* v221: book shadows lighter too, the same ~.42 shade as the objects (osamu) */
+.slot::before { background: rgba(0,0,0,.42); box-shadow: 0 1px 6px 3px rgba(0,0,0,.22); }
+html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.42); box-shadow: 0 1px 6px 3px rgba(28,0,16,.22); }
