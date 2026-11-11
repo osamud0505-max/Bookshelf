@@ -203,7 +203,8 @@
     const tint = opts.tint || "#000000";
     const floorMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.42 });
     const wallMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.3 });
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; floor.visible = false; // v292: off. The painted floors are steeper than the 3D view, so the books' real floor shadow showed as a dark strip along the back of the shelf (osamu); the soft contact shadows ground the books instead
+    scene.add(floor);
     const wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), wallMat); wall.receiveShadow = true; scene.add(wall);
     const unitPlane = new THREE.PlaneGeometry(1, 1);
     const contactMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.3), transparent: true, opacity: 0.8, depthWrite: false, toneMapped: false });
