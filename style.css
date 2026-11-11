@@ -2087,3 +2087,13 @@ html[data-bdk="closet"] .wsB { background: rgba(28,0,16,.62); }
 @media (min-width: 560px) { .wsB { filter: blur(6px); } }
 /* a lying book's cover faces up into the light, so it is not shaded like a cover turned away from you */
 .slot.lying .fShade { opacity: .18; }
+
+/* v277: books shade each other. The shadow of the book on the left lies over this book's left side, below that book's height; in a
+   pile, along the top edge of each book that has another lying on it. */
+.nbSh { position: absolute; left: 0; bottom: 0; width: calc(var(--shelf-h) * .085); z-index: 2; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,.5), rgba(0,0,0,.22) 45%, transparent);
+  -webkit-mask: linear-gradient(180deg, transparent, #000 14px); mask: linear-gradient(180deg, transparent, #000 14px); }
+.slot.lying .nbSh { left: auto; right: 0; top: 0 !important; width: calc(var(--shelf-h) * .05); -webkit-mask: none; mask: none;
+  background: linear-gradient(270deg, rgba(0,0,0,.55), transparent); }
+html[data-bdk="closet"] .nbSh { background: linear-gradient(90deg, rgba(28,0,16,.5), rgba(28,0,16,.22) 45%, transparent); }
+html[data-bdk="closet"] .slot.lying .nbSh { background: linear-gradient(270deg, rgba(28,0,16,.55), transparent); }

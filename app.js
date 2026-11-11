@@ -1093,7 +1093,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       for (let i = 0; i <= count + 1; i++) { if (lyingAt(i - 1)) continue; const s = h(`<span class="snap"></span>`); s.style.left = i * STEP + "px"; track.prepend(s); }
       books.forEach((b, i) => {
         const node = bookEl(b, H); bookNodes[i] = node;
-        slots[i].replaceChildren(node);
+        slots[i].replaceChildren(node, h(`<span class="nbSh" aria-hidden="true"></span>`));
         slots[i].style.height = dims(b, H).h + "px";
         slots[i].setAttribute("aria-label", b.title);
       });
@@ -1419,6 +1419,19 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           slot.classList.remove("lying");
         }
         if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", 1 - open);
+        // v277: the book on the left throws its shadow onto this one too, on its left side and only below that book's height
+        // (a little lower, as the light comes from above); in a pile each book shades the one under it along the seam
+        const nb = slot.querySelector(".nbSh");
+        if (nb && dm[i]) {
+          let a = 0, top = 0;
+          if (groupOf.has(i)) { const g = groupOf.get(i); a = i < g.end ? (1 - open) * (1 - opens[i + 1]) : 0; }
+          else if (i > 0 && dm[i - 1]) {
+            const j = i - 1, hL = groupOf.has(j) ? groupHeight(groupOf.get(j)) : poses[j] === "lean" ? dm[j].h * Math.cos(leanA(j) * (1 - opens[j])) : dm[j].h;
+            top = Math.max(0, dm[i].h - (hL - shOff().y));
+            a = top < dm[i].h - 4 ? (1 - open) * (1 - opens[j]) : 0;
+          }
+          nb.style.top = top.toFixed(1) + "px"; nb.style.opacity = a.toFixed(2);
+        }
         if (sh && dm[i]) {
           const so = shOff();
           sh.style.width = base[i] + "px"; sh.style.height = dm[i].h + "px";
