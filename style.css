@@ -2071,3 +2071,19 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
     linear-gradient(180deg, var(--spine) 0 var(--bd), transparent var(--bd) calc(100% - var(--bd)), var(--spine) calc(100% - var(--bd))),
     linear-gradient(180deg, rgba(0,0,0,.1), transparent 30%, transparent 70%, rgba(0,0,0,.1)),
     repeating-linear-gradient(180deg, #f1e8d4 0 1px, #ddd0b4 1px 2px); }
+
+/* v276: soft shadows on the wall, like osamu's reference: light from the front and upper left, so each book and object throws its
+   silhouette a little right and down onto the wall, darkest near the floor and fading as it rises. Cut off where floor meets wall. */
+.wallSh { position: absolute; left: 0; right: 0; top: -80px; bottom: calc(var(--top-d) * .5); overflow: hidden; pointer-events: none; z-index: 0; }
+.wsIn { position: absolute; left: 0; right: 0; bottom: calc(var(--top-d) * -.5); height: 0; }
+.wsB { position: absolute; left: 0; bottom: 0; border-radius: 3px; background: rgba(0,0,0,.62); filter: blur(5px);
+  -webkit-mask: linear-gradient(0deg, #000 0, #000 20%, rgba(0,0,0,.45) 100%); mask: linear-gradient(0deg, #000 0, #000 20%, rgba(0,0,0,.45) 100%); }
+.wsB.lying { -webkit-mask: none; mask: none; background: rgba(0,0,0,.42); }
+.wsO.ornament { z-index: 0; cursor: default; filter: brightness(0) blur(4px); opacity: .55; }
+.wsO.ornament::after, .wsO.ornament::before { display: none !important; }
+.wsO.ornament svg, .wsO.ornament img { filter: none !important; }
+.wsO .ornGlow, .wsO .ornPool, .wsO .ornFlame { display: none !important; }
+html[data-bdk="closet"] .wsB { background: rgba(28,0,16,.62); }
+@media (min-width: 560px) { .wsB { filter: blur(6px); } }
+/* a lying book's cover faces up into the light, so it is not shaded like a cover turned away from you */
+.slot.lying .fShade { opacity: .18; }
