@@ -161,6 +161,16 @@
     return t;
   }
 
+  // a soft-edged dark patch: solid in the middle, fading out over the outer `edge` of each side
+  const softCache = new Map();
+  function softTex(edge) {
+    if (softCache.has(edge)) return softCache.get(edge);
+    const N = 128, c = document.createElement("canvas"); c.width = c.height = N; const g = c.getContext("2d"), img = g.createImageData(N, N);
+    const f = (u) => { const t = Math.min(u, 1 - u) / edge; return t >= 1 ? 1 : t <= 0 ? 0 : t * t * (3 - 2 * t); };
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const a = f((x + 0.5) / N) * f((y + 0.5) / N); const k = (y * N + x) * 4; img.data[k] = img.data[k + 1] = img.data[k + 2] = 255; img.data[k + 3] = Math.round(a * 255); }
+    g.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c); softCache.set(edge, t); return t;
+  }
   let sharedR = null;
   function shared() {
     if (sharedR && !sharedR.getContext().isContextLost()) return sharedR;
@@ -195,6 +205,9 @@
     const wallMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.3 });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
     const wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), wallMat); wall.receiveShadow = true; scene.add(wall);
+    const unitPlane = new THREE.PlaneGeometry(1, 1);
+    const contactMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.3), transparent: true, opacity: 0.8, depthWrite: false, toneMapped: false });
+    const haloMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.2), transparent: true, opacity: 0.3, depthWrite: false, toneMapped: false });
     const books = new Map(); // id -> { node, sig }
     let dead = false, W = 0, Hc = 0, top = 0, bottom = 0, frameDirty = false;
     const inst = {
@@ -238,6 +251,12 @@
           const turn = 1 - it.open, q = (turn * Math.PI) / 2;
           rec.node.rotation.set(0, -it.open * Math.PI / 2, 0);
           rec.node.position.set(it.base / 2, 0, -(it.w / 2 * Math.sin(q) + it.d / 2 * Math.cos(q)) - (it.rec || 0) * H * 0.03 * turn);
+          // where the book is, flat on the screen: the box its four corners make, for the contact shadow and the wall halo
+          { const xs = [], ys = [];
+            for (const [px, pu] of [[0, 0], [it.base, 0], [0, h], [it.base, h]]) { xs.push(a * px - c * pu + X0); ys.push(-b * px + d2 * pu + Y0); }
+            const lean = Math.abs(b) > 0.02 && Math.abs(b) < 0.98;
+            rec.box = { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys), lean, foot: xs[ys.indexOf(Math.min(...ys))],
+              depth: it.w * Math.sin(q) + it.d * Math.cos(q), zc: rec.node.position.z, lying: Math.abs(b) >= 0.98 }; }
           const cover = rec.node.userData.cover;
           if (cover) {
             const m = cover.material, want = m.userData.ct && m.userData.ct.userData.ok ? m.userData.ct : m.userData.plain;
@@ -245,11 +264,28 @@
             cover.visible = it.open > 0.02;
           }
         }
-        for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); books.delete(id); }
+        for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
         const zw = -(maxW + 6);
         floor.scale.set(viewW + 400, -zw + 400, 1); floor.position.set(viewW / 2, 0, zw + (-zw + 400) / 2);
         wall.scale.set(viewW + 400, stageH + top + 200, 1); wall.position.set(viewW / 2, (stageH + top + 200) / 2, zw);
+        // soft grounding the single light can't give: a dark contact shadow on the floor right round each book's foot, and a
+        // soft halo on the wall close round its silhouette (osamu's white-shelf reference), a little to the right
+        for (const rec of books.values()) {
+          if (!rec.soft) { rec.soft = [new THREE.Mesh(unitPlane, contactMat), new THREE.Mesh(unitPlane, haloMat)]; rec.soft[0].renderOrder = 1; rec.soft[1].renderOrder = 1; scene.add(...rec.soft); }
+          const [ct, hl] = rec.soft, bx = rec.box, vis = rec.outer.visible && bx;
+          ct.visible = hl.visible = !!vis;
+          if (!vis) continue;
+          const wx = bx.x1 - bx.x0, blur = H * 0.05;
+          if (bx.y0 < 4) {
+            const cw = bx.lean ? Math.max(8, wx * 0.35) : wx, cx = bx.lean ? bx.foot : (bx.x0 + bx.x1) / 2;
+            const dz = bx.lying ? Math.max(8, bx.depth) : bx.depth;
+            ct.visible = true; ct.rotation.set(-Math.PI / 2, 0, 0);
+            ct.scale.set(cw + blur * 1.4, dz + H * 0.3, 1); ct.position.set(cx + H * 0.008, 0.4, (bx.lying ? -dz / 2 : bx.zc) + H * 0.1); // reaching out in front of the foot, where you can see it
+          } else ct.visible = false;
+          hl.scale.set(wx + blur * 2.4, bx.y1 - bx.y0 + blur * 2.4, 1);
+          hl.position.set((bx.x0 + bx.x1) / 2 + H * 0.025, (bx.y0 + bx.y1) / 2 - blur * 0.2, zw + 0.5);
+        }
         // the light: from the front and upper left
         key.position.set(viewW / 2 - H * 1.5, H * 3, H * 2.6); key.target.position.set(viewW / 2, H * 0.4, zw / 2); key.target.updateMatrixWorld();
         const sc = key.shadow.camera, span = viewW / 2 + H * 1.2;
