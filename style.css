@@ -2140,3 +2140,21 @@ html[data-bdk="closet"] .wallSh::before { background: linear-gradient(0deg, rgba
   opacity: var(--rec, 0);
   background: linear-gradient(90deg, rgba(0,0,0,.42), rgba(0,0,0,.14) 28%, rgba(0,0,0,.1) 60%, rgba(0,0,0,.36)); }
 .slot.lying .depSh { display: none; }
+
+/* v282, from osamu's close-up: all books stand on the same line. A book set further back is in the shade of the books either side
+   (evenly darker), every join between two books is a thin dark crevice, and the wall darkens in a soft halo close around the
+   books' tops rather than in a shadow thrown off to one side. */
+.depSh { background: linear-gradient(90deg, rgba(0,0,0,.5), rgba(0,0,0,.3) 18%, rgba(0,0,0,.26) 50%, rgba(0,0,0,.3) 82%, rgba(0,0,0,.5)); }
+.slot:not(.lying):not(.addSlot)::after { display: block; content: ""; position: absolute; left: -1px; right: -1px; top: 0; bottom: calc(var(--shelf-h) * -.045);
+  width: auto; height: auto; border-radius: 0; z-index: 2; pointer-events: none; filter: none;
+  background: linear-gradient(90deg, rgba(0,0,0,.6) 0, rgba(0,0,0,.18) 2px, transparent 4px, transparent calc(100% - 3px), rgba(0,0,0,.45) calc(100% - 1px)); }
+.wsB { background: rgba(0,0,0,.42); border-radius: 2px; filter: blur(calc(var(--shelf-h) * .02));
+  box-shadow: calc(var(--shelf-h) * .015) calc(var(--shelf-h) * -.01) calc(var(--shelf-h) * .12) calc(var(--shelf-h) * .03) rgba(0,0,0,.34); }
+html[data-bdk="closet"] .wsB { background: rgba(28,0,16,.42); box-shadow: calc(var(--shelf-h) * .015) calc(var(--shelf-h) * -.01) calc(var(--shelf-h) * .12) calc(var(--shelf-h) * .03) rgba(28,0,16,.34); }
+.wsB { box-shadow: calc(var(--shelf-h) * .015) calc(var(--shelf-h) * -.01) calc(var(--shelf-h) * .13) calc(var(--shelf-h) * .035) rgba(0,0,0,.42); }
+html[data-bdk="closet"] .wsB { box-shadow: calc(var(--shelf-h) * .015) calc(var(--shelf-h) * -.01) calc(var(--shelf-h) * .13) calc(var(--shelf-h) * .035) rgba(28,0,16,.42); }
+/* every book's front face (spine, or cover while it turns) sits at the same depth, so seen from above all feet land on one line
+   whatever the book's width; before, wider books stuck out further and stood lower */
+.book .body { transform: translateZ(calc(-1 * (var(--w) * .5 * sin(var(--turn) * 90deg) + var(--d) * .5 * cos(var(--turn) * 90deg))))
+    rotateY(calc(var(--turn) * 90deg)); }
+.nbSh, .depSh, .slot:not(.lying):not(.addSlot)::after { bottom: 0; }

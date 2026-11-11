@@ -1046,7 +1046,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     const wallSh = h(`<div class="wallSh" aria-hidden="true"><div class="wsIn"></div></div>`), wsIn = wallSh.firstChild;
     root.querySelector(".stage").prepend(wallSh);
     const bookSh = [];
-    const shOff = () => ({ x: H * 0.07, y: 0 }); // v280: osamu's picture: wide, soft, to the right, starting at the book's foot
+    const shOff = () => ({ x: H * 0.025, y: 0 }); // v280: osamu's picture: wide, soft, to the right, starting at the book's foot
     root.dataset.key = key;
     addLights(root);
     const count = books.length + (opts.onAdd ? 1 : 0);
@@ -1419,7 +1419,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           const rec = [0, 0, 1, 0, 2, 0, 1][hash((+books[i].id || i) * 7 + 3) % 7] * (1 - open);
           slot.style.setProperty("--rec", (rec / 2).toFixed(2));
           slot.style.transformOrigin = "";
-          slot.style.transform = `translate3d(${left}px,${(-rec * H * 0.012).toFixed(1)}px,0)`;
+          slot.style.transform = `translate3d(${left}px,0,0)`; // v282: every foot on the same line, as in osamu's picture
           slot.classList.remove("lying");
         }
         if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", 1 - open);
