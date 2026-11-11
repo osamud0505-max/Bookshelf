@@ -2280,3 +2280,9 @@ html[data-bdk="closet"] .wsB { box-shadow: calc(var(--shelf-h) * .015) calc(var(
    straight dark band across the head's curve */
 .slot:not(.lying) .depSh, .slot:not(.lying):not(.addSlot)::after { top: calc(3px - var(--tP, 3px)); }
 .slot:not(.lying):has(.book.paper) .depSh, .slot:not(.lying):not(.addSlot):has(.book.paper)::after { top: calc(.5px - var(--tP, 3px)); }
+
+/* v288: 3D books. The canvas sits behind the row; the flat books stay where they are, invisible, so they still take every tap
+   and swipe. All the painted-on book shadows give way to the real ones. */
+.b3d { z-index: 0; }
+.shelf.is3d .slot:not(.addSlot) > .book { opacity: 0; }
+.shelf.is3d .slot::before, .shelf.is3d .slot::after, .shelf.is3d .nbSh, .shelf.is3d .depSh, .shelf.is3d .ftSh, .shelf.is3d .wsB { display: none !important; }

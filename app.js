@@ -1046,6 +1046,16 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     const wallSh = h(`<div class="wallSh" aria-hidden="true"><div class="wsIn"></div></div>`), wsIn = wallSh.firstChild;
     root.querySelector(".stage").prepend(wallSh);
     const bookSh = [];
+    // v288: real 3D books (Customize > Books > 3D); the flat books stay, invisible, as the thing you touch
+    let b3d = null, topD = 0;
+    if (state.settings.books3d && window.Books3D) {
+      root.classList.add("is3d");
+      window.Books3D.whenReady(() => {
+        window.Books3D.sweep();
+        b3d = window.Books3D.create(stage, { tint: document.documentElement.dataset.bdk === "closet" ? "#1c0010" : "#000000" });
+        requestAnimationFrame(() => layout());
+      });
+    }
     const shOff = () => ({ x: H * 0.025, y: 0 }); // v280: osamu's picture: wide, soft, to the right, starting at the book's foot
     root.dataset.key = key;
     addLights(root);
@@ -1480,6 +1490,23 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         for (const o of list) { placeOrn(o, p.top, cx + o.vis / 2); cx += o.vis + 4; }
       }
       pileSpans = groups.map((g) => ({ s: g.start, e: g.end, L: g.L, R: g.L + g.S + PILE_GAP * 2 }));
+      if (b3d) {
+        if (!topD) topD = parseFloat(getComputedStyle(root).getPropertyValue("--top-d")) || 30;
+        const items = [];
+        for (let i = 0; i < books.length; i++) {
+          const b = books[i], slot = slots[i], D_ = dm[i];
+          if (!b || !D_) continue;
+          const m = new DOMMatrix(slot.style.transform || "none");
+          const to = (slot.style.transformOrigin || "50% 50%").split(" ").map((v) => parseFloat(v) / 100);
+          const fk = FONTS[b.spineFont] ? b.spineFont : FONTS[state.settings.spineFont] ? state.settings.spineFont : "classic";
+          items.push({ id: b.id, h: D_.h, w: D_.w, d: D_.d, base: base[i], open: opens[i], A: [m.a, m.b, m.c, m.d, m.e, m.f],
+            ox: base[i] * (isNaN(to[0]) ? 0.5 : to[0]), oy: D_.h * (isNaN(to[1]) ? 0.5 : to[1]),
+            rec: parseFloat(slot.style.getPropertyValue("--rec") || 0) * 2, visible: slot.style.visibility !== "hidden",
+            color: b.spineColor, spineUrl: spineUrl(b), coverUrl: b.coverUrl || null, ink: spineInk(b.spineColor), font: FONTS[fk],
+            title: b.title, author: b.author, hard: b.binding !== "paper", glossy: b.finish === "glossy" });
+        }
+        b3d.sync(items, { stageH: stage.clientHeight, viewW, H, topD });
+      }
       let n = Math.round(g); if (n < 0 || n > count - 1) n = -1; n = Math.min(n, books.length - 1);
       if (n >= 0 && lyingAt(n)) n = front; // passing over a lying book picks nothing and makes no sound
       if (n !== front) { if (front >= 0 && !drag && userMoved) soundBookSlide(); front = n; if (n >= 0) scrollMemory.set(key, n); slots.forEach((s, i) => s.classList.toggle("front", i === n)); drawCaption(); }
@@ -2175,6 +2202,12 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         lookWrap.append(btn);
       });
       body.append(looks);
+
+      // v288: real 3D books, on trial next to the flat ones
+      const b3g = h(`<div class="group"><h3 class="label">Books</h3><p class="hint">3D books are real shapes with real shadows. They're new, so the flat ones stay here to switch back to.</p>
+        <div class="chips" id="b3dPick"><button data-v="0" aria-pressed="${!s.books3d}">Flat</button><button data-v="1" aria-pressed="${!!s.books3d}">3D (new)</button></div></div>`);
+      b3g.querySelectorAll("#b3dPick button").forEach((b) => (b.onclick = () => set({ books3d: b.dataset.v === "1" })));
+      body.append(b3g);
 
       // Minimal can be tuned, quietly: a few colours, an accent, the shelf colour and the lettering
       if (current === "minimal") {
