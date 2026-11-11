@@ -2097,3 +2097,7 @@ html[data-bdk="closet"] .wsB { background: rgba(28,0,16,.62); }
   background: linear-gradient(270deg, rgba(0,0,0,.55), transparent); }
 html[data-bdk="closet"] .nbSh { background: linear-gradient(90deg, rgba(28,0,16,.5), rgba(28,0,16,.22) 45%, transparent); }
 html[data-bdk="closet"] .slot.lying .nbSh { background: linear-gradient(270deg, rgba(28,0,16,.55), transparent); }
+
+/* v279: every book used to look from its own eye point, so neighbouring tops splayed apart at the joins (a notch between books).
+   A far-away eye with the same angle keeps the top edges almost straight up, so the tops of neighbours meet cleanly. */
+.book { perspective: 5000px; --eye: calc(var(--h) * 1.67); }
