@@ -1430,6 +1430,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           // a leaning book meets its neighbour only at the top, so neither gets a crevice down that side
           const touch = j => !lean && j >= 0 && j < count && !groupOf.has(j) && poses[j] !== "lean" && !orns.some(o => !o.hang && o.idx === Math.max(i, j));
           slot.style.setProperty("--cl", touch(i - 1) ? 1 : 0); slot.style.setProperty("--cr", touch(i + 1) ? 1 : 0);
+          if (bookNodes[i]) slot.style.setProperty("--tP", bookNodes[i].style.getPropertyValue("--tP") || "3px");
           if (dm[i]) slot.style.setProperty("--fsag", (dm[i].d * (books[i].binding === "paper" ? .05 : .13)).toFixed(1) + "px");
         }
         if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", 1 - open);
@@ -1447,7 +1448,8 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
             ts = hL > dm[i].h + 2 ? Math.min(1, (hL - dm[i].h) / (H * 0.08)) * (1 - open) * (1 - opens[j]) : 0;
           }
           if (bookNodes[i]) bookNodes[i].style.setProperty("--tsh", ts.toFixed(2));
-          nb.style.top = top.toFixed(1) + "px"; nb.style.opacity = a.toFixed(2);
+          // v287: shading from the very top reaches up over the visible page top too, so it has no straight edge across the head
+          nb.style.top = top < 0.5 && !groupOf.has(i) ? "calc(3px - var(--tP, 3px))" : top.toFixed(1) + "px"; nb.style.opacity = a.toFixed(2);
         }
         if (sh && dm[i]) {
           const so = shOff();

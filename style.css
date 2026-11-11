@@ -2267,3 +2267,16 @@ html[data-bdk="closet"] .wsB { box-shadow: calc(var(--shelf-h) * .015) calc(var(
     linear-gradient(180deg, rgba(0,0,0,calc(var(--tsh, 0) * .45)), transparent 85%),
     linear-gradient(rgba(40,30,20,.18), rgba(40,30,20,.18)),
     repeating-linear-gradient(180deg, #e9dcc0 0 1px, #ddcfae 1px 2px); }
+/* v287: the strip of page block seen inside the head's curve had a darker tone and crosswise lines, so a straight seam ran across
+   the curve on narrow books; it now carries exactly the page top's tone and lines, and only the U shadow shapes it */
+.head { background: linear-gradient(rgba(0,0,0,.1), rgba(0,0,0,.1)), linear-gradient(rgba(40,30,20,.18), rgba(40,30,20,.18)), repeating-linear-gradient(90deg, #e9dcc0 0 1px, #ddcfae 1px 2px); }
+/* the U is now also the page top itself, drawn flat in one piece over the 3D faces below it, so no seam between the faces can show
+   through on any book; its bottom shadow is a thin soft line along the head's curve, not a band */
+.slot:not(.lying) .book.hard .tShade {
+  background: linear-gradient(90deg, rgba(0,0,0,calc(var(--tsh, 0) * .4)), transparent 80%), linear-gradient(rgba(40,30,20,.2), rgba(40,30,20,.2)),
+    repeating-linear-gradient(90deg, #e9dcc0 0 1px, #ddcfae 1px 2px);
+  box-shadow: inset 0 -1.2px 2px -.3px rgba(0,0,0,.42), inset 1.6px 0 2px -1px rgba(0,0,0,.42), inset -1.2px 0 2px -1px rgba(0,0,0,.3), inset 0 1px 1px -.5px rgba(0,0,0,.15); }
+/* a recessed book's shade and the crevices start at the top of its visible pages, not at the spine's top line: starting there drew a
+   straight dark band across the head's curve */
+.slot:not(.lying) .depSh, .slot:not(.lying):not(.addSlot)::after { top: calc(3px - var(--tP, 3px)); }
+.slot:not(.lying):has(.book.paper) .depSh, .slot:not(.lying):not(.addSlot):has(.book.paper)::after { top: calc(.5px - var(--tP, 3px)); }
