@@ -161,18 +161,33 @@
     return t;
   }
 
+  let sharedR = null;
+  function shared() {
+    if (sharedR && !sharedR.getContext().isContextLost()) return sharedR;
+    const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: false, powerPreference: "high-performance" });
+    r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    r.shadowMap.enabled = true; r.shadowMap.type = THREE.VSMShadowMap;
+    r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.0;
+    r.setClearColor(0x000000, 0);
+    sharedR = r; return r;
+  }
+
   // ---------- one shelf ----------
   function create(stage, opts = {}) {
+    // every shelf draws through ONE shared WebGL renderer and copies the picture into its own plain canvas: phones only allow a
+    // few WebGL canvases, and with one per shelf the extra shelves went blank
+    const renderer = shared();
     const cv = document.createElement("canvas"); cv.className = "b3d"; cv.setAttribute("aria-hidden", "true");
+    const ctx = cv.getContext("2d");
     stage.prepend(cv);
-    const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, powerPreference: "high-performance" });
-    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.VSMShadowMap;
-    renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+    const pr = Math.min(2, window.devicePixelRatio || 1);
+    let onScreen = true;
+    const io = new IntersectionObserver((es) => { onScreen = es[es.length - 1].isIntersecting; if (onScreen) inst.render(); }, { rootMargin: "200px" });
+    io.observe(cv);
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera();
     const key = new THREE.DirectionalLight("#fff4e6", 1.8); key.castShadow = true;
-    key.shadow.mapSize.set(2048, 1024); key.shadow.radius = 9; key.shadow.blurSamples = 20; key.shadow.bias = -0.0005;
+    key.shadow.mapSize.set(1024, 512); key.shadow.radius = 5; key.shadow.blurSamples = 20; key.shadow.bias = -0.0005;
     scene.add(key, key.target);
     const hemi = new THREE.HemisphereLight("#fffaf2", "#8f8577", 1.25); scene.add(hemi);
     const tint = opts.tint || "#000000";
@@ -191,7 +206,7 @@
         top = Math.round(H * 0.6); bottom = Math.round(topD * 0.5 + 6);
         const cw = viewW, ch = stageH + top + bottom;
         if (cw !== W || ch !== Hc) {
-          W = cw; Hc = ch; renderer.setSize(cw, ch, false);
+          W = cw; Hc = ch; cv.width = Math.round(cw * pr); cv.height = Math.round(ch * pr);
           cv.style.cssText = `position:absolute;left:0;top:${-top}px;width:${cw}px;height:${ch}px;pointer-events:none`;
         }
         // eye above the row, as far away as the flat books' perspective; world units are css px, y up from the shelf floor
@@ -243,14 +258,19 @@
         inst.render();
       },
       render() {
-        if (dead || !frameDirty || !W) return;
+        if (dead || !frameDirty || !W || !onScreen) return;
         frameDirty = false;
+        if (renderer.getContext().isContextLost()) return;
+        renderer.setSize(W, Hc, false);
         renderer.render(scene, camera);
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(renderer.domElement, 0, 0, cv.width, cv.height);
       },
       dispose() {
         if (dead) return; dead = true; live.delete(inst);
         for (const rec of books.values()) disposeBook(rec.node);
-        renderer.dispose(); try { renderer.forceContextLoss(); } catch (e) {}
+        io.disconnect();
+        scene.traverse((o) => { if (o.isLight && o.shadow && o.shadow.map) o.shadow.map.dispose(); });
         cv.remove();
       },
       canvas: cv,

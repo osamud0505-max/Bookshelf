@@ -1049,10 +1049,13 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     // v288: real 3D books (Customize > Books > 3D); the flat books stay, invisible, as the thing you touch
     let b3d = null, topD = 0;
     if (state.settings.books3d && window.Books3D) {
-      root.classList.add("is3d");
+      // the flat books only hide once the 3D ones are really there; if 3D can't start on this device, the flat ones stay
       window.Books3D.whenReady(() => {
-        window.Books3D.sweep();
-        b3d = window.Books3D.create(stage, { tint: document.documentElement.dataset.bdk === "closet" ? "#1c0010" : "#000000" });
+        try {
+          window.Books3D.sweep();
+          b3d = window.Books3D.create(stage, { tint: document.documentElement.dataset.bdk === "closet" ? "#1c0010" : "#000000" });
+          root.classList.add("is3d");
+        } catch (e) { console.warn("3D books could not start", e); b3d = null; root.classList.remove("is3d"); }
         requestAnimationFrame(() => layout());
       });
     }
@@ -1505,7 +1508,8 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
             color: b.spineColor, spineUrl: spineUrl(b), coverUrl: b.coverUrl || null, ink: spineInk(b.spineColor), font: FONTS[fk],
             title: b.title, author: b.author, hard: b.binding !== "paper", glossy: b.finish === "glossy" });
         }
-        b3d.sync(items, { stageH: stage.clientHeight, viewW, H, topD });
+        try { b3d.sync(items, { stageH: stage.clientHeight, viewW, H, topD }); }
+        catch (e) { console.warn("3D books failed", e); b3d.dispose(); b3d = null; root.classList.remove("is3d"); }
       }
       let n = Math.round(g); if (n < 0 || n > count - 1) n = -1; n = Math.min(n, books.length - 1);
       if (n >= 0 && lyingAt(n)) n = front; // passing over a lying book picks nothing and makes no sound
