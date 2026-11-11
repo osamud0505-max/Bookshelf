@@ -601,7 +601,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           <span class="grain"></span><span class="wear"></span><span class="rub"></span><span class="hinge"></span><span class="sheen"></span><span class="fShade"></span>
         </div>
         <div class="face spine"><span class="sForm"></span><span class="grain"></span><span class="wear"></span><span class="rub"></span><span class="sShade"></span></div>
-        <div class="face pages"></div><div class="face back"></div><div class="face top"></div>
+        <div class="face pages"></div><div class="face back"></div><div class="face top"></div><div class="face lid"></div>
       </div></div>`);
     el.style.cssText = `--w:${w}px;--h:${hh}px;--d:${d}px;--spine:${b.spineColor};--ink:${spineInk(b.spineColor)}` + (turn !== undefined ? `;--turn:${turn}` : "")
       // every book is worn in its own way: stains, rubbed corners and scratches sit in different places
@@ -1427,13 +1427,16 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         // (a little lower, as the light comes from above); in a pile each book shades the one under it along the seam
         const nb = slot.querySelector(".nbSh");
         if (nb && dm[i]) {
-          let a = 0, top = 0;
+          let a = 0, top = 0, ts = 0;
           if (groupOf.has(i)) { const g = groupOf.get(i); a = i < g.end ? (1 - open) * (1 - opens[i + 1]) : 0; }
           else if (i > 0 && dm[i - 1]) {
             const j = i - 1, hL = groupOf.has(j) ? groupHeight(groupOf.get(j)) : poses[j] === "lean" ? dm[j].h * Math.cos(leanA(j) * (1 - opens[j])) : dm[j].h;
             top = Math.max(0, dm[i].h - (hL - shOff().y));
             a = top < dm[i].h - 4 ? (1 - open) * (1 - opens[j]) : 0;
+            // v283: a taller book on the left also shades the near side of this one's top
+            ts = hL > dm[i].h + 2 ? Math.min(1, (hL - dm[i].h) / (H * 0.08)) * (1 - open) * (1 - opens[j]) : 0;
           }
+          if (bookNodes[i]) bookNodes[i].style.setProperty("--tsh", ts.toFixed(2));
           nb.style.top = top.toFixed(1) + "px"; nb.style.opacity = a.toFixed(2);
         }
         if (sh && dm[i]) {
