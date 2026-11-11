@@ -1984,21 +1984,40 @@
 
       const backup = h(`<div class="group"><h3 class="label">Backup</h3>
         <p class="hint">Your books live only in this browser. Save a backup now and then, and before clearing browser data or switching phones.</p><p class="hint versionTag">Version ${esc((document.querySelector('script[src*="app.js"]')?.getAttribute("src").match(/v=(\d+)/) || [, "?"])[1])}</p>
-        <div class="row"><button class="btn small" id="exp">Save a backup file</button><label class="btn small" for="imp">Restore from a backup<input type="file" id="imp" accept="application/json,.json" hidden></label></div></div>`);
+        <div class="row"><button class="btn small" id="exp">Save a backup file</button><label class="btn small" for="imp">Restore from a backup<input type="file" id="imp" accept="application/json,.json" hidden></label></div>
+        <p class="hint">If saving a file doesn't work here, copy the backup as text instead, and paste it into the other copy of the app.</p>
+        <div class="row"><button class="btn small" id="expTxt">Copy backup as text</button><button class="btn small" id="impTxt">Paste a backup</button></div>
+        <div id="txtBox" hidden><textarea class="input" id="bkTxt" rows="6" spellcheck="false" autocomplete="off" style="width:100%;font:12px/1.35 ui-monospace,monospace;margin-top:8px"></textarea>
+        <div class="row" style="margin-top:6px"><button class="btn small primary" id="bkGo" hidden>Restore this backup</button></div></div></div>`);
       backup.querySelector("#exp").onclick = () => {
         const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), books: state.books, settings: state.settings }, null, 2)], { type: "application/json" });
         const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `shelf-backup-${today()}.json`; a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       };
+      const restore = (text) => {
+        const d = JSON.parse(text);
+        if (!Array.isArray(d.books)) throw new Error("not a shelf backup");
+        state.books = d.books; state.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) };
+        save(); render(); draw(); toast(`Restored ${d.books.length} books`);
+      };
       backup.querySelector("#imp").onchange = async (e) => {
         const file = e.target.files[0]; if (!file) return;
-        try {
-          const d = JSON.parse(await file.text());
-          if (!Array.isArray(d.books)) throw new Error("not a shelf backup");
-          state.books = d.books; state.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) };
-          save(); render(); draw(); toast(`Restored ${d.books.length} books`);
-        } catch (err) { toast("That file isn't a Shelf backup."); }
+        try { restore(await file.text()); } catch (err) { toast("That file isn't a Shelf backup."); }
       };
+      // copy-and-paste backup, for places where downloads are blocked (like the copy hosted on claude.ai)
+      const box = backup.querySelector("#txtBox"), ta = backup.querySelector("#bkTxt"), go = backup.querySelector("#bkGo");
+      backup.querySelector("#expTxt").onclick = async () => {
+        box.hidden = false; go.hidden = true;
+        ta.value = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), books: state.books, settings: state.settings });
+        ta.readOnly = true; ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
+        let ok = false;
+        try { await navigator.clipboard.writeText(ta.value); ok = true; } catch (e) { try { ok = document.execCommand("copy"); } catch (e2) { /* manual copy */ } }
+        toast(ok ? `Copied a backup of ${state.books.length} books` : "Select all the text in the box and copy it");
+      };
+      backup.querySelector("#impTxt").onclick = () => {
+        box.hidden = false; go.hidden = false; ta.readOnly = false; ta.value = ""; ta.placeholder = "Paste the backup text here"; ta.focus();
+      };
+      go.onclick = () => { try { restore(ta.value.trim()); } catch (err) { toast("That text isn't a Shelf backup."); } };
       body.append(backup);
 
       sheet.append(body);
