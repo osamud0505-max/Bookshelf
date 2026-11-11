@@ -1302,6 +1302,8 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         }
       }
       const LEAN = (16 * Math.PI) / 180;
+      // each leaning book settles at its own angle, between about 11 and 19 degrees
+      const leanA = (i) => LEAN * (0.7 + (hash((+books[i].id || i) * 13 + 5) % 6) * 0.1);
       // how much room each book takes in the row
       const widths = [];
       for (const g of groups) {
@@ -1311,18 +1313,26 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       }
       // a leaning book rests where it really touches its neighbour: against its side if the neighbour is tall enough,
       // otherwise on the neighbour's top corner, so it never hangs in the air or sinks into the next book
-      const PILE_GAP = 3 + H * 0.025; // a lying book looks a little longer than its box (its near face is closer to you)
+      const PILE_GAP = 3 + H * 0.025;
+      // a standing book's spine is nearer to you than its box, so it reaches a little lower on the shelf; lying books
+      // are set down by the same amount so the pile stands on the same floor line instead of floating above it
+      const SINK = H * 0.028; // a lying book looks a little longer than its box (its near face is closer to you)
+      // v274 (osamu's mockups): a book leans onto a STANDING neighbour, as on a real shelf: the one on its left if that
+      // stands, else the one on its right; only when neither stands does it rest on a pile or another leaning book
+      const stands = (j) => j >= 0 && j < count && dm[j] && poses[j] === "stand";
+      const leanLeft = [];
+      for (let i = 0; i < count; i++) leanLeft[i] = stands(i - 1) ? true : stands(i + 1) ? false : i > 0;
       const leanFoot = (i) => {
-        const p = LEAN * (1 - opens[i]), h_ = dm[i].h, j = i > 0 ? i - 1 : i + 1;
+        const p = leanA(i) * (1 - opens[i]), h_ = dm[i].h, j = leanLeft[i] ? i - 1 : i + 1;
         let hn = h_;
-        if (j >= 0 && j < count && dm[j]) hn = groupOf.has(j) ? groupHeight(groupOf.get(j)) : poses[j] === "lean" ? dm[j].h * Math.cos(LEAN * (1 - opens[j])) : dm[j].h;
+        if (j >= 0 && j < count && dm[j]) hn = groupOf.has(j) ? groupHeight(groupOf.get(j)) : poses[j] === "lean" ? dm[j].h * Math.cos(leanA(j) * (1 - opens[j])) : dm[j].h;
         return Math.min(h_ * Math.sin(p), Math.max(0, hn - 2) * Math.tan(p));
       };
       function groupHeight(g) { let y = 0; for (let k = g.start; k <= g.end; k++) y += dm[k].d * (1 - opens[k]); return y; }
       const feet = [];
       for (let i = 0; i < count; i++) {
         if (groupOf.has(i)) { const g = groupOf.get(i); widths.push((g.S + PILE_GAP * 2) / g.n + opens[i] * (base[i] + 8)); continue; }
-        if (poses[i] === "lean") { const p = LEAN * (1 - opens[i]); feet[i] = leanFoot(i); widths.push(base[i] * Math.cos(p) + feet[i] + 3); continue; }
+        if (poses[i] === "lean") { const p = leanA(i) * (1 - opens[i]); feet[i] = leanFoot(i); widths.push(base[i] * Math.cos(p) + feet[i] + 3); continue; }
         widths.push(base[i]);
       }
       const ornW = (o) => (onPile.has(o) ? 0 : o.w);
@@ -1369,8 +1379,8 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         if (groupOf.has(i)) {
           // in a pile: lying on the books below it; while it is chosen it stands up beside the pile and turns its cover to you
           const g = groupOf.get(i);
-          if (i === g.start) { g.L = left; g.y = 0; g.ex = 0; }
-          const h_ = dm[i].h, d_ = dm[i].d, jit = ((hash(books[i].id) % 7) - 3) * 0.8;
+          if (i === g.start) { g.L = left; g.y = -SINK; g.ex = 0; }
+          const h_ = dm[i].h, d_ = dm[i].d, jit = ((hash(books[i].id) % 7) - 3) * H * 0.01;
           // lying books keep a small gap from the books either side and never stick out past the pile
           const lyX = Math.max(g.L + PILE_GAP, Math.min(g.L + PILE_GAP + g.S - h_, g.L + PILE_GAP + (g.S - h_) / 2 + jit)), lyY = g.y;
           const stX = g.L + g.S + PILE_GAP * 2 + g.ex + 4;
@@ -1386,7 +1396,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           // resting on its bottom corner with its top against the neighbour; it straightens up as it turns to you
           // the spine's near face looks a little taller than the box, so a tilted book is lifted by that much: its
           // corner then sits on the shelf instead of sinking into it and being cut off flat
-          const p = LEAN * (1 - open), W = base[i], toLeft = i > 0, foot = feet[i] || 0, up = (-H * 0.027 * Math.min(1, p / LEAN * 3)).toFixed(1);
+          const p = leanA(i) * (1 - open), W = base[i], toLeft = leanLeft[i], foot = feet[i] || 0, up = 0;
           if (toLeft) { slot.style.transformOrigin = "0 100%"; slot.style.transform = `translate3d(${(left + 1 + foot).toFixed(1)}px,${up}px,0) rotate(${(-p * 180 / Math.PI).toFixed(2)}deg)`; }
           else { slot.style.transformOrigin = "100% 100%"; slot.style.transform = `translate3d(${(left + W * Math.cos(p) - W).toFixed(1)}px,${up}px,0) rotate(${(p * 180 / Math.PI).toFixed(2)}deg)`; }
           slot.classList.remove("lying");
