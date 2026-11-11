@@ -1366,7 +1366,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         const left = cx != null ? cx - o.vis / 2 : o.hang ? PAD + x - offset - o.vis / 2 : PAD + x - offset + 5;
         if (cx == null) x += o.w;
         o.el.style.transform = `translate3d(${left.toFixed(1)}px,${(-lift).toFixed(1)}px,0)`; o.lift = lift;
-        if (o.sh) { const so = shOff(); o.sh.style.transform = `translate3d(${(left + so.x).toFixed(1)}px,${(-lift).toFixed(1)}px,0)`; }
+        if (o.sh) { const so = shOff(); o.sh.style.transform = `translate3d(${(left + so.x).toFixed(1)}px,${(so.y - lift).toFixed(1)}px,0)`; }
         o.el.classList.toggle("onPile", cx != null);
         // a flame leans away from the way it is being pushed, then settles
         if (o.x !== null && Math.abs(left - o.x) > 0.3 && !root.classList.contains("arranging")) {
@@ -1424,23 +1424,19 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         const nb = slot.querySelector(".nbSh");
         if (nb && dm[i]) {
           let a = 0, top = 0;
-          slot.classList.toggle("pileBase", groupOf.has(i) && groupOf.get(i).start === i && open < 0.5);
           if (groupOf.has(i)) { const g = groupOf.get(i); a = i < g.end ? (1 - open) * (1 - opens[i + 1]) : 0; }
           else if (i > 0 && dm[i - 1]) {
             const j = i - 1, hL = groupOf.has(j) ? groupHeight(groupOf.get(j)) : poses[j] === "lean" ? dm[j].h * Math.cos(leanA(j) * (1 - opens[j])) : dm[j].h;
             top = Math.max(0, dm[i].h - (hL - shOff().y));
-            if (hL > dm[i].h + 4) top = -Math.round(H * 0.04); // a taller book on the left also shades this one's top
             a = top < dm[i].h - 4 ? (1 - open) * (1 - opens[j]) : 0;
           }
           nb.style.top = top.toFixed(1) + "px"; nb.style.opacity = a.toFixed(2);
         }
         if (sh && dm[i]) {
           const so = shOff();
-          // v278: the shadow starts at the book's foot and runs back across the shelf floor and up the wall, its top a little lower
-          const ly = slot.classList.contains("lying");
-          sh.style.width = base[i] + "px"; sh.style.height = (ly ? dm[i].h : dm[i].h - so.y) + "px";
+          sh.style.width = base[i] + "px"; sh.style.height = dm[i].h + "px";
           sh.style.transformOrigin = slot.style.transformOrigin;
-          sh.style.transform = `translate(${so.x.toFixed(1)}px,0) ` + slot.style.transform;
+          sh.style.transform = `translate(${so.x.toFixed(1)}px,${so.y.toFixed(1)}px) ` + slot.style.transform;
           sh.classList.toggle("lying", slot.classList.contains("lying"));
         }
       }

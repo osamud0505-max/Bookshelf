@@ -2097,14 +2097,3 @@ html[data-bdk="closet"] .wsB { background: rgba(28,0,16,.62); }
   background: linear-gradient(270deg, rgba(0,0,0,.55), transparent); }
 html[data-bdk="closet"] .nbSh { background: linear-gradient(90deg, rgba(28,0,16,.5), rgba(28,0,16,.22) 45%, transparent); }
 html[data-bdk="closet"] .slot.lying .nbSh { background: linear-gradient(270deg, rgba(28,0,16,.55), transparent); }
-
-/* v278 (osamu's close-up): the shadows run from each book's foot back across the shelf floor and up the wall as one, so the wall
-   layer is cut at the books' floor line instead of where the floor meets the wall. A pile gets its contact shadow under the bottom
-   book (its left edge, which faces down once turned). Each book in a pile shades the cover of the one below where it shows. */
-.wallSh { bottom: 1px; }
-.wsIn { bottom: -1px; }
-.wsB { -webkit-mask: linear-gradient(0deg, #000 0, #000 28%, rgba(0,0,0,.4) 100%); mask: linear-gradient(0deg, #000 0, #000 28%, rgba(0,0,0,.4) 100%); }
-.slot.lying.pileBase::before { display: block; left: -7px; right: auto; top: -3px; bottom: -3px; width: 12px; height: auto; border-radius: 50% / 40%; }
-.slot.lying .nbSh { right: calc(var(--shelf-h) * -.04); width: calc(var(--shelf-h) * .09);
-  background: linear-gradient(270deg, rgba(0,0,0,.2), rgba(0,0,0,.42) 44%, rgba(0,0,0,.3) 56%, transparent); }
-html[data-bdk="closet"] .slot.lying .nbSh { background: linear-gradient(270deg, rgba(28,0,16,.2), rgba(28,0,16,.42) 44%, rgba(28,0,16,.3) 56%, transparent); }
