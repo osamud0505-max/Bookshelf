@@ -187,12 +187,12 @@
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera();
     const key = new THREE.DirectionalLight("#fff4e6", 1.8); key.castShadow = true;
-    key.shadow.mapSize.set(1024, 512); key.shadow.radius = 5; key.shadow.blurSamples = 20; key.shadow.bias = -0.0005;
+    key.shadow.mapSize.set(1024, 512); key.shadow.radius = 11; key.shadow.blurSamples = 24; key.shadow.bias = -0.0005;
     scene.add(key, key.target);
     const hemi = new THREE.HemisphereLight("#fffaf2", "#8f8577", 1.25); scene.add(hemi);
     const tint = opts.tint || "#000000";
     const floorMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.42 });
-    const wallMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.38 });
+    const wallMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.3 });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
     const wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), wallMat); wall.receiveShadow = true; scene.add(wall);
     const books = new Map(); // id -> { node, sig }
@@ -251,7 +251,7 @@
         floor.scale.set(viewW + 400, -zw + 400, 1); floor.position.set(viewW / 2, 0, zw + (-zw + 400) / 2);
         wall.scale.set(viewW + 400, stageH + top + 200, 1); wall.position.set(viewW / 2, (stageH + top + 200) / 2, zw);
         // the light: from the front and upper left
-        key.position.set(viewW / 2 - H * 2.3, H * 2.3, H * 2.4); key.target.position.set(viewW / 2, H * 0.4, zw / 2); key.target.updateMatrixWorld();
+        key.position.set(viewW / 2 - H * 1.5, H * 3, H * 2.6); key.target.position.set(viewW / 2, H * 0.4, zw / 2); key.target.updateMatrixWorld();
         const sc = key.shadow.camera, span = viewW / 2 + H * 1.2;
         sc.left = -span; sc.right = span; sc.top = H * 1.6; sc.bottom = -H * 1.6; sc.near = 10; sc.far = H * 8; sc.updateProjectionMatrix();
         frameDirty = true;

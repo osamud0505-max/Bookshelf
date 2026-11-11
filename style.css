@@ -2286,3 +2286,5 @@ html[data-bdk="closet"] .wsB { box-shadow: calc(var(--shelf-h) * .015) calc(var(
 .b3d { z-index: 0; }
 .shelf.is3d .slot:not(.addSlot) > .book { opacity: 0; }
 .shelf.is3d .slot::before, .shelf.is3d .slot::after, .shelf.is3d .nbSh, .shelf.is3d .depSh, .shelf.is3d .ftSh, .shelf.is3d .wsB { display: none !important; }
+/* v290: seen in 3D the row stood right at the back wall (osamu); it now stands further forward on the shelf, objects with it */
+.shelf.is3d .track > .stage { height: calc(100% - var(--top-d) * .32); }
