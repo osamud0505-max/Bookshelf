@@ -2193,3 +2193,14 @@ html[data-bdk="closet"] .wsB { box-shadow: calc(var(--shelf-h) * .015) calc(var(
 .book.hard .spine::before { content: ""; position: absolute; left: 6%; right: 6%; top: 0; height: 1.3px; z-index: 3; border-radius: 1px;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,.26) 30%, rgba(255,255,255,.18) 70%, transparent); }
 .slot.lying .book.hard .spine::before { display: none; }
+/* v284: the spine is a rounded back, so its outline is rounded too, the same shape its shadow takes on the floor: the head and foot
+   curve over at both edges (seen from a little above, the foot bows down in the middle), leaving small dark V's at every join */
+.book.hard .spine { border-radius: 50% 50% 50% 50% / 3px 3px 5px 5px; }
+.book.paper .spine { border-radius: 22% 22% 22% 22% / 1.5px 1.5px 2.5px 2.5px; }
+/* v284: the wall layer reached only to the stage's edge, so the soft halo round the first book was cut straight there and showed as a
+   separate grey strip beside it; let the layer run past both ends (the scroller still clips at the screen edge) */
+.wallSh { left: -60px; right: -60px; }
+.wsIn { left: 60px; right: 60px; }
+/* the crevice sits on the book's own edges, never outside them, and only on a side that touches another book */
+.slot:not(.lying):not(.addSlot)::after { left: 0; right: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,calc(var(--cl, 1) * .6)) 0, rgba(0,0,0,calc(var(--cl, 1) * .18)) 2px, transparent 4px, transparent calc(100% - 3px), rgba(0,0,0,calc(var(--cr, 1) * .45)) calc(100% - 1px)); }

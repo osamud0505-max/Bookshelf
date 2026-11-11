@@ -1422,6 +1422,12 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           slot.style.transform = `translate3d(${left}px,0,0)`; // v282: every foot on the same line, as in osamu's picture
           slot.classList.remove("lying");
         }
+        // v284: a crevice is only drawn where a book really touches a standing neighbour; at the row's ends, beside a pile or an
+        // object it showed as a loose grey strip next to the book
+        {
+          const touch = j => j >= 0 && j < count && !groupOf.has(j) && !orns.some(o => !o.hang && o.idx === Math.max(i, j));
+          slot.style.setProperty("--cl", touch(i - 1) ? 1 : 0); slot.style.setProperty("--cr", touch(i + 1) ? 1 : 0);
+        }
         if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", 1 - open);
         // v277: the book on the left throws its shadow onto this one too, on its left side and only below that book's height
         // (a little lower, as the light comes from above); in a pile each book shades the one under it along the seam
