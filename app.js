@@ -89,6 +89,7 @@
     const vignette = bd.tone ? ["radial-gradient(ellipse 120% 90% at 50% 40%, rgba(0,0,0,0) 55%, rgba(0,0,0,.28))"] : [];
     set("--backdrop", [...veil, ...vignette, bd.css()].join(","));
     document.documentElement.dataset.bd = bd.tone ? "1" : "";
+    document.documentElement.dataset.bdk = s.backdrop || "";
     // moving pieces of the backdrop (falling stars, floating lights); only rebuilt when they change, so they never restart
     const bdEl = document.getElementById("backdrop"), fx = bd.fx || "";
     if (bdEl && bdEl.dataset.fx !== fx) { bdEl.dataset.fx = fx; bdEl.innerHTML = fx ? D.backdropFx(fx) : ""; }
@@ -478,7 +479,7 @@
           <span class="grain"></span><span class="wear"></span><span class="rub"></span><span class="hinge"></span><span class="sheen"></span><span class="fShade"></span>
         </div>
         <div class="face spine"><span class="sForm"></span><span class="grain"></span><span class="wear"></span><span class="rub"></span><span class="sShade"></span></div>
-        <div class="face pages"></div><div class="face back"></div>
+        <div class="face pages"></div><div class="face back"></div><div class="face top"></div>
       </div></div>`);
     el.style.cssText = `--w:${w}px;--h:${hh}px;--d:${d}px;--spine:${b.spineColor};--ink:${spineInk(b.spineColor)}` + (turn !== undefined ? `;--turn:${turn}` : "")
       // every book is worn in its own way: stains, rubbed corners and scratches sit in different places
@@ -602,9 +603,22 @@
   }
   // the bin that shows while a decoration is lifted
   const bin = document.createElement("div");
-  bin.className = "decorBin"; bin.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg><span>Drop here to remove</span>`;
+  bin.className = "decorBin"; bin.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg><span>Tap to remove</span>`;
   document.body.append(bin);
   function showBin(on) { bin.classList.toggle("show", on); document.body.classList.toggle("arrangingDecor", on); if (!on) bin.classList.remove("over"); }
+  // after a hold the bin stays, so an object can be removed with a tap; a tap anywhere else puts it away
+  const binLabel = bin.querySelector("span");
+  let binPending = null;
+  function askBin(removeFn) {
+    binPending = removeFn; binLabel.textContent = "Tap to remove"; bin.classList.add("ask"); showBin(true);
+  }
+  function clearBin() {
+    if (!binPending) return;
+    binPending = null; bin.classList.remove("ask"); showBin(false);
+    
+  }
+  bin.addEventListener("click", (e) => { e.stopPropagation(); const f = binPending; clearBin(); if (f) f(); });
+  document.addEventListener("pointerdown", (e) => { if (binPending && !bin.contains(e.target)) clearBin(); }, true);
   function binHit(x, y) { if (!bin.classList.contains("show")) return false; const r = bin.getBoundingClientRect(); return x > r.left - 16 && x < r.right + 16 && y > r.top - 24 && y < r.bottom + 16; }
 
   // ---------------------------------------------------------------- candle sounds (made on the fly, no files)
@@ -828,12 +842,20 @@
   // which lights hang under a shelf: each shelf picks its own in the ✦ menu (kept per look); until then it shows the look's.
   // several can be on at once, e.g. wisteria with fireflies drifting around it
   const NO_SWITCH = ["fireflies", "closetRod"]; // always alive, no cord needed
-  const TALLEST = ["closetRod", "wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
+  const TALLEST = ["closetRod", "vampDrapes", "cottageLotus", "forestCatchers", "starCurtain", "loftCages", "loftSpider", "cabinSwags", "wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
+  // the look's own lights; a save made before a look got its lights (cottage, vampire) still says "none"
+  function lookLights() {
+    const s = state.settings.lights || {}, L = D.LOOKS[lookId()], def = L && L.set && L.set.lights;
+    return (!s.style || s.style === "none") && !Array.isArray(s.styles) && def && def.style && def.style !== "none" ? def : s;
+  }
   function shelfLights(key) {
-    const sd = shelfDecor(key), mine = (sd.lightsBy || {})[lookId()], base = state.settings.lights || {};
+    const sd = shelfDecor(key), mine = (sd.lightsBy || {})[lookId()], base = lookLights();
     const pick = mine || base;
     let styles = Array.isArray(pick.styles) ? pick.styles : pick.style && pick.style !== "none" ? [pick.style] : [];
     if (!mine && sd.noLights) styles = [];
+    // a look whose lights were redrawn swaps the old style for the new one, in old saves too
+    const swap = (D.LIGHT_SWAP || {})[lookId()];
+    if (swap) styles = [...new Set(styles.map((k) => swap[k] || k))];
     styles = styles.filter((k) => D.LIGHT_STYLES[k] && k !== "none");
     return { styles, colour: pick.colour || base.colour || "warm" };
   }
@@ -843,7 +865,7 @@
   }
   function addLights(root) {
     const key = root.dataset.key, sd = shelfDecor(key);
-    const base = state.settings.lights || {}, L = shelfLights(key);
+    const base = lookLights(), L = shelfLights(key);
     // each shelf has its own switch; until it is pulled it follows the look's "on"
     const on = sd.lightsOn !== undefined ? sd.lightsOn : base.on !== false;
     root.querySelectorAll(".lights, .pullCord").forEach((e) => e.remove());
@@ -980,7 +1002,7 @@
     }
     function makeOrn(it) {
         const kind = resolveKind(it.kind, shelfIdx);
-        const el = kind && D.ornamentEl(kind, H, it.on !== false);
+        const el = kind && D.ornamentEl(kind, H, (D.ORNAMENTS[kind] || {}).startOff ? it.lit === true : it.on !== false);
         if (!el) return null;
         const hang = !!D.ORNAMENTS[kind].hang, vis = parseFloat(el.style.width);
         // a hanging thing takes no room in the row: it hangs at the gap between two books
@@ -990,9 +1012,10 @@
           e.stopPropagation();
           const od = D.ORNAMENTS[kind];
           if (od && od.hourglass) { if (D.hourglassFlip(el)) soundHourglass(); return; }
-          if (od && od.still) { el.classList.remove("nudge"); void el.offsetWidth; el.classList.add("nudge"); return; }
+          // an object that does nothing stays still when tapped; only hanging clothes swing
+          if (od && od.still) { if (hang) { el.classList.remove("nudge"); void el.offsetWidth; el.classList.add("nudge"); } return; }
           if (el.classList.contains("snuffing")) return;
-          it.on = it.on === false;
+          it.on = !el.classList.contains("lit"); if (D.ORNAMENTS[kind].startOff) it.lit = it.on;
           toggleFlame(el, !it.on);
           saveItems();
         };
@@ -1037,7 +1060,7 @@
           drag = { o, id, ghost, gx: sx - r.left, gy: sy - r.top, cx: sx, cy: sy, raf: 0, over: false };
           root.classList.add("arranging"); el.classList.add("placeholder");
           if (navigator.vibrate) navigator.vibrate(12);
-          showBin(true);
+          document.body.classList.add("arrangingDecor");   // no drop-to-remove: the bin only offers "Tap to remove" after letting go
           const move = (m) => { if (m.pointerId !== id) return; drag.cx = m.clientX; drag.cy = m.clientY; dragFrame(); };
           const end = (m) => {
             if (m.pointerId !== id) return;
@@ -1062,7 +1085,6 @@
     function dragFrame() {
       const o = drag.o, sr = stage.getBoundingClientRect();
       const left = drag.cx - sr.left - drag.gx, mid = left + o.vis / 2;
-      drag.ghost.style.transform = `translate3d(${drag.cx - drag.gx}px,${drag.cy - drag.gy}px,0)`;
       // the gap goes before the first book whose middle is still to the right of the object
       let idx = 0, top = false;
       // held over a pile it goes on top; beside a pile it stands on the shelf
@@ -1074,10 +1096,10 @@
         if (p) idx = mid < (p.L + p.R) / 2 ? p.s : p.e + 1;
       }
       if (idx !== o.idx || top !== o.it.top) { o.idx = idx; o.it.top = top; sortOrns(); }
-      drag.over = binHit(drag.cx, drag.cy);
-      bin.classList.toggle("over", drag.over);
-      drag.ghost.classList.toggle("binning", drag.over);
       layout();
+      // it slides along the shelf and never leaves it: only the finger's x moves it, and it stands where it would land
+      const y = o.el.getBoundingClientRect().top;
+      drag.ghost.style.transform = `translate3d(${drag.cx - drag.gx}px,${y}px,0)`;
     }
     function drop(cancelled) {
       const o = drag.o, ghost = drag.ghost; cancelAnimationFrame(drag.raf);
@@ -1091,13 +1113,20 @@
         if (navigator.vibrate) navigator.vibrate(8);
       } else {
         o.it.after = o.idx === 0 ? null : o.idx >= books.length ? "end" : books[o.idx - 1].id;
+        if (!cancelled) askBin(() => {
+          if (!orns.includes(o)) return;
+          o.el.style.pointerEvents = "none";
+          const an = o.el.animate([{ opacity: 1, scale: 1 }, { opacity: 0, scale: 0.6 }], { duration: 260, easing: "ease-in" });
+          an.onfinish = () => { orns = orns.filter((x) => x !== o); o.el.remove(); sortOrns(); saveItems(); layout(); };
+          if (navigator.vibrate) navigator.vibrate(8);
+        });
       }
       saveItems();
       layout();
       if (!remove) {
         // the copy glides down into its gap, then the real one takes over
         const sr = stage.getBoundingClientRect(), h = parseFloat(o.el.style.height);
-        const top = o.hang ? o.el.getBoundingClientRect().top : sr.bottom - h - (o.lift || 0);
+        const top = o.el.getBoundingClientRect().top;
         ghost.classList.add("settle");
         ghost.style.transform = `translate3d(${sr.left + o.x}px,${top}px,0)`;
         setTimeout(() => { o.el.classList.remove("placeholder"); ghost.remove(); o.el.classList.add("landed"); setTimeout(() => o.el.classList.remove("landed"), 360); }, 300);
@@ -1177,7 +1206,11 @@
       let ornTotal = 0;
       for (const o of orns) { openAt += ornW(o) * Math.max(0, Math.min(1, f - (o.idx - 1))); ornTotal += ornW(o); }
       const total = widths.reduce((s, v) => s + v, 0) + ornTotal;
-      const maxOff = Math.max(0, total - (viewW - PAD * 2)), off0 = Math.max(0, Math.min(maxOff, openAt - viewW * 0.3));
+      const maxOff = Math.max(0, total - (viewW - PAD * 2));
+      // over the last step of the scroll the row slides on until the last object is in view, so objects standing after
+      // the last book can always be reached without the row scrolling past the end of the shelf
+      const endT = Math.max(0, Math.min(1, g - (count - 1)));
+      let off0 = Math.max(0, Math.min(maxOff, openAt - viewW * 0.3)); off0 += (maxOff - off0) * endT;
       const offset = Math.max(0, Math.min(maxOff, off0 + panX));
       panX = offset - off0; curOffset = offset;
       let x = 0, k = 0;
@@ -1295,6 +1328,12 @@
     }
 
     ["pointerdown", "wheel", "keydown"].forEach((ev) => scroller.addEventListener(ev, () => (userMoved = true), { passive: true }));
+    // freeze the closet glints while a finger is on the shelf so swipes stay smooth
+    let swipeT = 0;
+    const swipeOn = () => { clearTimeout(swipeT); document.documentElement.classList.add("swiping"); };
+    const swipeOff = () => { clearTimeout(swipeT); swipeT = setTimeout(() => document.documentElement.classList.remove("swiping"), 350); };
+    scroller.addEventListener("pointerdown", swipeOn, { passive: true });
+    ["pointerup", "pointercancel"].forEach((ev) => scroller.addEventListener(ev, swipeOff, { passive: true }));
     scroller.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(layout); }, { passive: true });
     function easePanHome() {
       if (!panX || panEase) return;
@@ -1383,7 +1422,7 @@
               setShelfLights(key, { styles }); keepOpen(); render();
             }));
             menu.append(lc);
-            if (L.styles.some((k) => !["wisteria", "chinese", "closetRod"].includes(k))) {
+            if (L.styles.some((k) => !["wisteria", "chinese", "closetRod", "vampDrapes", "cottageLotus", "forestCatchers", "starCurtain", "loftCages", "loftSpider", "cabinSwags"].includes(k))) {
               const cc = h(`<div class="colors small">${Object.entries(D.LIGHT_COLOURS).map(([k, [l, c]]) => `<button class="colorItem" data-v="${k}" aria-pressed="${L.colour === k}"><span class="dot ${L.colour === k ? "on" : ""}" style="background:${c || "conic-gradient(#ff6b6b,#ffd166,#5be3a5,#5cc8f5,#c792ff,#ff6b6b)"};box-shadow:0 0 10px ${c || "#ffd166"}88"></span>${esc(l)}</button>`).join("")}</div>`);
               cc.querySelectorAll("button").forEach((b) => (b.onclick = () => { setShelfLights(key, { colour: b.dataset.v }); keepOpen(); render(); }));
               menu.append(cc);
@@ -1472,7 +1511,7 @@
     if (el.id !== "bookSheet" && el.id !== "customizeSheet") redrawOpen = null;
     el.classList.remove("closing"); scrim.classList.remove("closing");
     openSheet = el; el.hidden = false; scrim.hidden = false; el.scrollTop = 0;
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = "hidden"; document.body.classList.add("sheetOpen");
   }
   let sheetGuard = null; // the book page uses this to stop closing with unsaved changes
   function closeSheet(force) {
@@ -1486,8 +1525,8 @@
       el.classList.remove("closing"); scrim.classList.remove("closing");
       if (openSheet === el) return; // opened again meanwhile
       el.hidden = true; el.replaceChildren();
-      if (!openSheet) scrim.hidden = true;
-    }, 340);
+      if (!openSheet) { scrim.hidden = true; document.body.classList.remove("sheetOpen"); }
+    }, 270);
     document.body.style.overflow = "";
   }
   scrim.onclick = closeSheet;
@@ -2007,4 +2046,44 @@
   // Shared helpers for music.js
   window.Shelf = { settings: () => state.settings, books: () => state.books, lookKey: () => state.settings.lookKey || (Object.entries(D.LOOKS).find(([, L]) => L.set.backdrop === state.settings.backdrop && L.set.theme === state.settings.theme) || [""])[0], h, esc, toast, showSheet, closeSheet, closeBtn, spineInk, byId, save, render, undo, redo, undoPair, recentRow, rememberColor };
   document.querySelector(".headerActions").prepend(undoPair("headerUndo"));
+})();
+
+// on-screen keyboard: lift the open sheet so the field being typed in stays above the keyboard (v207).
+// Some in-app viewers lay the keyboard over the page without telling it, so on touch screens we assume it
+// covers the lower 45% when neither the window nor the visual viewport shrank.
+(function () {
+  const coarse = matchMedia("(pointer: coarse)").matches;
+  const vv = window.visualViewport;
+  let baseH = innerHeight, sheet = null, t = 0, vvSeen = false, rsSeen = false;   // has this viewer ever told us about the keyboard?
+  const isField = (el) => el && el.matches && el.matches("input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]), textarea, [contenteditable=true]");
+  function apply() {
+    if (!sheet) return;
+    let kb = 0;
+    const vk = vv ? innerHeight - (vv.height + vv.offsetTop) : 0;
+    if (baseH - innerHeight > 80) { kb = 0; rsSeen = true; }     // the window itself shrank: the sheet already sits above the keyboard
+    else if (vk > 80) { kb = vk; vvSeen = true; }
+    else if (coarse && !vvSeen && !rsSeen) kb = Math.round(innerHeight * 0.42);   // only guess when the viewer never reports the keyboard
+
+    document.documentElement.style.setProperty("--kb", kb + "px");
+    const was = sheet.classList.contains("kb"), top0 = sheet.getBoundingClientRect().top;
+    sheet.classList.toggle("kb", kb > 0);
+    if (!was && kb > 0 && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const dy = top0 - sheet.getBoundingClientRect().top;
+      if (dy > 4) sheet.animate([{ transform: `translate3d(0,${dy}px,0)`, borderRadius: "18px 18px 0 0" }, { transform: "none", borderRadius: "0" }], { duration: 300, easing: "cubic-bezier(.22,1,.36,1)" });
+    }
+    const f = document.activeElement;
+    if (isField(f) && sheet.contains(f)) requestAnimationFrame(() => { const r = (f.closest(".field") || f).getBoundingClientRect(), room = innerHeight - kb; if (r.bottom > room - 12) sheet.scrollTop += r.bottom - (room - 12) + 8; });
+  }
+  function drop() { if (sheet) sheet.classList.remove("kb"); sheet = null; document.documentElement.style.removeProperty("--kb"); }
+  document.addEventListener("focusin", (e) => {
+    const s = e.target.closest && e.target.closest(".sheet");
+    if (!s || !isField(e.target) || innerWidth >= 768) return;
+    clearTimeout(t); if (sheet && sheet !== s) drop(); sheet = s; apply(); setTimeout(apply, 350);
+  });
+  document.addEventListener("focusout", () => {
+    clearTimeout(t);
+    t = setTimeout(() => { const f = document.activeElement; if (!(isField(f) && sheet && sheet.contains(f))) drop(); }, 80);
+  });
+  addEventListener("resize", () => { if (!sheet) baseH = innerHeight; else apply(); });
+  if (vv) vv.addEventListener("resize", apply);
 })();

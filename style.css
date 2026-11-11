@@ -96,6 +96,9 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   margin: 0 calc(-1 * var(--gutter)) 28px; padding: 2px var(--gutter) 6px;
 }
 .tabs::-webkit-scrollbar { display: none; }
+/* the first shelf reaches up behind the tabs (for the glow of its lights): the tabs, search and header stay on top, so they
+   still take taps and swipes */
+.tabs, .searchBox, .header { position: relative; z-index: 5; }
 .tab {
   flex: none; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px;
   border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--muted-fg);
@@ -137,10 +140,10 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .track { position: relative; height: calc(var(--shelf-h) * 1.16); }
 /* the shelf's top seen a little from above: lighter at the front edge, darker toward the wall, where it meets the wall in
    a soft shadow. Books and objects stand on it a little back from the edge, with their shadows falling on it. */
-.shelf { --top-d: 12px; }
-@media (min-width: 560px) { .shelf { --top-d: 16px; } }
+.shelf { --top-d: 34px; --floor-in: 26px; }
+@media (min-width: 560px) { .shelf { --top-d: 46px; --floor-in: 36px; } }
 .track::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--top-d); pointer-events: none;
-  background: linear-gradient(0deg, rgba(255,255,255,.2) 0, rgba(255,255,255,.08) 1.5px, rgba(255,255,255,.04) 30%, rgba(0,0,0,.28) 82%, rgba(0,0,0,.5) 100%), var(--plank-top); }
+  background: linear-gradient(0deg, rgba(255,255,255,.22) 0, rgba(255,255,255,.1) 2px, rgba(255,255,255,.03) 40%, rgba(0,0,0,.2) 78%, rgba(0,0,0,.42) 100%), var(--plank-top); }
 .track > .stage { height: calc(100% - var(--top-d) * .5); }
 .snap { position: absolute; top: 0; width: 1px; height: 1px; scroll-snap-align: start; }
 .stage { position: sticky; left: 0; height: 100%; }
@@ -182,7 +185,9 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 
 /* ---------- 3D book ---------- */
 .book { --turn: 0; position: relative; width: var(--w); height: var(--h); perspective: 1200px; }
-.book .body { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateY(calc(var(--turn) * 90deg)); }
+.book .body { position: absolute; inset: 0; transform-style: preserve-3d; transform: translateY(calc((var(--h) * .5 * (1 - cos(var(--te, 0) * 1deg))) - (var(--w) * .5 * sin(var(--turn) * 90deg) + var(--d) * .5 * cos(var(--turn) * 90deg)) * sin(var(--te, 0) * 1deg)))
+    rotateX(calc(var(--te, 0) * -1deg)) rotateY(calc(var(--turn) * 90deg)); }
+/* leaning the book back swings its near bottom edge down over the shelf's front; the translate above lifts it back so it still stands on the floor */
 .face { position: absolute; top: 0; height: var(--h); backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
 .front { left: 0; width: var(--w); border-radius: 1px 3px 3px 1px; transform: translateZ(calc(var(--d) / 2)); background: var(--spine); }
 .art { display: block; width: 100%; height: 100%; object-fit: cover; user-select: none; pointer-events: none; }
@@ -1378,11 +1383,10 @@ html { touch-action: pan-x pan-y; }
               radial-gradient(ellipse 30% 34% at 0% 66%, rgba(3,2,3,.8), rgba(3,2,3,.35) 55%, transparent 85%),
               radial-gradient(ellipse 30% 34% at 100% 66%, rgba(3,2,3,.8), rgba(3,2,3,.35) 55%, transparent 85%); }
 /* black steel shelf (the loft): a blackened flat bar. A bright arris along the top edge where it catches the light,
-   a brushed front face that darkens downward, fine mill scale streaks, and a slotted bolt every so often */
+   a brushed front face that darkens downward, fine mill scale streaks (no bolts: osamu asked for the dot to go, v254) */
 html[data-mat="steel"] .plank {
   background:
     linear-gradient(to bottom, rgba(255,236,210,.42) 0, rgba(255,236,210,.12) 1px, transparent 2px),
-    radial-gradient(circle at 50% 55%, #6c6e72 0 1.1px, #34363a 1.7px, #0d0e10 2.6px, rgba(0,0,0,.35) 3.2px, transparent 3.8px) 46px 0 / 230px 100% repeat-x,
     repeating-linear-gradient(to bottom, rgba(255,255,255,.035) 0 1px, transparent 1px 3px),
     linear-gradient(90deg, rgba(255,255,255,0) 0, rgba(255,255,255,.05) 18%, rgba(255,255,255,0) 32%, rgba(255,255,255,.04) 61%, rgba(255,255,255,0) 78%),
     linear-gradient(to bottom, #4a4c51 0, #2f3135 2px, #222327 5px, #191a1d 11px, #101113 100%);
@@ -1396,24 +1400,630 @@ html[data-mat="steel"] .plank::before {
 .shelf.hasLights[data-lights="closetRod"] .caption { padding-top: calc(var(--lights-h, 120px) - 6px); }
 .lights.closetRod .rod { position: absolute; left: 0; right: 0; pointer-events: none; filter: drop-shadow(0 3px 2px rgba(42,4,24,.35)); }
 .lights.closetRod .rod img { position: absolute; top: 0; height: 100%; }
+.ornament[data-kind="handbag"], .ornament[data-kind="pencilCup"], .ornament[data-kind="giftBoxes"], .ornament[data-kind="shoppingBags"], .ornament[data-kind="lipstickLamp"] { bottom: calc(var(--top-d) * -.42); }
+.lights.closetRod .rodMount { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; filter: drop-shadow(0 2px 1.5px rgba(42,4,24,.35)); }
+.lights.closetRod.rail { overflow: hidden; }
+.lights.closetRod.rail .railIn { position: absolute; left: 0; width: 100%; height: 100%; }
+/* the clothes take on the room: a little darker and pinker, lit from the front, in the shelf's shadow at the top */
+.lights.closetRod.rail .underShade { position: absolute; left: 0; right: 0; top: 0; bottom: 0; pointer-events: none; mix-blend-mode: multiply;
+  background: linear-gradient(180deg, rgba(90,15,58,.42) 0, rgba(120,26,78,.3) 14px, rgba(160,60,110,.14) 60px, rgba(255,255,255,0) 150px, rgba(255,255,255,0) 70%, rgba(120,30,80,.22) 100%); }
+.lights.closetRod .tube { position: absolute; pointer-events: none; background: url(obj/closet-rail-rod-m.webp) repeat-x; }
+.lights.closetRod.rail .rod { filter: drop-shadow(0 2px 1.5px rgba(42,4,24,.3)); }
 .lights.closetRod .rodPatch { position: absolute; pointer-events: none; overflow: hidden; }
 .lights.closetRod .rodPatch img { position: absolute; max-width: none; }
-.lights.closetRod .hgr { position: absolute; pointer-events: none; transform: rotate(var(--r)); }
-.lights.closetRod .hgr img { display: block; width: 100%; height: 100%; filter: drop-shadow(3px 4px 3px rgba(42,4,24,.28)); }
-.lights.closetRod .hgr .hit { position: absolute; top: 0; bottom: 0; pointer-events: auto; cursor: pointer; }
-.lights.closetRod .hgr.swing { animation: hgrSwing 2.2s cubic-bezier(.3,.6,.4,1); }
-@keyframes hgrSwing {
-  0% { transform: rotate(var(--r)); }
-  12% { transform: rotate(calc(var(--r) + var(--a))); }
-  32% { transform: rotate(calc(var(--r) - var(--a) * .62)); }
-  52% { transform: rotate(calc(var(--r) + var(--a) * .36)); }
-  70% { transform: rotate(calc(var(--r) - var(--a) * .18)); }
-  86% { transform: rotate(calc(var(--r) + var(--a) * .07)); }
-  100% { transform: rotate(var(--r)); }
-}
+.lights.closetRod .hgr { position: absolute; pointer-events: none; }
+/* v153: each hanger and each shoe is its own picture that swings from its hook */
+.lights.closetRod .pc { position: absolute; pointer-events: none; }
+.lights.closetRod .pc.live { will-change: transform; }
+.lights.closetRod .pc img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; filter: drop-shadow(2px 3px 2.5px rgba(42,4,24,.3)); }
 #backdrop .glint4 { width: var(--s); height: var(--s); opacity: 0; margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
   background: radial-gradient(circle, #fff 0 10%, rgba(255,210,236,.6) 18%, transparent 40%), linear-gradient(90deg, transparent 46%, rgba(255,255,255,.95) 50%, transparent 54%), linear-gradient(0deg, transparent 46%, rgba(255,255,255,.95) 50%, transparent 54%);
   -webkit-mask: radial-gradient(circle, #000 20%, transparent 70%); mask: radial-gradient(circle, #000 20%, transparent 70%);
   animation: glint4 var(--t) ease-in-out infinite; animation-delay: var(--d); }
 @keyframes glint4 { 0%, 70%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); } 82% { opacity: 1; transform: scale(1) rotate(25deg); } }
-@media (prefers-reduced-motion: reduce) { #backdrop .glint4 { animation: none; opacity: .5; } .lights.closetRod .hgr.swing { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #backdrop .glint4 { animation: none; opacity: .5; } }
+
+/* v172: twinkling glints on the closet pictures (sequins, glitter, hanger and hook highlights) */
+.lights.closetRod .pc .sp { position: absolute; pointer-events: none; transform: translate(-50%, -50%) scale(0); opacity: 0;
+  background: radial-gradient(circle, #fff 0 10%, rgba(255,255,255,.6) 20%, rgba(255,246,214,0) 58%),
+    linear-gradient(90deg, rgba(255,255,255,0), #fff 50%, rgba(255,255,255,0)) center / 100% 7% no-repeat,
+    linear-gradient(0deg, rgba(255,255,255,0), #fff 50%, rgba(255,255,255,0)) center / 7% 100% no-repeat;
+  animation: spTwinkle 3.4s ease-in-out infinite; animation-play-state: paused; }
+.lights.closetRod.rail.vis .pc .sp { animation-play-state: running; }
+html.swiping .lights.closetRod.rail.vis .pc .sp { animation-play-state: paused; }
+@keyframes spTwinkle { 0%, 38%, 100% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; }
+  62% { transform: translate(-50%, -50%) scale(1) rotate(35deg); opacity: 1; }
+  82% { transform: translate(-50%, -50%) scale(.4) rotate(70deg); opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .lights.closetRod .pc .sp { animation: none; opacity: .55; transform: translate(-50%, -50%) scale(.6); } }
+
+/* v174: the princess closet's shelves are deeper, seen from above like the floor of a cubby (osamu's picture): the floor
+   is deep and runs the full width of the row (a slanted end looked like the shelf was being cut off whenever the row moved). Books and objects
+   still stand halfway back on it, because everything keys off --top-d. */
+html[data-bdk="closet"] .shelf { --top-d: 34px; --floor-in: 26px; }
+@media (min-width: 560px) { html[data-bdk="closet"] .shelf { --top-d: 46px; --floor-in: 36px; } }
+html[data-bdk="closet"] .track::before {
+  background: linear-gradient(0deg, rgba(255,255,255,.22) 0, rgba(255,255,255,.1) 2px, rgba(255,255,255,.03) 40%, rgba(0,0,0,.2) 78%, rgba(0,0,0,.42) 100%),
+    linear-gradient(90deg, rgba(255,255,255,0), rgba(255,230,244,.22) 30%, rgba(255,255,255,0) 50%, rgba(255,230,244,.12) 78%, rgba(255,255,255,0)), #e0408f; }
+/* (the lacquer's glint line is left out here: on the deeper floor it would show as a white line along the back edge) */
+
+/* v176: books on the shelf are seen a little from above, like the shelf's floor: each one leans its top towards you a few
+   degrees, so you see the top of the page block between the two boards, and the spine runs back into depth. */
+.slot .book { --tilt: 9; }
+html[data-bdk="closet"] .slot .book { --tilt: 14; }
+.slot.lying .book { --tilt: 0; }
+.top { left: 0; width: var(--w); top: calc(var(--h) / 2 - var(--d) / 2); height: var(--d); transform: rotateX(90deg) translateZ(calc(var(--h) / 2 - .5px)); overflow: hidden;
+  background:
+    linear-gradient(90deg, var(--spine) 0, var(--spine) 2.5%, rgba(0,0,0,0) 2.5%),
+    linear-gradient(180deg, var(--spine) 0, var(--spine) 7%, rgba(0,0,0,0) 7%, rgba(0,0,0,0) 93%, var(--spine) 93%),
+    repeating-linear-gradient(180deg, #efe4cc 0 1px, #d9caa8 1px 2px);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
+.top::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.2), rgba(255,255,255,.1) 40%, rgba(0,0,0,.1)); }
+
+/* v180: realistic book shadows on the deeper floor. Two layers: a tight dark contact line right under the book's footprint, and a
+   long soft shadow that falls on the floor to the right (light from the upper left), sized by the floor depth. Both sit in the
+   floor plane, so they run back and forward across it rather than hugging the bottom edge. */
+.slot::after {
+  left: -2%; right: -2%; bottom: calc(var(--top-d) * -.5); height: calc(var(--top-d) * .95); border-radius: 0;
+  background:
+    radial-gradient(ellipse 50% 22% at 50% 50%, rgba(0,0,0,.62), rgba(0,0,0,.25) 55%, transparent 100%),
+    radial-gradient(ellipse 62% 42% at 62% 56%, rgba(0,0,0,.34), rgba(0,0,0,.12) 60%, transparent 100%);
+  filter: blur(1.4px);
+}
+.slot.front::after { background:
+    radial-gradient(ellipse 50% 22% at 50% 50%, rgba(0,0,0,.7), rgba(0,0,0,.28) 55%, transparent 100%),
+    radial-gradient(ellipse 70% 46% at 66% 58%, rgba(0,0,0,.4), rgba(0,0,0,.14) 60%, transparent 100%); }
+
+/* v181: the lean only applies while a book is spine-out (cover edge-on). A book showing its cover is as deep as it is wide, so any lean
+   made its bottom edge slope up to the back of the floor and it looked like it was standing behind the shelf instead of on it. */
+.book { --te: calc(var(--tilt, 0) * clamp(0, (var(--turn) - .93) / .07, 1)); }
+
+/* v183: osamu wants the books flat as before (no lean, no visible top). The lean code stays but is switched off. */
+.slot .book, html[data-bdk="closet"] .slot .book { --tilt: 0; }
+.top { display: none; }
+
+/* v184: the lipstick lamp. Off, the bullet sits down in the case with only its tip showing; tapped, it twists slowly up
+   (light runs round the ribbed base as it turns), then the lipstick lights up. Tapped again it winds back down. */
+.ornament[data-kind="lipstickLamp"] .lpBullet { transform: translateY(var(--rest)); transition: transform 1.5s cubic-bezier(.55,0,.35,1); }
+.ornament[data-kind="lipstickLamp"].lit .lpBullet { transform: translateY(0); transition: transform 2.3s cubic-bezier(.45,.05,.25,1); }
+.ornament[data-kind="lipstickLamp"] .lpRed { transition: filter .6s ease; }
+.ornament[data-kind="lipstickLamp"].lit .lpRed { filter: brightness(1.3) saturate(1.2); transition: filter 1.1s ease 1.7s; }
+.ornament[data-kind="lipstickLamp"] .lpShine { opacity: 0; }
+.ornament[data-kind="lipstickLamp"].twistUp .lpShine { animation: lpShine .75s ease-in-out 3; }
+.ornament[data-kind="lipstickLamp"].twistDown .lpShine { animation: lpShineBack .65s ease-in-out 2; }
+@keyframes lpShine { 0% { transform: translateX(0); opacity: 0; } 25%, 75% { opacity: 1; } 100% { transform: translateX(var(--run)); opacity: 0; } }
+@keyframes lpShineBack { 0% { transform: translateX(var(--run)); opacity: 0; } 25%, 75% { opacity: 1; } 100% { transform: translateX(0); opacity: 0; } }
+.ornament[data-kind="lipstickLamp"] .ornGlow { top: 12%; transition: opacity .6s ease; }
+.ornament[data-kind="lipstickLamp"].lit .ornGlow { transition: opacity 1.2s ease 1.8s; animation: none; }
+.ornament[data-kind="lipstickLamp"] .ornPool { transition-delay: 0s; }
+.ornament[data-kind="lipstickLamp"].lit .ornPool { transition-delay: 1.8s; }
+@media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"] .lpBullet, .ornament[data-kind="lipstickLamp"] .lpRed { transition-duration: .01s !important; transition-delay: 0s !important; } .ornament[data-kind="lipstickLamp"] .lpShine { animation: none !important; } }
+
+/* v188: one light for the whole room, from the front and upper left. Every book and object casts the same soft shadow back
+   and to the right onto the wall behind it, and has a thin dark line where it touches the floor. Nothing spreads in front. */
+:root { --cast: none; }
+.slot .book { filter: var(--cast); }
+.slot.lying .book { filter: none; }
+.ornament svg { filter: var(--cast); }
+.slot::after { display: none; }
+.slot::before { content: ""; position: absolute; pointer-events: none; left: -4%; right: -4%; bottom: -9px; height: 16px; filter: blur(3px);
+  /* a soft black shadow tucked right under the base, its top half hidden behind the book, so there is never a gap */
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(0,0,0,.7), rgba(0,0,0,.4) 55%, rgba(0,0,0,0) 100%); }
+.slot.lying::before, .addSlot::before { display: none; }
+.ornament[data-kind="lipstickLamp"] svg { filter: none; }
+/* v191: the lamp draws its own footprint shadow; no second blob */
+.ornament[data-kind="lipstickLamp"]::after, .slot:has(> .ornament[data-kind="lipstickLamp"])::before { display: none; }
+/* v192: objects slide along the shelf instead of being lifted */
+.ornGhost.up > svg { transform: none; filter: var(--cast); }
+.ornament[data-kind="lipstickLamp"].ornGhost.up > svg { filter: none; }
+.ornGhost.up::after { opacity: 1; transform: none; }
+.ornGhost.up.lit .ornPool { opacity: .9; }
+.ornGhost.binning > svg { opacity: .45; transform: scale(.94); }
+.ornament.landed > svg { animation: none; }
+/* v196: books get the lamp's footprint shadow, a dark band the shape of the book's base with a soft edge */
+.slot::before { left: -2px; right: -2px; bottom: -8px; height: 14px; border-radius: 40% / 50%;
+  background: rgba(0,0,0,.8); filter: blur(1.2px); box-shadow: 0 1px 6px 3px rgba(0,0,0,.42); }
+html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow: 0 1px 6px 3px rgba(28,0,16,.42); }
+/* v202: the closet's painted objects draw their own footprint shadow, so the generic blob under them goes */
+.ornament:is([data-kind="handbag"], [data-kind="pencilCup"], [data-kind="giftBoxes"], [data-kind="shoppingBags"])::after { display: none; }
+.ornament:is([data-kind="handbag"], [data-kind="pencilCup"], [data-kind="giftBoxes"], [data-kind="shoppingBags"]) svg { filter: none; }
+/* v204: glitter floating in the closet's ceiling light */
+#backdrop .paintBox.pinTop { top: 0; transform: translateX(-50%); }
+#backdrop .cDust { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, #fff 0 30%, rgba(255,214,240,.85) 45%, rgba(255,180,225,0) 72%);
+  filter: drop-shadow(0 0 3px rgba(255,190,232,.9));
+  animation: cDustFall var(--t) linear var(--d) infinite, cDustTw var(--tw) ease-in-out var(--d) infinite alternate; will-change: transform, opacity; }
+#backdrop .cDust.star { border-radius: 0; background: #fff; clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); --s: 9px; }
+@keyframes cDustFall { 0% { transform: translate(0, 0); opacity: 0; } 12% { opacity: 1; } 50% { transform: translate(var(--sway), calc(var(--fall) * .5)); } 85% { opacity: .9; } 100% { transform: translate(calc(var(--sway) * -.4), var(--fall)); opacity: 0; } }
+@keyframes cDustTw { from { scale: .55; } to { scale: 1.15; } }
+@media (prefers-reduced-motion: reduce) { #backdrop .cDust { animation: none; opacity: .7; } }
+/* v205: objects that run off the right of the screen must not make the row scrollable past the end of the shelf's
+   floor (there was bare wall beyond it). The stage is the screen-wide window everything is placed in; clip it sideways only. */
+.stage { overflow-x: clip; overflow-y: visible; }
+.decorBin.ask { pointer-events: auto; cursor: pointer; }
+
+/* v207: sheet lifted above the on-screen keyboard while typing */
+@media (max-width: 767px) {
+  /* v218: osamu wants the panel BIG while typing: it fills the screen, and its own bottom padding (the keyboard's height)
+     lets the field being typed in and the search results scroll up above the keyboard */
+  .sheet.kb { top: 0; bottom: 0; max-height: none; border-radius: 0; padding-bottom: 0; }
+  .sheet.kb > .sheetBody { padding-bottom: calc(var(--kb, 0px) + 24px); }
+}
+
+/* v240 (osamu): the lipstick lamp's light is warm, wide and moody: a candle-warm amber-rose glow that spreads far and
+   fades slowly, over a deeper shadow sinking the wall around it */
+.ornament[data-kind="lipstickLamp"] .ornGlow { mix-blend-mode: screen;
+  background: radial-gradient(closest-side, rgba(255,228,196,.92), rgba(255,188,132,.78) 9%, rgba(255,152,98,.52) 17%, rgba(242,120,82,.34) 27%, rgba(222,94,70,.21) 39%, rgba(194,72,60,.12) 53%, rgba(165,52,50,.055) 69%, rgba(140,40,45,.018) 85%, transparent) !important; }
+/* centred on the bullet (the case sits left of the picture's middle) */
+.ornament[data-kind="lipstickLamp"] .ornGlow { left: 38.7%; top: 12.5%; width: 660px; height: 540px; }
+.ornament[data-kind="lipstickLamp"] .lpHalo, .ornament[data-kind="lipstickLamp"] .lpCast { opacity: 0; transition: opacity .6s ease; }
+.ornament[data-kind="lipstickLamp"].lit .lpHalo, .ornament[data-kind="lipstickLamp"].lit .lpCast { opacity: 1; transition: opacity 1.1s ease 1.7s; }
+/* moodier: the wall around the lit lamp sinks into a deep berry shadow, so the light reads warmer and stronger */
+.ornament[data-kind="lipstickLamp"] .ornGlowIn::before { content: ""; position: absolute; left: 38.7%; top: 30%; width: 1100px; height: 760px; transform: translate(-50%, -50%); pointer-events: none;
+  background: radial-gradient(closest-side, transparent 30%, rgba(36,6,12,.36) 62%, rgba(36,6,12,.12) 85%, transparent); opacity: 0; transition: opacity .6s ease; }
+.ornament[data-kind="lipstickLamp"].lit .ornGlowIn::before { opacity: 1; transition: opacity 1.4s ease 1.8s; }
+.ornament[data-kind="lipstickLamp"].lit .ornGlow { animation: lpBreathe 6s ease-in-out 3s infinite alternate; }
+@keyframes lpBreathe { from { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: .82; transform: translate(-50%, -50%) scale(.94); } }
+.ornament[data-kind="lipstickLamp"] .ornPool { --pc: rgba(255,150,92,.95) !important; width: 360%; height: 18px; }
+.ornament[data-kind="lipstickLamp"].lit .lpRed { filter: brightness(1.45) saturate(1.25); }
+@media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .ornGlow { animation: none; } }
+
+/* v210/211: the calla candle & lily pens pair stands flush like the other closet pieces, with their own base shadows */
+.ornament[data-kind="callaCandle"], .ornament[data-kind="flowerVase"], .ornament[data-kind="vanityMirror"], .ornament[data-kind="lavender"] { bottom: calc(var(--top-d) * -.42); }
+.ornament:is([data-kind="callaCandle"], [data-kind="flowerVase"], [data-kind="vanityMirror"], [data-kind="lavender"])::after { display: none; }
+.ornament:is([data-kind="callaCandle"], [data-kind="flowerVase"], [data-kind="vanityMirror"], [data-kind="lavender"]) svg { filter: none; }
+.ornament[data-kind="callaCandle"] .clFlame, .ornament[data-kind="callaCandle"] .clLight { display: none; }
+.ornament[data-kind="callaCandle"].lit .clFlame { display: inline; }
+.ornament[data-kind="callaCandle"].lit .clLight { display: inline; opacity: var(--fi, 1); }
+.ornament[data-kind="callaCandle"] .ornGlow { left: 26.8%; top: 6%; width: 300px; height: 300px; transition: none;
+  background: radial-gradient(closest-side, rgba(255,214,150,.55), rgba(255,170,90,.3) 18%, rgba(255,140,70,.12) 40%, rgba(255,120,60,.04) 65%, transparent) !important; }
+.ornament[data-kind="callaCandle"].lit .ornGlow { animation: none; opacity: var(--fi, 1); }
+.ornament[data-kind="callaCandle"] .ornPool { display: none; }
+.ornament[data-kind="callaCandle"] .clSmoke { stroke-width: 1.2; }
+
+/* v219: smoother panels. The panel slides as one GPU layer (transform only, nothing that re-lays out the page), the
+   dimming is a plain fade, and while a panel is open the room's backdrop effects (glitter, fog...) pause so the phone
+   only has the panel to draw. */
+.sheet { will-change: transform; animation: sheetUp .34s cubic-bezier(.22,1,.36,1); }
+@keyframes sheetUp { from { transform: translate3d(0, 100%, 0); } }
+.sheet.closing { animation: sheetDown2 .26s cubic-bezier(.55,0,.75,.35) forwards; }
+@keyframes sheetDown2 { to { transform: translate3d(0, 100%, 0); } }
+.scrim { will-change: opacity; animation: fade .3s ease; }
+.scrim.closing { animation: scrimOut .26s ease forwards; }
+@media (min-width: 768px) {
+  .sheet { animation: sheetSide .3s cubic-bezier(.22,1,.36,1); }
+  @keyframes sheetSide { from { transform: translate3d(100%, 0, 0); } }
+  .sheet.closing { animation: sheetOutSide .24s cubic-bezier(.55,0,.75,.35) forwards; }
+}
+body.sheetOpen #backdrop *, body.sheetOpen #backdrop *::before, body.sheetOpen #backdrop *::after { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) { .sheet, .sheet.closing, .scrim, .scrim.closing { animation-duration: .01s !important; } }
+
+/* v221: book shadows lighter too, the same ~.42 shade as the objects (osamu) */
+.slot::before { background: rgba(0,0,0,.42); box-shadow: 0 1px 6px 3px rgba(0,0,0,.22); }
+html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.42); box-shadow: 0 1px 6px 3px rgba(28,0,16,.22); }
+
+/* herbalist board: its two herb bunches hang down over the shelf's front edge, so that shelf's row lets them show below the floor */
+.scroller:has(.ornament[data-kind="lavender"]) { padding-bottom: 44px; margin-bottom: -44px; }
+.stage:has(.ornament[data-kind="lavender"]) { z-index: 4; }
+html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornament .shTint { display: none; }
+
+/* velvet drapes (vamp.js): swags of velvet and lace under the shelf, a ruby drop below each loop */
+.shelf.hasLights[data-lights="vampDrapes"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.lights.vampDrapes .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.lights.vampDrapes .vSwag { position: absolute; pointer-events: none; transform-origin: 50% 2%; }
+.lights.vampDrapes .vSwag img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none;
+  filter: drop-shadow(0 4px 4px rgba(10,0,4,.45)) brightness(.86); transition: filter 1.2s ease; }
+.lights.vampDrapes .vDrop { position: absolute; pointer-events: none; }
+.lights.vampDrapes .vDrop img { position: absolute; left: 0; width: 100%; -webkit-user-drag: none; user-select: none;
+  filter: brightness(.72) saturate(.9) drop-shadow(0 3px 3px rgba(10,0,4,.5)); transition: filter 1s ease; }
+.lights.vampDrapes .vChain { position: absolute; left: calc(50% - .6px); top: 0; width: 1.2px;
+  background: repeating-linear-gradient(180deg, #d9b66a 0 1.6px, #6b4a1c 1.6px 2.6px); opacity: .9; }
+.lights.vampDrapes .vHalo { position: absolute; left: 50%; transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side, rgba(255,40,60,.55), rgba(200,10,40,.22) 45%, transparent 100%);
+  mix-blend-mode: screen; opacity: 0; transition: opacity 1.1s ease; pointer-events: none; }
+.lights.vampDrapes.on .vDrop img { filter: brightness(1.18) saturate(1.25) drop-shadow(0 0 6px rgba(255,40,60,.85)) drop-shadow(0 0 14px rgba(220,10,40,.5)); }
+.lights.vampDrapes.on .vHalo { opacity: 1; animation: vGlow 4.2s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -1.3s); }
+.lights.vampDrapes.on .vSwag img { filter: drop-shadow(0 4px 4px rgba(10,0,4,.45)) brightness(.95); }
+@keyframes vGlow { 0% { opacity: .75; transform: translate(-50%, -50%) scale(.92); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .lights.vampDrapes.on .vHalo { animation: none; } }
+.lights.vampDrapes .vKnot { position: absolute; pointer-events: none; }
+.lights.vampDrapes .vKnot img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; filter: brightness(.86); }
+.lights.vampDrapes.on .vKnot img { filter: brightness(.95); }
+/* the vampire room's switch is the crystals themselves: the cord is kept for keyboards and screen readers only */
+.shelf[data-lights="vampDrapes"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="vampDrapes"] .pullCord:focus-visible { opacity: 1; }
+.lights.vampDrapes .vDrop img { transition: filter .45s ease; }
+.lights.vampDrapes .vHalo { transition: opacity .45s ease; }
+.lights.vampDrapes .vDrop.yank img, .lights.vampDrapes .vDrop.yank .vHalo { animation: vPull 1s ease both; }
+.lights.vampDrapes .vDrop.yank .vChain { transform-origin: 50% 0; animation: vChainPull 1s ease both; }
+.lights.vampDrapes.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
+@keyframes vPull { 0% { translate: 0 0; } 14% { translate: 0 var(--pull); } 20% { translate: 0 calc(var(--pull) * .88); } 30% { translate: 0 calc(var(--pull) * -.12); } 40%, 100% { translate: 0 0; } }
+@keyframes vPullHalo { 0% { translate: 0 0; opacity: 1; } 14% { translate: 0 var(--pull); } 20% { translate: 0 calc(var(--pull) * .88); } 30% { translate: 0 calc(var(--pull) * -.12); } 40%, 100% { translate: 0 0; opacity: 1; } }
+@keyframes vChainPull { 0% { transform: scaleY(1); } 14% { transform: scaleY(var(--cs)); } 20% { transform: scaleY(calc(1 + (var(--cs) - 1) * .88)); } 30% { transform: scaleY(.99); } 40%, 100% { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .lights.vampDrapes .vDrop.yank * { animation: none !important; } }
+/* the cottage's flower lamps (vamp.js lotusEl): ivy cords behind, lotus shades, the driftwood branch on the shelf front */
+.shelf.hasLights[data-lights="cottageLotus"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.shelf[data-lights="cottageLotus"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="cottageLotus"] .pullCord:focus-visible { opacity: 1; }
+.lights.cottageLotus .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.lights.cottageLotus .lBranch { position: absolute; pointer-events: none; }
+.lights.cottageLotus .lBranch img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 3px 3px rgba(60,35,15,.35)); -webkit-user-drag: none; user-select: none; }
+.lights.cottageLotus .vDrop { position: absolute; pointer-events: none; }
+.lights.cottageLotus .vChain { position: absolute; top: 0; overflow: hidden; transform-origin: 50% 0; }
+.lights.cottageLotus .vChain img { position: absolute; left: 0; display: block; }
+.lights.cottageLotus .vDrop > img { position: absolute; left: 0; width: 100%; -webkit-user-drag: none; user-select: none;
+  filter: brightness(.94) saturate(.92) drop-shadow(0 4px 4px rgba(60,30,30,.28)); transition: filter .45s ease; }
+.lights.cottageLotus.on .vDrop > img { filter: brightness(1.12) saturate(1.18) drop-shadow(0 0 5px rgba(255,170,205,.95)) drop-shadow(0 0 16px rgba(255,120,175,.55)); }
+.lights.cottageLotus .vHalo { position: absolute; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255,190,215,.55), rgba(255,150,190,.22) 55%, transparent); opacity: 0; transition: opacity .45s ease; }
+.lights.cottageLotus.on .vHalo { opacity: 1; animation: vGlow 4.6s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -1.1s); }
+.lights.cottageLotus .vDrop.yank > img, .lights.cottageLotus .vDrop.yank .vHalo { animation: vPull 1s ease both; }
+.lights.cottageLotus.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
+.lights.cottageLotus .vDrop.yank .vChain { animation: vChainPull 1s ease both; }
+@media (prefers-reduced-motion: reduce) { .lights.cottageLotus.on .vHalo { animation: none; } .lights.cottageLotus .vDrop.yank * { animation: none !important; } }
+/* the enchanted forest's wisteria garland and suncatchers (vamp.js forestEl). Switching only changes opacity, never a
+   filter or a blend, so phones don't repaint the big pictures (that flickered) */
+.shelf.hasLights[data-lights="forestCatchers"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.shelf[data-lights="forestCatchers"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="forestCatchers"] .pullCord:focus-visible { opacity: 1; }
+.lights.forestCatchers { overflow-x: clip; }
+.lights.forestCatchers .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.lights.forestCatchers .vSwag { position: absolute; pointer-events: none; }
+.lights.forestCatchers .vSwag img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; filter: drop-shadow(0 4px 5px rgba(0,0,20,.35)); }
+.lights.forestCatchers .vDrop { position: absolute; pointer-events: none; }
+.lights.forestCatchers .vChain { position: absolute; top: 0; background: url(obj/forest-chain.webp) center bottom repeat-y; transform-origin: 50% 0; }
+.lights.forestCatchers .vDrop > img { position: absolute; -webkit-user-drag: none; user-select: none; }
+.lights.forestCatchers .vDrop > img.fGlow { filter: drop-shadow(0 0 1.5px rgba(230,200,255,.95)) drop-shadow(0 0 5px rgba(180,130,255,.45)); opacity: 0; transition: opacity .5s ease; }
+.lights.forestCatchers.on .vDrop > img.fGlow { opacity: 1; }
+.lights.forestCatchers .vHalo { position: absolute; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(185,140,255,.2), rgba(150,110,240,.08) 55%, transparent); opacity: 0; transition: opacity .5s ease; }
+.lights.forestCatchers.on .vHalo { opacity: 1; }
+.lights.forestCatchers .fSpots { position: absolute; inset: 0; pointer-events: none; }
+.lights.forestCatchers .fSpot { position: absolute; width: 0; height: 0; opacity: 0; transition: opacity .6s ease; }
+.lights.forestCatchers .fSpot::before, .lights.forestCatchers .fSpot::after { content: ""; position: absolute; left: 0; top: 0; transform: translate(-50%, -50%) scale(var(--s)); }
+.lights.forestCatchers .fSpot::before { width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(closest-side, rgba(var(--c),.85), rgba(var(--c),.3) 45%, transparent); }
+.lights.forestCatchers .fSpot::after { width: 16px; height: 16px; background: linear-gradient(rgba(var(--c),0), rgba(var(--c),.85) 50%, rgba(var(--c),0)) center / 1.2px 100% no-repeat, linear-gradient(90deg, rgba(var(--c),0), rgba(var(--c),.85) 50%, rgba(var(--c),0)) center / 100% 1.2px no-repeat; }
+.lights.forestCatchers.on .fSpot { opacity: 1; animation: fTwinkle 3.2s ease-in-out infinite alternate; animation-delay: calc(var(--d) * -1); }
+@keyframes fTwinkle { 0% { opacity: .3; } 60% { opacity: 1; } 100% { opacity: .55; } }
+.lights.forestCatchers .vDrop.yank > img, .lights.forestCatchers .vDrop.yank .vHalo { animation: vPull 1s ease both; }
+.lights.forestCatchers .vDrop.yank .vChain { animation: vChainPull 1s ease both; }
+@media (prefers-reduced-motion: reduce) { .lights.forestCatchers.on .fSpot { animation: none; } .lights.forestCatchers .vDrop.yank * { animation: none !important; } }
+/* the big hanging pictures each get their own layer up front: without it a phone repaints them all when a light
+   switches and shows one blank frame (osamu's recording, v234) */
+.lights.vampDrapes .vSwag, .lights.vampDrapes .vKnot, .lights.vampDrapes .vDrop,
+.lights.cottageLotus .lBranch, .lights.cottageLotus .vDrop,
+.lights.forestCatchers .vSwag, .lights.forestCatchers .vDrop, .lights.forestCatchers .fSpots { will-change: transform; backface-visibility: hidden; }
+/* the suncatchers' sparkle: tiny four-point stars that flare and fade on the glass beads while the light is on */
+.lights.forestCatchers .fGlint { position: absolute; width: 0; height: 0; opacity: 0; transition: opacity .4s ease; pointer-events: none; }
+.lights.forestCatchers .fGlint::before, .lights.forestCatchers .fGlint::after { content: ""; position: absolute; left: 0; top: 0; width: 11px; height: 11px; transform: translate(-50%, -50%) scale(0); }
+.lights.forestCatchers .fGlint::before { background:
+  linear-gradient(rgba(255,255,255,0), #fff 50%, rgba(255,255,255,0)) center / 1.3px 100% no-repeat,
+  linear-gradient(90deg, rgba(255,255,255,0), #fff 50%, rgba(255,255,255,0)) center / 100% 1.3px no-repeat; }
+.lights.forestCatchers .fGlint::after { width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(closest-side, #fff, rgba(235,210,255,.8) 45%, rgba(200,160,255,0)); }
+.lights.forestCatchers.on .fGlint { opacity: 1; }
+.lights.forestCatchers.on .fGlint::before, .lights.forestCatchers.on .fGlint::after { animation: fGlint var(--t) ease-in-out infinite; animation-delay: calc(var(--d) * -1); }
+@keyframes fGlint { 0%, 55%, 100% { transform: translate(-50%, -50%) scale(0) rotate(0deg); } 70% { transform: translate(-50%, -50%) scale(var(--z)) rotate(30deg); } 82% { transform: translate(-50%, -50%) scale(calc(var(--z) * .4)) rotate(45deg); } }
+@media (prefers-reduced-motion: reduce) { .lights.forestCatchers.on .fGlint::before, .lights.forestCatchers.on .fGlint::after { animation: none; transform: translate(-50%, -50%) scale(calc(var(--z) * .6)); } }
+/* starry night's light curtain and star trim (vamp.js curtainEl) */
+.shelf.hasLights[data-lights="starCurtain"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.lights.starCurtain { overflow-x: clip; }
+.lights.starCurtain .scBand { position: absolute; top: 0; display: block; overflow: visible; transform-origin: 50% 16px; will-change: transform; }
+.lights.starCurtain .scDefs { position: absolute; }
+.lights.starCurtain .scWire { fill: none; stroke: rgba(150,140,120,.25); stroke-width: .6; }
+.lights.starCurtain .scOff { fill: rgba(225,215,190,.28); }
+.lights.starCurtain .scStars { fill: #efe6cf; stroke: rgba(120,100,70,.5); stroke-width: .5; filter: drop-shadow(0 0 0 transparent); opacity: .7; transition: opacity .5s ease; }
+.lights.starCurtain.on .scStars { opacity: 1; }
+.lights.starCurtain .scLit { fill: url(#scDot); opacity: 0; transition: opacity .6s ease; }
+.lights.starCurtain.on .scLit { opacity: 1; }
+.lights.starCurtain.on .scTw { animation: scTw 2.8s ease-in-out infinite alternate; }
+.lights.starCurtain.on .scTw1 { animation-delay: -.7s; animation-duration: 3.3s; }
+.lights.starCurtain.on .scTw2 { animation-delay: -1.5s; animation-duration: 2.4s; }
+.lights.starCurtain.on .scTw3 { animation-delay: -2.1s; animation-duration: 3.8s; }
+@keyframes scTw { 0% { opacity: 1; } 55% { opacity: .9; } 100% { opacity: .35; } }
+.lights.starCurtain .starTrim, .lights.starCurtain .starTrimGlow { position: absolute; left: 0; right: 0; top: -1px; height: 24px; pointer-events: none;
+  -webkit-mask-repeat: repeat-x; mask-repeat: repeat-x; -webkit-mask-size: 31px 24px; mask-size: 31px 24px; }
+.lights.starCurtain .starTrim { background: linear-gradient(180deg, rgba(0,0,0,.42) 0, rgba(0,0,0,.2) 35%, rgba(0,0,0,.3) 100%), var(--plank-top); -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2220%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M0%200H26V8A13.0%2011.96%200%200%201%200%208Z%20M13.00%205.90%20L14.22%208.83%20L17.37%209.08%20L14.97%2011.14%20L15.70%2014.22%20L13.00%2012.57%20L10.30%2014.22%20L11.03%2011.14%20L8.63%209.08%20L11.78%208.83Z%22%20fill%3D%22%23000%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2220%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M0%200H26V8A13.0%2011.96%200%200%201%200%208Z%20M13.00%205.90%20L14.22%208.83%20L17.37%209.08%20L14.97%2011.14%20L15.70%2014.22%20L13.00%2012.57%20L10.30%2014.22%20L11.03%2011.14%20L8.63%209.08%20L11.78%208.83Z%22%20fill%3D%22%23000%22/%3E%3C/svg%3E"); }
+.lights.starCurtain .starTrimGlow { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2220%22%3E%3Cpath%20d%3D%22M0%200H26V8A13.0%2011.96%200%200%201%200%208Z%22%20fill%3D%22%23000%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2220%22%3E%3Cpath%20d%3D%22M0%200H26V8A13.0%2011.96%200%200%201%200%208Z%22%20fill%3D%22%23000%22/%3E%3C/svg%3E"); background: rgba(8,10,24,.85); }
+.lights.starCurtain .starTrimGlow::after, .lights.starCurtain .starTrimGlow::before { content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; }
+/* the light comes up from the strands hanging behind: brightest at each star's lower points, uneven from star to star */
+.lights.starCurtain .starTrimGlow::after { background:
+  radial-gradient(ellipse 22px 18px at 50% 110%, rgba(255,232,170,1), rgba(255,205,125,.55) 55%, rgba(255,190,110,0)) 0 0 / 23px 24px repeat-x,
+  linear-gradient(0deg, rgba(255,200,120,.85), rgba(255,185,105,.45) 55%, rgba(255,170,90,.2)); }
+.lights.starCurtain .starTrimGlow::before { background: radial-gradient(ellipse 12px 11px at 50% 100%, rgba(255,246,215,1), rgba(255,215,145,0)) 7px 0 / 37px 24px repeat-x; }
+.lights.starCurtain.on .starTrimGlow::after { opacity: 1; }
+.lights.starCurtain.on .starTrimGlow::before { opacity: 1; animation: scTw 3.1s ease-in-out -1.2s infinite alternate; }
+.shelf[data-lights="starCurtain"] .plank { box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .lights.starCurtain.on .scTw { animation: none; } }
+/* v242 starry: big paper star lanterns hanging in the curtain, glowing warm through their punched stars */
+.lights.starCurtain .scLan { position: absolute; transform-origin: 50% 0; will-change: transform; }
+.lights.starCurtain .scLanIn { position: absolute; inset: 0; transform-origin: 50% 0; animation: scSway var(--sw) ease-in-out var(--sd) infinite alternate; }
+.lights.starCurtain .scCord { position: absolute; left: 50%; top: 0; width: 1px; margin-left: -.5px; height: calc(var(--cord) + 2px); background: rgba(190,175,150,.55); }
+.lights.starCurtain .scLan img { position: absolute; left: 0; top: var(--cord); width: 100%; height: auto; display: block; }
+.lights.starCurtain .scOnImg { opacity: 0; transition: opacity .6s ease; }
+.lights.starCurtain.on .scOnImg { opacity: 1; }
+.lights.starCurtain .scHalo { position: absolute; left: 50%; top: var(--cord); width: 300%; aspect-ratio: 1; transform: translate(-50%, -33%); border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255,214,140,.42), rgba(255,180,100,.18) 45%, rgba(255,160,90,.06) 70%, rgba(255,150,80,0)); opacity: 0; transition: opacity .6s ease; }
+.lights.starCurtain.on .scHalo { opacity: 1; }
+@keyframes scSway { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
+@media (prefers-reduced-motion: reduce) { .lights.starCurtain .scLanIn { animation: none; } .lights.starCurtain .scLan.yank * { animation: none !important; } }
+/* v243 starry: three depths of strands, the back ones fainter */
+.lights.starCurtain .scLb { opacity: .45; }
+.lights.starCurtain .scLm { opacity: .72; }
+/* v244 starry: the lanterns are the switch, pulled down on their cords like the others */
+.shelf[data-lights="starCurtain"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="starCurtain"] .pullCord:focus-visible { opacity: 1; }
+.lights.starCurtain .scLan.yank img, .lights.starCurtain .scLan.yank .scHalo { animation: vPull 1s ease both; }
+.lights.starCurtain.on .scLan.yank .scHalo { animation: vPullHalo 1s ease both; }
+.lights.starCurtain .scLan.yank .scCord { transform-origin: 50% 0; animation: vChainPull 1s ease both; }
+.lights.starCurtain { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.lights.starCurtain img { -webkit-user-drag: none; }
+/* v245 starry: the shelf overhead shades the top of the curtain and the lanterns, deepest right under the board,
+   with a soft contact shadow under each scallop of the trim */
+.lights.starCurtain .scShade { position: absolute; left: 0; right: 0; top: 0; height: 150px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(4,5,14,.78) 0, rgba(4,5,14,.62) 22px, rgba(4,5,14,.42) 38px, rgba(4,5,14,.24) 60px, rgba(4,5,14,.1) 90px, rgba(4,5,14,.03) 120px, rgba(4,5,14,0) 150px); }
+.lights.starCurtain .scShade::after { content: ""; position: absolute; left: 0; right: 0; top: 14px; height: 18px;
+  background: radial-gradient(ellipse 18px 9px at 50% 0, rgba(0,0,0,.55), rgba(0,0,0,0)) 0 0 / 31px 18px repeat-x; }
+/* v246 (osamu: "not moody, just bright"): the room around the lit lamp falls into deep shadow and the lamp's light
+   is a low amber that warms what it touches (overlay, no white core) instead of brightening the pink wall */
+.ornament[data-kind="lipstickLamp"] .ornGlow { mix-blend-mode: overlay;
+  background: radial-gradient(closest-side, rgba(255,170,90,.95), rgba(255,140,70,.8) 14%, rgba(240,110,60,.55) 30%, rgba(200,80,50,.3) 48%, rgba(160,55,45,.12) 68%, rgba(130,40,40,.04) 85%, transparent) !important; }
+.ornament[data-kind="lipstickLamp"] .ornGlowIn::before { width: 1700px; height: 1300px;
+  background: radial-gradient(closest-side, rgba(28,4,12,0) 0, rgba(28,4,12,.08) 9%, rgba(28,4,12,.32) 20%, rgba(24,3,10,.55) 34%, rgba(20,2,8,.66) 55%, rgba(20,2,8,.62) 85%, rgba(20,2,8,0)); }
+.ornament[data-kind="lipstickLamp"] .ornPool { --pc: rgba(255,140,80,.6) !important; }
+.lpMood { position: absolute; left: calc(-1 * var(--gutter)); right: calc(-1 * var(--gutter)); top: 100%; height: 360px; z-index: 3; pointer-events: none;
+  background: radial-gradient(circle at var(--lx, 50%) var(--ly, 50%), rgba(22,3,9,0) 0, rgba(22,3,9,.1) 55px, rgba(22,3,9,.4) 125px, rgba(20,2,8,.64) 215px, rgba(16,2,7,.77) 330px, rgba(14,2,6,.8) 600px);
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 200px), transparent); mask-image: linear-gradient(#000 calc(100% - 200px), transparent);
+  opacity: 0; transition: opacity .6s ease; }
+/* the half inside the row sits over the books but under the lamp, and fades out up behind the heading */
+.lpMood.lpMoodIn { z-index: 2; right: auto; -webkit-mask-image: linear-gradient(transparent, #000 120px); mask-image: linear-gradient(transparent, #000 120px); }
+.lpMood.on { opacity: 1; transition: opacity 1.4s ease 1.6s; }
+/* the lamp's warm light, cast onto everything around it */
+.lpMood::before { content: ""; position: absolute; inset: 0; mix-blend-mode: overlay;
+  background: radial-gradient(circle at var(--lx, 50%) var(--ly, 50%), rgba(255,165,95,.9) 0, rgba(255,140,80,.62) 45px, rgba(235,110,65,.36) 100px, rgba(200,80,55,.16) 170px, rgba(160,55,45,.05) 250px, rgba(150,50,45,0) 330px); }
+.ornament[data-kind="lipstickLamp"] .ornGlow { display: none; }
+/* v247: the lamp's light falls on the things around it: shadows on the wall away from it, lit faces towards it */
+.lpFx { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
+.lpFx.on { opacity: 1; transition: opacity 1.4s ease 1.6s; }
+.lpFaces { z-index: 2; }
+.lpFx i { position: absolute; display: block; }
+.lpShadows i { border-radius: 6px; background: rgb(26,3,10); filter: blur(7px); }
+.lpFaces i { mix-blend-mode: overlay; border-radius: 2px; }
+.lpFaces i.fL { background: linear-gradient(90deg, rgba(255,170,100,.95) 0, rgba(255,150,90,.5) 18%, rgba(255,140,80,.18) 45%, rgba(255,140,80,0) 75%); }
+.lpFaces i.fR { background: linear-gradient(270deg, rgba(255,170,100,.95) 0, rgba(255,150,90,.5) 18%, rgba(255,140,80,.18) 45%, rgba(255,140,80,0) 75%); }
+.lpShadows i.fl { border-radius: 50%; filter: blur(3px); }
+/* v249 loft (osamu: like the photo): small cages on thin jute rope looped over a darker pole, vines everywhere */
+.shelf.hasLights[data-lights="loftCages"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.shelf[data-lights="loftCages"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="loftCages"] .pullCord:focus-visible { opacity: 1; }
+.lights.loftCages { overflow-x: clip; -webkit-user-select: none; user-select: none; }
+.lights.loftCages .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.lights.loftCages .lPole, .lights.loftCages .lSprigs { position: absolute; pointer-events: none; }
+.lights.loftCages .lSprigs { left: 0; top: 0; width: 100%; height: 0; }
+.lights.loftCages .lPole img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 4px 4px rgba(0,0,0,.45)); }
+.lights.loftCages img { position: absolute; display: block; -webkit-user-drag: none; }
+.lights.loftCages .lPole img { position: static; }
+.lights.loftCages .lVine img { left: 0; top: 0; width: 100%; }
+.lights.loftCages .vDrop { position: absolute; pointer-events: none; }
+.lights.loftCages .lRope { position: absolute; left: 0; top: 0; overflow: visible; transform-origin: 50% 0; }
+.lights.loftCages .lCage { filter: drop-shadow(0 3px 3px rgba(0,0,0,.35)); }
+.lights.loftCages .lBulb, .lights.loftCages .lFil, .lights.loftCages .vHalo { position: absolute; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
+.lights.loftCages .lBulb { border-radius: 45% 45% 50% 50% / 40% 40% 60% 60%;
+  background: radial-gradient(ellipse 60% 55% at 50% 55%, rgba(255,236,180,1), rgba(255,196,110,.9) 40%, rgba(255,160,70,.55) 75%, rgba(255,140,60,0)); }
+.lights.loftCages .lFil { border-radius: 40%; mix-blend-mode: screen;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255,250,225,1), rgba(255,215,140,.75) 50%, rgba(255,180,90,0)); }
+.lights.loftCages .vHalo { left: 50%; transform: translate(-50%, -50%); border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255,200,125,.55), rgba(255,170,90,.28) 30%, rgba(240,140,70,.11) 60%, rgba(220,120,60,.03) 82%, rgba(220,120,60,0)); }
+.lights.loftCages.on .lBulb, .lights.loftCages.on .lFil { opacity: 1; }
+.lights.loftCages.on .vHalo { opacity: 1; animation: vGlow 5s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -1.3s); }
+.lights.loftCages .vDrop.yank .lCage, .lights.loftCages .vDrop.yank .lBulb, .lights.loftCages .vDrop.yank .lFil, .lights.loftCages .vDrop.yank .vHalo, .lights.loftCages .vDrop.yank .lRv { animation: vPull 1s ease both; }
+.lights.loftCages.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
+.lights.loftCages .vDrop.yank .lRope { animation: vChainPull 1s ease both; }
+.lights.loftCages .lPole, .lights.loftCages .vDrop { will-change: transform; backface-visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { .lights.loftCages.on .vHalo { animation: none; } .lights.loftCages .vDrop.yank * { animation: none !important; } }
+/* v250 loft (osamu's photo): an Edison spider pendant, its canopy hidden under the shelf; cords, hooks and bulbs drawn */
+.shelf.hasLights[data-lights="loftSpider"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.shelf[data-lights="loftSpider"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="loftSpider"] .pullCord:focus-visible { opacity: 1; }
+.lights.loftSpider { overflow-x: clip; -webkit-user-select: none; user-select: none; }
+.lights.loftSpider .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.lights.loftSpider .sDrape { position: absolute; left: 0; top: -6px; overflow: visible; }
+.lights.loftSpider .sCords path { stroke: #141210; stroke-width: 1.9; stroke-linecap: round; }
+.lights.loftSpider .sHooks path { stroke: #26221e; stroke-width: 1.6; stroke-linecap: round; fill: none; }
+.lights.loftSpider .vDrop { position: absolute; pointer-events: none; will-change: transform; backface-visibility: hidden; }
+.lights.loftSpider .sCord { position: absolute; top: 0; width: 1.9px; background: #141210; transform-origin: 50% 0; }
+.lights.loftSpider .sBulb { position: absolute; left: 0; top: 0; overflow: visible; }
+.lights.loftSpider .sSock { fill: #17140f; } .lights.loftSpider .sSockHi { fill: rgba(255,255,255,.18); }
+.lights.loftSpider .sNeck { fill: rgba(190,175,150,.35); }
+.lights.loftSpider .sGlass { fill: rgba(210,200,180,.16); stroke: rgba(235,225,205,.45); stroke-width: .7; }
+.lights.loftSpider .sShine { fill: none; stroke: rgba(255,255,255,.7); stroke-width: 1.3; stroke-linecap: round; }
+.lights.loftSpider .sFil { fill: none; stroke: rgba(80,62,40,.8); stroke-width: .55; }
+/* lit: warm amber glass, a hot filament and a wide, soft, moody pool of light (opacity only) */
+.lights.loftSpider .sGlow, .lights.loftSpider .sFilLit, .lights.loftSpider .vHalo { opacity: 0; transition: opacity .6s ease; }
+.lights.loftSpider .sGlow { fill: url(#sGlowG); }
+.lights.loftSpider .sFilLit { fill: none; stroke: #fff6d6; stroke-width: .9; filter: drop-shadow(0 0 1.5px rgba(255,200,110,.95)); }
+.lights.loftSpider .vHalo { position: absolute; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255,198,120,.5), rgba(255,170,90,.24) 22%, rgba(240,140,70,.09) 52%, rgba(220,120,60,.025) 78%, rgba(220,120,60,0)); }
+.lights.loftSpider.on .sGlow, .lights.loftSpider.on .sFilLit { opacity: 1; }
+.lights.loftSpider.on .vHalo { opacity: 1; animation: vGlow 5s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -1.3s); }
+.lights.loftSpider .vDrop.yank .sBulb, .lights.loftSpider .vDrop.yank .vHalo { animation: vPull 1s ease both; }
+.lights.loftSpider.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
+.lights.loftSpider .vDrop.yank .sCord { animation: vChainPull 1s ease both; }
+@media (prefers-reduced-motion: reduce) { .lights.loftSpider.on .vHalo { animation: none; } .lights.loftSpider .vDrop.yank * { animation: none !important; } }
+/* the hooks sit up under the board, lost in the shelf's shadow (osamu) */
+.lights.loftSpider .sShade { position: absolute; left: 0; right: 0; top: 0; height: 70px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(10,6,4,.72) 0, rgba(10,6,4,.45) 14px, rgba(10,6,4,.2) 34px, rgba(10,6,4,.06) 54px, rgba(10,6,4,0) 70px); }
+/* v252: osamu's painted bulbs and cord; the lit twin fades in over the unlit one (opacity only) */
+.lights.loftSpider .sBulb { position: absolute; }
+.lights.loftSpider .sBulb img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; -webkit-user-drag: none; }
+.lights.loftSpider .sBulb .sLit { opacity: 0; transition: opacity .6s ease; }
+.lights.loftSpider.on .sBulb .sLit { opacity: 1; }
+.lights.loftSpider .sCord { width: 2.6px; }
+.lights.loftSpider .sCords path { stroke: #1b1a19; stroke-width: 2.3; }
+.lights.loftSpider .sCordsHi path { fill: none; stroke: rgba(255,255,255,.13); stroke-width: .55; transform: translate(-.5px, -.4px); }
+
+/* v253 (osamu: "a shelf trim that fits the loft, something modern"): matte black steel fascia, perforated, lit from behind by the spider bulbs */
+.lights.loftSpider .spTrim { position: absolute; left: 0; right: 0; top: -1px; height: 18px; pointer-events: none; z-index: 3; }
+.lights.loftSpider .spTrim i { position: absolute; inset: 0; display: block; }
+.lights.loftSpider .spTrimBack { background: #070606; }
+.lights.loftSpider .spTrimLit { opacity: 0; transition: opacity .6s ease; }
+.lights.loftSpider.on .spTrimLit { opacity: 1; }
+.lights.loftSpider .spTrimFace {
+  /* v254: the same blackened flat bar as the shelf front (html[data-mat="steel"] .plank), so it reads as one piece */
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 15px, rgba(255,236,210,.14) 16.5px, rgba(255,236,210,.04) 17.2px, rgba(0,0,0,.55) 18px),
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.035) 0 1px, transparent 1px 3px),
+    linear-gradient(90deg, rgba(255,255,255,0) 0, rgba(255,255,255,.05) 18%, rgba(255,255,255,0) 32%, rgba(255,255,255,.04) 61%, rgba(255,255,255,0) 78%),
+    linear-gradient(to bottom, #101113 0, #0e0f11 100%);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2218%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M0%200H12V18H0Z%20M1.65%207a1.35%201.35%200%201%200%202.7%200a1.35%201.35%200%201%200%20-2.7%200Z%20M7.65%2011.5a1.35%201.35%200%201%200%202.7%200a1.35%201.35%200%201%200%20-2.7%200Z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E") 0 0 / 12px 18px repeat-x; mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2218%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M0%200H12V18H0Z%20M1.65%207a1.35%201.35%200%201%200%202.7%200a1.35%201.35%200%201%200%20-2.7%200Z%20M7.65%2011.5a1.35%201.35%200%201%200%202.7%200a1.35%201.35%200%201%200%20-2.7%200Z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E") 0 0 / 12px 18px repeat-x; }
+
+/* v255 (osamu: the cord-to-bulb joint showed a cut and two colours): the painted cord stub is cropped off the bulbs, so the
+   cord runs straight into the socket's strain relief; the cord is the stub's own width and neutral black with its left-side sheen */
+.lights.loftSpider .sCord { background: linear-gradient(90deg, #0e0e10 0, #1f1f21 14%, #48484b 30%, #3a3a3c 45%, #262628 70%, #1c1c1e 88%, #0c0c0e 100%); }
+.lights.loftSpider .sCords path { stroke: #232325; stroke-width: 1.8; }
+
+/* v256 cabin (osamu's hallway photo: "only the lights and hung ornaments, overlapping lights and some ornaments here and there"):
+   rows of warm icicle swags at three depths, red glass baubles and red stars on short ribbons. Tap an ornament = switch. */
+.shelf.hasLights[data-lights="cabinSwags"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.shelf[data-lights="cabinSwags"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="cabinSwags"] .pullCord:focus-visible { opacity: 1; }
+.lights.cabinSwags { overflow-x: clip; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.lights.cabinSwags .vIn { position: absolute; inset: 0; }
+.lights.cabinSwags .cDefs { position: absolute; }
+.lights.cabinSwags .cRow { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.lights.cabinSwags .cWire { fill: none; stroke: #1f2a1c; stroke-width: .8; stroke-linecap: round; }
+.lights.cabinSwags .cRowb .cWire { stroke: #1a2117; stroke-width: .6; opacity: .8; }
+.lights.cabinSwags .cOff { fill: #f4ead0; opacity: .55; transition: opacity .6s ease; }
+.lights.cabinSwags.on .cOff { opacity: 1; fill: #fff6dc; }
+.lights.cabinSwags .cRowb .cOff { opacity: .35; }
+.lights.cabinSwags.on .cRowb .cOff { opacity: .8; }
+.lights.cabinSwags .cLit { fill: url(#cbDot); opacity: 0; transition: opacity .6s ease; }
+.lights.cabinSwags.on .cLit { opacity: 1; }
+.lights.cabinSwags .cRowb .cLit { filter: none; }
+.lights.cabinSwags.on .cRowb .cLit { opacity: .7; }
+.lights.cabinSwags.on .cTw { animation: scTw 2.8s ease-in-out infinite alternate; }
+.lights.cabinSwags.on .cTw1 { animation-delay: -.7s; animation-duration: 3.3s; }
+.lights.cabinSwags.on .cTw2 { animation-delay: -1.5s; animation-duration: 2.4s; }
+.lights.cabinSwags.on .cTw3 { animation-delay: -2.1s; animation-duration: 3.8s; }
+.lights.cabinSwags .cShade { position: absolute; left: 0; right: 0; top: 0; height: 40px; pointer-events: none; background: linear-gradient(180deg, rgba(10,6,3,.55), rgba(10,6,3,0)); }
+.lights.cabinSwags .cDrop { position: absolute; will-change: transform; }
+.lights.cabinSwags .cRib { position: absolute; top: 0; width: 1.8px; background: linear-gradient(90deg, #4a0a10, #9c1c26 50%, #4a0a10); }
+.lights.cabinSwags .cOrn { position: absolute; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,.4)); }
+.lights.cabinSwags .cClear .cOrn { filter: none; }
+.lights.cabinSwags .cOrn img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; -webkit-user-drag: none; }
+/* v257: the paintings are lit by fairy lights; with the lights off the same picture sits under a darker copy, faded by opacity only */
+.lights.cabinSwags .cOrn .cDim { filter: brightness(.5) saturate(.85); }
+.lights.cabinSwags .cClear .cOrn .cDim { filter: brightness(.55) saturate(.4); opacity: .8; }
+.lights.cabinSwags .cOrn .cOn { opacity: 0; transition: opacity .6s ease; }
+.lights.cabinSwags.on .cOrn .cOn { opacity: 1; }
+.lights.cabinSwags .cClear .cRib { width: .8px; background: rgba(235,240,245,.38); }
+.lights.cabinSwags .vDrop.yank .cRib { animation: vChainPull 1s ease both; }
+/* v258 (osamu: "the second the lipstick lamp turns on everything goes dark... the room already has light"): no more
+   darkening around the lit lamp, and so no hard edge where that shade was clipped under the header. The warm light
+   pool, the lit book faces and the soft cast shadows stay. */
+.ornament[data-kind="lipstickLamp"] .ornGlowIn::before { display: none; }
+.lpMood { background: none; }
+
+/* v259 (osamu's snow trim photo): fluffy felt snow draped over the shelf's front edge, icicles hanging in front of the
+   lights and wires. Its band covers the plank's face with a soft lip over the top; a soft shadow falls on the lights
+   behind; when the lights are on, the bottom of the snow picks up their warm glow (opacity only) */
+.lights.cabinSwags { z-index: 1; }
+.lights.cabinSwags .cSnow { position: absolute; left: 0; right: 0; top: -21px; height: 125px; pointer-events: none;
+  background: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; filter: drop-shadow(0 4px 3px rgba(20,10,4,.45)); }
+.lights.cabinSwags .cSnowLit { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; mix-blend-mode: multiply;
+  background: linear-gradient(180deg, rgba(255,255,255,0) 0, rgba(255,255,255,0) 30px, rgba(255,244,228,1) 60px, rgba(255,232,205,1) 100%);
+  -webkit-mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
+.lights.cabinSwags.on .cSnowLit { opacity: 1; }
+/* v259 (osamu: "in the image the whole shelf top is covered"): a snow layer over the shelf's top face too, from the
+   books' feet to the front edge (they stand a little sunk into it), lighter where it faces up */
+.lights.cabinSwags .cSnowTop { position: absolute; left: 0; right: 0; top: -38px; height: 22px; pointer-events: none;
+  background: none; filter: brightness(1.04); }
+.lights.cabinSwags .cSnow { top: -25px; }
+/* v260 (osamu: "it looks horrible... I like the snow hanging and that's it, the shelf is still wood, the lights are
+   horrible"): no snow on the shelf top, no drawn strands; bigger ornaments on hangers (painted fairy-light hangers to come) */
+.lights.cabinSwags .cSnowTop { display: none; }
+.lights.cabinSwags .cSnow { top: -21px; }
+.lights.cabinSwags .cRib, .lights.cabinSwags .cClear .cRib { width: 1.1px; background: #1c2118; }
+/* v261: each ornament hangs on osamu's painted fairy-light strand (cut from the top, so it comes out from behind the
+   snow), ending in a hook through the ornament's loop. The strands are the lights: lit twin fades in by opacity */
+
+
+
+.lights.cabinSwags .cDrop { overflow: visible; }
+
+/* v263 cabin (osamu): ribbon/chain hangers, more ornaments that are themselves the lights, and a snowy shelf */
+.lights.cabinSwags .cChain { position: absolute; top: 0; width: 3px; background: url(obj/cabin-chain.webp) center bottom / 3px 275.3px no-repeat; }
+.lights.cabinSwags .cRibbon { position: absolute; top: 0; width: 3.33px; background: url(obj/cabin-ribbon.webp) center bottom / 3.33px 106.7px repeat-y; }
+.lights.cabinSwags .cBow { position: absolute; width: 18px; height: 16.7px; background: url(obj/cabin-bow.webp) center / 100% 100% no-repeat; z-index: 1; }
+.lights.cabinSwags .cHalo { position: absolute; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; opacity: 0; transition: opacity .6s ease;
+  background: radial-gradient(closest-side, rgba(255,205,135,.42), rgba(255,180,110,.16) 50%, rgba(255,170,100,0)); }
+.lights.cabinSwags .cRed .cHalo { background: radial-gradient(closest-side, rgba(255,120,90,.42), rgba(230,70,60,.15) 50%, rgba(200,40,40,0)); }
+.lights.cabinSwags.on .cHalo { opacity: 1; }
+.lights.cabinSwags .cIn { position: absolute; inset: 0; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; mix-blend-mode: screen; opacity: 0; transition: opacity .6s ease;
+  background: radial-gradient(ellipse 48% 42% at 50% 58%, rgba(255,226,170,.85), rgba(255,190,120,.35) 55%, rgba(255,170,100,0)); }
+.lights.cabinSwags .cRed .cIn { background: radial-gradient(ellipse 48% 42% at 50% 58%, rgba(255,170,120,.8), rgba(255,90,70,.35) 55%, rgba(255,60,50,0)); }
+.lights.cabinSwags.on .cIn { opacity: 1; }
+.lights.cabinSwags .cDrop .cOrn { isolation: isolate; }
+/* the shelf itself is snow: the top face and the front take osamu's snow texture, lighter at the front edge */
+.shelf[data-lights="cabinSwags"] .track::before { background: linear-gradient(0deg, rgba(255,255,255,.35) 0, rgba(255,255,255,.12) 3px, rgba(255,255,255,0) 40%, rgba(90,110,140,.12) 80%, rgba(60,75,100,.28) 100%), url(obj/cabin-snow-tex.webp) 0 0 / 220px 220px; }
+.shelf[data-lights="cabinSwags"] .plank { background: url(obj/cabin-snow-tex.webp) 0 0 / 220px 220px; }
+.shelf[data-lights="cabinSwags"] .plank::after { display: none; }
+.lights.cabinSwags .cRed .cOrn { filter: none; }
+.lights.cabinSwags .cRed .cOrn .cDim { filter: brightness(.6) saturate(.9); opacity: .9; }
+/* v264: bow over the loop, chain through it on a gold jump ring; the snow trim sits lower so its fringe starts right
+   at the front edge of the snowy shelf top, with no line between them */
+.lights.cabinSwags .cRingB, .lights.cabinSwags .cRingF { position: absolute; width: 8px; height: 10px; overflow: visible; }
+.lights.cabinSwags .cRingB path, .lights.cabinSwags .cRingF path { fill: none; stroke: #c9a24a; stroke-width: .85; }
+.lights.cabinSwags .cRingF path { stroke: #e6c46c; }
+.lights.cabinSwags .cBow { z-index: 2; }
+.lights.cabinSwags .cSnow { top: -17px; }
+.lights.cabinSwags::after { content: ""; position: absolute; left: 0; right: 0; top: -19.5px; height: 8px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(240,242,246,0), rgba(239,242,246,.96) 45%, rgba(236,240,245,.5) 75%, rgba(236,240,245,0)); }
+/* v265 (osamu's one-piece "snow over the edge" painting): the top face and the lip + icicles are cut from the same
+   strip at the plank's top edge. The top part rides on the sticky stage (behind the books, never scrolls), the lip part
+   on the plank, both from the same x, so the join stays seamless while the row scrolls */
+.shelf[data-lights="cabinSwags"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d); background: url(obj/cabin-snowedge-top.webp) 0 0 / 352.33px 100% repeat-x; }
+.lights.cabinSwags .cSnow { top: -16px; height: 96.33px; background: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
+.lights.cabinSwags .cSnowLit { -webkit-mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
+.lights.cabinSwags::after { display: none; }
+/* v266 (osamu: the switch should feel like Christmas, and the pull should match the other looks): tapping an ornament
+   pulls it down on its ribbon or chain like the other hanging lights; switching on runs left to right along the shelf,
+   each ornament lighting with a star glint and the snow sparkling behind, then they twinkle gently, red and clear
+   taking turns; switching off fades them right to left. All opacity/transform only */
+.lights.cabinSwags .vDrop.yank .cOrn, .lights.cabinSwags .vDrop.yank .cHalo, .lights.cabinSwags .vDrop.yank .cBow,
+.lights.cabinSwags .vDrop.yank .cRingB, .lights.cabinSwags .vDrop.yank .cRingF { animation: vPull 1s ease both; }
+.lights.cabinSwags.on .vDrop.yank .cHalo { animation: vPullHalo 1s ease both; }
+.lights.cabinSwags .vDrop.yank .cChain, .lights.cabinSwags .vDrop.yank .cRibbon { transform-origin: 50% 0; animation: vChainPull 1s ease both; }
+.lights.cabinSwags.switchOn .cOn, .lights.cabinSwags.switchOn .cIn, .lights.cabinSwags.switchOn .cHalo { transition-duration: .45s; transition-delay: calc(var(--o) * .8s); }
+.lights.cabinSwags.switchOff .cOn, .lights.cabinSwags.switchOff .cIn, .lights.cabinSwags.switchOff .cHalo { transition-duration: .4s; transition-delay: calc((1 - var(--o)) * .7s); }
+.lights.cabinSwags .cGlint { position: absolute; transform: translate(-50%, -50%) scale(0); opacity: 0; pointer-events: none;
+  background: radial-gradient(closest-side, #fff 0, #fffbe6 30%, rgba(255,236,190,.85) 55%, rgba(255,230,180,0));
+  clip-path: polygon(50% 0, 57% 43%, 100% 50%, 57% 57%, 50% 100%, 43% 57%, 0 50%, 43% 43%); }
+.lights.cabinSwags.switchOn .cGlint { animation: cGlint .75s ease-out both; animation-delay: calc(var(--o) * .8s + .12s); }
+@keyframes cGlint { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(0deg); } 35% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(30deg); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(.2) rotate(70deg); } }
+.lights.cabinSwags.on:not(.switchOn) .cIn { animation: cTwinkle 3.2s ease-in-out infinite; animation-delay: calc(var(--i) * .23s); }
+.lights.cabinSwags.on:not(.switchOn) .cClear .cIn { animation-delay: calc(var(--i) * .23s + 1.6s); }
+@keyframes cTwinkle { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.lights.cabinSwags .cSparks { position: absolute; left: 0; right: 0; top: -16px; height: 60px; pointer-events: none; z-index: 2; }
+.lights.cabinSwags .cSparks i { position: absolute; opacity: 0; transform: scale(0);
+  background: radial-gradient(closest-side, #fff 0, rgba(255,255,255,.9) 35%, rgba(220,235,255,0));
+  clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%); }
+.lights.cabinSwags.on:not(.switchOn) .cSparks i { animation: cSpark 7s ease-in-out infinite; animation-delay: var(--sd); }
+.lights.cabinSwags.switchOn .cSparks i { animation: cSparkOn .7s ease-out both; animation-delay: calc(var(--o) * .8s); }
+@keyframes cSpark { 0%, 86%, 100% { opacity: 0; transform: scale(0) rotate(0deg); } 92% { opacity: 1; transform: scale(1) rotate(25deg); } }
+@keyframes cSparkOn { 0% { opacity: 0; transform: scale(0) rotate(0deg); } 40% { opacity: 1; transform: scale(1.2) rotate(30deg); } 100% { opacity: 0; transform: scale(0) rotate(60deg); } }
+@media (prefers-reduced-motion: reduce) { .lights.cabinSwags .cGlint, .lights.cabinSwags .cSparks i, .lights.cabinSwags .cIn, .lights.cabinSwags .vDrop.yank * { animation: none !important; } }
+/* each ornament gives a little jingle (a swing from its loop) as the light reaches it */
+.lights.cabinSwags.switchOn .vDrop:not(.yank) .cOrn { transform-origin: 50% 2px; animation: cJingle 1s ease-out both; animation-delay: calc(var(--o) * .8s); }
+@keyframes cJingle { 0% { rotate: 0deg; } 18% { rotate: 7deg; } 40% { rotate: -5deg; } 62% { rotate: 2.5deg; } 82% { rotate: -1deg; } 100% { rotate: 0deg; } }
+@media (prefers-reduced-motion: reduce) { .lights.cabinSwags.switchOn .cOrn { animation: none; } }
+/* v267 (osamu: unlit, the ornaments were so see-through they vanished against the wood): unlit glass is no longer
+   darkened; it keeps its own colour plus a fine pale rim of reflected room light, so its outline always reads */
+.lights.cabinSwags .cOrn .cDim, .lights.cabinSwags .cRed .cOrn .cDim { opacity: 1;
+  filter: brightness(.82) contrast(1.1) drop-shadow(0 0 .6px rgba(255,248,236,.55)) drop-shadow(0 1px 1.5px rgba(0,0,0,.35)); }
+.lights.cabinSwags .cClear .cOrn .cDim { filter: brightness(1.05) contrast(1.15) drop-shadow(0 0 .7px rgba(255,255,255,.7)) drop-shadow(0 1px 1.5px rgba(0,0,0,.4)); }
+/* v268 (osamu: the drapes weren't the same shade as the room's curtains): the velvet is graded to the backdrop
+   curtains, about half as bright and a touch less pink; the gold knot is graded with it */
+.lights.vampDrapes .vSwag img { filter: drop-shadow(0 4px 4px rgba(10,0,4,.45)) hue-rotate(6deg) brightness(.46) saturate(1.05); }
+.lights.vampDrapes.on .vSwag img { filter: drop-shadow(0 4px 4px rgba(10,0,4,.45)) hue-rotate(6deg) brightness(.52) saturate(1.05); }
+.lights.vampDrapes .vKnot img { filter: hue-rotate(6deg) brightness(.46) saturate(1.05); }
+.lights.vampDrapes.on .vKnot img { filter: hue-rotate(6deg) brightness(.52) saturate(1.05); }
