@@ -2101,3 +2101,27 @@ html[data-bdk="closet"] .slot.lying .nbSh { background: linear-gradient(270deg, 
 /* v279: every book used to look from its own eye point, so neighbouring tops splayed apart at the joins (a notch between books).
    A far-away eye with the same angle keeps the top edges almost straight up, so the tops of neighbours meet cleanly. */
 .book { perspective: 5000px; --eye: calc(var(--h) * 1.67); }
+
+/* v280: shadows as in osamu's own picture: wide and very soft, falling to the right of each book from its foot, running onto the
+   shelf floor and fading out before the front edge. No hard edges anywhere: a big blur, and nothing is cut at the wall line. */
+.wallSh { bottom: calc(var(--top-d) * -.5); top: -120px; }
+.wsIn { bottom: calc(var(--top-d) * .5); }
+.wsB { background: rgba(0,0,0,.5); border-radius: 6px; filter: blur(calc(var(--shelf-h) * .065));
+  -webkit-mask: none; mask: none; }
+.wsB.lying { background: rgba(0,0,0,.45); }
+html[data-bdk="closet"] .wsB { background: rgba(28,0,16,.5); }
+@media (min-width: 560px) { .wsB { filter: blur(calc(var(--shelf-h) * .065)); } }
+.wsO.ornament { filter: brightness(0) blur(calc(var(--shelf-h) * .05)); opacity: .36; }
+/* the shadow keeps its strength right beside the book and fades out wide to the right, like osamu's picture */
+.wsB { background: rgba(0,0,0,.4); filter: blur(calc(var(--shelf-h) * .025));
+  box-shadow: calc(var(--shelf-h) * .05) calc(var(--shelf-h) * .01) calc(var(--shelf-h) * .14) calc(var(--shelf-h) * .02) rgba(0,0,0,.32); }
+@media (min-width: 560px) { .wsB { filter: blur(calc(var(--shelf-h) * .025)); } }
+.wsB.lying { background: rgba(0,0,0,.36); }
+html[data-bdk="closet"] .wsB { background: rgba(28,0,16,.4); box-shadow: calc(var(--shelf-h) * .05) calc(var(--shelf-h) * .01) calc(var(--shelf-h) * .14) calc(var(--shelf-h) * .02) rgba(28,0,16,.32); }
+.wsB { background: rgba(0,0,0,.5); box-shadow: calc(var(--shelf-h) * .05) calc(var(--shelf-h) * .01) calc(var(--shelf-h) * .14) calc(var(--shelf-h) * .02) rgba(0,0,0,.4); }
+/* the light comes from above and in front: the wall darkens softly toward the shelf behind the books, and the shelf throws a long soft
+   shadow on the wall beneath it */
+.wallSh::before { content: ""; position: absolute; left: 0; right: 0; bottom: var(--top-d); height: calc(var(--shelf-h) * .45); pointer-events: none;
+  background: linear-gradient(0deg, rgba(0,0,0,.16), rgba(0,0,0,.07) 35%, transparent); }
+html[data-bdk="closet"] .wallSh::before { background: linear-gradient(0deg, rgba(28,0,16,.18), rgba(28,0,16,.07) 35%, transparent); }
+.plank { box-shadow: 0 12px 18px -8px rgba(0,0,0,.55), 0 26px 46px -6px rgba(0,0,0,.22); }

@@ -1046,7 +1046,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     const wallSh = h(`<div class="wallSh" aria-hidden="true"><div class="wsIn"></div></div>`), wsIn = wallSh.firstChild;
     root.querySelector(".stage").prepend(wallSh);
     const bookSh = [];
-    const shOff = () => ({ x: H * 0.07, y: H * 0.04 });
+    const shOff = () => ({ x: H * 0.07, y: 0 }); // v280: osamu's picture: wide, soft, to the right, starting at the book's foot
     root.dataset.key = key;
     addLights(root);
     const count = books.length + (opts.onAdd ? 1 : 0);
@@ -1323,10 +1323,10 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       }
       // a leaning book rests where it really touches its neighbour: against its side if the neighbour is tall enough,
       // otherwise on the neighbour's top corner, so it never hangs in the air or sinks into the next book
-      const PILE_GAP = 3 + H * 0.025;
+      const PILE_GAP = 1 + H * 0.008; // v280: books touch, as in osamu's reference
       // a standing book's spine is nearer to you than its box, so it reaches a little lower on the shelf; lying books
       // are set down by the same amount so the pile stands on the same floor line instead of floating above it
-      const SINK = H * 0.028; // a lying book looks a little longer than its box (its near face is closer to you)
+      const SINK = 0; // v280: with the far eye (v279) a standing spine no longer reaches lower than its box, so piles sit on the same line // a lying book looks a little longer than its box (its near face is closer to you)
       // v274 (osamu's mockups): a book leans onto a STANDING neighbour, as on a real shelf: the one on its left if that
       // stands, else the one on its right; only when neither stands does it rest on a pile or another leaning book
       const stands = (j) => j >= 0 && j < count && dm[j] && poses[j] === "stand";
@@ -1342,7 +1342,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       const feet = [];
       for (let i = 0; i < count; i++) {
         if (groupOf.has(i)) { const g = groupOf.get(i); widths.push((g.S + PILE_GAP * 2) / g.n + opens[i] * (base[i] + 8)); continue; }
-        if (poses[i] === "lean") { const p = leanA(i) * (1 - opens[i]); feet[i] = leanFoot(i); widths.push(base[i] * Math.cos(p) + feet[i] + 3); continue; }
+        if (poses[i] === "lean") { const p = leanA(i) * (1 - opens[i]); feet[i] = leanFoot(i); widths.push(base[i] * Math.cos(p) + feet[i] + 1); continue; }
         widths.push(base[i]);
       }
       const ornW = (o) => (onPile.has(o) ? 0 : o.w);
@@ -1434,7 +1434,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         }
         if (sh && dm[i]) {
           const so = shOff();
-          sh.style.width = base[i] + "px"; sh.style.height = dm[i].h + "px";
+          sh.style.width = base[i] + "px"; sh.style.height = (slot.classList.contains("lying") ? dm[i].h : dm[i].h - H * 0.05) + "px";
           sh.style.transformOrigin = slot.style.transformOrigin;
           sh.style.transform = `translate(${so.x.toFixed(1)}px,${so.y.toFixed(1)}px) ` + slot.style.transform;
           sh.classList.toggle("lying", slot.classList.contains("lying"));
