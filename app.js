@@ -528,7 +528,7 @@
     const { h: hh, d } = dims({ ...b, spineArt: null }, 230);
     const ratio = Math.max(3, Math.round(hh / d));
     const pages = b.pageCount ? `about ${b.pageCount} pages` : "a normal novel";
-    return `Paint the SPINE of the book "${b.title}"${b.author ? ` by ${b.author}` : ""}, seen perfectly straight on and flat, like a photograph taken head-on of a book standing on a shelf. Use the attached front cover as the reference: same colours, same typefaces, same edition, same era. If the cover is a hardcover, paint a hardcover spine (cloth or leather, a slightly rounded back); if it is a paperback, paint a paperback spine.
+    return `Paint the SPINE of the book "${b.title}"${b.author ? ` by ${b.author}` : ""}, seen perfectly straight on and flat, like a photograph taken head-on of a book standing on a shelf. Use the attached front cover as the reference: same colours, same typefaces, same edition, same era. ${b.binding === "paper" ? "This is a PAPERBACK: a flat, square spine printed on card, with a faint soft fold running down each long edge where it bends onto the covers, and no raised bands." : "This is a HARDCOVER: a cloth or leather case with a slightly rounded back, so the spine turns gently away from the light at both long edges, and the boards stand a hair proud of the head and tail."}
 
 Make it look like a real, gently read copy: realistic photo, soft rubbed edges, a few small creases and scuffs, slightly faded at the top. Not an illustration.
 
@@ -593,7 +593,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
   function bookEl(b, base, turn) {
     const { h: hh, w, d } = dims(b, base);
     const design = b.spineDesign || autoDesign(b);
-    const el = h(`<div class="book ${b.finish === "glossy" ? "glossy" : "matte"}">
+    const el = h(`<div class="book ${b.finish === "glossy" ? "glossy" : "matte"}${b.binding === "paper" ? " paper" : " hard"}">
       <div class="body">
         <div class="face front">
           ${b.coverUrl ? `<img class="art" alt="" draggable="false" loading="lazy" referrerpolicy="no-referrer" src="${esc(b.coverUrl)}">` : ""}
@@ -1753,9 +1753,11 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       // shelf + finish
       const quick = h(`<div class="grid2">
         <label class="field"><span class="label">Shelf</span><select class="input" id="f-status">${shelves().map(([k, l]) => `<option value="${k}" ${b.status === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
-        <div class="field"><span class="label">Cover</span><div class="seg"><button data-v="matte" aria-pressed="${b.finish !== "glossy"}">Matte</button><button data-v="glossy" aria-pressed="${b.finish === "glossy"}">Glossy</button></div></div></div>`);
+        <div class="field"><span class="label">Cover</span><div class="seg"><button data-v="matte" aria-pressed="${b.finish !== "glossy"}">Matte</button><button data-v="glossy" aria-pressed="${b.finish === "glossy"}">Glossy</button></div></div>
+        <div class="field"><span class="label">Binding</span><div class="seg bind"><button data-b="hard" aria-pressed="${b.binding !== "paper"}">Hardcover</button><button data-b="paper" aria-pressed="${b.binding === "paper"}">Paperback</button></div></div></div>`);
       quick.querySelector("#f-status").onchange = (e) => stage({ status: e.target.value });
-      quick.querySelectorAll(".seg button").forEach((btn) => (btn.onclick = () => stage({ finish: btn.dataset.v })));
+      quick.querySelectorAll(".seg button[data-v]").forEach((btn) => (btn.onclick = () => stage({ finish: btn.dataset.v })));
+      quick.querySelectorAll(".seg button[data-b]").forEach((btn) => (btn.onclick = () => stage({ binding: btn.dataset.b })));
       body.append(quick);
 
       // read
