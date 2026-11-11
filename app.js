@@ -1041,6 +1041,12 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     const hangLayer = h(`<div class="hangLayer"></div>`); root.append(hangLayer);
     // cobwebs tucked under the shelf sit behind the caption, so its words stay readable and tappable over them
     const webLayer = h(`<div class="hangLayer webLayer"></div>`); root.append(webLayer);
+    // v276: one light from the front and upper left, so every book and object throws a soft shadow up and to the right onto
+    // the wall behind it. The layer is cut off at the line where the shelf floor meets the wall, so no shadow lies on the floor.
+    const wallSh = h(`<div class="wallSh" aria-hidden="true"><div class="wsIn"></div></div>`), wsIn = wallSh.firstChild;
+    root.querySelector(".stage").prepend(wallSh);
+    const bookSh = [];
+    const shOff = () => ({ x: H * 0.07, y: H * 0.04 });
     root.dataset.key = key;
     addLights(root);
     const count = books.length + (opts.onAdd ? 1 : 0);
@@ -1087,11 +1093,13 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       for (let i = 0; i <= count + 1; i++) { if (lyingAt(i - 1)) continue; const s = h(`<span class="snap"></span>`); s.style.left = i * STEP + "px"; track.prepend(s); }
       books.forEach((b, i) => {
         const node = bookEl(b, H); bookNodes[i] = node;
-        slots[i].replaceChildren(node);
+        slots[i].replaceChildren(node, h(`<span class="nbSh" aria-hidden="true"></span>`));
         slots[i].style.height = dims(b, H).h + "px";
         slots[i].setAttribute("aria-label", b.title);
       });
       if (opts.onAdd) slots[books.length].style.height = Math.round(H * 0.86) + "px";
+      wsIn.querySelectorAll(".wsB").forEach((n) => n.remove()); bookSh.length = 0;
+      books.forEach((b, i) => { const s = h(`<span class="wsB"></span>`); wsIn.append(s); bookSh[i] = s; });
       const plank = root.querySelector(".plank");
       hangLayer.style.left = scroller.offsetLeft + "px"; hangLayer.style.top = plank.offsetTop + "px"; hangLayer.style.width = viewW + "px";
       webLayer.style.cssText = hangLayer.style.cssText;
@@ -1122,7 +1130,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       return i < 0 ? books.length : i + 1;
     }
     function buildOrns() {
-      orns.forEach((o) => o.el.remove());
+      orns.forEach((o) => { o.el.remove(); if (o.sh) o.sh.remove(); });
       orns = [];
       if (!books.length) return;
       items.forEach((it) => { const o = makeOrn(it); if (o) orns.push(o); });
@@ -1149,6 +1157,8 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         };
         armDrag(o);
         (hang ? hangLayer : stage).append(el);
+        // its wall shadow: the same object, unlit, turned into a soft dark silhouette behind it
+        if (!hang) { const sh = D.ornamentEl(kind, H, false); if (sh) { sh.classList.add("wsO"); sh.removeAttribute("id"); wsIn.append(sh); o.sh = sh; } }
         return o;
     }
     // keep the stored order the same as the order on the shelf
@@ -1236,7 +1246,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       ghost.classList.remove("up", "binning");
       if (remove) {
         ghost.classList.add("vanish");
-        orns = orns.filter((x) => x !== o); o.el.remove(); sortOrns();
+        orns = orns.filter((x) => x !== o); o.el.remove(); if (o.sh) o.sh.remove(); sortOrns();
         setTimeout(() => ghost.remove(), 320);
         if (navigator.vibrate) navigator.vibrate(8);
       } else {
@@ -1245,7 +1255,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           if (!orns.includes(o)) return;
           o.el.style.pointerEvents = "none";
           const an = o.el.animate([{ opacity: 1, scale: 1 }, { opacity: 0, scale: 0.6 }], { duration: 260, easing: "ease-in" });
-          an.onfinish = () => { orns = orns.filter((x) => x !== o); o.el.remove(); sortOrns(); saveItems(); layout(); };
+          an.onfinish = () => { orns = orns.filter((x) => x !== o); o.el.remove(); if (o.sh) o.sh.remove(); sortOrns(); saveItems(); layout(); };
           if (navigator.vibrate) navigator.vibrate(8);
         });
       }
@@ -1356,6 +1366,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         const left = cx != null ? cx - o.vis / 2 : o.hang ? PAD + x - offset - o.vis / 2 : PAD + x - offset + 5;
         if (cx == null) x += o.w;
         o.el.style.transform = `translate3d(${left.toFixed(1)}px,${(-lift).toFixed(1)}px,0)`; o.lift = lift;
+        if (o.sh) { const so = shOff(); o.sh.style.transform = `translate3d(${(left + so.x).toFixed(1)}px,${(so.y - lift).toFixed(1)}px,0)`; }
         o.el.classList.toggle("onPile", cx != null);
         // a flame leans away from the way it is being pushed, then settles
         if (o.x !== null && Math.abs(left - o.x) > 0.3 && !root.classList.contains("arranging")) {
@@ -1373,6 +1384,8 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         const slot = slots[i];
         const vis = left + widths[i] > -120 && left < viewW + 120;
         slot.style.visibility = vis ? "visible" : "hidden";
+        const sh = bookSh[i];
+        if (sh) sh.style.visibility = slot.style.visibility;
         if (!vis && !groupOf.has(i)) continue;
         slot.style.width = base[i] + "px";
         const pose = poses[i], open = opens[i];
@@ -1406,6 +1419,26 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           slot.classList.remove("lying");
         }
         if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", 1 - open);
+        // v277: the book on the left throws its shadow onto this one too, on its left side and only below that book's height
+        // (a little lower, as the light comes from above); in a pile each book shades the one under it along the seam
+        const nb = slot.querySelector(".nbSh");
+        if (nb && dm[i]) {
+          let a = 0, top = 0;
+          if (groupOf.has(i)) { const g = groupOf.get(i); a = i < g.end ? (1 - open) * (1 - opens[i + 1]) : 0; }
+          else if (i > 0 && dm[i - 1]) {
+            const j = i - 1, hL = groupOf.has(j) ? groupHeight(groupOf.get(j)) : poses[j] === "lean" ? dm[j].h * Math.cos(leanA(j) * (1 - opens[j])) : dm[j].h;
+            top = Math.max(0, dm[i].h - (hL - shOff().y));
+            a = top < dm[i].h - 4 ? (1 - open) * (1 - opens[j]) : 0;
+          }
+          nb.style.top = top.toFixed(1) + "px"; nb.style.opacity = a.toFixed(2);
+        }
+        if (sh && dm[i]) {
+          const so = shOff();
+          sh.style.width = base[i] + "px"; sh.style.height = dm[i].h + "px";
+          sh.style.transformOrigin = slot.style.transformOrigin;
+          sh.style.transform = `translate(${so.x.toFixed(1)}px,${so.y.toFixed(1)}px) ` + slot.style.transform;
+          sh.classList.toggle("lying", slot.classList.contains("lying"));
+        }
       }
       while (k < orns.length) { const o = orns[k++]; if (!onPile.has(o)) placeOrn(o); }
       // the top cover of each pile, seen a little from above, so things have a surface to stand on
