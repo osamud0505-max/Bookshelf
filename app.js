@@ -1985,6 +1985,7 @@
       const backup = h(`<div class="group"><h3 class="label">Backup</h3>
         <p class="hint">Your books live only in this browser. Save a backup now and then, and before clearing browser data or switching phones.</p><p class="hint versionTag">Version ${esc((document.querySelector('script[src*="app.js"]')?.getAttribute("src").match(/v=(\d+)/) || [, "?"])[1])}</p>
         <div class="row"><button class="btn small" id="exp">Save a backup file</button><label class="btn small" for="imp">Restore from a backup<input type="file" id="imp" accept="application/json,.json" hidden></label></div>
+        ${(() => { try { const pv = JSON.parse(localStorage.getItem("shelf.v1.beforeRestore") || "null"); return pv && Array.isArray(pv.books) ? `<div class="row"><button class="btn small" id="unRestore">Undo the last restore (${pv.books.length} books from ${esc(new Date(pv.at).toLocaleDateString())})</button></div>` : ""; } catch (e) { return ""; } })()}
         <p class="hint">If saving a file doesn't work here, copy the backup as text instead, and paste it into the other copy of the app.</p>
         <div class="row"><button class="btn small" id="expTxt">Copy backup as text</button><button class="btn small" id="impTxt">Paste a backup</button></div>
         <div id="txtBox" hidden><textarea class="input" id="bkTxt" rows="6" spellcheck="false" autocomplete="off" style="width:100%;font:12px/1.35 ui-monospace,monospace;margin-top:8px"></textarea>
@@ -2008,8 +2009,20 @@
       const restore = (text) => {
         const d = JSON.parse(text);
         if (!Array.isArray(d.books)) throw new Error("not a shelf backup");
+        // keep what was here before, so a restore can be taken back even after the page reloads
+        try { localStorage.setItem("shelf.v1.beforeRestore", JSON.stringify({ at: new Date().toISOString(), books: state.books, settings: state.settings })); } catch (e) { /* storage full */ }
         state.books = d.books; state.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) };
         save(); render(); draw(); toast(`Restored ${d.books.length} books`);
+      };
+      const un = backup.querySelector("#unRestore");
+      if (un) un.onclick = () => {
+        try {
+          const pv = JSON.parse(localStorage.getItem("shelf.v1.beforeRestore"));
+          const cur = { at: new Date().toISOString(), books: state.books, settings: state.settings };
+          state.books = pv.books; state.settings = { ...DEFAULT_SETTINGS, ...(pv.settings || {}) };
+          localStorage.setItem("shelf.v1.beforeRestore", JSON.stringify(cur));
+          save(); render(); draw(); toast(`Brought back ${pv.books.length} books`);
+        } catch (e) { toast("Couldn't undo the restore."); }
       };
       backup.querySelector("#imp").onchange = async (e) => {
         const file = e.target.files[0]; if (!file) return;
