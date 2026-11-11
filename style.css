@@ -2027,3 +2027,14 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lights.vampDrapes.on .vSwag img { filter: drop-shadow(0 4px 4px rgba(10,0,4,.45)) hue-rotate(6deg) brightness(.52) saturate(1.05); }
 .lights.vampDrapes .vKnot img { filter: hue-rotate(6deg) brightness(.46) saturate(1.05); }
 .lights.vampDrapes.on .vKnot img { filter: hue-rotate(6deg) brightness(.52) saturate(1.05); }
+/* v273 painted spines (osamu's Gemini pictures): the picture is the spine; only the turn shading and a faint
+   rounded back stay on top, so it lights like the other books */
+.book.painted .spine { padding: 0; background: var(--spine); }
+.book.painted .spine .sArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; -webkit-user-drag: none; user-select: none; }
+.book.painted .spine .grain, .book.painted .spine .wear, .book.painted .spine .rub { display: none; }
+.book.painted .spine .sForm { opacity: .35; }
+.paintSpine .row { flex-wrap: wrap; gap: 6px; }
+.paintSpine textarea { width: 100%; font: 12px/1.4 ui-monospace, monospace; margin-top: 6px; }
+.ownDesign { border-top: 1px solid var(--border, rgba(255,255,255,.08)); padding-top: 8px; }
+.ownDesign > summary { cursor: pointer; padding: 4px 0; }
+.ownDesign[open] > summary { margin-bottom: 8px; }
