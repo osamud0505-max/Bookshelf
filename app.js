@@ -1989,9 +1989,20 @@
         <div class="row"><button class="btn small" id="expTxt">Copy backup as text</button><button class="btn small" id="impTxt">Paste a backup</button></div>
         <div id="txtBox" hidden><textarea class="input" id="bkTxt" rows="6" spellcheck="false" autocomplete="off" style="width:100%;font:12px/1.35 ui-monospace,monospace;margin-top:8px"></textarea>
         <div class="row" style="margin-top:6px"><button class="btn small primary" id="bkGo" hidden>Restore this backup</button></div></div></div>`);
-      backup.querySelector("#exp").onclick = () => {
-        const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), books: state.books, settings: state.settings }, null, 2)], { type: "application/json" });
-        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `shelf-backup-${today()}.json`; a.click();
+      backup.querySelector("#exp").onclick = async () => {
+        const text = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), books: state.books, settings: state.settings }, null, 2);
+        const filename = `shelf-backup-${today()}.json`;
+        // on claude.ai the page can't download by itself: it asks the viewer to save the file instead
+        if (window.claude && window.claude.use) {
+          const dl = await Promise.race([window.claude.use("downloads").catch(() => null), new Promise((r) => setTimeout(() => r(null), 4000))]);
+          if (dl) {
+            try { await dl.save({ filename, data: text }); toast("Backup saved"); }
+            catch (e) { if (e && e.code !== "declined") toast("The backup couldn't be saved here. Use Copy backup as text."); }
+            return;
+          }
+        }
+        const blob = new Blob([text], { type: "application/json" });
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       };
       const restore = (text) => {
