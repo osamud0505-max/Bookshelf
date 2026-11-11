@@ -1093,7 +1093,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       for (let i = 0; i <= count + 1; i++) { if (lyingAt(i - 1)) continue; const s = h(`<span class="snap"></span>`); s.style.left = i * STEP + "px"; track.prepend(s); }
       books.forEach((b, i) => {
         const node = bookEl(b, H); bookNodes[i] = node;
-        slots[i].replaceChildren(node, h(`<span class="nbSh" aria-hidden="true"></span>`));
+        slots[i].replaceChildren(node, h(`<span class="nbSh" aria-hidden="true"></span>`), h(`<span class="depSh" aria-hidden="true"></span>`));
         slots[i].style.height = dims(b, H).h + "px";
         slots[i].setAttribute("aria-label", b.title);
       });
@@ -1414,8 +1414,12 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           else { slot.style.transformOrigin = "100% 100%"; slot.style.transform = `translate3d(${(left + W * Math.cos(p) - W).toFixed(1)}px,${up}px,0) rotate(${(p * 180 / Math.PI).toFixed(2)}deg)`; }
           slot.classList.remove("lying");
         } else {
+          // v280 (osamu's reference): not every book is pushed in to the same depth. A book set further back stands a little higher
+          // on the floor (seen from above) and sits in the shade of its neighbours
+          const rec = [0, 0, 1, 0, 2, 0, 1][hash((+books[i].id || i) * 7 + 3) % 7] * (1 - open);
+          slot.style.setProperty("--rec", (rec / 2).toFixed(2));
           slot.style.transformOrigin = "";
-          slot.style.transform = `translate3d(${left}px,0,0)`;
+          slot.style.transform = `translate3d(${left}px,${(-rec * H * 0.012).toFixed(1)}px,0)`;
           slot.classList.remove("lying");
         }
         if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", 1 - open);

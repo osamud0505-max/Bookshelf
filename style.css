@@ -2125,3 +2125,18 @@ html[data-bdk="closet"] .wsB { background: rgba(28,0,16,.4); box-shadow: calc(va
   background: linear-gradient(0deg, rgba(0,0,0,.16), rgba(0,0,0,.07) 35%, transparent); }
 html[data-bdk="closet"] .wallSh::before { background: linear-gradient(0deg, rgba(28,0,16,.18), rgba(28,0,16,.07) 35%, transparent); }
 .plank { box-shadow: 0 12px 18px -8px rgba(0,0,0,.55), 0 26px 46px -6px rgba(0,0,0,.22); }
+/* the shadow layer must stay behind every book: on the books' own 3D faces it was showing through as a hard line at the wall line */
+.wallSh { z-index: -1; }
+/* v280: a lit object's glow ended in a line at the object's own base, but books stand a little lower (their spines reach
+   further forward), so their feet were cut out of the light. The glow now reaches to the shelf's front edge and fades out softly. */
+.stage .ornament:not(.hanging) .ornGlowBox { bottom: calc(var(--top-d) * -.5);
+  -webkit-mask-image: linear-gradient(to top, transparent 0, rgba(0,0,0,.5) 12px, #000 40px); mask-image: linear-gradient(to top, transparent 0, rgba(0,0,0,.5) 12px, #000 40px); }
+.stage .ornament:not(.hanging) .ornGlowIn { bottom: calc(var(--top-d) * .5); }
+/* the spine's near face reaches a little below the book's box (seen from above, it is nearer to you); the neighbour shading has to
+   reach that far too, or it stops in a hard line just above the foot */
+.nbSh { bottom: calc(var(--shelf-h) * -.045); }
+/* a book set further back: the books either side throw their shade onto its edges and it is a little darker overall */
+.depSh { position: absolute; left: 0; right: 0; top: 0; bottom: calc(var(--shelf-h) * -.045); z-index: 2; pointer-events: none;
+  opacity: var(--rec, 0);
+  background: linear-gradient(90deg, rgba(0,0,0,.42), rgba(0,0,0,.14) 28%, rgba(0,0,0,.1) 60%, rgba(0,0,0,.36)); }
+.slot.lying .depSh { display: none; }
