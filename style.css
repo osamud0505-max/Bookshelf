@@ -2299,3 +2299,9 @@ html[data-bdk="closet"] .wsB { box-shadow: calc(var(--shelf-h) * .015) calc(var(
 .shelf.is3d .wallSh::before { display: none; }
 .shelf.is3d .wsO.ornament { filter: brightness(0) blur(calc(var(--shelf-h) * .035)); opacity: .5; }
 html[data-bdk="closet"] .shelf.is3d .wsO.ornament { opacity: .45; }
+/* v295: in 3D the painted floor no longer darkens toward the wall (stretched deeper it read as a grey band, osamu); the real 3D
+   light does all the shading there */
+.shelf.is3d .track::before { background: linear-gradient(0deg, rgba(255,255,255,.22) 0, rgba(255,255,255,.1) 2px, rgba(255,255,255,0) 30%), var(--plank-top); }
+html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient(0deg, rgba(255,255,255,.22) 0, rgba(255,255,255,.1) 2px, rgba(255,255,255,0) 30%),
+    linear-gradient(90deg, rgba(255,255,255,0), rgba(255,230,244,.22) 30%, rgba(255,255,255,0) 50%, rgba(255,230,244,.12) 78%, rgba(255,255,255,0)), #e0408f; }
+.shelf.is3d[data-lights="cabinSwags"] .track::before { background: linear-gradient(0deg, rgba(255,255,255,.35) 0, rgba(255,255,255,.12) 3px, rgba(255,255,255,0) 40%), url(obj/cabin-snow-tex.webp) 0 0 / 220px 220px; }
