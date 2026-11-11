@@ -277,8 +277,8 @@
         }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
-        floor.scale.set(viewW + 800, F - zw, 1); floor.position.set(viewW / 2, 0, (F + zw) / 2);
-        wall.scale.set(viewW + 800, stageH + top + 400, 1); wall.position.set(viewW / 2, (stageH + top + 400) / 2, zw);
+        floor.scale.set(viewW + 800, F - zw - 3, 1); floor.position.set(viewW / 2, 0, (F + zw + 3) / 2); // v296: floor and wall stop short of the corner; where they met, the soft shadows doubled up into a dark line along the back (osamu)
+        wall.scale.set(viewW + 800, stageH + top + 400, 1); wall.position.set(viewW / 2, (stageH + top + 400) / 2 + 3, zw);
         // soft grounding the single light can't give: a dark contact shadow on the floor right round each book's foot, and a
         // soft halo on the wall close round its silhouette (osamu's white-shelf reference), a little to the right
         for (const rec of books.values()) {
