@@ -601,7 +601,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           <span class="grain"></span><span class="wear"></span><span class="rub"></span><span class="hinge"></span><span class="sheen"></span><span class="fShade"></span>
         </div>
         <div class="face spine"><span class="sForm"></span><span class="grain"></span><span class="wear"></span><span class="rub"></span><span class="sShade"></span></div>
-        <div class="face pages"></div><div class="face back"></div><div class="face top"></div><div class="face lid"></div>
+        <div class="face head"></div><div class="face pages"></div><div class="face back"></div><div class="face top"></div><div class="face lid"></div>
       </div></div>`);
     el.style.cssText = `--w:${w}px;--h:${hh}px;--d:${d}px;--spine:${b.spineColor};--ink:${spineInk(b.spineColor)}` + (turn !== undefined ? `;--turn:${turn}` : "")
       // every book is worn in its own way: stains, rubbed corners and scratches sit in different places
@@ -1093,7 +1093,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       for (let i = 0; i <= count + 1; i++) { if (lyingAt(i - 1)) continue; const s = h(`<span class="snap"></span>`); s.style.left = i * STEP + "px"; track.prepend(s); }
       books.forEach((b, i) => {
         const node = bookEl(b, H); bookNodes[i] = node;
-        slots[i].replaceChildren(node, h(`<span class="nbSh" aria-hidden="true"></span>`), h(`<span class="depSh" aria-hidden="true"></span>`));
+        slots[i].replaceChildren(node, h(`<span class="nbSh" aria-hidden="true"></span>`), h(`<span class="depSh" aria-hidden="true"></span>`), h(`<span class="ftSh" aria-hidden="true"></span>`));
         slots[i].style.height = dims(b, H).h + "px";
         slots[i].setAttribute("aria-label", b.title);
       });
@@ -1287,7 +1287,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         if (!b) { base.push(30); poses.push("stand"); dm.push(null); continue; }
         const D_ = dims(b, H), a = ((1 - open) * Math.PI) / 2;
         dm.push(D_);
-        base.push(D_.w * Math.cos(a) + D_.d * Math.sin(a) + open * 2);
+        base.push(D_.w * Math.cos(a) + D_.d * Math.sin(a));
         poses.push(b.pose === "lean" || b.pose === "lie" ? b.pose : "stand");
       }
       // an object right after a lying book sits on top of that pile instead of taking room in the row
@@ -1425,8 +1425,12 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         // v284: a crevice is only drawn where a book really touches a standing neighbour; at the row's ends, beside a pile or an
         // object it showed as a loose grey strip next to the book
         {
-          const touch = j => j >= 0 && j < count && !groupOf.has(j) && !orns.some(o => !o.hang && o.idx === Math.max(i, j));
+          const lean = poses[i] === "lean" && !groupOf.has(i);
+          slot.classList.toggle("lean", lean);
+          // a leaning book meets its neighbour only at the top, so neither gets a crevice down that side
+          const touch = j => !lean && j >= 0 && j < count && !groupOf.has(j) && poses[j] !== "lean" && !orns.some(o => !o.hang && o.idx === Math.max(i, j));
           slot.style.setProperty("--cl", touch(i - 1) ? 1 : 0); slot.style.setProperty("--cr", touch(i + 1) ? 1 : 0);
+          if (dm[i]) slot.style.setProperty("--fsag", (dm[i].d * (books[i].binding === "paper" ? .05 : .13)).toFixed(1) + "px");
         }
         if (bookNodes[i]) bookNodes[i].style.setProperty("--turn", 1 - open);
         // v277: the book on the left throws its shadow onto this one too, on its left side and only below that book's height

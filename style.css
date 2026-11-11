@@ -2204,3 +2204,47 @@ html[data-bdk="closet"] .wsB { box-shadow: calc(var(--shelf-h) * .015) calc(var(
 /* the crevice sits on the book's own edges, never outside them, and only on a side that touches another book */
 .slot:not(.lying):not(.addSlot)::after { left: 0; right: 0;
   background: linear-gradient(90deg, rgba(0,0,0,calc(var(--cl, 1) * .6)) 0, rgba(0,0,0,calc(var(--cl, 1) * .18)) 2px, transparent 4px, transparent calc(100% - 3px), rgba(0,0,0,calc(var(--cr, 1) * .45)) calc(100% - 1px)); }
+
+/* v285: a rounded spine seen from a little above: both its head and its foot bow down in the middle (a smile at each end), with
+   the board corners standing up at the head. The head is cut by an ellipse so the top of the page block shows through it, the
+   foot by rounded corners. The same --sag drives both, so top and bottom always match. */
+.book { --sag: calc(var(--d) * .13); }
+.book.paper { --sag: calc(var(--d) * .05); }
+.book.hard .spine, .book.paper .spine { border-radius: 0 0 50% 50% / 0 0 var(--sag) var(--sag);
+  -webkit-mask: radial-gradient(ellipse 50% var(--sag) at 50% 0, transparent calc(100% - .6px), #000 100%);
+  mask: radial-gradient(ellipse 50% var(--sag) at 50% 0, transparent calc(100% - .6px), #000 100%); }
+.slot.lying .book .spine { border-radius: 0; -webkit-mask: none; mask: none; }
+/* the rim light follows the head's curve instead of running straight across */
+.book.hard .spine::before { left: 0; right: 0; top: 0; height: calc(var(--sag) + 1.4px); border-radius: 0;
+  background: radial-gradient(ellipse 50% var(--sag) at 50% 0, transparent calc(100% - .6px), rgba(255,255,255,.22) 100%, transparent calc(100% + 1.2px)); }
+/* boards: thin and in the spine's own colour, a little darker, so they read as the cover's edge rather than separate pegs */
+.book .lid, .book .top { --bd: 1.6px; }
+.book.hard .lid { filter: brightness(.82); }
+/* where the foot curves away you see down to the floor right under the book, which is in deep contact shadow, never the lit floor */
+.ftSh { position: absolute; left: 0; right: 0; bottom: 0; height: 0; z-index: -1; pointer-events: none; }
+.slot:not(.lying):not(.addSlot) .ftSh { height: calc(var(--fsag, 3px) + 2px); background: linear-gradient(0deg, rgba(0,0,0,.72), rgba(0,0,0,.5)); }
+/* the contact shadow under the row is one continuous band: square where two books meet (it used to be a rounded blob per book,
+   which scalloped between them), soft and rounded only at a free end */
+.slot:not(.lying)::before { left: calc(var(--cl, 0) * 0px - (1 - var(--cl, 0)) * 2px); right: calc(var(--cr, 0) * 0px - (1 - var(--cr, 0)) * 2px);
+  border-radius: calc((1 - var(--cl, 0)) * 7px) calc((1 - var(--cr, 0)) * 7px) calc((1 - var(--cr, 0)) * 7px) calc((1 - var(--cl, 0)) * 7px) / 50%; }
+/* inside the head's curve you look onto the front of the page block just behind the spine, in shadow, not into the empty book */
+.head { width: var(--d); left: calc(var(--w) / 2 - var(--d) / 2); top: 3px; height: calc(var(--sag) + 2px);
+  transform: rotateY(-90deg) translateZ(calc(var(--w) / 2 - 1.5px));
+  background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.6)), repeating-linear-gradient(180deg, #e6d9bc 0 1px, #c9b993 1px 2px); }
+.book.paper .head { top: .5px; }
+.slot.lying .head { display: none; }
+/* the head is now the spine's own curve, so the lid is only the two boards (its old straight spine strip floated above the curve) */
+.book.hard .lid { background: linear-gradient(180deg, var(--spine) 0 var(--bd), transparent var(--bd) calc(100% - var(--bd)), var(--spine) calc(100% - var(--bd))); }
+.book.hard .lid::after { background: linear-gradient(180deg, rgba(255,255,255,.2) 0 .6px, transparent .6px calc(100% - var(--bd)), rgba(255,255,255,.14) calc(100% - var(--bd)) calc(100% - var(--bd) + .6px), transparent 0);
+  -webkit-mask: linear-gradient(180deg, #000 0 var(--bd), transparent var(--bd) calc(100% - var(--bd)), #000 calc(100% - var(--bd)));
+  mask: linear-gradient(180deg, #000 0 var(--bd), transparent var(--bd) calc(100% - var(--bd)), #000 calc(100% - var(--bd))); }
+/* the sunken page block: quiet page lines, darker toward the spine head and the boards it sits below, nothing bright or stripy */
+.book.hard .top { background:
+    linear-gradient(90deg, rgba(0,0,0,.42) 0, rgba(0,0,0,.2) 22%, rgba(0,0,0,.06) 50%, transparent 75%),
+    linear-gradient(180deg, rgba(0,0,0,.4) 0, transparent calc(var(--bd) + 3px), transparent calc(100% - var(--bd) - 3px), rgba(0,0,0,.34) 100%),
+    linear-gradient(180deg, rgba(0,0,0,calc(var(--tsh, 0) * .45)), transparent 85%),
+    linear-gradient(rgba(40,30,20,.18), rgba(40,30,20,.18)),
+    repeating-linear-gradient(180deg, #e9dcc0 0 1px, #ddcfae 1px 2px); }
+.book.hard .top::after { display: none; }
+/* a leaning book stands on one corner: no flat dark foot under it (it showed as a dark block beside the corner) */
+.slot.lean .ftSh { display: none; }
