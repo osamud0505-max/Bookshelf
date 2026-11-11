@@ -2292,3 +2292,10 @@ html[data-bdk="closet"] .wsB { box-shadow: calc(var(--shelf-h) * .015) calc(var(
    fronts do, so the real shadows land on it; a swipe slides the row freely, a tap turns a book */
 .shelf.is3d .track > .stage { height: calc(100% - var(--b3off, 0px)); }
 .shelf.pick3d .scroller { scroll-snap-type: none; }
+/* v294: objects' wall shadows in 3D: cast by the same light as the books (offset from JS), cut off where the wall meets the 3D floor,
+   as dark and soft as the books' real ones */
+.shelf.is3d .wallSh { top: -260px; bottom: calc(var(--top-d) - var(--b3off, 0px)); }
+.shelf.is3d .wsIn { bottom: calc(var(--b3off, 0px) - var(--top-d)); }
+.shelf.is3d .wallSh::before { display: none; }
+.shelf.is3d .wsO.ornament { filter: brightness(0) blur(calc(var(--shelf-h) * .035)); opacity: .5; }
+html[data-bdk="closet"] .shelf.is3d .wsO.ornament { opacity: .45; }

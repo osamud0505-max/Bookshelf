@@ -1082,7 +1082,8 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         requestAnimationFrame(() => layout());
       });
     }
-    const shOff = () => ({ x: H * 0.025, y: 0 }); // v280: osamu's picture: wide, soft, to the right, starting at the book's foot
+    let sh3 = null; // v294: in 3D, objects' wall shadows follow the 3D light
+    const shOff = () => (sh3 ? { x: sh3.x, y: sh3.y } : { x: H * 0.025, y: 0 }); // v280: osamu's picture: wide, soft, to the right, starting at the book's foot
     root.dataset.key = key;
     addLights(root);
     const count = books.length + (opts.onAdd ? 1 : 0);
@@ -1548,6 +1549,8 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           if (fl) {
             const cur = root.style.getPropertyValue("--top-d"), want = fl.depth.toFixed(1) + "px";
             if (cur !== want) { root.style.setProperty("--top-d", want); root.style.setProperty("--b3off", fl.below.toFixed(1) + "px"); topD = fl.depth; }
+            const nsh = { x: fl.shX, y: fl.shY };
+            if (!sh3 || Math.abs(sh3.x - nsh.x) > 0.5 || Math.abs(sh3.y - nsh.y) > 0.5) { sh3 = nsh; requestAnimationFrame(() => layout()); }
           }
         }
         catch (e) { console.warn("3D books failed", e); b3d.dispose(); b3d = null; root.classList.remove("is3d"); }

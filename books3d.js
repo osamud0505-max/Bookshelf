@@ -197,12 +197,12 @@
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera();
     const key = new THREE.DirectionalLight("#fff4e6", 1.8); key.castShadow = true;
-    key.shadow.mapSize.set(1024, 512); key.shadow.radius = 11; key.shadow.blurSamples = 24; key.shadow.bias = -0.0005;
+    key.shadow.mapSize.set(2048, 1024); key.shadow.radius = 8; key.shadow.blurSamples = 24; key.shadow.bias = -0.0005;
     scene.add(key, key.target);
     const hemi = new THREE.HemisphereLight("#fffaf2", "#8f8577", 1.25); scene.add(hemi);
     const tint = opts.tint || "#000000";
-    const floorMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.45 });
-    const wallMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.4 });
+    const floorMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.55 });
+    const wallMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.6 }); // v294: as dark as the test shelf's
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; // v293: the painted floor is now stretched to match this floor exactly, so its real shadows line up
     scene.add(floor);
     const wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), wallMat); wall.receiveShadow = true; scene.add(wall);
@@ -302,7 +302,9 @@
         sc.left = -span; sc.right = span; sc.top = H * 2.2; sc.bottom = -H * 2.2; sc.near = 10; sc.far = H * 12; sc.updateProjectionMatrix();
         frameDirty = true;
         inst.render();
-        return { below, depth };
+        // where an object's shadow lands on the wall, flat on the screen: the same light, from the shelf front to the wall
+        const L = new THREE.Vector3(-1.6, 3.6, 4.1), g = -zw, sc2 = Dc / (Dc + g);
+        return { below, depth, shX: ((-L.x / L.z) * g) * sc2, shY: ((L.y / L.z) * g) * sc2 };
       },
       render() {
         if (dead || !frameDirty || !W || !onScreen) return;
