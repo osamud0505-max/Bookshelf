@@ -1985,6 +1985,8 @@
       const backup = h(`<div class="group"><h3 class="label">Backup</h3>
         <p class="hint">Your books live only in this browser. Save a backup now and then, and before clearing browser data or switching phones.</p><p class="hint versionTag">Version ${esc((document.querySelector('script[src*="app.js"]')?.getAttribute("src").match(/v=(\d+)/) || [, "?"])[1])}</p>
         <div class="row"><button class="btn small" id="exp">Save a backup file</button><label class="btn small" for="imp">Restore from a backup<input type="file" id="imp" accept="application/json,.json" hidden></label></div>
+        <div class="row"><label class="btn small" for="impBooks">Restore only the books<input type="file" id="impBooks" accept="application/json,.json" hidden></label></div>
+        <p class="hint">"Restore only the books" takes the books from a backup and keeps this copy's looks, lights, objects and other settings.</p>
         ${(() => { try { const pv = JSON.parse(localStorage.getItem("shelf.v1.beforeRestore") || "null"); return pv && Array.isArray(pv.books) ? `<div class="row"><button class="btn small" id="unRestore">Undo the last restore (${pv.books.length} books from ${esc(new Date(pv.at).toLocaleDateString())})</button></div>` : ""; } catch (e) { return ""; } })()}
         <p class="hint">If saving a file doesn't work here, copy the backup as text instead, and paste it into the other copy of the app.</p>
         <div class="row"><button class="btn small" id="expTxt">Copy backup as text</button><button class="btn small" id="impTxt">Paste a backup</button></div>
@@ -2006,12 +2008,18 @@
         const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       };
-      const restore = (text) => {
+      const restore = (text, booksOnly) => {
         const d = JSON.parse(text);
         if (!Array.isArray(d.books)) throw new Error("not a shelf backup");
         // keep what was here before, so a restore can be taken back even after the page reloads
         try { localStorage.setItem("shelf.v1.beforeRestore", JSON.stringify({ at: new Date().toISOString(), books: state.books, settings: state.settings })); } catch (e) { /* storage full */ }
-        state.books = d.books; state.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) };
+        state.books = d.books;
+        if (booksOnly) {
+          // the books come with the shelves they sit on: add the backup's own shelves and names this copy doesn't have
+          const ds = d.settings || {}, cur = state.settings.customShelves || [], have = new Set(cur.map(([id]) => id));
+          state.settings.customShelves = [...cur, ...(ds.customShelves || []).filter(([id]) => !have.has(id))];
+          state.settings.shelfNames = { ...(ds.shelfNames || {}), ...(state.settings.shelfNames || {}) };
+        } else state.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) };
         save(); render(); draw(); toast(`Restored ${d.books.length} books`);
       };
       const un = backup.querySelector("#unRestore");
@@ -2023,6 +2031,10 @@
           localStorage.setItem("shelf.v1.beforeRestore", JSON.stringify(cur));
           save(); render(); draw(); toast(`Brought back ${pv.books.length} books`);
         } catch (e) { toast("Couldn't undo the restore."); }
+      };
+      backup.querySelector("#impBooks").onchange = async (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        try { restore(await file.text(), true); } catch (err) { toast("That file isn't a Shelf backup."); }
       };
       backup.querySelector("#imp").onchange = async (e) => {
         const file = e.target.files[0]; if (!file) return;
