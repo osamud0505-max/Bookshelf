@@ -2288,3 +2288,7 @@ html[data-bdk="closet"] .wsB { box-shadow: calc(var(--shelf-h) * .015) calc(var(
 .shelf.is3d .slot::before, .shelf.is3d .slot::after, .shelf.is3d .nbSh, .shelf.is3d .depSh, .shelf.is3d .ftSh, .shelf.is3d .wsB { display: none !important; }
 /* v290: seen in 3D the row stood right at the back wall (osamu); it now stands further forward on the shelf, objects with it */
 .shelf.is3d .track > .stage { height: calc(100% - var(--top-d) * .32); }
+/* v293: 3D shelves. The painted floor is stretched (from JS) to the 3D floor's depth and the row stands where the 3D books'
+   fronts do, so the real shadows land on it; a swipe slides the row freely, a tap turns a book */
+.shelf.is3d .track > .stage { height: calc(100% - var(--b3off, 0px)); }
+.shelf.pick3d .scroller { scroll-snap-type: none; }

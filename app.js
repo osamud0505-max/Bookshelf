@@ -1048,6 +1048,29 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     const bookSh = [];
     // v288: real 3D books (Customize > Books > 3D); the flat books stay, invisible, as the thing you touch
     let b3d = null, topD = 0;
+    // v293 (osamu chose the 3D test shelf's feel): in 3D a tap turns a book to you in place and the others slide aside; a swipe
+    // just slides the row along. Each book eases on its own, as on the test shelf.
+    const is3dMode = !!(state.settings.books3d && window.Books3D);
+    let pick = -1, anim3 = 0, follow3 = false;
+    const op3 = [];
+    if (is3dMode) root.classList.add("pick3d");
+    function step3() {
+      let moving = false;
+      for (let i = 0; i < count; i++) {
+        const target = i === pick ? 1 : 0, v = op3[i] || 0;
+        if (v === target) continue;
+        let nv = v + (target - v) * 0.14; if (Math.abs(target - nv) < 0.002) nv = target;
+        op3[i] = nv; moving = true;
+      }
+      layout();
+      anim3 = moving ? requestAnimationFrame(step3) : 0;
+      if (!moving) follow3 = false;
+    }
+    function pick3(i) {
+      if (i >= count || (i >= 0 && !books[i]) || (i >= 0 && lyingAt(i))) return;
+      pick = i; userMoved = true; follow3 = true;
+      if (!anim3) anim3 = requestAnimationFrame(step3);
+    }
     if (state.settings.books3d && window.Books3D) {
       // the flat books only hide once the 3D ones are really there; if 3D can't start on this device, the flat ones stay
       window.Books3D.whenReady(() => {
@@ -1086,7 +1109,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     books.forEach((b, i) => {
       const slot = h(`<button type="button" class="slot" tabindex="-1"></button>`);
       // a lying book is never picked by swiping; a tap just opens it
-      slot.onclick = () => (i === front || b.pose === "lie" ? openBook(b.id) : goTo(i));
+      slot.onclick = () => (i === front || b.pose === "lie" ? openBook(b.id) : is3dMode ? pick3(i) : goTo(i));
       stage.append(slot); slots.push(slot);
     });
     if (opts.onAdd) {
@@ -1103,7 +1126,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       track.style.width = (count + 1) * STEP + viewW + "px";
       stage.style.width = viewW + "px";
       track.querySelectorAll(".snap").forEach((n) => n.remove());
-      for (let i = 0; i <= count + 1; i++) { if (lyingAt(i - 1)) continue; const s = h(`<span class="snap"></span>`); s.style.left = i * STEP + "px"; track.prepend(s); }
+      for (let i = 0; i <= count + 1 && !is3dMode; i++) { if (lyingAt(i - 1)) continue; const s = h(`<span class="snap"></span>`); s.style.left = i * STEP + "px"; track.prepend(s); }
       books.forEach((b, i) => {
         const node = bookEl(b, H); bookNodes[i] = node;
         slots[i].replaceChildren(node, h(`<span class="nbSh" aria-hidden="true"></span>`), h(`<span class="depSh" aria-hidden="true"></span>`), h(`<span class="ftSh" aria-hidden="true"></span>`));
@@ -1287,7 +1310,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
 
     function layout() {
       if (!viewW) return;
-      const g = Math.max(-1, Math.min(count, scroller.scrollLeft / STEP - 1)); // -1 and count: every book spine out
+      const g = is3dMode ? pick : Math.max(-1, Math.min(count, scroller.scrollLeft / STEP - 1)); // -1 and count: every book spine out
       const f = Math.max(0, Math.min(count - 1, g));
       // each book: how open it is (0 spine out, 1 turned to show its cover), its width as seen, and its pose
       const opens = [], base = [], poses = [], dm = [];
@@ -1295,7 +1318,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         const b = books[i];
         const o = Math.max(0, Math.min(1, 1 - Math.abs(i - g)));
         // a book lying in a pile stays lying when it is picked; only upright books turn to show their cover
-        const open = b && b.pose === "lie" ? 0 : o * o * (3 - 2 * o);
+        const open = b && b.pose === "lie" ? 0 : is3dMode ? op3[i] || 0 : o * o * (3 - 2 * o);
         opens.push(open);
         if (!b) { base.push(30); poses.push("stand"); dm.push(null); continue; }
         const D_ = dims(b, H), a = ((1 - open) * Math.PI) / 2;
@@ -1372,8 +1395,13 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       // the last book can always be reached without the row scrolling past the end of the shelf
       const endT = Math.max(0, Math.min(1, g - (count - 1)));
       let off0 = Math.max(0, Math.min(maxOff, openAt - viewW * 0.3)); off0 += (maxOff - off0) * endT;
-      const offset = Math.max(0, Math.min(maxOff, off0 + panX));
-      panX = offset - off0; curOffset = offset;
+      let offset;
+      if (is3dMode) {
+        // the row is as wide to scroll as it is long, so a swipe moves it under your finger
+        const tw = Math.round(viewW + maxOff); if (Math.abs(parseFloat(track.style.width) - tw) > 1) track.style.width = tw + "px";
+        offset = Math.max(0, Math.min(maxOff, scroller.scrollLeft));
+      } else offset = Math.max(0, Math.min(maxOff, off0 + panX));
+      panX = is3dMode ? 0 : offset - off0; curOffset = offset;
       let x = 0, k = 0;
       const placeOrn = (o, lift = 0, cx = null) => {
         const left = cx != null ? cx - o.vis / 2 : o.hang ? PAD + x - offset - o.vis / 2 : PAD + x - offset + 5;
@@ -1493,6 +1521,12 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         for (const o of list) { placeOrn(o, p.top, cx + o.vis / 2); cx += o.vis + 4; }
       }
       pileSpans = groups.map((g) => ({ s: g.start, e: g.end, L: g.L, R: g.L + g.S + PILE_GAP * 2 }));
+      // while a book turns, the row slides just enough to keep it in view
+      if (is3dMode && follow3 && pick >= 0 && bookPos[pick]) {
+        const l = bookPos[pick].l, r = l + widths[pick];
+        let dx = 0; if (r > viewW - PAD) dx = r - (viewW - PAD); if (l - dx < PAD) dx = l - PAD;
+        if (Math.abs(dx) > 0.5) scroller.scrollLeft = Math.max(0, Math.min(maxOff, offset + dx));
+      }
       if (b3d) {
         if (!topD) topD = parseFloat(getComputedStyle(root).getPropertyValue("--top-d")) || 30;
         const items = [];
@@ -1508,7 +1542,14 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
             color: b.spineColor, spineUrl: spineUrl(b), coverUrl: b.coverUrl || null, ink: spineInk(b.spineColor), font: FONTS[fk],
             title: b.title, author: b.author, hard: b.binding !== "paper", glossy: b.finish === "glossy" });
         }
-        try { b3d.sync(items, { stageH: stage.clientHeight, viewW, H, topD }); }
+        try {
+          const fl = b3d.sync(items, { stageH: stage.clientHeight, viewW, H, topD });
+          // the painted shelf floor is stretched to the 3D floor's depth, so the real shadows land on it in the right place
+          if (fl) {
+            const cur = root.style.getPropertyValue("--top-d"), want = fl.depth.toFixed(1) + "px";
+            if (cur !== want) { root.style.setProperty("--top-d", want); root.style.setProperty("--b3off", fl.below.toFixed(1) + "px"); topD = fl.depth; }
+          }
+        }
         catch (e) { console.warn("3D books failed", e); b3d.dispose(); b3d = null; root.classList.remove("is3d"); }
       }
       let n = Math.round(g); if (n < 0 || n > count - 1) n = -1; n = Math.min(n, books.length - 1);
@@ -1519,7 +1560,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     function drawCaption() {
       const b = books[front];
       caption.replaceChildren();
-      if (!b && books.length) { caption.append(h(`<span class="hint">Swipe to pick a book</span>`)); return; }
+      if (!b && books.length) { caption.append(h(`<span class="hint">${is3dMode ? "Tap a book to turn it to you" : "Swipe to pick a book"}</span>`)); return; }
       if (!b) { caption.append(h(`<span class="hint">${esc(opts.empty || "Add a book to start this shelf.")}</span>`)); return; }
       const main = h(`<button type="button" class="capMain"><span class="capTitle">${esc(b.title)}</span><span class="capMeta"><span>${esc(b.author)}</span></span></button>`);
       if (b.rating) main.querySelector(".capMeta").append(starsEl(b.rating, null, 12));
@@ -1541,6 +1582,11 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     }
 
     function goTo(i, instant, dir = 1) {
+      if (is3dMode) {
+        if (i >= 0 && i < count && lyingAt(i)) { let j = i; while (j >= 0 && j < count && lyingAt(j)) j += dir; i = j; }
+        if (i >= 0 && i < books.length) pick3(i);
+        return;
+      }
       if (i >= 0 && i < count && lyingAt(i)) { let j = i; while (j >= 0 && j < count && lyingAt(j)) j += dir; i = j >= 0 && j < count ? j : uprightNear(i, -dir); }
       if (i < 0 || (i >= count && !count)) { scroller.scrollTo({ left: 0, behavior: instant ? "auto" : "smooth" }); return; }
       const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1573,7 +1619,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(at - 1, false, -1); }
       else if (e.key === "Enter" && books[front]) openBook(books[front].id);
     });
-    const ro = new ResizeObserver(() => { const keep = front < 0 ? scrollMemory.get(key) || 0 : front; build(); front = -1; goTo(keep, true); layout(); });
+    const ro = new ResizeObserver(() => { if (is3dMode) { build(); layout(); return; } const keep = front < 0 ? scrollMemory.get(key) || 0 : front; build(); front = -1; goTo(keep, true); layout(); });
     ro.observe(scroller);
     root._dispose = () => ro.disconnect();
     // the ✦ menu adds a decoration next to the book in front

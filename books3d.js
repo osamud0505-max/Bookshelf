@@ -201,13 +201,13 @@
     scene.add(key, key.target);
     const hemi = new THREE.HemisphereLight("#fffaf2", "#8f8577", 1.25); scene.add(hemi);
     const tint = opts.tint || "#000000";
-    const floorMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.42 });
-    const wallMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.3 });
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; floor.visible = false; // v292: off. The painted floors are steeper than the 3D view, so the books' real floor shadow showed as a dark strip along the back of the shelf (osamu); the soft contact shadows ground the books instead
+    const floorMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.45 });
+    const wallMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.4 });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; // v293: the painted floor is now stretched to match this floor exactly, so its real shadows line up
     scene.add(floor);
     const wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), wallMat); wall.receiveShadow = true; scene.add(wall);
     const unitPlane = new THREE.PlaneGeometry(1, 1);
-    const contactMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.3), transparent: true, opacity: 0.8, depthWrite: false, toneMapped: false });
+    const contactMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.3), transparent: true, opacity: 0.45, depthWrite: false, toneMapped: false });
     const haloMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.2), transparent: true, opacity: 0.3, depthWrite: false, toneMapped: false });
     const books = new Map(); // id -> { node, sig }
     let dead = false, W = 0, Hc = 0, top = 0, bottom = 0, frameDirty = false;
@@ -217,16 +217,26 @@
         if (dead) return;
         const { stageH, viewW, H, topD } = geom;
         // the canvas covers the row, a bit above the tallest book for the tops and wall shadows, and the floor in front
-        top = Math.round(H * 0.6); bottom = Math.round(topD * 0.5 + 6);
+        // v293, as on osamu's test shelf: a near eye (about a 26 degree view across the screen), a little above the books
+        // (about 1.85 times a book's height), the books' fronts a short way back from the shelf's front edge (F) and their backs
+        // against the wall (zw). Where the floor's front edge and the wall line land on screen is handed back, so the painted
+        // floor can be stretched to fit
+        const Dc = viewW / 2 / Math.tan((13 * Math.PI) / 180);
+        const eyeY = H + Dc * 0.2, F = H * 0.2;
+        let wMax = 40; for (const it of items) wMax = Math.max(wMax, it.w);
+        const zw = -(wMax + H * 0.22); // a gap behind the books, as on the test shelf, so their shadows show on the wall
+        const sOf = (z) => (eyeY * -z) / (Dc - z);
+        const below = -sOf(F), depth = sOf(zw) + below;
+        top = Math.round(H * 0.6); bottom = Math.round(below + 4);
         const cw = viewW, ch = stageH + top + bottom;
         if (cw !== W || ch !== Hc) {
           W = cw; Hc = ch; cv.width = Math.round(cw * pr); cv.height = Math.round(ch * pr);
           cv.style.cssText = `position:absolute;left:0;top:${-top}px;width:${cw}px;height:${ch}px;pointer-events:none`;
         }
         // eye above the row, as far away as the flat books' perspective; world units are css px, y up from the shelf floor
-        const eyeY = H + D * 0.17, cx = viewW / 2; // looking down about 10 degrees, as on the test shelf osamu approved
-        camera.position.set(cx, eyeY, D); camera.up.set(0, 1, 0); camera.lookAt(cx, eyeY, 0);
-        const n = 50, f = D + 2000, k = n / D;
+        const cx = viewW / 2;
+        camera.position.set(cx, eyeY, Dc); camera.up.set(0, 1, 0); camera.lookAt(cx, eyeY, 0);
+        const n = 20, f = Dc + 3000, k = n / Dc;
         const yTop = stageH + top, yBot = -bottom; // world y of the canvas's top and bottom edges at z = 0
         camera.projectionMatrix.makePerspective((0 - cx) * k, (viewW - cx) * k, (yTop - eyeY) * k, (yBot - eyeY) * k, n, f);
         camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
@@ -267,32 +277,32 @@
         }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
-        const zw = -(maxW + 6);
-        floor.scale.set(viewW + 400, -zw + 400, 1); floor.position.set(viewW / 2, 0, zw + (-zw + 400) / 2);
-        wall.scale.set(viewW + 400, stageH + top + 200, 1); wall.position.set(viewW / 2, (stageH + top + 200) / 2, zw);
+        floor.scale.set(viewW + 800, F - zw, 1); floor.position.set(viewW / 2, 0, (F + zw) / 2);
+        wall.scale.set(viewW + 800, stageH + top + 400, 1); wall.position.set(viewW / 2, (stageH + top + 400) / 2, zw);
         // soft grounding the single light can't give: a dark contact shadow on the floor right round each book's foot, and a
         // soft halo on the wall close round its silhouette (osamu's white-shelf reference), a little to the right
         for (const rec of books.values()) {
           if (!rec.soft) { rec.soft = [new THREE.Mesh(unitPlane, contactMat), new THREE.Mesh(unitPlane, haloMat)]; rec.soft[0].renderOrder = 1; rec.soft[1].renderOrder = 1; scene.add(...rec.soft); }
           const [ct, hl] = rec.soft, bx = rec.box, vis = rec.outer.visible && bx;
-          ct.visible = hl.visible = !!vis;
+          ct.visible = !!vis; hl.visible = false; // the real light now draws the wall shadow
           if (!vis) continue;
           const wx = bx.x1 - bx.x0, blur = H * 0.05;
           if (bx.y0 < 4) {
             const cw = bx.lean ? Math.max(8, wx * 0.35) : wx, cx = bx.lean ? bx.foot : (bx.x0 + bx.x1) / 2;
             const dz = bx.lying ? Math.max(8, bx.depth) : bx.depth;
             ct.visible = true; ct.rotation.set(-Math.PI / 2, 0, 0);
-            ct.scale.set(cw + blur * 1.4, dz + H * 0.3, 1); ct.position.set(cx + H * 0.008, 0.4, (bx.lying ? -dz / 2 : bx.zc) + H * 0.1); // reaching out in front of the foot, where you can see it
+            ct.scale.set(cw + blur * 0.7, dz + blur * 0.7, 1); ct.position.set(cx, 0.3, bx.lying ? -dz / 2 : bx.zc); // a tight dark contact right round the foot
           } else ct.visible = false;
           hl.scale.set(wx + blur * 2.4, bx.y1 - bx.y0 + blur * 2.4, 1);
           hl.position.set((bx.x0 + bx.x1) / 2 + H * 0.025, (bx.y0 + bx.y1) / 2 - blur * 0.2, zw + 0.5);
         }
         // the light: from the front and upper left
-        key.position.set(viewW / 2 - H * 1.5, H * 3, H * 2.6); key.target.position.set(viewW / 2, H * 0.4, zw / 2); key.target.updateMatrixWorld();
+        key.position.set(viewW / 2 - H * 1.6, H * 3.6, H * 4.1); key.target.position.set(viewW / 2, 0, zw / 2); key.target.updateMatrixWorld();
         const sc = key.shadow.camera, span = viewW / 2 + H * 1.2;
-        sc.left = -span; sc.right = span; sc.top = H * 1.6; sc.bottom = -H * 1.6; sc.near = 10; sc.far = H * 8; sc.updateProjectionMatrix();
+        sc.left = -span; sc.right = span; sc.top = H * 2.2; sc.bottom = -H * 2.2; sc.near = 10; sc.far = H * 12; sc.updateProjectionMatrix();
         frameDirty = true;
         inst.render();
+        return { below, depth };
       },
       render() {
         if (dead || !frameDirty || !W || !onScreen) return;
