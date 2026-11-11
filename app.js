@@ -419,13 +419,135 @@
     clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 2600);
   }
 
+  // ---------------------------------------------------------------- painted spines (v273, osamu's Gemini pictures)
+  // Each picture lives in its own IndexedDB store, not in the books list: pictures are far too big for localStorage.
+  // A book only keeps b.spineArt = { key, ar } (the picture's id and its width / height).
+  const spineUrls = new Map();
+  const spineDb = new Promise((res) => {
+    try { const r = indexedDB.open("shelf-spines", 1); r.onupgradeneeded = () => r.result.createObjectStore("img"); r.onsuccess = () => res(r.result); r.onerror = () => res(null); }
+    catch (e) { res(null); }
+  });
+  async function spineTx(mode, fn) {
+    const d = await spineDb; if (!d) throw new Error("no storage");
+    return new Promise((resolve, reject) => {
+      const tx = d.transaction("img", mode), req = fn(tx.objectStore("img"));
+      tx.oncomplete = () => resolve(req ? req.result : undefined); tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+    });
+  }
+  async function spinePut(key, blob) {
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+    await spineTx("readwrite", (s) => s.put(blob, key));
+    spineUrls.set(key, URL.createObjectURL(blob));
+  }
+  const spineUrl = (b) => (b && b.spineArt && spineUrls.get(b.spineArt.key)) || null;
+  /** Load every stored picture once at start; pictures no book (or the kept pre-restore shelf) points at are thrown away. */
+  async function spineLoadAll() {
+    try {
+      const keys = await spineTx("readonly", (s) => s.getAllKeys()), vals = await spineTx("readonly", (s) => s.getAll());
+      const used = new Set(state.books.map((b) => b.spineArt && b.spineArt.key).filter(Boolean));
+      try { (JSON.parse(localStorage.getItem("shelf.v1.beforeRestore") || "null") || { books: [] }).books.forEach((b) => b.spineArt && used.add(b.spineArt.key)); } catch (e) { /* none kept */ }
+      let n = 0;
+      keys.forEach((k, i) => { if (used.has(k)) { spineUrls.set(k, URL.createObjectURL(vals[i])); n++; } else spineTx("readwrite", (s) => s.delete(k)).catch(() => {}); });
+      return n;
+    } catch (e) { return 0; }
+  }
+  const blobToDataUrl = (blob) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(null); r.readAsDataURL(blob); });
+  function dataUrlToBlob(u) {
+    const [head, b64] = u.split(","), type = (head.match(/data:([^;]+)/) || [, "image/png"])[1], bin = atob(b64), a = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+    return new Blob([a], { type });
+  }
+  /** The painted spines the given books use, as data URLs, for backup files. */
+  async function spinesFor(books) {
+    const out = {};
+    for (const b of books) {
+      const k = b.spineArt && b.spineArt.key; if (!k || out[k]) continue;
+      try { const blob = await spineTx("readonly", (s) => s.get(k)); if (blob) out[k] = await blobToDataUrl(blob); } catch (e) { /* skip */ }
+    }
+    return out;
+  }
+  async function spinesRestore(map) {
+    for (const [k, u] of Object.entries(map || {})) { try { await spinePut(k, dataUrlToBlob(u)); } catch (e) { /* skip */ } }
+  }
+  /** Cut the spine out of Gemini's picture: key out the green, trim to the spine, stand it upright. */
+  function spineFromPhoto(file) {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const sc = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+        const W = Math.round(img.naturalWidth * sc), H = Math.round(img.naturalHeight * sc);
+        const c = document.createElement("canvas"); c.width = W; c.height = H;
+        const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0, W, H);
+        const id = g.getImageData(0, 0, W, H), px = id.data;
+        // green screen: how far green stands above red and blue. A sage or olive spine stays (small lead);
+        // Gemini's bright or shaded green backdrop goes (big lead). Edges are softened and de-greened.
+        for (let i = 0; i < px.length; i += 4) {
+          const r = px[i], gg = px[i + 1], bl = px[i + 2], m = Math.max(r, bl), lead = gg - m;
+          const a = lead <= 28 ? 1 : lead >= 62 ? 0 : 1 - (lead - 28) / 34;
+          if (a < 1) { px[i + 1] = Math.min(gg, m + 10); px[i + 3] = Math.round(a * 255); }
+        }
+        // the spine is the solid upright block: columns mostly opaque, then rows mostly opaque within them
+        const colOk = (x) => { let n = 0; for (let y = 0; y < H; y++) if (px[(y * W + x) * 4 + 3] > 200) n++; return n > H * 0.25; };
+        const rowOk = (y, x0, x1) => { let n = 0; for (let x = x0; x <= x1; x++) if (px[(y * W + x) * 4 + 3] > 200) n++; return n > (x1 - x0 + 1) * 0.5; };
+        let x0 = 0, x1 = W - 1; while (x0 < W && !colOk(x0)) x0++; while (x1 > x0 && !colOk(x1)) x1--;
+        let wide = false;
+        if (x1 - x0 < 4) {   // nothing upright: maybe the spine was painted lying down
+          const rowFull = (y) => { let n = 0; for (let x = 0; x < W; x++) if (px[(y * W + x) * 4 + 3] > 200) n++; return n > W * 0.25; };
+          let y0 = 0, y1 = H - 1; while (y0 < H && !rowFull(y0)) y0++; while (y1 > y0 && !rowFull(y1)) y1--;
+          if (y1 - y0 < 4) return resolve(null);
+          x0 = 0; x1 = W - 1;
+          const colIn = (x) => { let n = 0; for (let y = y0; y <= y1; y++) if (px[(y * W + x) * 4 + 3] > 200) n++; return n > (y1 - y0 + 1) * 0.5; };
+          while (x0 < W && !colIn(x0)) x0++; while (x1 > x0 && !colIn(x1)) x1--;
+          wide = { y0, y1 };
+        }
+        let y0 = 0, y1 = H - 1;
+        if (wide) { y0 = wide.y0; y1 = wide.y1; } else { while (y0 < H && !rowOk(y0, x0, x1)) y0++; while (y1 > y0 && !rowOk(y1, x0, x1)) y1--; }
+        g.putImageData(id, 0, 0);
+        const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+        if (cw < 4 || ch < 4) return resolve(null);
+        // stand it up (a lying spine reads left to right, so it turns clockwise), at most 900px tall
+        const upW = wide ? ch : cw, upH = wide ? cw : ch, k = Math.min(1, 900 / upH);
+        const o = document.createElement("canvas"); o.width = Math.max(2, Math.round(upW * k)); o.height = Math.max(2, Math.round(upH * k));
+        const og = o.getContext("2d");
+        if (wide) { og.translate(o.width, 0); og.rotate(Math.PI / 2); og.drawImage(c, x0, y0, cw, ch, 0, 0, o.height, o.width); }
+        else og.drawImage(c, x0, y0, cw, ch, 0, 0, o.width, o.height);
+        // its main colour, for the top and back of the book
+        const mid = og.getImageData(Math.floor(o.width * 0.3), Math.floor(o.height * 0.1), Math.max(1, Math.floor(o.width * 0.4)), Math.floor(o.height * 0.8)).data;
+        let R = 0, G = 0, B = 0, n = 0; for (let i = 0; i < mid.length; i += 16) if (mid[i + 3] > 200) { R += mid[i]; G += mid[i + 1]; B += mid[i + 2]; n++; }
+        const hex = n ? "#" + [R, G, B].map((v) => Math.round(v / n).toString(16).padStart(2, "0")).join("") : null;
+        const done = (blob) => resolve(blob ? { blob, ar: o.width / o.height, color: hex, preview: o.toDataURL("image/png") } : null);
+        o.toBlob((bw) => (bw && bw.type === "image/webp" ? done(bw) : o.toBlob(done, "image/png")), "image/webp", 0.9);
+      };
+      img.src = url;
+    });
+  }
+  /** A fresh Gemini prompt for this one book's spine. */
+  function spinePrompt(b) {
+    const { h: hh, d } = dims({ ...b, spineArt: null }, 230);
+    const ratio = Math.max(3, Math.round(hh / d));
+    const pages = b.pageCount ? `about ${b.pageCount} pages` : "a normal novel";
+    return `Paint the SPINE of the book "${b.title}"${b.author ? ` by ${b.author}` : ""}, seen perfectly straight on and flat, like a photograph taken head-on of a book standing on a shelf. Use the attached front cover as the reference: same colours, same typefaces, same edition, same era. If the cover is a hardcover, paint a hardcover spine (cloth or leather, a slightly rounded back); if it is a paperback, paint a paperback spine.
+
+Make it look like a real, gently read copy: realistic photo, soft rubbed edges, a few small creases and scuffs, slightly faded at the top. Not an illustration.
+
+Text on the spine, spelled exactly: the title "${b.title}"${b.author ? ` and the author "${b.author.split(",")[0].trim()}"` : ""}, running from top to bottom the way English spines are printed, plus a small publisher logo near the bottom if the edition has one.
+
+Shape: the spine stands upright in the centre of the image and fills about 90% of the image height. Its width is about 1/${ratio} of its height (${pages}). Show only the spine: no front cover, no back cover, no pages, no shelf, no other books, no hands.
+
+Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no shadow, no gradient, no green reflections on the book. Portrait image, 9:16.`;
+  }
+
   function dims(b, base) {
     const scale = (SIZES[b.size] || SIZES.regular)[1];
     const hh = Math.round(base * scale * (b.height ? b.height / 100 : 0.94 + (hash(b.id) % 4) * 0.02));
     const aspect = Math.max(0.5, Math.min(0.9, b.coverAspect || 2 / 3));
     const w = Math.round(hh * aspect);
     const pages = b.pageCount || 280;
-    const d = Math.max(8, Math.round(Math.max(24, Math.min(62, 14 + pages / 14)) * (hh / 230) * (b.thickness || 100) / 100));
+    let d = Math.max(8, Math.round(Math.max(24, Math.min(62, 14 + pages / 14)) * (hh / 230) * (b.thickness || 100) / 100));
+    // a painted spine sets the thickness from its own shape
+    if (b.spineArt && b.spineArt.ar) d = Math.max(6, Math.round(hh * Math.min(0.45, b.spineArt.ar) * (b.thickness || 100) / 100));
     return { h: hh, w, d };
   }
 
@@ -485,7 +607,13 @@
       // every book is worn in its own way: stains, rubbed corners and scratches sit in different places
       + (() => { const r = hash((+b.id || 7) * 31 + 11); return `;--wx:${r % 173}px;--wy:${(r >> 3) % 211}px;--sx:${(r >> 6) % 97}px;--age:${(0.75 + ((r >> 9) % 6) * 0.07).toFixed(2)}`; })();
     const spine = el.querySelector(".spine"), form = spine.querySelector(".sForm");
-    for (const key of ["title", "author", "extra"]) {
+    const art = spineUrl(b);
+    if (art) {
+      el.classList.add("painted");
+      const im = document.createElement("img"); im.className = "sArt"; im.alt = ""; im.draggable = false; im.src = art;
+      spine.prepend(im);
+    }
+    if (!art) for (const key of ["title", "author", "extra"]) {
       const part = design[key];
       if (part && part.show && part.text && part.text.trim()) form.after(spineTextEl(part, design.dir, hh / 230));
     }
@@ -1559,7 +1687,7 @@
   function openBook(id) {
     const sheet = document.getElementById("bookSheet");
     let draft = {};
-    let designTab = "title";
+    let designTab = "title", promptOpen = false, ownOpen = false;
     const dirty = () => Object.keys(draft).length > 0;
     const view = () => { const b = byId(id); return b ? { ...b, ...draft } : null; };
     let bar = null;
@@ -1657,8 +1785,18 @@
       const part = design[designTab];
       const fontOpts = Object.entries(FONTS).map(([k, f]) => `<option value="${k}" ${part.font === k ? "selected" : ""} style="font-family:${f.family}">${f.label}</option>`).join("");
       const look = h(`<div class="group"><div class="row"><h3 class="label" style="flex:1">How it looks on the shelf</h3>${b.spineDesign ? `<button class="linkBtn" id="d-reset">Reset to automatic</button>` : ""}</div>
-        <div class="styleCopy"><button type="button" class="btn small" id="d-copy">Copy style</button>${state.settings.copiedStyle ? `<button type="button" class="btn small" id="d-paste"><i class="dot" style="background:${esc(state.settings.copiedStyle.spineColor || "#888")}"></i>Paste style from <em>${esc(state.settings.copiedStyle.from || "another book")}</em></button>` : `<span class="hint">Copy this spine's fonts, colours and layout to use on another book.</span>`}</div>
         <div class="lookRow"><div class="lookPreview"></div><div class="lookControls">
+          <div class="field paintSpine"><span class="hint">Spine picture</span>
+            <div class="row"><button type="button" class="btn small" id="s-gen" aria-expanded="${promptOpen}">Generate with Gemini</button><label class="btn small" for="s-up">${spineUrl(b) ? "Upload a new spine" : "Upload spine"}<input type="file" id="s-up" accept="image/*" hidden></label>${b.spineArt ? `<button type="button" class="linkBtn" id="s-del">Remove</button>` : ""}</div>
+            <div id="s-prompt" ${promptOpen ? "" : "hidden"}>
+              <p class="hint">In Gemini: attach this book's cover, paste the prompt, then upload the picture Gemini paints here. The green is cut away for you.</p>
+              <textarea class="input" id="s-text" rows="7" readonly spellcheck="false"></textarea>
+              <div class="row" style="margin-top:6px"><button type="button" class="btn small primary" id="s-copy">Copy prompt</button>${b.coverUrl ? `<a class="btn small" id="s-cover" href="${esc(b.coverUrl)}" target="_blank" rel="noopener" download="${esc((b.title || "cover").replace(/[^\w\- ]+/g, ""))}-cover.jpg">Open the cover to save it</a>` : ""}</div>
+            </div>
+            <p class="hint" id="s-msg"></p>
+          </div>
+          <details class="ownDesign" ${ownOpen ? "open" : ""}><summary class="hint">${b.spineArt ? "Design it myself (used only without a spine picture)" : "Design it myself"}</summary>
+        <div class="styleCopy" style="margin-bottom:8px"><button type="button" class="btn small" id="d-copy">Copy style</button>${state.settings.copiedStyle ? `<button type="button" class="btn small" id="d-paste"><i class="dot" style="background:${esc(state.settings.copiedStyle.spineColor || "#888")}"></i>Paste style from <em>${esc(state.settings.copiedStyle.from || "another book")}</em></button>` : `<span class="hint">Copy this spine's fonts, colours and layout to use on another book.</span>`}</div>
           <div class="field"><span class="hint">Text runs</span><div class="seg" id="d-dir">
             <button data-v="down" aria-pressed="${design.dir === "down"}">↓ Down</button><button data-v="up" aria-pressed="${design.dir === "up"}">↑ Up</button><button data-v="across" aria-pressed="${design.dir === "across"}">Across</button></div></div>
           <div class="seg tabsSeg" id="d-tab">
@@ -1671,11 +1809,36 @@
             <button class="btn small" id="d-bold" aria-pressed="${!!part.bold}" style="font-weight:800">B</button></div></div>
           ${["size|Size|4|40|0.5|", "spacing|Letter spacing|-6|60|1|", "pos|Position along the spine|0|100|1|%", "shift|Move sideways|-40|40|1|"].map((r) => { const [k, l, mn, mx, st] = r.split("|"); return `<div class="field"><span class="hint">${l}: <b data-out="${k}">${part[k]}</b></span><input type="range" data-k="${k}" min="${mn}" max="${mx}" step="${st}" value="${part[k]}"></div>`; }).join("")}
           <div class="field"><span class="hint">Colour</span><div class="row" style="flex-wrap:nowrap"><button class="btn small" id="d-autoColor" aria-pressed="${!part.color}">Automatic</button><input class="input" type="color" id="d-color" value="${part.color || spineInk(b.spineColor)}" style="padding:4px;width:64px"></div></div>
+          </details>
           <div class="field"><span class="hint">Thickness: <b id="thickVal">${b.thickness ? b.thickness + "%" : "Auto (from page count)"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-thick" min="40" max="180" step="5" value="${b.thickness || 100}"><button class="btn small" id="f-thickAuto">Auto</button></div></div>
           <div class="field"><span class="hint">How it sits on the shelf</span><div class="seg" id="f-pose">${[["stand", "Standing"], ["lean", "Leaning"], ["lie", "Lying flat"]].map(([k, l]) => `<button data-v="${k}" aria-pressed="${(b.pose || "stand") === k}">${l}</button>`).join("")}</div></div>
           <div class="field"><span class="hint">Height: <b id="tallVal">${b.height ? b.height + "%" : "Auto"}</b></span><div class="row" style="flex-wrap:nowrap"><input type="range" id="f-tall" min="70" max="120" step="2" value="${b.height || 96}"><button class="btn small" id="f-tallAuto">Auto</button></div></div>
           <div class="field"><span class="hint">Book size</span><div class="seg" id="f-bsize">${Object.entries(SIZES).map(([k, [l]]) => `<button data-v="${k}" aria-pressed="${(b.size || "regular") === k}">${l}</button>`).join("")}</div></div>
         </div></div></div>`);
+      // painted spine: a prompt for Gemini, and the picture it paints
+      const sMsg = look.querySelector("#s-msg"), sText = look.querySelector("#s-text");
+      sText.value = spinePrompt(view());
+      look.querySelector("#s-gen").onclick = () => { promptOpen = !promptOpen; look.querySelector("#s-prompt").hidden = !promptOpen; look.querySelector("#s-gen").setAttribute("aria-expanded", promptOpen); if (promptOpen) sText.value = spinePrompt(view()); };
+      look.querySelector("#s-copy").onclick = async () => {
+        let ok = false;
+        try { await navigator.clipboard.writeText(sText.value); ok = true; } catch (e) { sText.focus(); sText.select(); try { ok = document.execCommand("copy"); } catch (e2) { /* manual */ } }
+        toast(ok ? "Prompt copied. Paste it into Gemini with the cover." : "Select the prompt and copy it");
+      };
+      look.querySelector(".ownDesign").ontoggle = (e) => { ownOpen = e.target.open; };
+      look.querySelector("#s-up").onchange = async (e) => {
+        const f = e.target.files && e.target.files[0]; if (!f) return;
+        sMsg.textContent = "Cutting out the spine…";
+        const got = await spineFromPhoto(f);
+        if (!got) { sMsg.textContent = "Couldn't find the spine in that picture. It needs to stand on a plain green background."; return; }
+        if (got.ar > 0.5) { sMsg.textContent = "That came out wider than a spine. Check the green background is plain, or try another picture."; return; }
+        const key = `sp-${id}-${Date.now().toString(36)}`;
+        try { await spinePut(key, got.blob); } catch (err) { sMsg.textContent = "This browser wouldn't store the picture."; return; }
+        const patch = { spineArt: { key, ar: +got.ar.toFixed(4) } };
+        if (got.color && !view().spineManual) patch.spineColor = got.color;
+        promptOpen = false; stage(patch); toast("Spine added. Tap Save to keep it.");
+      };
+      const sDel = look.querySelector("#s-del");
+      if (sDel) sDel.onclick = () => stage({ spineArt: null });
       const preview = look.querySelector(".lookPreview");
       const drawPreview = () => preview.replaceChildren(bookEl(view(), innerWidth < 560 ? 330 : 380, 1));
       drawPreview();
@@ -1993,7 +2156,7 @@
         <div id="txtBox" hidden><textarea class="input" id="bkTxt" rows="6" spellcheck="false" autocomplete="off" style="width:100%;font:12px/1.35 ui-monospace,monospace;margin-top:8px"></textarea>
         <div class="row" style="margin-top:6px"><button class="btn small primary" id="bkGo" hidden>Restore this backup</button></div></div></div>`);
       backup.querySelector("#exp").onclick = async () => {
-        const text = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), books: state.books, settings: state.settings }, null, 2);
+        const text = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), books: state.books, settings: state.settings, spines: await spinesFor(state.books) }, null, 2);
         const filename = `shelf-backup-${today()}.json`;
         // on claude.ai the page can't download by itself: it asks the viewer to save the file instead
         if (window.claude && window.claude.use) {
@@ -2014,6 +2177,7 @@
         // keep what was here before, so a restore can be taken back even after the page reloads
         try { localStorage.setItem("shelf.v1.beforeRestore", JSON.stringify({ at: new Date().toISOString(), books: state.books, settings: state.settings })); } catch (e) { /* storage full */ }
         state.books = d.books;
+        if (d.spines) spinesRestore(d.spines).then(() => render());
         if (booksOnly) {
           // the books come with the shelves they sit on: add the backup's own shelves and names this copy doesn't have
           const ds = d.settings || {}, cur = state.settings.customShelves || [], have = new Set(cur.map(([id]) => id));
@@ -2044,7 +2208,7 @@
       const box = backup.querySelector("#txtBox"), ta = backup.querySelector("#bkTxt"), go = backup.querySelector("#bkGo");
       backup.querySelector("#expTxt").onclick = async () => {
         box.hidden = false; go.hidden = true;
-        ta.value = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), books: state.books, settings: state.settings });
+        ta.value = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), books: state.books, settings: state.settings, spines: await spinesFor(state.books) });
         ta.readOnly = true; ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
         let ok = false;
         try { await navigator.clipboard.writeText(ta.value); ok = true; } catch (e) { try { ok = document.execCommand("copy"); } catch (e2) { /* manual copy */ } }
@@ -2101,6 +2265,7 @@
   // Shared helpers for music.js
   window.Shelf = { settings: () => state.settings, books: () => state.books, lookKey: () => state.settings.lookKey || (Object.entries(D.LOOKS).find(([, L]) => L.set.backdrop === state.settings.backdrop && L.set.theme === state.settings.theme) || [""])[0], h, esc, toast, showSheet, closeSheet, closeBtn, spineInk, byId, save, render, undo, redo, undoPair, recentRow, rememberColor };
   document.querySelector(".headerActions").prepend(undoPair("headerUndo"));
+  spineLoadAll().then((n) => { if (n) render(); });
 })();
 
 // on-screen keyboard: lift the open sheet so the field being typed in stays above the keyboard (v207).
