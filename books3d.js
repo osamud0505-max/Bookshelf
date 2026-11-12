@@ -619,7 +619,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
             rec.mesh.visible = ob.visible !== false;
             // v322: the gift box picture keeps only its own soft footprint shadow (drawn with the picture); the light's long cast
             // shadow fell to the right as a hard block cut off at the wall (osamu: "the shadows are not right at all")
-            rec.mesh.castShadow = ob.kind !== "giftBoxes";
+            rec.mesh.castShadow = ob.kind !== "giftBoxes" && ob.kind !== "shoppingBags";
             { // place each strip: its foot on the floor where the floor shows at that height on screen, scaled for being further back
               const P = rec.mesh.geometry.attributes.position, onPile = ob.y > 1;
               for (let k = 0; k < rec.NC; k++) {
