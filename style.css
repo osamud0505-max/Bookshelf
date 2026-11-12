@@ -1947,10 +1947,10 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
    behind; when the lights are on, the bottom of the snow picks up their warm glow (opacity only) */
 .lights.cabinSwags { z-index: 1; }
 .lights.cabinSwags .cSnow { position: absolute; left: 0; right: 0; top: -21px; height: 125px; pointer-events: none;
-  background: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; filter: drop-shadow(0 4px 3px rgba(20,10,4,.45)); }
+  background: url(obj/cabin-snowedge-bot2.webp) 0 0 / 352.33px 96.33px repeat-x; filter: drop-shadow(0 4px 3px rgba(20,10,4,.45)); }
 .lights.cabinSwags .cSnowLit { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; mix-blend-mode: multiply;
   background: linear-gradient(180deg, rgba(255,255,255,0) 0, rgba(255,255,255,0) 30px, rgba(255,244,228,1) 60px, rgba(255,232,205,1) 100%);
-  -webkit-mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
+  -webkit-mask: url(obj/cabin-snowedge-bot2.webp) 0 0 / 352.33px 96.33px repeat-x; mask: url(obj/cabin-snowedge-bot2.webp) 0 0 / 352.33px 96.33px repeat-x; }
 .lights.cabinSwags.on .cSnowLit { opacity: 1; }
 /* v259 (osamu: "in the image the whole shelf top is covered"): a snow layer over the shelf's top face too, from the
    books' feet to the front edge (they stand a little sunk into it), lighter where it faces up */
@@ -2001,9 +2001,9 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
    strip at the plank's top edge. The top part rides on the sticky stage (behind the books, never scrolls), the lip part
    on the plank, both from the same x, so the join stays seamless while the row scrolls */
 .shelf[data-lights="cabinSwags"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
-  bottom: calc(var(--top-d) * -.5); height: var(--top-d); background: url(obj/cabin-snowedge-top.webp) 0 0 / 352.33px 100% repeat-x; }
-.lights.cabinSwags .cSnow { top: -16px; height: 96.33px; background: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
-.lights.cabinSwags .cSnowLit { -webkit-mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d); background: url(obj/cabin-snowedge-top4.webp) 0 0 / 352.33px 100% repeat-x; }
+.lights.cabinSwags .cSnow { top: -16px; height: 96.33px; background: url(obj/cabin-snowedge-bot2.webp) 0 0 / 352.33px 96.33px repeat-x; }
+.lights.cabinSwags .cSnowLit { -webkit-mask: url(obj/cabin-snowedge-bot2.webp) 0 0 / 352.33px 96.33px repeat-x; mask: url(obj/cabin-snowedge-bot2.webp) 0 0 / 352.33px 96.33px repeat-x; }
 .lights.cabinSwags::after { display: none; }
 /* v266 (osamu: the switch should feel like Christmas, and the pull should match the other looks): tapping an ornament
    pulls it down on its ribbon or chain like the other hanging lights; switching on runs left to right along the shelf,
@@ -2358,3 +2358,9 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 @keyframes lpGlX { to { transform: translateX(-3312px); } }
 @keyframes lpGlY { to { transform: translateY(-1488px); } }
 @media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .lpSheetG, .ornament[data-kind="lipstickLamp"].lit .lpGY { animation: none; } }
+/* v338 (osamu: the cabin's snow top no longer fit the deeper 3D shelf floor): in 3D the snow's top face covers the whole 3D floor,
+   from its front edge (b3off under the stage) back to the wall line, so its soft back edge sits on the wall line, not mid-floor */
+.shelf.is3d[data-lights="cabinSwags"] .stage::before { bottom: calc(var(--b3off, 0px) * -1); height: var(--top-d); }
+/* v340 (osamu's one-piece snow painting): the top and the lip are cut from the same picture, so nothing may darken the join:
+   the lip's drop-shadow is clipped at its top edge so it only falls down onto the lights, never up onto the snow top */
+.lights.cabinSwags .cSnow { clip-path: inset(0 -20px -40px -20px); }
