@@ -265,8 +265,12 @@ vec2 gLayer(vec3 p, float d, float sz) {
     noCast(group);
     // v329: osamu chose the painted lamp again, made to work like this one: the model's case, bullet and footprint are hidden and
     // only its light, floor pool and cable are used, at the painted bullet's place
-    if (!LIP_3D) { feet.forEach((f) => (f.visible = false)); cs.visible = false; if (!LIP_HYBRID) bm.visible = false;
-      else { // only the case's top rim and the inside of the tube, which show through the painting's cut; the painted body covers the rest
+    // v334 (osamu: the shadow must match the lamp, like the 3D one): the model's own soft footprint shadow stays under the painted lamp
+    // v335 (osamu's 3D screenshot): and its real cast shadow too, running back to the wall: the case and bullet stay in the scene
+    // but draw nothing, so only their shadow shows under the painted lamp
+    if (!LIP_3D) { const ghost = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }); cs.material = ghost; cs.castShadow = true; cs.receiveShadow = false;
+      if (!LIP_HYBRID) { bm.material = ghost; bm.castShadow = true; }
+      if (LIP_HYBRID) { // only the case's top rim and the inside of the tube, which show through the painting's cut; the painted body covers the rest
         const P = (r, y) => new THREE.Vector2(r, y), rim = new THREE.Mesh(new THREE.LatheGeometry([P(27.4, 146), P(27.6, 150), P(28.2, 151.4), P(28, 153.4), P(26.6, 154.2), P(25.4, 152.6), P(25.4, 100)], 72), gold);
         rim.position.y = LIP_DY; rim.castShadow = false; rim.receiveShadow = true; group.add(rim); } }
     return { group, bullet, redMat, U, light, pool, cable, cableKey: "", rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
@@ -528,7 +532,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     // v327: the gift boxes' and shopping bags' shadow lies on the 3D floor itself (osamu: the shadow must end exactly at the back
     // edge of the shelf). It is drawn from each strip's own footing: dark under and right round the bases, soft at the sides and
     // front, and running straight back to the wall line, where the floor ends, so it stops exactly at the back edge
-    const SOFT_FOOT = new Set(["giftBoxes", "shoppingBags", "lipstickLamp"]);
+    const SOFT_FOOT = new Set(["giftBoxes", "shoppingBags", "lipstickLamp"]), OWN_FOOT = new Set(["lipstickLamp"]);
     function floorShadow(rec, ob, zs, H, zw) {
       const front = -1 + H * 0.06, ext = H * 0.14, m = ob.w * 0.08, x0 = ob.x - m, x1 = ob.x + ob.w + m, back = zw;
       const key = [x0, x1, back, ...zs.map((z) => (z == null ? "n" : z.toFixed(1)))].join();
@@ -676,7 +680,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
                 P.array.set([X(xa), yb, z, X(xb), yb, z, X(xa), yt, z, X(xb), yt, z], k * 12); zs.push(onPile ? null : z);
               }
               P.needsUpdate = true; rec.mesh.geometry.computeBoundingSphere();
-              if (SOFT_FOOT.has(ob.kind)) floorShadow(rec, ob, zs, H, zw);
+              if (SOFT_FOOT.has(ob.kind) && !OWN_FOOT.has(ob.kind)) floorShadow(rec, ob, zs, H, zw);
             }
             // v322: osamu went back to a picture for the gift boxes (a Gemini render that looks 3D), so the hand-built model is off;
             // the picture casts its shadow through the hidden strips like the bags. buildGiftBoxes stays in case it comes back
