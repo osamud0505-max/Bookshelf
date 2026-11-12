@@ -2348,7 +2348,13 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 .ornament[data-kind="lipstickLamp"] .lpB2 { transform: translateY(var(--rest)); }
 .ornament[data-kind="lipstickLamp"].lit .lpB2 { transform: none; }
 .ornament[data-kind="lipstickLamp"] .lpSheetG { display: none; }
-.ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpSheetG { display: inline; animation: lpGlRun 2.1s steps(16) infinite; }
+.ornament[data-kind="lipstickLamp"]:not(.lpTwisting) .lpSheetL { display: none; }
+/* v332: the lit glints loop through 72 frames (4.8s, 12 across and 6 down), starting where the lit turn ends */
+.ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpSheetG { display: inline; animation: lpGlX .8s steps(12) -3s infinite; }
+.ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpGY { animation: lpGlY 4.8s steps(6) -3s infinite; }
 .ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpSheetT { display: none; }
-@keyframes lpGlRun { to { transform: translateX(-4288px); } }
-@media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .lpSheetG { animation: none; } }
+.ornament[data-kind="lipstickLamp"] .lpRimGlow { opacity: 0; }
+.ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpRimGlow { opacity: 1; }
+@keyframes lpGlX { to { transform: translateX(-3312px); } }
+@keyframes lpGlY { to { transform: translateY(-1488px); } }
+@media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .lpSheetG, .ornament[data-kind="lipstickLamp"].lit .lpGY { animation: none; } }

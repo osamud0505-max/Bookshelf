@@ -476,9 +476,11 @@
   // tube as it turns (where a real lipstick turns), then it lights up; tapping again winds it back down. The bullet only ever moves; nothing is redrawn.
   const LIP_VW = 95.3, LIP_REST = 38.5;
   // v331: the photographed 3D bullet's frame (picture units: x, y, w, h), its pixel size, and how far it sinks when down
-  const LIP_FR = [14.367, 17.006, 44.667, 76.167], LIP_FW = 268, LIP_FH = 457, LIP_DROP = 37.8;
+  const LIP_FR = [14.367, 17.006, 44.667, 40], LIP_FW = 268, LIP_FH = 240, LIP_DROP = 37.8;
+  // v332: 72 frames a turn (5° each, so the twist flows like the 3D one), in a grid 12 frames wide; and how its light comes on
+  const LIP_N = 72, LIP_COLS = 12, LIP_CW = 276, LIP_CH = 248; // each frame sits in a cell with a clear gap, so no frame bleeds into the next
   const lipBez = (x1, y1, x2, y2) => (t) => { const c = (u, a, b) => 3 * a * u * (1 - u) ** 2 + 3 * b * u * u * (1 - u) + u ** 3; let lo = 0, hi = 1; for (let i = 0; i < 22; i++) { const m = (lo + hi) / 2; if (c(m, x1, x2) < t) lo = m; else hi = m; } return c((lo + hi) / 2, y1, y2); };
-  const LIP_STROKE = lipBez(0.42, 0, 0.4, 1);
+  const LIP_STROKE = lipBez(0.42, 0, 0.4, 1), LIP_EASE = lipBez(0.25, 0.1, 0.25, 1);
   const lipTwists = (t) => { const i = Math.min(2, Math.floor(t * 3)), u = Math.min(1, (t * 3 - i) / 0.82); return (i + LIP_STROKE(u)) / 3; };
   // v329: glitter flecks inside the bullet (painted x 18.5..54.4, y 2..60), in a band two turns wide so it can slide round as
   // the lipstick twists (one turn = LIP_SPIN): most are a soft shimmer, a few glint now and then
@@ -506,9 +508,16 @@
       + `<ellipse class="lpFoot" cx="36.9" cy="187" rx="44" ry="15.4" fill="url(#${g}fp)"/>`
       + `<image href="obj/closet-lipstick-case4back-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       + `<g mask="url(#${g}bm)"><g class="lpB2" style="--rest:${LIP_DROP}px"><clipPath id="${g}fc"><rect x="0" y="0" width="${LIP_FW}" height="${LIP_FH}"/></clipPath><g transform="translate(${LIP_FR[0]} ${LIP_FR[1]}) scale(${(LIP_FR[2] / LIP_FW).toFixed(5)})"><g clip-path="url(#${g}fc)">`
-      + `<image class="lpSheetT" href="obj/closet-lipstick-bullet3t.webp" x="0" y="0" width="${LIP_FW * 24}" height="${LIP_FH}" preserveAspectRatio="none"/>`
-      + `<image class="lpSheetG" href="obj/closet-lipstick-bullet3g.webp" x="0" y="0" width="${LIP_FW * 16}" height="${LIP_FH}" preserveAspectRatio="none"/></g></g></g></g>`
-      + `<image href="obj/closet-lipstick-case4-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`,
+      + `<image class="lpSheetT" href="obj/closet-lipstick-bullet4t.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/>`
+      + `<image class="lpSheetL" href="obj/closet-lipstick-bullet5l.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none" opacity="0"/>`
+      + `<g class="lpGY"><image class="lpSheetG" href="obj/closet-lipstick-bullet5g.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/></g></g></g></g></g>`
+      + `<image href="obj/closet-lipstick-case4-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
+      // v333 (osamu's real lamp): lit, the light glows red round the rim's opening and falls warm on the gold edge
+      + `<g class="lpRimGlow" style="mix-blend-mode:screen"><filter id="${g}rg" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="1.3"/></filter>`
+      + `<radialGradient id="${g}rs" gradientUnits="userSpaceOnUse" cx="36.7" cy="50.5" r="27" gradientTransform="translate(0 50.5) scale(1 .4) translate(0 -50.5)"><stop offset=".6" stop-color="#ff6a2c" stop-opacity=".95"/><stop offset=".8" stop-color="#ff4a22" stop-opacity=".45"/><stop offset="1" stop-color="#ff5a2a" stop-opacity="0"/></radialGradient>`
+      + `<ellipse cx="36.7" cy="52" rx="27" ry="10.8" fill="url(#${g}rs)"/>`
+      + `</g><g class="lpRimGlow"><path d="M14.3 50.3A22.4 4.6 0 0 0 59.1 50.3" fill="none" stroke="#ff2a14" stroke-width="3" stroke-linecap="round" opacity=".85" filter="url(#${g}rg)"/>`
+      + `<path d="M14.7 50.3A22 4.4 0 0 0 58.7 50.3" fill="none" stroke="#ff8a4a" stroke-width=".8" stroke-linecap="round" opacity=".9"/></g>`,
     _draw: (g) => `<defs><mask id="${g}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-clip.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-turn2.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<linearGradient id="${g}s" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d8" stop-opacity=".5"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`
@@ -531,16 +540,21 @@
       el.classList.add(out ? "twistDown" : "twistUp");
       el.classList.toggle("lit", !out);
       lipTwist(out ? 1.3 : 2.2);
-      // v331: the bullet turns as it rises, like the 3D one: one full turn in three twists of the hand, played from its 24 frames
-      const B = el.querySelector(".lpB2"), S = el.querySelector(".lpSheetT"), dur = out ? 1500 : 2300, t0 = performance.now();
-      if (B && S) {
+      // v332: the bullet turns as it rises, like the 3D one: one full turn in three twists of the hand, from 72 frames. Its own light
+      // comes on and goes off exactly with the lamp's light round it (on: after 1.7s, over 1.1s; off: over 0.6s), as the 3D one did
+      const B = el.querySelector(".lpB2"), S = el.querySelector(".lpSheetT"), SL = el.querySelector(".lpSheetL"), RG = el.querySelectorAll(".lpRimGlow"), dur = out ? 1500 : 2300, t0 = performance.now();
+      if (B && S && SL) {
         cancelAnimationFrame(el._lpRaf); el.classList.add("lpTwisting");
+        const g0 = el._lpGlow == null ? (out ? 1 : 0) : el._lpGlow, gEnd = out ? 600 : 2800, total = Math.max(dur, gEnd);
         const step = (now) => {
-          const t = Math.min(1, (now - t0) / dur), r = lipTwists(t), rise = out ? 1 - r : r;
+          const ms = now - t0, t = Math.min(1, ms / dur), r = lipTwists(t), rise = out ? 1 - r : r;
+          const gl = out ? g0 * (1 - LIP_EASE(Math.min(1, ms / 600))) : g0 + (1 - g0) * LIP_EASE(Math.min(1, Math.max(0, ms - 1700) / 1100));
+          el._lpGlow = gl;
           B.style.transform = `translateY(${(LIP_DROP * (1 - rise)).toFixed(2)}px)`;
-          S.setAttribute("x", -(Math.round(rise * 24) % 24) * LIP_FW);
-          if (t < 1) el._lpRaf = requestAnimationFrame(step);
-          else { B.style.transform = ""; S.setAttribute("x", 0); el.classList.remove("lpTwisting"); }
+          const k = Math.round(rise * LIP_N) % LIP_N, x = -(k % LIP_COLS) * LIP_CW, y = -Math.floor(k / LIP_COLS) * LIP_CH;
+          S.setAttribute("x", x); S.setAttribute("y", y); SL.setAttribute("x", x); SL.setAttribute("y", y); SL.setAttribute("opacity", gl.toFixed(3)); RG.forEach((e) => { e.style.opacity = gl.toFixed(3); });
+          if (ms < total) el._lpRaf = requestAnimationFrame(step);
+          else { B.style.transform = ""; S.setAttribute("x", 0); S.setAttribute("y", 0); SL.setAttribute("x", 0); SL.setAttribute("y", 0); el._lpGlow = out ? 0 : 1; RG.forEach((e) => { e.style.opacity = ""; }); el.classList.remove("lpTwisting"); }
         };
         el._lpRaf = requestAnimationFrame(step);
       }
