@@ -176,7 +176,7 @@
     if (sharedR && !sharedR.getContext().isContextLost()) return sharedR;
     const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: false, powerPreference: "high-performance" });
     r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-    r.shadowMap.enabled = true; r.shadowMap.type = THREE.VSMShadowMap;
+    r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
     r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.0;
     r.setClearColor(0x000000, 0);
     sharedR = r; return r;
@@ -197,15 +197,20 @@
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera();
     const key = new THREE.DirectionalLight("#fff4e6", 1.8); key.castShadow = true;
-    key.shadow.mapSize.set(2048, 1024); key.shadow.radius = 8; key.shadow.blurSamples = 24; key.shadow.bias = -0.0005;
+    key.shadow.mapSize.set(1024, 512); key.shadow.radius = 4; key.shadow.blurSamples = 24; key.shadow.bias = -0.0005;
     scene.add(key, key.target);
     const hemi = new THREE.HemisphereLight("#fffaf2", "#8f8577", 1.25); scene.add(hemi);
     const tint = opts.tint || "#000000";
     const floorMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.55 });
     const wallMat = new THREE.ShadowMaterial({ color: tint, opacity: 0.6 }); // v294: as dark as the test shelf's
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; // v293: the painted floor is now stretched to match this floor exactly, so its real shadows line up
-    scene.add(floor);
-    const wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), wallMat); wall.receiveShadow = true; scene.add(wall);
+    // v297: floor and wall are one bent surface that shares its corner edge; as two separate planes their soft shadows met in a
+    // dark line along the back of the shelf (osamu)
+    const roomGeo = new THREE.BufferGeometry();
+    roomGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Array(18).fill(0), 3));
+    roomGeo.setAttribute("normal", new THREE.Float32BufferAttribute([0,1,0, 0,1,0, 0,1,0, 0,0,1, 0,0,1, 0,0,1], 3));
+    roomGeo.setIndex([0, 1, 2, 0, 2, 3, 3, 2, 4, 3, 4, 5]);
+    const room = new THREE.Mesh(roomGeo, wallMat); room.receiveShadow = true; scene.add(room);
+    const floor = { scale: { set() {} }, position: { set() {} } }, wall = floor;
     const unitPlane = new THREE.PlaneGeometry(1, 1);
     const contactMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.3), transparent: true, opacity: 0.45, depthWrite: false, toneMapped: false });
     const haloMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.2), transparent: true, opacity: 0.3, depthWrite: false, toneMapped: false });
@@ -277,8 +282,11 @@
         }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
-        floor.scale.set(viewW + 800, F - zw - 3, 1); floor.position.set(viewW / 2, 0, (F + zw + 3) / 2); // v296: floor and wall stop short of the corner; where they met, the soft shadows doubled up into a dark line along the back (osamu)
-        wall.scale.set(viewW + 800, stageH + top + 400, 1); wall.position.set(viewW / 2, (stageH + top + 400) / 2 + 3, zw);
+        { const x0 = -400, x1 = viewW + 400, yt = stageH + top + 400, P = roomGeo.attributes.position;
+          // 0,1: floor front edge; 3,2: the corner; 4,5: top of the wall
+          [[x0, 0, F], [x1, 0, F], [x1, 0, zw], [x0, 0, zw], [x1, yt, zw], [x0, yt, zw]].forEach((v, k) => P.setXYZ(k, ...v));
+          P.needsUpdate = true; roomGeo.computeBoundingSphere(); }
+        wall.scale.set(viewW + 800, stageH + top + 400, 1); wall.position.set(viewW / 2, (stageH + top + 400) / 2, zw);
         // soft grounding the single light can't give: a dark contact shadow on the floor right round each book's foot, and a
         // soft halo on the wall close round its silhouette (osamu's white-shelf reference), a little to the right
         for (const rec of books.values()) {
