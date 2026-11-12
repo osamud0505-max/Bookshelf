@@ -2364,3 +2364,6 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 /* v340 (osamu's one-piece snow painting): the top and the lip are cut from the same picture, so nothing may darken the join:
    the lip's drop-shadow is clipped at its top edge so it only falls down onto the lights, never up onto the snow top */
 .lights.cabinSwags .cSnow { clip-path: inset(0 -20px -40px -20px); }
+/* v342 (osamu: the calla candle & lily pens showed two shadow angles in 3D): their painted floor shadow fell to the left while
+   the 3D light casts every shadow to the right, so in 3D only the light's shadow stays */
+.shelf.is3d .ornament .bakedSh { display: none; }
