@@ -261,36 +261,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     let sd = 11; const rnd = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
     // cardboard: flat colour with a faint paper grain
     const board = (base) => cv(256, 256, (g, w, h) => { g.fillStyle = base; g.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(${rnd() < .5 ? "255,255,255" : "0,0,0"},${.025 + rnd() * .035})`; g.fillRect(rnd() * w, rnd() * h, 1 + rnd() * 2, 1); } });
-    // the hatbox print: cream linen, lilac hydrangea heads, green leaves and small pink bows, repeating round the box
-    const motif = (g, x, y, s) => {
-      g.save(); g.translate(x, y); g.scale(s, s);
-      g.fillStyle = "#86a87a"; [[-15, 10, .6], [16, 12, -.5], [2, 19, 1.4]].forEach(([lx, ly, a]) => { g.save(); g.translate(lx, ly); g.rotate(a); g.beginPath(); g.ellipse(0, 0, 9, 4.2, 0, 0, Math.PI * 2); g.fill(); g.restore(); });
-      for (let i = 0; i < 46; i++) { const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * 15; g.fillStyle = ["#b3a8e6", "#9c8fd9", "#c8bff0", "#8f84cf"][i % 4]; g.beginPath(); g.arc(Math.cos(a) * r, Math.sin(a) * r * 0.9, 3.1, 0, Math.PI * 2); g.fill(); }
-      g.restore();
-    };
-    const bowMotif = (g, x, y, s) => {
-      g.save(); g.translate(x, y); g.scale(s, s); g.strokeStyle = "#e3a1ae"; g.fillStyle = "#e3a1ae"; g.lineWidth = 2.6; g.lineCap = "round";
-      g.beginPath(); g.ellipse(-9, -3, 9, 5, -0.35, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.ellipse(9, -3, 9, 5, 0.35, 0, Math.PI * 2); g.stroke();
-      g.beginPath(); g.moveTo(-1, 1); g.quadraticCurveTo(-6, 10, -10, 17); g.moveTo(1, 1); g.quadraticCurveTo(5, 11, 9, 18); g.stroke();
-      g.beginPath(); g.arc(0, -1, 2.8, 0, Math.PI * 2); g.fill(); g.restore();
-    };
-    const print = (w, h, n, sc) => (g) => {
-      g.fillStyle = "#f6ecdc"; g.fillRect(0, 0, w, h);
-      for (let i = 0; i < 9000; i++) { g.fillStyle = `rgba(${rnd() < .5 ? "255,255,250" : "150,120,100"},${.04 + rnd() * .05})`; g.fillRect(rnd() * w, rnd() * h, rnd() < .5 ? 3 : 1, rnd() < .5 ? 1 : 3); }
-      for (let i = 0; i < n; i++) { const x = ((i + 0.5) / n) * w, row = i % 2; motif(g, x, h * (row ? 0.68 : 0.3), sc); bowMotif(g, x + w / n / 2, h * (row ? 0.3 : 0.7), sc * 0.95);
-        g.fillStyle = "#d9b3a8"; for (let j = 0; j < 4; j++) { g.beginPath(); g.arc(x + w / n * (0.15 + j * 0.06), h * (row ? 0.92 : 0.1) + j * 2, 1.6, 0, Math.PI * 2); g.fill(); } }
-    };
-    const side = cv(1024, 256, print(1024, 256, 6, 2.2)); side.wrapS = THREE.RepeatWrapping;
-    const band = cv(1024, 64, print(1024, 64, 12, 0.9)); band.wrapS = THREE.RepeatWrapping;
-    const top = cv(512, 512, (g, w, h) => { print(w, h, 4, 2.4)(g); g.save(); g.globalCompositeOperation = "source-over"; motif(g, w / 2, h / 2, 2.6); bowMotif(g, w * 0.3, h * 0.62, 2); bowMotif(g, w * 0.7, h * 0.36, 2); g.restore(); });
-    // lace: a white scalloped edge with little holes, cut out by its alpha
-    const lace = cv(1024, 64, (g, w, h) => {
-      g.clearRect(0, 0, w, h); g.fillStyle = "#fffaf4"; g.fillRect(0, 0, w, 20);
-      for (let x = 0; x < w; x += 32) { g.beginPath(); g.arc(x + 16, 20, 16, 0, Math.PI); g.fill(); }
-      g.globalCompositeOperation = "destination-out";
-      for (let x = 0; x < w; x += 32) { g.beginPath(); g.arc(x + 16, 24, 6, 0, Math.PI * 2); g.fill(); for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(x + 6 + k * 10, 9, 2.2, 0, Math.PI * 2); g.fill(); } }
-    }); lace.wrapS = THREE.RepeatWrapping;
-    giftShared = { brownTex: board("#5d3b36"), pinkTex: board("#b8676f"), side, band, top, lace };
+    giftShared = { brownTex: board("#5d3b36"), pinkTex: board("#b8676f") };
     return giftShared;
   }
   // a satin ribbon along a path; its width runs along "across" (or flat on the surface below it when across is null)
@@ -305,7 +276,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     }
     const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
   }
-  function buildGiftBoxes() {
+  function buildGiftBoxes(onReady) {
     const S = giftParts(), group = new THREE.Group(), V = (x, y, z) => new THREE.Vector3(x, y, z);
     const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; group.add(m); return m; };
     const card = (tex) => new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, metalness: 0 });
@@ -336,23 +307,20 @@ vec2 gLayer(vec3 p, float d, float sz) {
     add(ribbonGeo([V(kx + 2, ky, kz + 2), V(kx + 6, pTop + t + 1, kz + 18), V(kx + 8, pTop + t + 0.8, fz - 3), V(kx + 8.5, pTop - 2, fz + 0.4), V(kx + 7, py + ph * 0.5, fz + 0.2),
       V(kx + 4, py + 3, fz + 0.4), V(kx + 2, bh + 0.8, bfz - 2), V(kx + 1, bh - 2, bfz + 0.3), V(kx - 3, bh * 0.55, bfz + 0.4), V(kx - 5, 9, bfz + 0.6), V(kx - 3, 0.9, bfz + 6),
       V(kx + 6, 0.8, bfz + 13), V(kx + 16, 0.9, bfz + 9), V(kx + 12, 0.8, bfz + 4)], rw * 0.9, V(1, 0, 0.15)), satin, 0, 0, 0);
-    // three printed hatboxes, each with a lid band; lace round the top one
-    const sideM = new THREE.MeshStandardMaterial({ map: S.side, roughness: 0.8 }), bandM = new THREE.MeshStandardMaterial({ map: S.band, roughness: 0.8 }), topM = new THREE.MeshStandardMaterial({ map: S.top, roughness: 0.8 });
-    const hx = 237.5, hz = -68.5;
+    // v314: three hatboxes wearing osamu's own Gemini print: each band, lid band and lid top is cut straight out of the
+    // painting (obj/gift3d-hat*), unrolled from its curve so the bows, hydrangeas and the lace sit where she painted them
+    const tl = new THREE.TextureLoader(), tex = (n) => { const t = tl.load("obj/gift3d-" + n + ".webp", () => onReady && onReady()); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
     let y = 0;
-    [[66, 70, 15, 1.6], [60, 58, 14, 1.25], [51, 54, 13, 1.05]].forEach(([R, h, lid, rep], i) => {
-      const sm = sideM.clone(); sm.map = S.side.clone(); sm.map.repeat.set(rep, 1); sm.map.needsUpdate = true;
-      const bm = bandM.clone(); bm.map = S.band.clone(); bm.map.repeat.set(rep * 1.6, 1); bm.map.needsUpdate = true;
-      add(new THREE.CylinderGeometry(R, R, h - lid + 0.5, 72, 1, true), sm, hx, y + (h - lid + 0.5) / 2, hz).rotation.y = i * 1.3;
-      add(new THREE.CylinderGeometry(R + 1.6, R + 1.6, lid, 72, 1, true), bm, hx, y + h - lid / 2, hz);
-      const cap = add(new THREE.CircleGeometry(R + 1.6, 72), topM, hx, y + h, hz); cap.rotation.x = -Math.PI / 2; cap.rotation.z = i * 0.9;
-      // a slight rolled edge where the lid's top meets its band
-      add(new THREE.TorusGeometry(R + 1.6, 0.9, 8, 72), bandM, hx, y + h - 0.4, hz).rotation.x = Math.PI / 2;
-      if (i === 2) { const lm = new THREE.MeshStandardMaterial({ map: S.lace.clone(), alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.9 }); lm.map.repeat.set(7, 1); lm.map.needsUpdate = true;
-        add(new THREE.CylinderGeometry(R + 2.1, R + 2.6, lid * 1.1, 72, 1, true), lm, hx, y + h - lid - lid * 0.42, hz); }
+    [["hat1", 238.3, 63.4, 66, 76, 20], ["hat2", 234.1, 57.7, 59.9, 59, 18.6], ["hat3", 234.0, 48.3, 50.3, 47, 15]].forEach(([n, hx, Rb, Rl, h, lid]) => {
+      const hz = -67.5, M = (t) => new THREE.MeshStandardMaterial({ map: tex(n + "-" + t), roughness: 0.82 });
+      add(new THREE.CylinderGeometry(Rb, Rb, h - lid + 0.5, 72, 1, true), M("body"), hx, y + (h - lid + 0.5) / 2, hz);
+      const bandM = M("lid");
+      add(new THREE.CylinderGeometry(Rl, Rl, lid, 72, 1, true), bandM, hx, y + h - lid / 2, hz);
+      add(new THREE.CircleGeometry(Rl, 72), M("top"), hx, y + h, hz).rotation.x = -Math.PI / 2;
+      add(new THREE.TorusGeometry(Rl, 0.7, 8, 72), bandM, hx, y + h - 0.3, hz).rotation.x = Math.PI / 2;
       y += h;
     });
-    return { group, depth: 2 * (66 + 1.6) + 2 };
+    return { group, depth: 2 * 66 + 3 };
   }
 
   // a round pool of light, brightest in the middle, fading smoothly to nothing at the rim
@@ -578,7 +546,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
               P.needsUpdate = true; rec.mesh.geometry.computeBoundingSphere();
             }
             if (ob.kind === "giftBoxes") {
-              if (!rec.gift) { rec.gift = buildGiftBoxes(); scene.add(rec.gift.group); }
+              if (!rec.gift) { rec.gift = buildGiftBoxes(() => { if (!dead) { frameDirty = true; inst.render(); } }); scene.add(rec.gift.group); }
               const G = rec.gift, k = ob.w / GIFT_VW, room = -zw - 2;
               rec.mesh.visible = false; // the model casts its own shadow
               G.group.visible = ob.visible !== false;
