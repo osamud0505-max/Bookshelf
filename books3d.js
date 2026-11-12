@@ -265,6 +265,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
   // Built in the painting's own units (GIFT_VW wide, 200 tall), fronts at z = 0: a chocolate box with a pink box on top tied
   // with satin ribbon and a bow, its long tail running down to the shelf, and three round hatboxes printed with hydrangeas
   // and little pink bows, the top one trimmed with lace, like osamu's painted stack
+  const GIFT_3D = false;
   const GIFT_VW = 304.9;
   let giftShared = null;
   function giftParts() {
@@ -616,6 +617,9 @@ vec2 gLayer(vec3 p, float d, float sz) {
               scene.add(mesh); rec = { mesh, tex, depth, img: ob.img, foot, NC }; objs.set(ob.id, rec);
             }
             rec.mesh.visible = ob.visible !== false;
+            // v322: the gift box picture keeps only its own soft footprint shadow (drawn with the picture); the light's long cast
+            // shadow fell to the right as a hard block cut off at the wall (osamu: "the shadows are not right at all")
+            rec.mesh.castShadow = ob.kind !== "giftBoxes";
             { // place each strip: its foot on the floor where the floor shows at that height on screen, scaled for being further back
               const P = rec.mesh.geometry.attributes.position, onPile = ob.y > 1;
               for (let k = 0; k < rec.NC; k++) {
@@ -627,7 +631,9 @@ vec2 gLayer(vec3 p, float d, float sz) {
               }
               P.needsUpdate = true; rec.mesh.geometry.computeBoundingSphere();
             }
-            if (ob.kind === "giftBoxes") {
+            // v322: osamu went back to a picture for the gift boxes (a Gemini render that looks 3D), so the hand-built model is off;
+            // the picture casts its shadow through the hidden strips like the bags. buildGiftBoxes stays in case it comes back
+            if (GIFT_3D && ob.kind === "giftBoxes") {
               if (!rec.gift) { rec.gift = buildGiftBoxes(() => { if (!dead) { frameDirty = true; inst.render(); } }); scene.add(rec.gift.group); }
               const G = rec.gift, k = ob.w / GIFT_VW, room = -zw - 2;
               rec.mesh.visible = false; // the model casts its own shadow

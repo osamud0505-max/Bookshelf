@@ -445,7 +445,7 @@
   const contact = (g, cx, rx) => `<defs><radialGradient id="${g}cs" cx=".5" cy="1" r="1"><stop offset="0" stop-color="#2a0418" stop-opacity=".5"/><stop offset=".5" stop-color="#2a0418" stop-opacity=".22"/><stop offset="1" stop-color="#2a0418" stop-opacity="0"/></radialGradient><radialGradient id="${g}cc"><stop offset="0" stop-color="#1a0210" stop-opacity=".75"/><stop offset=".7" stop-color="#1a0210" stop-opacity=".35"/><stop offset="1" stop-color="#1a0210" stop-opacity="0"/></radialGradient></defs>`
     + `<ellipse cx="${cx}" cy="197.5" rx="${f1(rx * 1.08)}" ry="5" fill="url(#${g}cc)" style="filter:blur(1.5px)"/>`;
   // footprint shadows made from each picture's own bottom edge (scratchpad shadowgen.py): x, width, height in picture units
-  const FOOT = { "pencilcup-small": [-23.06, 267.99, 211.93, "3"], "giftboxes2": [-14.57, 334.0, 204.86, "3"], "bags2": [-14.29, 370.86, 204.86, "3"] };
+  const FOOT = { "pencilcup-small": [-23.06, 267.99, 211.93, "3"], "giftboxes3": [-14.8, 282.0, 204.8, ""], "bags2": [-14.29, 370.86, 204.86, "3"] };
   const painted = (label, name, W, H, scale, shadows) => {
     const vw = f1(200 * W / H);
     return { label, scale, vw, still: true, flat: true, img: pic(name),
@@ -467,7 +467,8 @@
   }
   D.ORNAMENTS.vanityMirror = baked("Vanity mirror", "mirror", 1083, 1675, 1695, 0.85);   // osamu: "a bit smaller"
   D.ORNAMENTS.pencilCup = painted("Pencil cup & lipstick", "pencilcup-small", 558, 503, 0.55, [[0.43, 0.3], [0.84, 0.16]]);
-  D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes2", 1067, 700, 0.74, [[0.5, 0.49]]);
+  // v322: osamu's Gemini 3D-look render of the stack (keyed from green), same height as the old painting
+  D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes3", 1262, 1000, 0.74, [[0.5, 0.49]]);
   D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags2", 1198, 700, 0.745, [[0.5, 0.49]]);
 
   // the lipstick lamp: three layers from osamu's pictures (the empty case, the bullet, and where the bullet may show
