@@ -21,7 +21,8 @@
   // and tassel, their tails falling at the shelf's ends. Seven ruby drops hang between them, each on its own gold chain
   // that runs up behind the velvet to somewhere under the shelf nobody can see. [across the pair, the crystal's top
   // below the shelf] in pair widths, read off their picture: the middle one lowest, the two outer ones over the tails.
-  const DROPS = [[0.125, 0.54], [0.25, 0.367], [0.385, 0.452], [0.5, 0.64], [0.615, 0.452], [0.75, 0.367], [0.875, 0.54]];
+  // v345 (osamu: with the tablecloth the hanging lights were too long): each crystal now hangs just below the cloth's hem
+  const DROPS = [[0.125, 0.27], [0.25, 0.23], [0.385, 0.29], [0.5, 0.34], [0.615, 0.29], [0.75, 0.23], [0.875, 0.27]];
   function drapesEl(w, cfg) {
     // a phone's shelf takes one pair; a wide one hangs as many phone-sized pairs side by side
     const n = Math.max(1, Math.round(w / 430)), cell = w / n;
