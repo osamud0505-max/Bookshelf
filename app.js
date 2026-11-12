@@ -685,7 +685,31 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
   const STYLE_PROPS = ["display", "visibility", "opacity", "fill", "stroke", "fill-opacity", "stroke-opacity", "stroke-width"];
   function thumbUrl(k, H) {
     const id = k + ":" + H; if (thumbs.has(id)) return thumbs.get(id);
-    const el = D.ornamentEl(k, H, true, true), host = document.createElement("div");
+    const url = svgUrlOf(D.ornamentEl(k, H, true, true));
+    thumbs.set(id, url); return url;
+  }
+  // v300: an object's silhouette for the 3D light to cast a real shadow from: the object unlit (no flame or glow), its
+  // painted pictures copied in, since a picture drawn from an SVG file may not fetch anything else
+  const masks = new Map(), pics = new Map();
+  const picData = (u) => { if (!pics.has(u)) pics.set(u, fetch(u).then((r) => r.blob()).then((bl) => new Promise((ok) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = () => ok(u); fr.readAsDataURL(bl); })).catch(() => u)); return pics.get(u); };
+  function maskFor(k, H, done) {
+    const id = k + ":" + H, m = masks.get(id);
+    if (m) return m.img;
+    masks.set(id, { img: null });
+    const el = D.ornamentEl(k, H, false);
+    if (!el) return null;
+    el.querySelectorAll(".ornGlow, .ornPool, .ornFlame, .litOnly, .ember, .smoke").forEach((n) => n.remove());
+    let url = svgUrlOf(el); if (!url) return null;
+    let txt = decodeURIComponent(url.slice(url.indexOf(",") + 1));
+    const refs = [...new Set([...txt.matchAll(/href="([^"#][^"]*)"/g)].map((x) => x[1]).filter((u) => !u.startsWith("data:")))];
+    Promise.all(refs.map((u) => picData(new URL(u, location.href).href).then((d) => [u, d]))).then((pairs) => {
+      for (const [u, d] of pairs) txt = txt.split(`"${u}"`).join(`"${d}"`);
+      const img = new Image(); img.onload = () => { masks.get(id).img = img; done(); }; img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(txt);
+    });
+    return null;
+  }
+  function svgUrlOf(el) {
+    const host = document.createElement("div");
     host.style.cssText = "position:fixed;left:-10000px;top:0;pointer-events:none";
     host.append(el); document.body.append(host);
     const svg = el.querySelector("svg"); let url = "";
@@ -704,7 +728,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(svg));
     } catch (e) { url = ""; }
     host.remove();
-    thumbs.set(id, url); return url;
+    return url;
   }
   function ornArt(k, box) {
     const o = D.ORNAMENTS[k], hgt = Math.min(box, (box * 1.15 * 200) / (o.vw || 100)), H = Math.round(hgt / (o.scale || 0.7));
@@ -1407,7 +1431,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       const placeOrn = (o, lift = 0, cx = null) => {
         const left = cx != null ? cx - o.vis / 2 : o.hang ? PAD + x - offset - o.vis / 2 : PAD + x - offset + 5;
         if (cx == null) x += o.w;
-        o.el.style.transform = `translate3d(${left.toFixed(1)}px,${(-lift).toFixed(1)}px,0)`; o.lift = lift;
+        o.el.style.transform = `translate3d(${left.toFixed(1)}px,${(-lift).toFixed(1)}px,0)`; o.lift = lift; o.left = left;
         if (o.sh) { const so = shOff(); o.sh.style.transform = `translate3d(${(left + so.x).toFixed(1)}px,${(so.y - lift).toFixed(1)}px,0)`; }
         o.el.classList.toggle("onPile", cx != null);
         // a flame leans away from the way it is being pushed, then settles
@@ -1544,7 +1568,21 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
             title: b.title, author: b.author, hard: b.binding !== "paper", glossy: b.finish === "glossy" });
         }
         try {
-          const fl = b3d.sync(items, { stageH: stage.clientHeight, viewW, H, topD });
+          // the objects standing on the shelf cast real shadows too: each one's silhouette, where it stands
+          const objs = [];
+          for (const o of orns) {
+            if (o.hang || o.left == null || !o.el.isConnected) continue;
+            const kind = o.el.dataset.kind, img = maskFor(kind, H, () => requestAnimationFrame(() => layout()));
+            if (!img) continue;
+            if (!o.box || o.box.H !== H) {
+              const svg = o.el.querySelector("svg"); if (!svg) continue;
+              const r = svg.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+              if (!r.width) continue;
+              o.box = { H, dx: r.left - sr.left - o.left, db: sr.bottom - r.bottom - (o.lift || 0), w: r.width, h: r.height };
+            }
+            objs.push({ id: o.it.id, img, x: o.left + o.box.dx, y: o.box.db + (o.lift || 0), w: o.box.w, h: o.box.h, visible: !o.el.classList.contains("placeholder") });
+          }
+          const fl = b3d.sync(items, { stageH: stage.clientHeight, viewW, H, topD, objs });
           // the painted shelf floor is stretched to the 3D floor's depth, so the real shadows land on it in the right place
           if (fl) {
             const cur = root.style.getPropertyValue("--top-d"), want = fl.depth.toFixed(1) + "px";
