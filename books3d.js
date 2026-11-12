@@ -309,7 +309,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
       V(kx + 6, 0.8, bfz + 13), V(kx + 16, 0.9, bfz + 9), V(kx + 12, 0.8, bfz + 4)], rw * 0.9, V(1, 0, 0.15)), satin, 0, 0, 0);
     // v314: three hatboxes wearing osamu's own Gemini print: each band, lid band and lid top is cut straight out of the
     // painting (obj/gift3d-hat*), unrolled from its curve so the bows, hydrangeas and the lace sit where she painted them
-    const tl = new THREE.TextureLoader(), tex = (n) => { const t = tl.load("obj/gift3d-" + n + ".webp", () => onReady && onReady()); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
+    const tl = new THREE.TextureLoader(), tex = (n) => { const t = tl.load("obj/gift3d2-" + n + ".webp", () => onReady && onReady()); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
     let y = 0;
     [["hat1", 238.3, 63.4, 66, 76, 20], ["hat2", 234.1, 57.7, 59.9, 59, 18.6], ["hat3", 234.0, 48.3, 50.3, 47, 15]].forEach(([n, hx, Rb, Rl, h, lid]) => {
       const hz = -67.5, M = (t) => new THREE.MeshStandardMaterial({ map: tex(n + "-" + t), roughness: 0.82 });
