@@ -492,6 +492,10 @@ vec2 gLayer(vec3 p, float d, float sz) {
     roomGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Array(18).fill(0), 3));
     roomGeo.setAttribute("normal", new THREE.Float32BufferAttribute([0,1,0, 0,1,0, 0,1,0, 0,0,1, 0,0,1, 0,0,1], 3));
     roomGeo.setIndex([0, 1, 2, 0, 2, 3]); // v301: osamu: shadows on the shelf floor only, never on the backdrop (the wall part is left out)
+    // v337 (osamu's phone: the soft floor shadows stopped part way back, a bare band before the wall): the floor caught real shadows
+    // but also wrote depth, and the soft shadow planes lie just above it; far back, a phone's coarser depth buffer can't tell them
+    // apart and the floor hid them. Nothing needs the floor's depth, so it writes none
+    wallMat.depthWrite = false; floorMat.depthWrite = false;
     const room = new THREE.Mesh(roomGeo, wallMat); room.receiveShadow = true; scene.add(room);
     const floor = { scale: { set() {} }, position: { set() {} } }, wall = floor;
     const unitPlane = new THREE.PlaneGeometry(1, 1);
