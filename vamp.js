@@ -49,7 +49,7 @@
     drops.push(bd);
     const halos = BAT.shades.map(([u, v]) => `<i class="vHalo" style="left:${f1(u * bw)}px;top:${f1(v * bh)}px;width:${f1(bw * 0.62)}px;height:${f1(bw * 0.62)}px"></i>`).join("");
     const back = `<div class="vDrop vBat" data-n="0" style="left:${f1(bcx - bw / 2)}px;top:${f1(by)}px;width:${f1(bw)}px;height:${f1(bh)}px;transform-origin:50% 0;--i:0">`
-      + `<img src="obj/vamp-batlamp.webp" alt="" draggable="false" decoding="async" style="top:0;height:100%"><img class="vBatLit" src="obj/vamp-batlamp-lit.webp" alt="" draggable="false" decoding="async" style="top:0;height:100%">${halos}</div>`;
+      + `<img src="obj/vamp-batlamp.webp" alt="" draggable="false" decoding="async" style="top:0;height:100%"><img class="vBatLit" src="obj/vamp-batlamp-lit2.webp" alt="" draggable="false" decoding="async" style="top:0;height:100%">${halos}</div>`;
     const front = "";
     const el = document.createElement("div");
     el.className = "lights vampDrapes" + (cfg.on ? " on" : "");
