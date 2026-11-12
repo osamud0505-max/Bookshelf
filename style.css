@@ -2384,3 +2384,6 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 .lights.vampDrapes.on .vBat .vBatLit { filter: drop-shadow(0 0 5px rgba(150,8,14,.75)); }
 .lights.vampDrapes .vBat .vHalo { background: radial-gradient(closest-side, rgba(170,10,18,.42), rgba(90,0,8,.2) 55%, transparent 100%); mix-blend-mode: screen; }
 .lights.vampDrapes.on .vBat img:not(.vBatLit) { filter: brightness(.62) saturate(.9) drop-shadow(0 3px 3px rgba(10,0,4,.5)); }
+/* v348 (osamu: moodier still): a smouldering oxblood glow, the halo low and faint */
+.lights.vampDrapes.on .vBat .vBatLit { filter: drop-shadow(0 0 4px rgba(110,4,10,.7)); }
+.lights.vampDrapes .vBat .vHalo { background: radial-gradient(closest-side, rgba(120,6,12,.32), rgba(60,0,6,.16) 55%, transparent 100%); }
