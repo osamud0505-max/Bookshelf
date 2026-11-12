@@ -238,6 +238,7 @@
     const contactMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.3), transparent: true, opacity: 0.45, depthWrite: false, toneMapped: false });
     const haloMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.2), transparent: true, opacity: 0.3, depthWrite: false, toneMapped: false });
     const books = new Map(); // id -> { node, sig }
+    const objs = new Map(); // object id -> { mesh, tex, depth, img }
     let dead = false, W = 0, Hc = 0, top = 0, bottom = 0, frameDirty = false;
     const inst = {
       // items: [{ id, b, h, w, d, A: [a,b,c,d,e,f], ox, oy, base, open, rec, visible, spineUrl, coverUrl, ink, font, hard, glossy }]
@@ -303,6 +304,26 @@
             cover.visible = it.open > 0.02;
           }
         }
+        // objects: an unseen cut-out of each one's silhouette, standing a little back from the front of the shelf. Only the light
+        // sees it, so it throws the object's real shadow onto the floor and the wall alongside the books'
+        { const live = new Set();
+          for (const ob of geom.objs || []) {
+            live.add(ob.id);
+            let rec = objs.get(ob.id);
+            if (!rec || rec.img !== ob.img) {
+              if (rec) { scene.remove(rec.mesh); rec.tex.dispose(); rec.depth.dispose(); }
+              const c2 = document.createElement("canvas"); c2.width = Math.max(2, Math.round(ob.w * 2)); c2.height = Math.max(2, Math.round(ob.h * 2)); c2.getContext("2d").drawImage(ob.img, 0, 0, c2.width, c2.height);
+              const tex = new THREE.CanvasTexture(c2);
+              // three's shadow pass takes the cut-out's picture and alpha test from the object's own material
+              const depth = new THREE.MeshBasicMaterial({ map: tex, alphaTest: 0.5, colorWrite: false, depthWrite: false, side: THREE.DoubleSide });
+              const mesh = new THREE.Mesh(unitPlane, depth); mesh.castShadow = true;
+              scene.add(mesh); rec = { mesh, tex, depth, img: ob.img }; objs.set(ob.id, rec);
+            }
+            const zc = -Math.min(ob.w * 0.3, -zw * 0.45);
+            rec.mesh.visible = ob.visible !== false;
+            rec.mesh.scale.set(ob.w, ob.h, 1); rec.mesh.position.set(ob.x + ob.w / 2, ob.y + ob.h / 2, zc);
+          }
+          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); rec.tex.dispose(); rec.depth.dispose(); objs.delete(id); } }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
         { const x0 = -400, x1 = viewW + 400, yt = stageH + top + 400, P = roomGeo.attributes.position;
