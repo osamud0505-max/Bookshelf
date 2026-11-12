@@ -15,14 +15,13 @@
   const KN = { w: 108, h: 449, cx: 50, cy: 35 };
   const DR = { w: 212, h: 877 };
   const CL = { w: 1300, h: 584, hem: 0.347 }; // hem: the middle swag's lowest point, in cloth widths // osamu's tablecloth front (obj/vamp-cloth-front.webp)
-  // the five candles (obj/vamp-candle0-4.webp): height in widths, and where the wick is across the candle
-  const CA = [1.888, 3.35, 4.97, 6.76, 4.14], CW = [0.52, 0.488, 0.485, 0.491, 0.494];
-  // [across the cloth, top of the candle in px on a 412px shelf, which candle]: no two neighbours level or alike
-  // v353 (osamu's photo of floating candles in a lace-draped hall): fifteen candles per cloth, at three depths. The
-  // far ones (small, dim, soft) hang behind the cloth and may tuck up behind its hem; the middle and near ones float
-  // clear below the hem. [across the cloth, top in px on a 412px shelf, which candle, depth 0 far .. 2 near]
-  const CSC = [0.5, 0.75, 1];
-  const CANDLES = [[0.136, 141, 0, 1], [0.174, 92, 2, 0], [0.208, 117, 2, 2], [0.315, 114, 1, 0], [0.357, 164, 0, 2], [0.407, 114, 1, 0], [0.436, 156, 4, 1], [0.511, 163, 0, 2], [0.557, 179, 0, 1], [0.615, 159, 1, 0], [0.702, 137, 2, 1], [0.765, 126, 0, 2], [0.781, 178, 1, 0], [0.852, 126, 3, 2], [0.891, 156, 0, 1]];
+  // v354 (osamu: the scattered candles were horrible): osamu's Gemini picture of a whole floating-candle cluster, each
+  // candle cut out where Gemini painted it (obj/vamp-fc0-15.webp). [left, top, width, height] in cluster widths, the
+  // wick across the candle, and 1 for the soft faraway ones, which hang behind the cloth.
+  const FC = [[0.2396, 0.0376, 0.0571, 0.3696, 0.493, 0], [0.6143, 0.0486, 0.0395, 0.2951, 0.498, 0], [0.732, 0.0672, 0.0634, 0.3696, 0.579, 0], [0.3412, 0.0833, 0.035, 0.2484, 0.492, 0], [0.4343, 0.0878, 0.0341, 0.1711, 0.487, 0], [0.5723, 0.09, 0.03, 0.2061, 0.485, 0], [0.1878, 0.095, 0.0319, 0.1553, 0.484, 0], [0.0489, 0.1253, 0.0246, 0.1184, 0.5, 1], [0.5385, 0.1278, 0.0189, 0.0887, 0.5, 1], [0.9271, 0.131, 0.0253, 0.1184, 0.5, 1], [0.4763, 0.1338, 0.0483, 0.2333, 0.489, 0], [0.3097, 0.1364, 0.018, 0.0732, 0.5, 1], [0.6771, 0.1386, 0.0303, 0.1496, 0.496, 0], [0.1181, 0.1525, 0.0439, 0.196, 0.487, 0], [0.392, 0.1645, 0.0256, 0.1711, 0.49, 0], [0.845, 0.184, 0.0388, 0.1831, 0.51, 0]];
+  // the cloth's lowest point every 2.5% across it (in cloth widths, from obj/vamp-cloth-front.webp's alpha)
+  const HEM = [0.447, 0.447, 0.445, 0.442, 0.316, 0.225, 0.223, 0.218, 0.185, 0.238, 0.253, 0.261, 0.295, 0.3, 0.301, 0.31, 0.323, 0.335, 0.342, 0.347, 0.348, 0.346, 0.344, 0.338, 0.327, 0.312, 0.298, 0.29, 0.284, 0.267, 0.258, 0.249, 0.196, 0.22, 0.225, 0.244, 0.432, 0.442, 0.445, 0.447, 0.447];
+  const hemAt = (u) => { const t = Math.max(0, Math.min(40, u * 40)), i = Math.min(39, Math.floor(t)); return Math.max(HEM[i], HEM[i + 1]); };
   const reduce = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
 
   // osamu's picture (2026-11-10): the two halves of a velvet drape meet in the middle of the shelf under a gold knot
@@ -52,15 +51,17 @@
     // v351 (osamu's photo): floating taper candles in front of the cloth, osamu's Gemini candles, five per cloth at
     // uneven heights, each bobbing on its own slow beat. The flames are drawn here so they can be lit and snuffed:
     // tapping a candle is the light switch, and it wobbles a little as if nudged in the air.
-    const cwid = Math.max(9, 0.03 * cell);
-    for (let c = 0; c < n; c++) CANDLES.forEach(([u, top, i, z], j) => {
-      const cw = cwid * CSC[z], h = cw * CA[i], t = top * cell / 412;
-      drops.push({ cx: c * cell + u * cell, top: t, dh: h, cw, z, hw: Math.max(z ? 12 : 8, cw), len: 260, th: 0, om: 0, els: [], i, j: c * 15 + j, front: z > 0 });
+    // the cluster spans the cloth; it hangs as high as it can with every near candle's flame clear below the hem
+    let Y = 0;
+    FC.forEach(([x, y, w, h, wk, far]) => { if (!far) Y = Math.max(Y, hemAt(x + w / 2) * cell - 16 + 1.85 * w * cell + 4 - y * cell); });
+    for (let c = 0; c < n; c++) FC.forEach(([x, y, w, h, wk, far], j) => {
+      const cw = w * cell;
+      drops.push({ cx: c * cell + (x + w * wk) * cell, x: c * cell + x * cell, top: Y + y * cell, dh: h * cell, cw, wk, z: far ? 0 : (w > 0.045 ? 2 : 1), hw: Math.max(12, cw), len: 260, th: 0, om: 0, els: [], i: j, j: c * 16 + j, front: !far });
     });
-    const front = drops.map((d) => `<div class="vCandle vz${d.z}" style="left:${f1(d.cx - d.cw / 2)}px;top:${f1(d.top)}px;width:${f1(d.cw)}px;height:${f1(d.dh)}px;--j:${d.j % 11}"><div class="vBob">`
-      + `<i class="vHalo" style="width:${f1(d.cw * 7)}px;height:${f1(d.cw * 7)}px"></i>`
-      + `<i class="vFlame" style="left:${f1(d.cw * (CW[d.i] - 0.42))}px;width:${f1(d.cw * 0.84)}px;height:${f1(d.cw * 2)}px"><i></i></i>`
-      + `<img src="obj/vamp-candle${d.i}.webp" alt="" draggable="false" decoding="async"></div></div>`).join("");
+    const front = drops.map((d) => `<div class="vCandle vz${d.z}" style="left:${f1(d.x)}px;top:${f1(d.top)}px;width:${f1(d.cw)}px;height:${f1(d.dh)}px;--j:${d.j % 11}"><div class="vBob">`
+      + `<i class="vHalo" style="width:${f1(Math.min(d.cw * 7, 100))}px;height:${f1(Math.min(d.cw * 7, 100))}px"></i>`
+      + `<i class="vFlame" style="left:${f1(d.cw * (d.wk - 0.42))}px;width:${f1(d.cw * 0.84)}px;height:${f1(d.cw * 1.75)}px"><i></i></i>`
+      + `<img src="obj/vamp-fc${d.i}.webp" alt="" draggable="false" decoding="async"></div></div>`).join("");
     const el = document.createElement("div");
     el.className = "lights vampDrapes" + (cfg.on ? " on" : "");
     const bottom = Math.max(clH - 16, ...drops.map((d) => d.top + d.dh + 6)) + 8;
