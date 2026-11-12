@@ -311,7 +311,7 @@
             live.add(ob.id);
             let rec = objs.get(ob.id);
             if (!rec || rec.img !== ob.img) {
-              if (rec) { scene.remove(rec.mesh); rec.tex.dispose(); rec.depth.dispose(); }
+              if (rec) { scene.remove(rec.mesh); if (rec.light) scene.remove(rec.light); rec.tex.dispose(); rec.depth.dispose(); }
               const c2 = document.createElement("canvas"); c2.width = Math.max(2, Math.round(ob.w * 2)); c2.height = Math.max(2, Math.round(ob.h * 2)); c2.getContext("2d").drawImage(ob.img, 0, 0, c2.width, c2.height);
               const tex = new THREE.CanvasTexture(c2);
               // three's shadow pass takes the cut-out's picture and alpha test from the object's own material
@@ -322,8 +322,12 @@
             const zc = -1; // v301: at the object's own base line, so its shadow starts right under it (osamu: a gap showed when it stood further back)
             rec.mesh.visible = ob.visible !== false;
             rec.mesh.scale.set(ob.w, ob.h, 1); rec.mesh.position.set(ob.x + ob.w / 2, ob.y + ob.h / 2, zc);
+            // v302: a lit lipstick lamp lights the real books beside it, warm on the sides that face it (osamu: the flat
+            // light boxes laid over the books looked bad)
+            if (ob.lamp && !rec.light) { rec.light = new THREE.PointLight("#ffa66b", 0, H * 1.4, 0); scene.add(rec.light); }
+            if (rec.light) { rec.light.intensity = ob.lamp && ob.visible !== false ? 1.6 : 0; rec.light.position.set(ob.x + ob.w * 0.39, ob.y + ob.h * 0.62, H * 0.12); }
           }
-          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); rec.tex.dispose(); rec.depth.dispose(); objs.delete(id); } }
+          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.light) scene.remove(rec.light); rec.tex.dispose(); rec.depth.dispose(); objs.delete(id); } }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
         { const x0 = -400, x1 = viewW + 400, yt = stageH + top + 400, P = roomGeo.attributes.position;
