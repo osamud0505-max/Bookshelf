@@ -2343,3 +2343,7 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 .shelf.is3d .ornament:is([data-kind="giftBoxes"], [data-kind="shoppingBags"]) image[href*="-shadow"] { display: none; }
 /* v329: no halo round the bullet (osamu: the glitter shines IN the bullet, nothing floating around it) */
 .ornament[data-kind="lipstickLamp"] .lpHalo { display: none; }
+/* v330: the lipstick lamp in 3D is osamu's new painted case with the 3D bullet; flat mode keeps the painted bullet and old case */
+.ornament[data-kind="lipstickLamp"] .lpCase4 { display: none; }
+.shelf.is3d .ornament[data-kind="lipstickLamp"] .lpCase4 { display: inline; }
+.shelf.is3d .ornament[data-kind="lipstickLamp"] .lpFlatOnly { display: none; }
