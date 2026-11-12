@@ -467,8 +467,8 @@
   }
   D.ORNAMENTS.vanityMirror = baked("Vanity mirror", "mirror", 1083, 1675, 1695, 0.85);   // osamu: "a bit smaller"
   D.ORNAMENTS.pencilCup = painted("Pencil cup & lipstick", "pencilcup-small", 558, 503, 0.55, [[0.43, 0.3], [0.84, 0.16]]);
-  // v322: osamu's Gemini 3D-look render of the stack (keyed from green), same height as the old painting
-  D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes3", 1262, 1000, 0.74, [[0.5, 0.49]]);
+  // v322: osamu's Gemini 3D-look render of the stack (keyed from green), osamu: "too small", so 0.9 makes it as wide as the old painting (was 0.74)
+  D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes3", 1262, 1000, 0.9, [[0.5, 0.49]]);
   D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags2", 1198, 700, 0.745, [[0.5, 0.49]]);
 
   // the lipstick lamp: three layers from osamu's pictures (the empty case, the bullet, and where the bullet may show
