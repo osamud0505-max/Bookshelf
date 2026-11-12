@@ -2319,3 +2319,5 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 /* v307: in 3D the lipstick lamp is a real 3D model; the painting stays only as the tap target */
 .shelf.is3d .ornament[data-kind="lipstickLamp"]:not(.wsO) svg,
 .shelf.is3d .ornament[data-kind="lipstickLamp"]:not(.wsO) .ornGlow { opacity: 0 !important; }
+/* v327: in 3D the gift boxes' and shopping bags' shadow is drawn on the 3D floor (it ends exactly at the back edge), so the flat one goes */
+.shelf.is3d .ornament:is([data-kind="giftBoxes"], [data-kind="shoppingBags"]) image[href*="-shadow"] { display: none; }
