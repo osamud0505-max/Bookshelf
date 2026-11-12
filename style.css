@@ -2367,3 +2367,10 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 /* v342 (osamu: the calla candle & lily pens showed two shadow angles in 3D): their painted floor shadow fell to the left while
    the 3D light casts every shadow to the right, so in 3D only the light's shadow stays */
 .shelf.is3d .ornament .bakedSh { display: none; }
+/* v344 (osamu: the vampire drapes become a tablecloth for the shelf): the cloth's top lies on the shelf behind the books,
+   one cloth per phone-sized cell like its front (--vcell from vamp.js), and covers the whole 3D floor back to the wall */
+.shelf[data-lights="vampDrapes"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d); background: url(obj/vamp-cloth-top2.webp) 0 0 / var(--vcell, 412px) 100% repeat-x;
+  filter: brightness(.62); }
+.shelf.is3d[data-lights="vampDrapes"] .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+.lights.vampDrapes .vCloth img { filter: drop-shadow(0 4px 4px rgba(10,0,4,.45)) brightness(.86); }

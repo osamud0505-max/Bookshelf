@@ -14,6 +14,7 @@
   const CO = { w: 1361, h: 2296, tuck: 0.03 };
   const KN = { w: 108, h: 449, cx: 50, cy: 35 };
   const DR = { w: 212, h: 877 };
+  const CL = { w: 1300, h: 584 }; // osamu's tablecloth front (obj/vamp-cloth-front.webp)
   const reduce = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
 
   // osamu's picture (2026-11-10): the two halves of a velvet drape meet in the middle of the shelf under a gold knot
@@ -27,11 +28,12 @@
     const cw = cell / 2, ch = cw * CO.h / CO.w, k = cw / CO.w, lift = CO.tuck * ch;
     const dh = 0.2 * cell, dw = dh * DR.w / DR.h;
     const parts = [], knots = [], drops = [];
+    // v344 (osamu): the drapes became a tablecloth: osamu's Gemini cloth lies on the shelf (its top, behind the books, is
+    // the shelf's ::before, see style.css) and its front hangs over the shelf's front edge, one cloth per phone-sized cell
+    const clH = cell * CL.h / CL.w;
     for (let c = 0; c < n; c++) {
       const x = c * cell;
-      parts.push(`<div class="vSwag" style="left:${f1(x)}px;top:${f1(-lift)}px;width:${f1(cw)}px;height:${f1(ch)}px;transform-origin:0 0"><img src="obj/vamp-drapeL.webp" alt="" draggable="false" decoding="async"></div>`,
-        `<div class="vSwag" style="left:${f1(x + cw)}px;top:${f1(-lift)}px;width:${f1(cw)}px;height:${f1(ch)}px;transform-origin:100% 0"><img src="obj/vamp-drapeR.webp" alt="" draggable="false" decoding="async"></div>`);
-      knots.push(`<div class="vKnot" style="left:${f1(x + cw - KN.cx * k)}px;top:${f1(-lift + 0.006 * ch - KN.cy * k + 6)}px;width:${f1(KN.w * k)}px;height:${f1(KN.h * k)}px"><img src="obj/vamp-knot.webp" alt="" draggable="false" decoding="async"></div>`);
+      parts.push(`<div class="vSwag vCloth" style="left:${f1(x)}px;top:-16px;width:${f1(cell)}px;height:${f1(clH)}px;transform-origin:50% 0"><img src="obj/vamp-cloth-front.webp" alt="" draggable="false" decoding="async"></div>`);
       DROPS.forEach(([u, v]) => { const top = v * cell; drops.push({ cx: x + u * cell, top, dh, len: top + dh, th: 0, om: 0, els: [] }); });
     }
     const box = (d, i, cls) => `<div class="${cls}" data-n="${i}" style="left:${f1(d.cx - dw / 2)}px;top:0;width:${f1(dw)}px;height:${f1(d.top + d.dh)}px;transform-origin:50% 0;--i:${i}">`;
@@ -42,9 +44,10 @@
       + `<img src="obj/vamp-drop.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.top)}px;height:${f1(d.dh)}px"></div>`).join("");
     const el = document.createElement("div");
     el.className = "lights vampDrapes" + (cfg.on ? " on" : "");
-    const bottom = Math.max(ch - lift, ...drops.map((d) => d.top + d.dh)) + 8;
+    const bottom = Math.max(clH - 16, ...drops.map((d) => d.top + d.dh)) + 8;
     el.style.height = Math.ceil(bottom) + "px";
-    el.innerHTML = `<div class="vIn">${back}${front}${parts.join("")}${knots.join("")}</div>`;
+    el.innerHTML = `<div class="vIn">${back}${front}${parts.join("")}</div>`;
+    el.style.setProperty("--vcell", f1(cell) + "px"); requestAnimationFrame(() => { const sh = el.closest(".shelf"); if (sh) sh.style.setProperty("--vcell", f1(cell) + "px"); });
     const bEls = el.querySelectorAll(".vDrop:not(.vDropF)"), fEls = el.querySelectorAll(".vDropF");
     drops.forEach((d, i) => { d.els = [bEls[i], fEls[i]]; });
     const swags = [...el.querySelectorAll(".vSwag")].map((s) => ({ el: s, b: 0, bv: 0 }));
