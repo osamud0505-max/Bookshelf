@@ -231,7 +231,7 @@
     const roomGeo = new THREE.BufferGeometry();
     roomGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Array(18).fill(0), 3));
     roomGeo.setAttribute("normal", new THREE.Float32BufferAttribute([0,1,0, 0,1,0, 0,1,0, 0,0,1, 0,0,1, 0,0,1], 3));
-    roomGeo.setIndex([0, 1, 2, 0, 2, 3, 3, 2, 4, 3, 4, 5]);
+    roomGeo.setIndex([0, 1, 2, 0, 2, 3]); // v301: osamu: shadows on the shelf floor only, never on the backdrop (the wall part is left out)
     const room = new THREE.Mesh(roomGeo, wallMat); room.receiveShadow = true; scene.add(room);
     const floor = { scale: { set() {} }, position: { set() {} } }, wall = floor;
     const unitPlane = new THREE.PlaneGeometry(1, 1);
@@ -319,7 +319,7 @@
               const mesh = new THREE.Mesh(unitPlane, depth); mesh.castShadow = true;
               scene.add(mesh); rec = { mesh, tex, depth, img: ob.img }; objs.set(ob.id, rec);
             }
-            const zc = -Math.min(ob.w * 0.3, -zw * 0.45);
+            const zc = -1; // v301: at the object's own base line, so its shadow starts right under it (osamu: a gap showed when it stood further back)
             rec.mesh.visible = ob.visible !== false;
             rec.mesh.scale.set(ob.w, ob.h, 1); rec.mesh.position.set(ob.x + ob.w / 2, ob.y + ob.h / 2, zc);
           }
