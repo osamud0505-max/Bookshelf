@@ -249,6 +249,112 @@ vec2 gLayer(vec3 p, float d, float sz) {
     return { group, bullet, redMat, U, light, pool, cable, cableKey: "", rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
   }
 
+  // ---------- v313: the closet's gift boxes in 3D (osamu chose them after the lipstick lamp) ----------
+  // Built in the painting's own units (GIFT_VW wide, 200 tall), fronts at z = 0: a chocolate box with a pink box on top tied
+  // with satin ribbon and a bow, its long tail running down to the shelf, and three round hatboxes printed with hydrangeas
+  // and little pink bows, the top one trimmed with lace, like osamu's painted stack
+  const GIFT_VW = 304.9;
+  let giftShared = null;
+  function giftParts() {
+    if (giftShared) return giftShared;
+    const cv = (w, h, fn) => { const c = document.createElement("canvas"); c.width = w; c.height = h; fn(c.getContext("2d"), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
+    let sd = 11; const rnd = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+    // cardboard: flat colour with a faint paper grain
+    const board = (base) => cv(256, 256, (g, w, h) => { g.fillStyle = base; g.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(${rnd() < .5 ? "255,255,255" : "0,0,0"},${.025 + rnd() * .035})`; g.fillRect(rnd() * w, rnd() * h, 1 + rnd() * 2, 1); } });
+    // the hatbox print: cream linen, lilac hydrangea heads, green leaves and small pink bows, repeating round the box
+    const motif = (g, x, y, s) => {
+      g.save(); g.translate(x, y); g.scale(s, s);
+      g.fillStyle = "#86a87a"; [[-15, 10, .6], [16, 12, -.5], [2, 19, 1.4]].forEach(([lx, ly, a]) => { g.save(); g.translate(lx, ly); g.rotate(a); g.beginPath(); g.ellipse(0, 0, 9, 4.2, 0, 0, Math.PI * 2); g.fill(); g.restore(); });
+      for (let i = 0; i < 46; i++) { const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * 15; g.fillStyle = ["#b3a8e6", "#9c8fd9", "#c8bff0", "#8f84cf"][i % 4]; g.beginPath(); g.arc(Math.cos(a) * r, Math.sin(a) * r * 0.9, 3.1, 0, Math.PI * 2); g.fill(); }
+      g.restore();
+    };
+    const bowMotif = (g, x, y, s) => {
+      g.save(); g.translate(x, y); g.scale(s, s); g.strokeStyle = "#e3a1ae"; g.fillStyle = "#e3a1ae"; g.lineWidth = 2.6; g.lineCap = "round";
+      g.beginPath(); g.ellipse(-9, -3, 9, 5, -0.35, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.ellipse(9, -3, 9, 5, 0.35, 0, Math.PI * 2); g.stroke();
+      g.beginPath(); g.moveTo(-1, 1); g.quadraticCurveTo(-6, 10, -10, 17); g.moveTo(1, 1); g.quadraticCurveTo(5, 11, 9, 18); g.stroke();
+      g.beginPath(); g.arc(0, -1, 2.8, 0, Math.PI * 2); g.fill(); g.restore();
+    };
+    const print = (w, h, n, sc) => (g) => {
+      g.fillStyle = "#f6ecdc"; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 9000; i++) { g.fillStyle = `rgba(${rnd() < .5 ? "255,255,250" : "150,120,100"},${.04 + rnd() * .05})`; g.fillRect(rnd() * w, rnd() * h, rnd() < .5 ? 3 : 1, rnd() < .5 ? 1 : 3); }
+      for (let i = 0; i < n; i++) { const x = ((i + 0.5) / n) * w, row = i % 2; motif(g, x, h * (row ? 0.68 : 0.3), sc); bowMotif(g, x + w / n / 2, h * (row ? 0.3 : 0.7), sc * 0.95);
+        g.fillStyle = "#d9b3a8"; for (let j = 0; j < 4; j++) { g.beginPath(); g.arc(x + w / n * (0.15 + j * 0.06), h * (row ? 0.92 : 0.1) + j * 2, 1.6, 0, Math.PI * 2); g.fill(); } }
+    };
+    const side = cv(1024, 256, print(1024, 256, 6, 2.2)); side.wrapS = THREE.RepeatWrapping;
+    const band = cv(1024, 64, print(1024, 64, 12, 0.9)); band.wrapS = THREE.RepeatWrapping;
+    const top = cv(512, 512, (g, w, h) => { print(w, h, 4, 2.4)(g); g.save(); g.globalCompositeOperation = "source-over"; motif(g, w / 2, h / 2, 2.6); bowMotif(g, w * 0.3, h * 0.62, 2); bowMotif(g, w * 0.7, h * 0.36, 2); g.restore(); });
+    // lace: a white scalloped edge with little holes, cut out by its alpha
+    const lace = cv(1024, 64, (g, w, h) => {
+      g.clearRect(0, 0, w, h); g.fillStyle = "#fffaf4"; g.fillRect(0, 0, w, 20);
+      for (let x = 0; x < w; x += 32) { g.beginPath(); g.arc(x + 16, 20, 16, 0, Math.PI); g.fill(); }
+      g.globalCompositeOperation = "destination-out";
+      for (let x = 0; x < w; x += 32) { g.beginPath(); g.arc(x + 16, 24, 6, 0, Math.PI * 2); g.fill(); for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(x + 6 + k * 10, 9, 2.2, 0, Math.PI * 2); g.fill(); } }
+    }); lace.wrapS = THREE.RepeatWrapping;
+    giftShared = { brownTex: board("#5d3b36"), pinkTex: board("#b8676f"), side, band, top, lace };
+    return giftShared;
+  }
+  // a satin ribbon along a path; its width runs along "across" (or flat on the surface below it when across is null)
+  function ribbonGeo(pts, width, across) {
+    const curve = new THREE.CatmullRomCurve3(pts, false, "centripetal"), N = Math.max(8, pts.length * 10), pos = [], uv = [], idx = [];
+    for (let i = 0; i <= N; i++) {
+      const t = i / N, p = curve.getPoint(t), T = curve.getTangent(t);
+      let S = across ? across.clone() : new THREE.Vector3().crossVectors(T, new THREE.Vector3(0, 1, 0));
+      S.addScaledVector(T, -S.dot(T)); if (S.lengthSq() < 1e-6) S.set(1, 0, 0); S.normalize().multiplyScalar(width / 2);
+      pos.push(p.x - S.x, p.y - S.y, p.z - S.z, p.x + S.x, p.y + S.y, p.z + S.z); uv.push(0, t, 1, t);
+      if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
+  }
+  function buildGiftBoxes() {
+    const S = giftParts(), group = new THREE.Group(), V = (x, y, z) => new THREE.Vector3(x, y, z);
+    const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; group.add(m); return m; };
+    const card = (tex) => new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, metalness: 0 });
+    const brown = card(S.brownTex), pink = card(S.pinkTex);
+    const satin = new THREE.MeshStandardMaterial({ color: "#f0b2bf", roughness: 0.34, metalness: 0.05, side: THREE.DoubleSide });
+    // a box with a lid that overhangs it a little
+    const box = (mat, cx, y0, w, h, d, cz, lidH) => {
+      add(new THREE.BoxGeometry(w, h - lidH + 0.5, d), mat, cx, y0 + (h - lidH + 0.5) / 2, cz);
+      add(new THREE.BoxGeometry(w + 2.6, lidH, d + 2.6), mat, cx, y0 + h - lidH / 2, cz);
+    };
+    // chocolate box on the floor, pink box on it, set a little back and to the right
+    const bw = 172, bh = 70, bd = 100, bcx = 88, bcz = -bd / 2 - 1.3;
+    box(brown, bcx, 0, bw, bh, bd, bcz, 13);
+    const pw = 150, ph = 46, pd = 86, pcx = 98, pcz = -pd / 2 - 7, py = bh;
+    box(pink, pcx, py, pw, ph, pd, pcz, 14);
+    // the ribbon tied round the pink box both ways, crossing on top under the bow
+    const t = 0.7, rw = 8, pTop = py + ph + 0.05, ex = pw / 2 + 1.35, ez = pd / 2 + 1.35, rx = pcx + 6, rz = pcz;
+    add(new THREE.BoxGeometry(pw + 2.7 + t * 2, t, rw), satin, pcx, pTop + t / 2, rz);
+    add(new THREE.BoxGeometry(rw, t, pd + 2.7 + t * 2), satin, rx, pTop + t / 2 + 0.05, pcz);
+    [-1, 1].forEach((s) => { add(new THREE.BoxGeometry(t, ph, rw), satin, pcx + s * (ex + t / 2), py + ph / 2, rz); add(new THREE.BoxGeometry(rw, ph, t), satin, rx, py + ph / 2, pcz + s * (ez + t / 2)); });
+    // the bow: two loops, a knot and two short tails, then one long tail that falls over the front and curls on the shelf
+    const ky = pTop + t + 2.2, kz = rz, kx = rx;
+    const loop = (s) => ribbonGeo([V(kx + s * 2, ky + 1, kz - 1), V(kx + s * 10, ky + 5, kz - 7), V(kx + s * 23, ky + 8, kz - 7), V(kx + s * 30, ky + 7, kz), V(kx + s * 23, ky + 4.5, kz + 7), V(kx + s * 10, ky + 2, kz + 6), V(kx + s * 2, ky + 1, kz + 1.5)], rw * 0.95, V(0.18 * s, 0.9, 0.3));
+    add(loop(-1), satin, 0, 0, 0); add(loop(1), satin, 0, 0, 0);
+    add(new THREE.SphereGeometry(4.2, 16, 12), satin, kx, ky + 0.5, kz + 1).scale.set(1, 0.85, 0.8);
+    add(ribbonGeo([V(kx - 2, ky, kz + 2), V(kx - 9, pTop + t + 1.2, kz + 14), V(kx - 16, pTop + t + 0.8, kz + 27), V(kx - 18, pTop + t + 0.6, pcz + pd / 2 - 2)], rw * 0.9, null), satin, 0, 0, 0);
+    const fz = pcz + ez + t + 0.6, bfz = bcz + bd / 2 + 1.3 + 0.7;
+    add(ribbonGeo([V(kx + 2, ky, kz + 2), V(kx + 6, pTop + t + 1, kz + 18), V(kx + 8, pTop + t + 0.8, fz - 3), V(kx + 8.5, pTop - 2, fz + 0.4), V(kx + 7, py + ph * 0.5, fz + 0.2),
+      V(kx + 4, py + 3, fz + 0.4), V(kx + 2, bh + 0.8, bfz - 2), V(kx + 1, bh - 2, bfz + 0.3), V(kx - 3, bh * 0.55, bfz + 0.4), V(kx - 5, 9, bfz + 0.6), V(kx - 3, 0.9, bfz + 6),
+      V(kx + 6, 0.8, bfz + 13), V(kx + 16, 0.9, bfz + 9), V(kx + 12, 0.8, bfz + 4)], rw * 0.9, V(1, 0, 0.15)), satin, 0, 0, 0);
+    // three printed hatboxes, each with a lid band; lace round the top one
+    const sideM = new THREE.MeshStandardMaterial({ map: S.side, roughness: 0.8 }), bandM = new THREE.MeshStandardMaterial({ map: S.band, roughness: 0.8 }), topM = new THREE.MeshStandardMaterial({ map: S.top, roughness: 0.8 });
+    const hx = 237.5, hz = -68.5;
+    let y = 0;
+    [[66, 70, 15, 1.6], [60, 58, 14, 1.25], [51, 54, 13, 1.05]].forEach(([R, h, lid, rep], i) => {
+      const sm = sideM.clone(); sm.map = S.side.clone(); sm.map.repeat.set(rep, 1); sm.map.needsUpdate = true;
+      const bm = bandM.clone(); bm.map = S.band.clone(); bm.map.repeat.set(rep * 1.6, 1); bm.map.needsUpdate = true;
+      add(new THREE.CylinderGeometry(R, R, h - lid + 0.5, 72, 1, true), sm, hx, y + (h - lid + 0.5) / 2, hz).rotation.y = i * 1.3;
+      add(new THREE.CylinderGeometry(R + 1.6, R + 1.6, lid, 72, 1, true), bm, hx, y + h - lid / 2, hz);
+      const cap = add(new THREE.CircleGeometry(R + 1.6, 72), topM, hx, y + h, hz); cap.rotation.x = -Math.PI / 2; cap.rotation.z = i * 0.9;
+      // a slight rolled edge where the lid's top meets its band
+      add(new THREE.TorusGeometry(R + 1.6, 0.9, 8, 72), bandM, hx, y + h - 0.4, hz).rotation.x = Math.PI / 2;
+      if (i === 2) { const lm = new THREE.MeshStandardMaterial({ map: S.lace.clone(), alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.9 }); lm.map.repeat.set(7, 1); lm.map.needsUpdate = true;
+        add(new THREE.CylinderGeometry(R + 2.1, R + 2.6, lid * 1.1, 72, 1, true), lm, hx, y + h - lid - lid * 0.42, hz); }
+      y += h;
+    });
+    return { group, depth: 2 * (66 + 1.6) + 2 };
+  }
+
   // a round pool of light, brightest in the middle, fading smoothly to nothing at the rim
   let poolT = null;
   function poolTex() {
@@ -430,7 +536,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
             live.add(ob.id);
             let rec = objs.get(ob.id);
             if (!rec || rec.img !== ob.img) {
-              if (rec) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
+              if (rec) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
               const c2 = document.createElement("canvas"); c2.width = Math.max(2, Math.round(ob.w * 2)); c2.height = Math.max(2, Math.round(ob.h * 2)); c2.getContext("2d").drawImage(ob.img, 0, 0, c2.width, c2.height);
               const tex = new THREE.CanvasTexture(c2);
               // three's shadow pass takes the cut-out's picture and alpha test from the object's own material
@@ -471,6 +577,14 @@ vec2 gLayer(vec3 p, float d, float sz) {
               }
               P.needsUpdate = true; rec.mesh.geometry.computeBoundingSphere();
             }
+            if (ob.kind === "giftBoxes") {
+              if (!rec.gift) { rec.gift = buildGiftBoxes(); scene.add(rec.gift.group); }
+              const G = rec.gift, k = ob.w / GIFT_VW, room = -zw - 2;
+              rec.mesh.visible = false; // the model casts its own shadow
+              G.group.visible = ob.visible !== false;
+              // keep it inside the shelf: if the hatboxes are deeper than the space in front of the wall, press them flatter front to back
+              G.group.scale.set(k, k, Math.min(k, room / G.depth)); G.group.position.set(ob.x, ob.y, -1);
+            }
             if (ob.hasLamp) {
               if (!rec.lip) { rec.lip = buildLipstick(); scene.add(rec.lip.group); }
               const L = rec.lip, k = ob.w / LIP_VW, on = !!ob.lamp && ob.visible !== false, now = performance.now();
@@ -500,7 +614,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
               applyLip(rec, now); if (L.rise.tr || L.glow.tr || L.glow.v > 0.01) lampTick();
             }
           }
-          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
+          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
         { const x0 = -400, x1 = viewW + 400, yt = stageH + top + 400, P = roomGeo.attributes.position;

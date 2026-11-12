@@ -2317,5 +2317,5 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 .shelf.is3d .lpMood, .shelf.is3d .ornament[data-kind="lipstickLamp"] .ornPool { display: none !important; }
 
 /* v307: in 3D the lipstick lamp is a real 3D model; the painting stays only as the tap target */
-.shelf.is3d .ornament[data-kind="lipstickLamp"]:not(.wsO) svg,
+.shelf.is3d .ornament[data-kind="lipstickLamp"]:not(.wsO) svg, .shelf.is3d .ornament[data-kind="giftBoxes"]:not(.wsO) svg,
 .shelf.is3d .ornament[data-kind="lipstickLamp"]:not(.wsO) .ornGlow { opacity: 0 !important; }
