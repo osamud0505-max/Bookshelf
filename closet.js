@@ -475,16 +475,32 @@
   // above the case's front lip). Tapping it twists the bullet slowly up out of the case, light running round the gold
   // tube as it turns (where a real lipstick turns), then it lights up; tapping again winds it back down. The bullet only ever moves; nothing is redrawn.
   const LIP_VW = 95.3, LIP_REST = 38.5;
+  // v329: glitter flecks inside the bullet (painted x 18.5..54.4, y 2..60), in a band two turns wide so it can slide round as
+  // the lipstick twists (one turn = LIP_SPIN): most are a soft shimmer, a few glint now and then
+  const LIP_SPIN = 36, LIP_FLECKS = (() => {
+    let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    let out = ""; const one = [];
+    for (let i = 0; i < 150; i++) one.push([18 + rnd() * LIP_SPIN, 3 + rnd() * 58, 0.2 + rnd() * 0.32, rnd()]);
+    for (const dx of [0, LIP_SPIN, 2 * LIP_SPIN]) for (const [x, y, r, q] of one) {
+      const t = (1.4 + q * 2.6).toFixed(2), d = (-q * 5).toFixed(2);
+      out += q > 0.8
+        ? `<circle class="lpGl" cx="${f1(x + dx)}" cy="${f1(y)}" r="${(r * 1.7).toFixed(2)}" fill="#fffaf6" style="--t:${t}s;--d:${d}s"/>`
+        : `<circle class="lpFl" cx="${f1(x + dx)}" cy="${f1(y)}" r="${r.toFixed(2)}" fill="#ffc8cf" style="--t:${t}s;--d:${d}s"/>`;
+    }
+    return out;
+  })();
   D.ORNAMENTS.lipstickLamp = {
     label: "Lipstick lamp", scale: 1.0, startOff: true, vw: LIP_VW, soft: true, flat: true, glow: "rgba(255,150,95,.42)", img: "obj/closet-lipstick-case2-cosy.webp",
     draw: (g) => `<defs><mask id="${g}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-clip.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-turn2.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<linearGradient id="${g}s" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d8" stop-opacity=".5"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`
-      + `<radialGradient id="${g}fp"><stop offset="0" stop-color="rgb(28,0,16)" stop-opacity=".42"/><stop offset=".8" stop-color="rgb(28,0,16)" stop-opacity=".42"/><stop offset=".9" stop-color="rgb(28,0,16)" stop-opacity=".21"/><stop offset="1" stop-color="rgb(28,0,16)" stop-opacity="0"/></radialGradient><ellipse cx="36.9" cy="187" rx="44" ry="15.4" fill="url(#${g}fp)"/>`
+      + `<radialGradient id="${g}fp"><stop offset="0" stop-color="rgb(28,0,16)" stop-opacity=".42"/><stop offset=".8" stop-color="rgb(28,0,16)" stop-opacity=".42"/><stop offset=".9" stop-color="rgb(28,0,16)" stop-opacity=".21"/><stop offset="1" stop-color="rgb(28,0,16)" stop-opacity="0"/></radialGradient><ellipse class="lpFoot" cx="36.9" cy="187" rx="44" ry="15.4" fill="url(#${g}fp)"/>`
       + `<g class="lpHalo" style="mix-blend-mode:screen"><g class="lpBullet" style="--rest:${LIP_REST}px"><image href="obj/closet-lipstick-bullet2-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none" filter="url(#${g}h)"/></g></g>`
       + `<image href="obj/closet-lipstick-case2-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       + `<g class="lpCast" mask="url(#${g}c)" style="mix-blend-mode:screen"><rect x="0" y="40" width="${LIP_VW}" height="130" fill="url(#${g}cl)"/><rect x="0" y="40" width="${LIP_VW}" height="60" fill="url(#${g}cr)"/></g>`
-      + `<g mask="url(#${g}m)"><g class="lpBullet" style="--rest:${LIP_REST}px"><image class="lpRed" href="obj/closet-lipstick-bullet2-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></g></g>`
+      + `<g mask="url(#${g}m)"><g class="lpBullet" style="--rest:${LIP_REST}px"><image class="lpRed" href="obj/closet-lipstick-bullet2-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
+      + `<mask id="${g}b" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200" style="mask-type:alpha"><image href="obj/closet-lipstick-bullet2-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
+      + `<g mask="url(#${g}b)" class="lpGlit" style="mix-blend-mode:screen"><g class="lpSpin" style="--spin:${LIP_SPIN}px">${LIP_FLECKS}</g></g></g></g>`
       // lit: a soft halo that follows the bullet's own shape, and its light falling on the gold case (strongest at the lip, fading down the tube)
       + `<filter id="${g}h" filterUnits="userSpaceOnUse" x="-25" y="-25" width="${f1(LIP_VW + 50)}" height="160"><feGaussianBlur stdDeviation="3.2"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 .58  0 0 0 0 .4  0 0 0 .95 0"/></filter>`
       + `<mask id="${g}c" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200" style="mask-type:alpha"><image href="obj/closet-lipstick-case2-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
