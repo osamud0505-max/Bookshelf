@@ -172,8 +172,31 @@
     const t = new THREE.CanvasTexture(c); softCache.set(edge, t); return t;
   }
   let sharedR = null;
+  // v299: three's PCF takes 17 on/off samples spread 4 texels apart, which drew the soft edge as visible steps (osamu: "a bit
+  // pixelated"). This swaps it for a smooth 6x6-texel box: 49 neighbouring samples, the outer ring weighted by where the
+  // point falls between texels, so the edge fades evenly however the shadow map's grid lines up with the screen.
+  let pcfPatched = false;
+  function smoothPCF() {
+    if (pcfPatched) return; pcfPatched = true;
+    const C = THREE.ShaderChunk, src = C.shadowmap_pars_fragment, a = src.indexOf("#if defined( SHADOWMAP_TYPE_PCF )"), b = src.indexOf("#elif defined( SHADOWMAP_TYPE_PCF_SOFT )");
+    if (a < 0 || b < a) return;
+    C.shadowmap_pars_fragment = src.slice(0, a) + `#if defined( SHADOWMAP_TYPE_PCF )
+			vec2 tc = shadowCoord.xy * shadowMapSize + 0.5;
+			vec2 f = fract( tc ), ts = 1.0 / shadowMapSize, base = ( floor( tc ) - 0.5 ) * ts;
+			float sum = 0.0;
+			for ( int j = -3; j <= 3; j ++ ) {
+				float wy = j == -3 ? 1.0 - f.y : ( j == 3 ? f.y : 1.0 );
+				for ( int i = -3; i <= 3; i ++ ) {
+					float wx = i == -3 ? 1.0 - f.x : ( i == 3 ? f.x : 1.0 );
+					sum += wx * wy * texture2DCompare( shadowMap, base + vec2( float( i ), float( j ) ) * ts, shadowCoord.z );
+				}
+			}
+			shadow = sum / 36.0;
+		` + src.slice(b);
+  }
   function shared() {
     if (sharedR && !sharedR.getContext().isContextLost()) return sharedR;
+    smoothPCF();
     const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: false, powerPreference: "high-performance" });
     r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
