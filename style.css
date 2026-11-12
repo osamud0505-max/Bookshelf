@@ -2001,7 +2001,7 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
    strip at the plank's top edge. The top part rides on the sticky stage (behind the books, never scrolls), the lip part
    on the plank, both from the same x, so the join stays seamless while the row scrolls */
 .shelf[data-lights="cabinSwags"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
-  bottom: calc(var(--top-d) * -.5); height: var(--top-d); background: url(obj/cabin-snowedge-top.webp) 0 0 / 352.33px 100% repeat-x; }
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d); background: url(obj/cabin-snowedge-top2.webp) 0 0 / 528px 100% repeat-x; }
 .lights.cabinSwags .cSnow { top: -16px; height: 96.33px; background: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
 .lights.cabinSwags .cSnowLit { -webkit-mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; mask: url(obj/cabin-snowedge-bot.webp) 0 0 / 352.33px 96.33px repeat-x; }
 .lights.cabinSwags::after { display: none; }
