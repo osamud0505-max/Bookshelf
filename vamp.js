@@ -18,7 +18,9 @@
   // the five candles (obj/vamp-candle0-4.webp): height in widths, and where the wick is across the candle
   const CA = [1.888, 3.35, 4.97, 6.76, 4.14], CW = [0.52, 0.488, 0.485, 0.491, 0.494];
   // [across the cloth, top of the candle in px on a 412px shelf, which candle]: no two neighbours level or alike
-  const CANDLES = [[0.13, 52, 2], [0.31, 112, 0], [0.5, 34, 3], [0.68, 82, 4], [0.86, 58, 1]];
+  // v352 (osamu: lower, not touching the cloth): each candle's flame starts just below the cloth's hem where it hangs,
+  // the tallest where the hem rides highest and the stub under the middle swag, clear of the long corner tails
+  const CANDLES = [[0.2, 120, 3], [0.35, 165, 4], [0.5, 173, 0], [0.65, 174, 1], [0.8, 123, 2]];
   const reduce = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
 
   // osamu's picture (2026-11-10): the two halves of a velvet drape meet in the middle of the shelf under a gold knot
@@ -59,7 +61,7 @@
       + `<img src="obj/vamp-candle${d.i}.webp" alt="" draggable="false" decoding="async"></div></div>`).join("");
     const el = document.createElement("div");
     el.className = "lights vampDrapes" + (cfg.on ? " on" : "");
-    const bottom = clH - 16 + 8;
+    const bottom = Math.max(clH - 16, ...drops.map((d) => d.top + d.dh + 6)) + 8;
     el.style.height = Math.ceil(bottom) + "px";
     el.innerHTML = `<div class="vIn">${back}${front}${parts.join("")}</div>`;
     el.style.setProperty("--vcell", f1(cell) + "px"); requestAnimationFrame(() => { const sh = el.closest(".shelf"); if (sh) sh.style.setProperty("--vcell", f1(cell) + "px"); });
