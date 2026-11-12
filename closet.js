@@ -468,8 +468,8 @@
   D.ORNAMENTS.vanityMirror = baked("Vanity mirror", "mirror", 1083, 1675, 1695, 0.85);   // osamu: "a bit smaller"
   D.ORNAMENTS.pencilCup = painted("Pencil cup & lipstick", "pencilcup-small", 558, 503, 0.55, [[0.43, 0.3], [0.84, 0.16]]);
   // v326: osamu preferred the original paintings, so the Gemini 3D-look pictures (giftboxes3, bags3) are off again
-  D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes2", 1067, 700, 0.74, [[0.5, 0.49]]);
-  D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags2", 1198, 700, 0.745, [[0.5, 0.49]]);
+  D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes2", 1067, 700, 1.3, [[0.5, 0.49]]);
+  D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags2", 1198, 700, 1.3, [[0.5, 0.49]]);
 
   // the lipstick lamp: three layers from osamu's pictures (the empty case, the bullet, and where the bullet may show
   // above the case's front lip). Tapping it twists the bullet slowly up out of the case, light running round the gold

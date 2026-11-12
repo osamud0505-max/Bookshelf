@@ -514,6 +514,28 @@ vec2 gLayer(vec3 p, float d, float sz) {
       });
     }
     let skipShadows = false;
+    // v327: the gift boxes' and shopping bags' shadow lies on the 3D floor itself (osamu: the shadow must end exactly at the back
+    // edge of the shelf). It is drawn from each strip's own footing: dark under and right round the bases, soft at the sides and
+    // front, and running straight back to the wall line, where the floor ends, so it stops exactly at the back edge
+    const SOFT_FOOT = new Set(["giftBoxes", "shoppingBags"]);
+    function floorShadow(rec, ob, zs, H, zw) {
+      const front = -1 + H * 0.06, ext = H * 0.14, m = ob.w * 0.08, x0 = ob.x - m, x1 = ob.x + ob.w + m, back = zw;
+      const key = [x0, x1, back, ...zs.map((z) => (z == null ? "n" : z.toFixed(1)))].join();
+      if (rec.fsKey === key) return; rec.fsKey = key;
+      if (!rec.fs) { rec.fs = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: tint === "#000000" ? "#000000" : "#1a0812", transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false })); rec.fs.rotation.x = -Math.PI / 2; rec.fs.renderOrder = 1; scene.add(rec.fs); }
+      if (zs.every((z) => z == null)) { rec.fs.visible = false; return; }
+      // a small canvas, stretched with smooth filtering, gives the soft edges (a canvas blur filter drew nothing on some GPUs)
+      const CW = 48, CH = 40, c = document.createElement("canvas"); c.width = CW; c.height = CH; const g = c.getContext("2d");
+      const zy = (z) => ((z - back) / (front - back)) * CH; // canvas y: 0 at the wall line, CH at the front of the patch
+      g.fillStyle = "#fff";
+      const n = zs.length;
+      for (let k = 0; k < n; k++) { if (zs[k] == null) continue; const xa = ((m + (k / n) * ob.w) / (x1 - x0)) * CW, xb = ((m + ((k + 1) / n) * ob.w) / (x1 - x0)) * CW;
+        const yf = zy(zs[k]), ye = zy(zs[k] + Math.max(ext, (front - zs[k]) * 0.75)), gr = g.createLinearGradient(0, yf, 0, ye);
+        gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.3, "rgba(255,255,255,.6)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+        g.fillStyle = "#fff"; g.fillRect(xa, 0, xb - xa, yf); g.fillStyle = gr; g.fillRect(xa, yf, xb - xa, ye - yf); }
+      const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; if (rec.fs.material.map) rec.fs.material.map.dispose(); rec.fs.material.map = t; rec.fs.material.alphaMap = null; rec.fs.material.needsUpdate = true;
+      rec.fs.scale.set(x1 - x0, front - back, 1); rec.fs.position.set((x0 + x1) / 2, 0.3, (front + back) / 2); rec.fs.visible = ob.visible !== false;
+    }
     const objs = new Map(); // object id -> { mesh, tex, depth, img }
     let dead = false, W = 0, Hc = 0, top = 0, bottom = 0, frameDirty = false;
     const inst = {
@@ -587,7 +609,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
             live.add(ob.id);
             let rec = objs.get(ob.id);
             if (!rec || rec.img !== ob.img) {
-              if (rec) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
+              if (rec) { scene.remove(rec.mesh); if (rec.fs) scene.remove(rec.fs); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
               const c2 = document.createElement("canvas"); c2.width = Math.max(2, Math.round(ob.w * 2)); c2.height = Math.max(2, Math.round(ob.h * 2)); c2.getContext("2d").drawImage(ob.img, 0, 0, c2.width, c2.height);
               const tex = new THREE.CanvasTexture(c2);
               // three's shadow pass takes the cut-out's picture and alpha test from the object's own material
@@ -621,15 +643,16 @@ vec2 gLayer(vec3 p, float d, float sz) {
             // shadow fell to the right as a hard block cut off at the wall (osamu: "the shadows are not right at all")
             rec.mesh.castShadow = ob.kind !== "giftBoxes" && ob.kind !== "shoppingBags";
             { // place each strip: its foot on the floor where the floor shows at that height on screen, scaled for being further back
-              const P = rec.mesh.geometry.attributes.position, onPile = ob.y > 1;
+              const P = rec.mesh.geometry.attributes.position, onPile = ob.y > 1, zs = [];
               for (let k = 0; k < rec.NC; k++) {
                 const sB = onPile ? 0 : rec.foot[k] * ob.h; // screen px above the floor's front line
                 const z = onPile ? -1 : Math.max(zw + 2, Math.min(-1, (sB * Dc) / (sB - eyeY))), sc = (Dc - z) / Dc;
                 const yb = onPile ? ob.y : 0, yt = yb + (ob.h - sB) * sc, xa = ob.x + Math.max(0, (k - 0.6) / rec.NC) * ob.w, xb = ob.x + Math.min(1, (k + 1.6) / rec.NC) * ob.w;
                 const X = (x) => cx + (x - cx) * sc;
-                P.array.set([X(xa), yb, z, X(xb), yb, z, X(xa), yt, z, X(xb), yt, z], k * 12);
+                P.array.set([X(xa), yb, z, X(xb), yb, z, X(xa), yt, z, X(xb), yt, z], k * 12); zs.push(onPile ? null : z);
               }
               P.needsUpdate = true; rec.mesh.geometry.computeBoundingSphere();
+              if (SOFT_FOOT.has(ob.kind)) floorShadow(rec, ob, zs, H, zw);
             }
             // v322: osamu went back to a picture for the gift boxes (a Gemini render that looks 3D), so the hand-built model is off;
             // the picture casts its shadow through the hidden strips like the bags. buildGiftBoxes stays in case it comes back
@@ -670,7 +693,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
               applyLip(rec, now); if (L.rise.tr || L.glow.tr || L.glow.v > 0.01) lampTick();
             }
           }
-          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
+          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.fs) scene.remove(rec.fs); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
         { const x0 = -400, x1 = viewW + 400, yt = stageH + top + 400, P = roomGeo.attributes.position;
