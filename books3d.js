@@ -191,8 +191,8 @@
     const C = THREE.ShaderChunk, src = C.shadowmap_pars_fragment, a = src.indexOf("#if defined( SHADOWMAP_TYPE_PCF )"), b = src.indexOf("#elif defined( SHADOWMAP_TYPE_PCF_SOFT )");
     if (a < 0 || b < a) return;
     C.shadowmap_pars_fragment = src.slice(0, a) + `#if defined( SHADOWMAP_TYPE_PCF )
-			vec2 tc = shadowCoord.xy * shadowMapSize + 0.5;
-			vec2 f = fract( tc ), ts = 1.0 / shadowMapSize, base = ( floor( tc ) - 0.5 ) * ts;
+			vec2 ts = max( shadowRadius, 1.0 ) / shadowMapSize, tc = shadowCoord.xy / ts + 0.5;
+			vec2 f = fract( tc ), base = ( floor( tc ) - 0.5 ) * ts;
 			float sum = 0.0;
 			for ( int j = -3; j <= 3; j ++ ) {
 				float wy = j == -3 ? 1.0 - f.y : ( j == 3 ? f.y : 1.0 );
@@ -230,7 +230,7 @@
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera();
     const key = new THREE.DirectionalLight("#fff4e6", 1.8); key.castShadow = true;
-    key.shadow.mapSize.set(1024, 512); key.shadow.radius = 4; key.shadow.blurSamples = 24; key.shadow.bias = -0.0005;
+    key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 2; // v305: finer map, same softness (osamu: stepped edges on the floor shadows) key.shadow.blurSamples = 24; key.shadow.bias = -0.0005;
     scene.add(key, key.target);
     const hemi = new THREE.HemisphereLight("#fffaf2", "#8f8577", 1.25); scene.add(hemi);
     const tint = opts.tint || "#000000";
