@@ -216,6 +216,8 @@
     redMat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, U);
       sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vGP;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvGP = position;");
+      // the lamp's own light shines out of the bullet, so it must not light the bullet's outside
+      sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_begin>", THREE.ShaderChunk.lights_fragment_begin.replace("#if ( NUM_POINT_LIGHTS > 0 ) && defined( RE_Direct )", "#if 0"));
       sh.fragmentShader = sh.fragmentShader.replace("#include <common>", `#include <common>
 varying vec3 vGP; uniform float uTime; uniform float uGlow;
 vec3 gH(vec3 p) { p = fract(p * vec3(.1031, .1030, .0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }
@@ -230,11 +232,21 @@ vec2 gLayer(vec3 p, float d, float sz) {
   float mica = a.x * .7 + b.x * .35, glint = max(a.y, b.y * .6);
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1., .42, .46), mica * .1);
   totalEmissiveRadiance += uGlow * (vec3(.17, .012, .03) + mica * vec3(.3, .07, .1) + glint * vec3(4.5, 3.6, 3.8));
+  float inner = 1. - smoothstep(118., 192., vGP.y);
+  totalEmissiveRadiance += uGlow * inner * vec3(.75, .07, .1);
   totalEmissiveRadiance += (1. - uGlow) * glint * vec3(.35, .25, .28); }`);
     };
     const bullet = new THREE.Group(), bm = new THREE.Mesh(S.bulletGeo, redMat); bm.castShadow = true; bullet.add(bm);
     group.add(bullet);
-    return { group, bullet, redMat, U, rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
+    // v311: real light from the bullet (osamu): a warm red lamp that lights the books and objects round it, and a soft pool of
+    // its colour on the shelf floor under it
+    const light = new THREE.PointLight("#ff5a64", 0, 0, 2); light.visible = false; bullet.add(light);
+    light.position.set(0, 176, 40); // just in front of the bullet (which ignores it), so it falls on the books and the case
+    const pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: "#ff7684", map: poolTex(), transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
+    pool.rotation.x = -Math.PI / 2; pool.renderOrder = 2; pool.visible = false;
+    const cable = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: "#f3eee8", roughness: 0.75, metalness: 0, clippingPlanes: [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)] }));
+    cable.castShadow = true; cable.receiveShadow = true;
+    return { group, bullet, redMat, U, light, pool, cable, cableKey: "", rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
   }
 
   // a round pool of light, brightest in the middle, fading smoothly to nothing at the rim
@@ -275,7 +287,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     smoothPCF();
     const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: false, powerPreference: "high-performance" });
     r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-    r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
+    r.localClippingEnabled = true; r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
     r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.0;
     r.setClearColor(0x000000, 0);
     sharedR = r; return r;
@@ -330,6 +342,8 @@ vec2 gLayer(vec3 p, float d, float sz) {
       L.bullet.position.y = -LIP_REST * (1 - L.rise.v); L.bullet.rotation.y = -Math.PI * 2 * (1 - L.rise.v);
       const g = L.glow.v;
       L.U.uTime.value = (now / 1000) % 1000; L.U.uGlow.value = L.glow.v;
+      L.light.visible = g > 0.01; L.light.intensity = L.lightMax * g;
+      L.pool.visible = g > 0.01; L.pool.material.opacity = 0.9 * g;
     }
     let lampRaf = 0, lampLast = 0;
     function lampTick() {
@@ -416,7 +430,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
             live.add(ob.id);
             let rec = objs.get(ob.id);
             if (!rec || rec.img !== ob.img) {
-              if (rec) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
+              if (rec) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
               const c2 = document.createElement("canvas"); c2.width = Math.max(2, Math.round(ob.w * 2)); c2.height = Math.max(2, Math.round(ob.h * 2)); c2.getContext("2d").drawImage(ob.img, 0, 0, c2.width, c2.height);
               const tex = new THREE.CanvasTexture(c2);
               // three's shadow pass takes the cut-out's picture and alpha test from the object's own material
@@ -463,6 +477,20 @@ vec2 gLayer(vec3 p, float d, float sz) {
               rec.mesh.visible = false; // the model casts its own shadow
               L.group.visible = ob.visible !== false;
               L.group.scale.setScalar(k); L.group.position.set(ob.x + LIP_CX * k, ob.y, -LIP_BASE_R * k - 1);
+              if (!L.pool.parent) scene.add(L.pool, L.cable);
+              const lx = ob.x + LIP_CX * k, lz = -LIP_BASE_R * k - 1, Rb = LIP_BASE_R * k;
+              L.lightMax = 26000 * (H / 100) ** 2; L.light.distance = H * 1.8;
+              L.pool.scale.set(H * 2.2, (F - zw) * 1.3, 1); L.pool.position.set(lx, 0.4, (F + zw) / 2);
+              // v311: the lamp's cable (osamu): out of the back of the base, along the shelf floor to the back, and down behind it
+              const ck = [lx, lz, zw, k, ob.y].map((v) => v.toFixed(1)).join();
+              if (L.cableKey !== ck) {
+                L.cableKey = ck; const r = Math.max(1.1, 2.2 * k), y0 = ob.y + r, V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+                const pts = [V3(lx + Rb * 0.35, y0 + 2 * k, lz - Rb * 0.7), V3(lx + Rb * 0.6, y0, lz - Rb * 1.15), V3(lx + Rb * 0.95, r, lz - Rb * 1.6),
+                  V3(lx + Rb * 1.25, r, (lz - Rb * 1.6 + zw) / 2), V3(lx + Rb * 1.4, r, zw + r * 2.5), V3(lx + Rb * 1.45, r * 0.4, zw + r * 0.3),
+                  V3(lx + Rb * 1.45, -r * 3, zw - r * 0.6), V3(lx + Rb * 1.45, -H * 0.6, zw - r * 0.9)];
+                L.cable.geometry.dispose(); L.cable.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, "centripetal"), 90, r, 10, false);
+              }
+              L.cable.visible = L.group.visible;
               if (L.on === undefined) { L.on = on; L.rise.v = L.glow.v = on ? 1 : 0; }
               else if (on !== L.on) {
                 L.on = on;
@@ -472,7 +500,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
               applyLip(rec, now); if (L.rise.tr || L.glow.tr || L.glow.v > 0.01) lampTick();
             }
           }
-          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
+          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
         { const x0 = -400, x1 = viewW + 400, yt = stageH + top + 400, P = roomGeo.attributes.position;
