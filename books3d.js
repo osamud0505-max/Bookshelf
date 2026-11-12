@@ -171,12 +171,16 @@
     g.putImageData(img, 0, 0);
     const t = new THREE.CanvasTexture(c); softCache.set(edge, t); return t;
   }
-  // v320: a soft dark patch on the floor right under a 3D object's base, where the light can't reach, so it sits on the shelf
-  // like the books do instead of hovering (osamu: the shadows)
-  function contactPatch(w, d, edge, opacity) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ color: "#1a0812", map: softTex(edge), transparent: true, opacity, depthWrite: false, toneMapped: false }));
-    m.rotation.x = -Math.PI / 2; m.renderOrder = 1; return m;
+  // v321: 3D objects no longer cast the key light's long shadow (osamu: "the shadows are not right at all"; it fell off to
+  // the right as a hard dark block cut off at the wall). Each gets one soft footprint shadow instead, the shape of its base,
+  // like the painted objects: a dark core hugging the base and a softer spread a little wider, mostly to the right (the
+  // light is upper left) and in front. Nothing reaches behind the object's back, so nothing shows on the backdrop.
+  function footShadow(group, cx, cz, w, d, round) {
+    const mk = (pw, pd, edge, op) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(pw, pd), new THREE.MeshBasicMaterial({ color: "#1a0812", map: softTex(edge), transparent: true, opacity: op, depthWrite: false, toneMapped: false })); m.rotation.x = -Math.PI / 2; m.renderOrder = 1; group.add(m); return m; };
+    mk(w + 8, d + 16, round ? 0.42 : 0.14, 0.92).position.set(cx + 1, 0.3, cz + 8);
+    mk(w + 50, d + 50, 0.5, 0.55).position.set(cx + 10, 0.25, cz + 25);
   }
+  const noCast = (o) => o.traverse((m) => { if (m.isMesh) m.castShadow = false; });
   // ---- the 3D lipstick lamp, measured off osamu's painting (units: the painting's 95.3 x 200 box, y up from the case's foot)
   const LIP_VW = 95.3, LIP_CX = 36.7, LIP_BASE_R = 34.4, LIP_REST = 38.5;
   let lipShared = null;
@@ -215,7 +219,7 @@
     const S = lipParts(), group = new THREE.Group();
     const gold = new THREE.MeshStandardMaterial({ color: "#fff6dc", map: S.goldTex, metalness: 0.9, roughness: 0.2, envMap: S.envTex, envMapIntensity: 1.6, side: THREE.DoubleSide });
     const cs = new THREE.Mesh(S.caseGeo, gold); cs.castShadow = true; cs.receiveShadow = true; group.add(cs);
-    const cp = contactPatch(2 * LIP_BASE_R + 18, 2 * LIP_BASE_R + 22, 0.38, 0.8); cp.position.set(0, 0.3, 5); group.add(cp);
+    footShadow(group, 0, 0, 2 * LIP_BASE_R, 2 * LIP_BASE_R, true);
     // v309: the glitter is IN the bullet (osamu: "the small glitters in it to shine, not sparkles around it"). Each fleck is a
     // tiny tilted mirror fixed in the lipstick: some catch the light and glint as it turns and twinkles, most stay a soft shimmer
     const U = { uTime: { value: 0 }, uGlow: { value: 0 } };
@@ -253,6 +257,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     pool.rotation.x = -Math.PI / 2; pool.renderOrder = 2; pool.visible = false;
     const cable = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: "#141214", roughness: 0.55, metalness: 0, clippingPlanes: [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)] }));
     cable.castShadow = true; cable.receiveShadow = true;
+    noCast(group);
     return { group, bullet, redMat, U, light, pool, cable, cableKey: "", rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
   }
 
@@ -347,7 +352,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     // chocolate box on the floor, pink box on it, set a little back and to the right
     const bw = 172, bh = 70, bd = 100, bcx = 88, bcz = -bd / 2 - 1.3;
     box(brown, bcx, 0, bw, bh, bd, bcz, 13);
-    const bp = contactPatch(bw + 14, bd + 20, 0.16, 0.8); bp.position.set(bcx, 0.3, bcz + 5); group.add(bp);
+    footShadow(group, bcx, bcz, bw, bd, false);
     const pw = 150, ph = 46, pd = 86, pcx = 98, pcz = -pd / 2 - 7, py = bh;
     box(pink, pcx, py, pw, ph, pd, pcz, 14);
     // the ribbon tied round the pink box both ways, crossing on top under the bow
@@ -374,7 +379,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     const tl = new THREE.TextureLoader(), load = (n) => { const t = tl.load("obj/gift3d4-" + n + ".webp", () => onReady && onReady()); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
     const printT = load("print"), TILE = 200;
     const pm = (rx, ry, ox, oy) => { const t = printT.clone(); t.repeat.set(rx, ry); t.offset.set(ox, oy); return new THREE.MeshStandardMaterial({ map: t, roughness: 0.82 }); };
-    const hp = contactPatch(2 * 66 + 18, 2 * 66 + 22, 0.38, 0.8); hp.position.set(238.3, 0.3, -67.5 + 5); group.add(hp);
+    footShadow(group, 238.3, -67.5, 2 * 66, 2 * 66, true);
     let y = 0;
     [["hat1", 238.3, 63.4, 66, 76, 20], ["hat2", 234.1, 57.7, 59.9, 59, 18.6], ["hat3", 234.0, 48.3, 50.3, 47, 15]].forEach(([n, hx, Rb, Rl, h, lid], i) => {
       const hz = -67.5, reps = Math.max(1, Math.round((2 * Math.PI * Rb) / TILE)), unit = (2 * Math.PI * Rb) / reps, oy = i * 0.31;
@@ -396,6 +401,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
       }
       y += h;
     });
+    noCast(group);
     return { group, depth: 2 * 66 + 3 };
   }
 
