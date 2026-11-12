@@ -2353,6 +2353,8 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 .ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpSheetG { display: inline; animation: lpGlX .8s steps(12) -3s infinite; }
 .ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpGY { animation: lpGlY 4.8s steps(6) -3s infinite; }
 .ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpSheetT { display: none; }
+.ornament[data-kind="lipstickLamp"] .lpRimGlow { opacity: 0; }
+.ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpRimGlow { opacity: 1; }
 @keyframes lpGlX { to { transform: translateX(-3312px); } }
 @keyframes lpGlY { to { transform: translateY(-1488px); } }
 @media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .lpSheetG, .ornament[data-kind="lipstickLamp"].lit .lpGY { animation: none; } }

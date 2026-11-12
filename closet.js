@@ -509,9 +509,15 @@
       + `<image href="obj/closet-lipstick-case4back-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       + `<g mask="url(#${g}bm)"><g class="lpB2" style="--rest:${LIP_DROP}px"><clipPath id="${g}fc"><rect x="0" y="0" width="${LIP_FW}" height="${LIP_FH}"/></clipPath><g transform="translate(${LIP_FR[0]} ${LIP_FR[1]}) scale(${(LIP_FR[2] / LIP_FW).toFixed(5)})"><g clip-path="url(#${g}fc)">`
       + `<image class="lpSheetT" href="obj/closet-lipstick-bullet4t.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/>`
-      + `<image class="lpSheetL" href="obj/closet-lipstick-bullet4l.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none" opacity="0"/>`
-      + `<g class="lpGY"><image class="lpSheetG" href="obj/closet-lipstick-bullet4g.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/></g></g></g></g></g>`
-      + `<image href="obj/closet-lipstick-case4-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`,
+      + `<image class="lpSheetL" href="obj/closet-lipstick-bullet5l.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none" opacity="0"/>`
+      + `<g class="lpGY"><image class="lpSheetG" href="obj/closet-lipstick-bullet5g.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/></g></g></g></g></g>`
+      + `<image href="obj/closet-lipstick-case4-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
+      // v333 (osamu's real lamp): lit, the light glows red round the rim's opening and falls warm on the gold edge
+      + `<g class="lpRimGlow" style="mix-blend-mode:screen"><filter id="${g}rg" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="1.3"/></filter>`
+      + `<radialGradient id="${g}rs" gradientUnits="userSpaceOnUse" cx="36.7" cy="50.5" r="27" gradientTransform="translate(0 50.5) scale(1 .4) translate(0 -50.5)"><stop offset=".6" stop-color="#ff6a2c" stop-opacity=".95"/><stop offset=".8" stop-color="#ff4a22" stop-opacity=".45"/><stop offset="1" stop-color="#ff5a2a" stop-opacity="0"/></radialGradient>`
+      + `<ellipse cx="36.7" cy="52" rx="27" ry="10.8" fill="url(#${g}rs)"/>`
+      + `</g><g class="lpRimGlow"><path d="M14.3 50.3A22.4 4.6 0 0 0 59.1 50.3" fill="none" stroke="#ff2a14" stroke-width="3" stroke-linecap="round" opacity=".85" filter="url(#${g}rg)"/>`
+      + `<path d="M14.7 50.3A22 4.4 0 0 0 58.7 50.3" fill="none" stroke="#ff8a4a" stroke-width=".8" stroke-linecap="round" opacity=".9"/></g>`,
     _draw: (g) => `<defs><mask id="${g}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-clip.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-turn2.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<linearGradient id="${g}s" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d8" stop-opacity=".5"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`
@@ -536,7 +542,7 @@
       lipTwist(out ? 1.3 : 2.2);
       // v332: the bullet turns as it rises, like the 3D one: one full turn in three twists of the hand, from 72 frames. Its own light
       // comes on and goes off exactly with the lamp's light round it (on: after 1.7s, over 1.1s; off: over 0.6s), as the 3D one did
-      const B = el.querySelector(".lpB2"), S = el.querySelector(".lpSheetT"), SL = el.querySelector(".lpSheetL"), dur = out ? 1500 : 2300, t0 = performance.now();
+      const B = el.querySelector(".lpB2"), S = el.querySelector(".lpSheetT"), SL = el.querySelector(".lpSheetL"), RG = el.querySelectorAll(".lpRimGlow"), dur = out ? 1500 : 2300, t0 = performance.now();
       if (B && S && SL) {
         cancelAnimationFrame(el._lpRaf); el.classList.add("lpTwisting");
         const g0 = el._lpGlow == null ? (out ? 1 : 0) : el._lpGlow, gEnd = out ? 600 : 2800, total = Math.max(dur, gEnd);
@@ -546,9 +552,9 @@
           el._lpGlow = gl;
           B.style.transform = `translateY(${(LIP_DROP * (1 - rise)).toFixed(2)}px)`;
           const k = Math.round(rise * LIP_N) % LIP_N, x = -(k % LIP_COLS) * LIP_CW, y = -Math.floor(k / LIP_COLS) * LIP_CH;
-          S.setAttribute("x", x); S.setAttribute("y", y); SL.setAttribute("x", x); SL.setAttribute("y", y); SL.setAttribute("opacity", gl.toFixed(3));
+          S.setAttribute("x", x); S.setAttribute("y", y); SL.setAttribute("x", x); SL.setAttribute("y", y); SL.setAttribute("opacity", gl.toFixed(3)); RG.forEach((e) => { e.style.opacity = gl.toFixed(3); });
           if (ms < total) el._lpRaf = requestAnimationFrame(step);
-          else { B.style.transform = ""; S.setAttribute("x", 0); S.setAttribute("y", 0); SL.setAttribute("x", 0); SL.setAttribute("y", 0); el._lpGlow = out ? 0 : 1; el.classList.remove("lpTwisting"); }
+          else { B.style.transform = ""; S.setAttribute("x", 0); S.setAttribute("y", 0); SL.setAttribute("x", 0); SL.setAttribute("y", 0); el._lpGlow = out ? 0 : 1; RG.forEach((e) => { e.style.opacity = ""; }); el.classList.remove("lpTwisting"); }
         };
         el._lpRaf = requestAnimationFrame(step);
       }
