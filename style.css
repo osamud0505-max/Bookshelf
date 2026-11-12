@@ -2358,3 +2358,6 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 @keyframes lpGlX { to { transform: translateX(-3312px); } }
 @keyframes lpGlY { to { transform: translateY(-1488px); } }
 @media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .lpSheetG, .ornament[data-kind="lipstickLamp"].lit .lpGY { animation: none; } }
+/* v338 (osamu: the cabin's snow top no longer fit the deeper 3D shelf floor): in 3D the snow's top face covers the whole 3D floor,
+   from its front edge (b3off under the stage) back to the wall line, so its soft back edge sits on the wall line, not mid-floor */
+.shelf.is3d[data-lights="cabinSwags"] .stage::before { bottom: calc(var(--b3off, 0px) * -1); height: var(--top-d); }
