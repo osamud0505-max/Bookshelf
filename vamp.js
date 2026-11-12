@@ -14,39 +14,50 @@
   const CO = { w: 1361, h: 2296, tuck: 0.03 };
   const KN = { w: 108, h: 449, cx: 50, cy: 35 };
   const DR = { w: 212, h: 877 };
+  const BAT = { w: 720, h: 888, shades: [[0.19, 0.80], [0.816, 0.83]] }; // osamu's bat chandelier; shade centres (fractions)
+  const CL = { w: 1300, h: 584, hem: 0.347 }; // hem: the middle swag's lowest point, in cloth widths // osamu's tablecloth front (obj/vamp-cloth-front.webp)
   const reduce = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
 
   // osamu's picture (2026-11-10): the two halves of a velvet drape meet in the middle of the shelf under a gold knot
   // and tassel, their tails falling at the shelf's ends. Seven ruby drops hang between them, each on its own gold chain
   // that runs up behind the velvet to somewhere under the shelf nobody can see. [across the pair, the crystal's top
   // below the shelf] in pair widths, read off their picture: the middle one lowest, the two outer ones over the tails.
-  const DROPS = [[0.125, 0.54], [0.25, 0.367], [0.385, 0.452], [0.5, 0.64], [0.615, 0.452], [0.75, 0.367], [0.875, 0.54]];
+  // v345 (osamu: with the tablecloth the hanging lights were too long): each crystal now hangs just below the cloth's hem
+  const DROPS = [[0.125, 0.27], [0.25, 0.23], [0.385, 0.29], [0.5, 0.34], [0.615, 0.29], [0.75, 0.23], [0.875, 0.27]];
   function drapesEl(w, cfg) {
     // a phone's shelf takes one pair; a wide one hangs as many phone-sized pairs side by side
-    const n = Math.max(1, Math.round(w / 430)), cell = w / n;
+    // an odd number of cloths, so one cloth's middle swag is always in the middle of the shelf, over the chandelier
+    const n = Math.max(1, 2 * Math.round((w / 430 - 1) / 2) + 1), cell = w / n;
     const cw = cell / 2, ch = cw * CO.h / CO.w, k = cw / CO.w, lift = CO.tuck * ch;
     const dh = 0.2 * cell, dw = dh * DR.w / DR.h;
     const parts = [], knots = [], drops = [];
+    // v344 (osamu): the drapes became a tablecloth: osamu's Gemini cloth lies on the shelf (its top, behind the books, is
+    // the shelf's ::before, see style.css) and its front hangs over the shelf's front edge, one cloth per phone-sized cell
+    const clH = cell * CL.h / CL.w;
     for (let c = 0; c < n; c++) {
       const x = c * cell;
-      parts.push(`<div class="vSwag" style="left:${f1(x)}px;top:${f1(-lift)}px;width:${f1(cw)}px;height:${f1(ch)}px;transform-origin:0 0"><img src="obj/vamp-drapeL.webp" alt="" draggable="false" decoding="async"></div>`,
-        `<div class="vSwag" style="left:${f1(x + cw)}px;top:${f1(-lift)}px;width:${f1(cw)}px;height:${f1(ch)}px;transform-origin:100% 0"><img src="obj/vamp-drapeR.webp" alt="" draggable="false" decoding="async"></div>`);
-      knots.push(`<div class="vKnot" style="left:${f1(x + cw - KN.cx * k)}px;top:${f1(-lift + 0.006 * ch - KN.cy * k + 6)}px;width:${f1(KN.w * k)}px;height:${f1(KN.h * k)}px"><img src="obj/vamp-knot.webp" alt="" draggable="false" decoding="async"></div>`);
+      parts.push(`<div class="vSwag vCloth" style="left:${f1(x)}px;top:-16px;width:${f1(cell)}px;height:${f1(clH)}px;transform-origin:50% 0"><img src="obj/vamp-cloth-front.webp" alt="" draggable="false" decoding="async"></div>`);
       DROPS.forEach(([u, v]) => { const top = v * cell; drops.push({ cx: x + u * cell, top, dh, len: top + dh, th: 0, om: 0, els: [] }); });
     }
-    const box = (d, i, cls) => `<div class="${cls}" data-n="${i}" style="left:${f1(d.cx - dw / 2)}px;top:0;width:${f1(dw)}px;height:${f1(d.top + d.dh)}px;transform-origin:50% 0;--i:${i}">`;
-    // the drops hang behind the velvet, chains and crystals both (osamu: they're under the drape)
-    const back = drops.map((d, i) => box(d, i, "vDrop") + `<i class="vChain" style="height:${f1(d.top + d.dh * 0.03)}px"></i></div>`).join("");
-    const front = drops.map((d, i) => box(d, i, "vDrop vDropF")
-      + `<i class="vHalo" style="top:${f1(d.top + d.dh * 0.6)}px;width:${f1(d.dh * 1.3)}px;height:${f1(d.dh * 1.3)}px"></i>`
-      + `<img src="obj/vamp-drop.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.top)}px;height:${f1(d.dh)}px"></div>`).join("");
+    // v346 (osamu: the crystals were too many and uneven): ONE bronze bat chandelier per shelf, osamu's Gemini painting of
+    // their photo, hanging from under the shelf behind the cloth with its two glass shades below the hem. It is the
+    // switch (tap) and swings on its chain (swipe); lit, its shades glow red from inside
+    drops.length = 0;
+    // it hangs on its chain from under the shelf, behind the cloth, and comes out just below the middle swag's hem
+    const bw = Math.min(240, 0.5 * Math.min(w, 430)), bh = bw * BAT.h / BAT.w, bcx = w / 2, by = CL.hem * cell - 16 + 2;
+    const bd = { cx: bcx, top: by, dh: bh, hw: bw * 0.48, len: by + bh * 0.5, th: 0, om: 0, els: [], chain: 1 };
+    drops.push(bd);
+    const halos = BAT.shades.map(([u, v]) => `<i class="vHalo" style="left:${f1(u * bw)}px;top:${f1(v * bh)}px;width:${f1(bw * 0.62)}px;height:${f1(bw * 0.62)}px"></i>`).join("");
+    const back = `<div class="vDrop vBat" data-n="0" style="left:${f1(bcx - bw / 2)}px;top:${f1(by)}px;width:${f1(bw)}px;height:${f1(bh)}px;transform-origin:50% 0;--i:0">`
+      + `<img src="obj/vamp-batlamp.webp" alt="" draggable="false" decoding="async" style="top:0;height:100%"><img class="vBatLit" src="obj/vamp-batlamp-lit2.webp" alt="" draggable="false" decoding="async" style="top:0;height:100%">${halos}</div>`;
+    const front = "";
     const el = document.createElement("div");
     el.className = "lights vampDrapes" + (cfg.on ? " on" : "");
-    const bottom = Math.max(ch - lift, ...drops.map((d) => d.top + d.dh)) + 8;
+    const bottom = Math.max(clH - 16, by + bh) + 8;
     el.style.height = Math.ceil(bottom) + "px";
-    el.innerHTML = `<div class="vIn">${back}${front}${parts.join("")}${knots.join("")}</div>`;
-    const bEls = el.querySelectorAll(".vDrop:not(.vDropF)"), fEls = el.querySelectorAll(".vDropF");
-    drops.forEach((d, i) => { d.els = [bEls[i], fEls[i]]; });
+    el.innerHTML = `<div class="vIn">${back}${front}${parts.join("")}</div>`;
+    el.style.setProperty("--vcell", f1(cell) + "px"); requestAnimationFrame(() => { const sh = el.closest(".shelf"); if (sh) sh.style.setProperty("--vcell", f1(cell) + "px"); });
+    bd.els = [el.querySelector(".vBat")];
     const swags = [...el.querySelectorAll(".vSwag")].map((s) => ({ el: s, b: 0, bv: 0 }));
     touch(el, drops, swags);
     return el;
@@ -199,8 +210,7 @@
     el.className = "lights cottageLotus" + (cfg.on ? " on" : "");
     el.style.height = Math.ceil(Math.max(...drops.map((d) => d.top + d.dh)) + 10) + "px";
     el.innerHTML = `<div class="vIn">${back}${front}${branches.join("")}</div>`;
-    const bEls = el.querySelectorAll(".vDrop:not(.vDropF)"), fEls = el.querySelectorAll(".vDropF");
-    drops.forEach((d, i) => { d.els = [bEls[i], fEls[i]]; });
+    bd.els = [el.querySelector(".vBat")];
     touch(el, drops, [], { quiet: true });
     return el;
   }
@@ -254,8 +264,7 @@
     el.style.height = Math.ceil(Math.max(wh - lift, ...drops.map((d) => d.top + d.dh)) + 10) + "px";
     // the suncatchers hang behind the wisteria; their light spots fall on the wall over everything
     el.innerHTML = `<div class="vIn">${back}${front}${garlands.join("")}<div class="fSpots">${spots.join("")}</div></div>`;
-    const bEls = el.querySelectorAll(".vDrop:not(.vDropF)"), fEls = el.querySelectorAll(".vDropF");
-    drops.forEach((d, i) => { d.els = [bEls[i], fEls[i]]; });
+    bd.els = [el.querySelector(".vBat")];
     const swags = [...el.querySelectorAll(".vSwag")].map((s2) => ({ el: s2, b: 0, bv: 0 }));
     touch(el, drops, swags);
     return el;

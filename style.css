@@ -2367,3 +2367,20 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 /* v342 (osamu: the calla candle & lily pens showed two shadow angles in 3D): their painted floor shadow fell to the left while
    the 3D light casts every shadow to the right, so in 3D only the light's shadow stays */
 .shelf.is3d .ornament .bakedSh { display: none; }
+/* v344 (osamu: the vampire drapes become a tablecloth for the shelf): the cloth's top lies on the shelf behind the books,
+   one cloth per phone-sized cell like its front (--vcell from vamp.js), and covers the whole 3D floor back to the wall */
+.shelf[data-lights="vampDrapes"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d); background: url(obj/vamp-cloth-top2.webp) 0 0 / var(--vcell, 412px) 100% repeat-x;
+  filter: brightness(.62); }
+.shelf.is3d[data-lights="vampDrapes"] .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+.lights.vampDrapes .vCloth img { filter: drop-shadow(0 4px 4px rgba(10,0,4,.45)) brightness(.86); }
+/* v346: osamu's bat chandelier (vamp.js): one per shelf, behind the cloth; lit, the shades glow red from inside */
+.lights.vampDrapes .vBat img { filter: brightness(.7) saturate(.95) drop-shadow(0 3px 3px rgba(10,0,4,.5)); }
+.lights.vampDrapes .vBat .vBatLit { filter: none; opacity: 0; transition: opacity .45s ease; }
+.lights.vampDrapes.on .vBat img:not(.vBatLit) { filter: brightness(.8) saturate(.95) drop-shadow(0 3px 3px rgba(10,0,4,.5)); }
+.lights.vampDrapes.on .vBat .vBatLit { opacity: 1; filter: drop-shadow(0 0 6px rgba(255,50,60,.7)); }
+.lights.vampDrapes .vBat .vHalo { background: radial-gradient(closest-side, rgba(255,60,70,.5), rgba(200,10,40,.2) 50%, transparent 100%); }
+/* v347 (osamu: the red could be moodier): deeper blood-red shades, a low smouldering halo instead of a bright pink one */
+.lights.vampDrapes.on .vBat .vBatLit { filter: drop-shadow(0 0 5px rgba(150,8,14,.75)); }
+.lights.vampDrapes .vBat .vHalo { background: radial-gradient(closest-side, rgba(170,10,18,.42), rgba(90,0,8,.2) 55%, transparent 100%); mix-blend-mode: screen; }
+.lights.vampDrapes.on .vBat img:not(.vBatLit) { filter: brightness(.62) saturate(.9) drop-shadow(0 3px 3px rgba(10,0,4,.5)); }
