@@ -266,8 +266,11 @@ vec2 gLayer(vec3 p, float d, float sz) {
     // v329: osamu chose the painted lamp again, made to work like this one: the model's case, bullet and footprint are hidden and
     // only its light, floor pool and cable are used, at the painted bullet's place
     // v334 (osamu: the shadow must match the lamp, like the 3D one): the model's own soft footprint shadow stays under the painted lamp
-    if (!LIP_3D) { cs.visible = false; if (!LIP_HYBRID) bm.visible = false;
-      else { // only the case's top rim and the inside of the tube, which show through the painting's cut; the painted body covers the rest
+    // v335 (osamu's 3D screenshot): and its real cast shadow too, running back to the wall: the case and bullet stay in the scene
+    // but draw nothing, so only their shadow shows under the painted lamp
+    if (!LIP_3D) { const ghost = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }); cs.material = ghost; cs.castShadow = true; cs.receiveShadow = false;
+      if (!LIP_HYBRID) { bm.material = ghost; bm.castShadow = true; }
+      if (LIP_HYBRID) { // only the case's top rim and the inside of the tube, which show through the painting's cut; the painted body covers the rest
         const P = (r, y) => new THREE.Vector2(r, y), rim = new THREE.Mesh(new THREE.LatheGeometry([P(27.4, 146), P(27.6, 150), P(28.2, 151.4), P(28, 153.4), P(26.6, 154.2), P(25.4, 152.6), P(25.4, 100)], 72), gold);
         rim.position.y = LIP_DY; rim.castShadow = false; rim.receiveShadow = true; group.add(rim); } }
     return { group, bullet, redMat, U, light, pool, cable, cableKey: "", rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
