@@ -182,6 +182,11 @@
   }
   const noCast = (o) => o.traverse((m) => { if (m.isMesh) m.castShadow = false; });
   // ---- the 3D lipstick lamp, measured off osamu's painting (units: the painting's 95.3 x 200 box, y up from the case's foot)
+  const LIP_3D = false;
+  // v331: off again; the lamp is all pictures now (closet.js). v330 (osamu): the painted case (closet-lipstick-case4, its opening and the back of its rim cut out) with the 3D bullet. The 3D
+  // case stays behind it, so only its back rim and inside show through the cut, and the bullet rises in front of them. Its rim
+  // sits LIP_DY lower than the model's to meet the painting
+  const LIP_HYBRID = false, LIP_DY = 0, LIP_RIM_S = 149.7; // LIP_RIM_S: the painted rim's height in picture units
   const LIP_VW = 95.3, LIP_CX = 36.7, LIP_BASE_R = 34.4, LIP_REST = 38.5;
   let lipShared = null;
   function lipParts() {
@@ -219,7 +224,7 @@
     const S = lipParts(), group = new THREE.Group();
     const gold = new THREE.MeshStandardMaterial({ color: "#fff6dc", map: S.goldTex, metalness: 0.9, roughness: 0.2, envMap: S.envTex, envMapIntensity: 1.6, side: THREE.DoubleSide });
     const cs = new THREE.Mesh(S.caseGeo, gold); cs.castShadow = true; cs.receiveShadow = true; group.add(cs);
-    footShadow(group, 0, 0, 2 * LIP_BASE_R, 2 * LIP_BASE_R, true);
+    const fs0 = group.children.length; footShadow(group, 0, 0, 2 * LIP_BASE_R, 2 * LIP_BASE_R, true); const feet = group.children.slice(fs0);
     // v309: the glitter is IN the bullet (osamu: "the small glitters in it to shine, not sparkles around it"). Each fleck is a
     // tiny tilted mirror fixed in the lipstick: some catch the light and glint as it turns and twinkles, most stay a soft shimmer
     const U = { uTime: { value: 0 }, uGlow: { value: 0 } };
@@ -258,6 +263,12 @@ vec2 gLayer(vec3 p, float d, float sz) {
     const cable = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: "#141214", roughness: 0.55, metalness: 0, clippingPlanes: [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)] }));
     cable.castShadow = true; cable.receiveShadow = true;
     noCast(group);
+    // v329: osamu chose the painted lamp again, made to work like this one: the model's case, bullet and footprint are hidden and
+    // only its light, floor pool and cable are used, at the painted bullet's place
+    if (!LIP_3D) { feet.forEach((f) => (f.visible = false)); cs.visible = false; if (!LIP_HYBRID) bm.visible = false;
+      else { // only the case's top rim and the inside of the tube, which show through the painting's cut; the painted body covers the rest
+        const P = (r, y) => new THREE.Vector2(r, y), rim = new THREE.Mesh(new THREE.LatheGeometry([P(27.4, 146), P(27.6, 150), P(28.2, 151.4), P(28, 153.4), P(26.6, 154.2), P(25.4, 152.6), P(25.4, 100)], 72), gold);
+        rim.position.y = LIP_DY; rim.castShadow = false; rim.receiveShadow = true; group.add(rim); } }
     return { group, bullet, redMat, U, light, pool, cable, cableKey: "", rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
   }
 
@@ -496,7 +507,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
       const L = rec.lip; tween(L.rise, now); tween(L.glow, now);
       // v310: it twists open like a real lipstick (osamu's videos): the bullet turns as it rides up, one full turn in all,
       // in three hand twists, and comes to rest facing the way the painting does
-      L.bullet.position.y = -LIP_REST * (1 - L.rise.v); L.bullet.rotation.y = -Math.PI * 2 * (1 - L.rise.v);
+      L.bullet.position.y = (LIP_HYBRID && !LIP_3D ? LIP_DY : 0) - LIP_REST * (1 - L.rise.v); L.bullet.rotation.y = -Math.PI * 2 * (1 - L.rise.v);
       const g = L.glow.v;
       L.U.uTime.value = (now / 1000) % 1000; L.U.uGlow.value = L.glow.v;
       L.light.visible = g > 0.01; L.light.intensity = L.lightMax * g;
@@ -517,7 +528,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     // v327: the gift boxes' and shopping bags' shadow lies on the 3D floor itself (osamu: the shadow must end exactly at the back
     // edge of the shelf). It is drawn from each strip's own footing: dark under and right round the bases, soft at the sides and
     // front, and running straight back to the wall line, where the floor ends, so it stops exactly at the back edge
-    const SOFT_FOOT = new Set(["giftBoxes", "shoppingBags"]);
+    const SOFT_FOOT = new Set(["giftBoxes", "shoppingBags", "lipstickLamp"]);
     function floorShadow(rec, ob, zs, H, zw) {
       const front = -1 + H * 0.06, ext = H * 0.14, m = ob.w * 0.08, x0 = ob.x - m, x1 = ob.x + ob.w + m, back = zw;
       const key = [x0, x1, back, ...zs.map((z) => (z == null ? "n" : z.toFixed(1)))].join();
@@ -654,7 +665,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
             rec.mesh.visible = ob.visible !== false;
             // v322: the gift box picture keeps only its own soft footprint shadow (drawn with the picture); the light's long cast
             // shadow fell to the right as a hard block cut off at the wall (osamu: "the shadows are not right at all")
-            rec.mesh.castShadow = ob.kind !== "giftBoxes" && ob.kind !== "shoppingBags";
+            rec.mesh.castShadow = !SOFT_FOOT.has(ob.kind);
             { // place each strip: its foot on the floor where the floor shows at that height on screen, scaled for being further back
               const P = rec.mesh.geometry.attributes.position, onPile = ob.y > 1, zs = [];
               for (let k = 0; k < rec.NC; k++) {
@@ -680,9 +691,15 @@ vec2 gLayer(vec3 p, float d, float sz) {
             if (ob.hasLamp) {
               if (!rec.lip) { rec.lip = buildLipstick(); scene.add(rec.lip.group); }
               const L = rec.lip, k = ob.w / LIP_VW, on = !!ob.lamp && ob.visible !== false, now = performance.now();
-              rec.mesh.visible = false; // the model casts its own shadow
+              if (LIP_3D) rec.mesh.visible = false; // the model casts its own shadow
               L.group.visible = ob.visible !== false;
               L.group.scale.setScalar(k); L.group.position.set(ob.x + LIP_CX * k, ob.y, -LIP_BASE_R * k - 1);
+              if (LIP_HYBRID && !LIP_3D) {
+                // the 3D rim and bullet must land exactly on the painted case: the painting is flat on the screen, the model stands a
+                // little back, so place and size it so its rim's centre projects onto the painted rim's centre
+                const zc = -LIP_BASE_R * k - 1, mg = Dc / (Dc - zc), sx = ob.x + LIP_CX * k, sy = ob.y + LIP_RIM_S * k, k2 = k / mg;
+                L.group.scale.setScalar(k2); L.group.position.set(cx + (sx - cx) / mg, eyeY + (sy - eyeY) / mg - 154 * k2, zc);
+              }
               if (!L.pool.parent) scene.add(L.pool, L.cable);
               const lx = ob.x + LIP_CX * k, lz = -LIP_BASE_R * k - 1, Rb = LIP_BASE_R * k;
               L.lightMax = 26000 * (H / 100) ** 2; L.light.distance = H * 1.8;

@@ -1489,6 +1489,26 @@ html[data-bdk="closet"] .slot .book { --tilt: 14; }
 .ornament[data-kind="lipstickLamp"].lit .lpRed { filter: brightness(1.3) saturate(1.2); transition: filter 1.1s ease 1.7s; }
 .ornament[data-kind="lipstickLamp"] .lpShine { opacity: 0; }
 .ornament[data-kind="lipstickLamp"].twistUp .lpShine { animation: lpShine .75s ease-in-out 3; }
+/* v329: it twists open like a real lipstick (osamu's videos, as the 3D lamp did): three twists of the hand, each easing in and
+   out with a short pause to re-grip, the bullet rising a third of the way with each while its glitter turns round with it */
+.ornament[data-kind="lipstickLamp"].twistUp .lpBullet { animation: lpRise 2.3s both; }
+.ornament[data-kind="lipstickLamp"].twistDown .lpBullet { animation: lpSink 1.5s both; }
+.ornament[data-kind="lipstickLamp"].twistUp .lpSpin { animation: lpTurn 2.3s both; }
+.ornament[data-kind="lipstickLamp"].twistDown .lpSpin { animation: lpTurnBack 1.5s both; }
+@keyframes lpRise { 0% { transform: translateY(var(--rest)); animation-timing-function: cubic-bezier(.42,0,.4,1); } 27% { transform: translateY(calc(var(--rest) * .667)); } 33% { transform: translateY(calc(var(--rest) * .667)); animation-timing-function: cubic-bezier(.42,0,.4,1); }
+  60% { transform: translateY(calc(var(--rest) * .333)); } 66% { transform: translateY(calc(var(--rest) * .333)); animation-timing-function: cubic-bezier(.42,0,.4,1); } 93%, 100% { transform: translateY(0); } }
+@keyframes lpSink { 0% { transform: translateY(0); animation-timing-function: cubic-bezier(.42,0,.4,1); } 27% { transform: translateY(calc(var(--rest) * .333)); } 33% { transform: translateY(calc(var(--rest) * .333)); animation-timing-function: cubic-bezier(.42,0,.4,1); }
+  60% { transform: translateY(calc(var(--rest) * .667)); } 66% { transform: translateY(calc(var(--rest) * .667)); animation-timing-function: cubic-bezier(.42,0,.4,1); } 93%, 100% { transform: translateY(var(--rest)); } }
+@keyframes lpTurn { 0% { transform: translateX(0); animation-timing-function: cubic-bezier(.42,0,.4,1); } 27%, 33% { transform: translateX(calc(var(--spin) * -.333)); animation-timing-function: cubic-bezier(.42,0,.4,1); } 60%, 66% { transform: translateX(calc(var(--spin) * -.667)); animation-timing-function: cubic-bezier(.42,0,.4,1); } 93%, 100% { transform: translateX(calc(var(--spin) * -1)); } }
+@keyframes lpTurnBack { 0% { transform: translateX(calc(var(--spin) * -1)); animation-timing-function: cubic-bezier(.42,0,.4,1); } 27%, 33% { transform: translateX(calc(var(--spin) * -.667)); animation-timing-function: cubic-bezier(.42,0,.4,1); } 60%, 66% { transform: translateX(calc(var(--spin) * -.333)); animation-timing-function: cubic-bezier(.42,0,.4,1); } 93%, 100% { transform: translateX(0); } }
+/* the glitter is IN the bullet: tiny flecks that shimmer softly, a few catching the light and glinting; brighter once it's lit */
+.ornament[data-kind="lipstickLamp"] .lpFl { opacity: .28; animation: lpFleck var(--t) ease-in-out var(--d) infinite alternate; }
+.ornament[data-kind="lipstickLamp"] .lpGl { opacity: 0; animation: lpGlint var(--t) ease-in-out var(--d) infinite; }
+.ornament[data-kind="lipstickLamp"] .lpGlit { opacity: .55; transition: opacity .6s ease; }
+.ornament[data-kind="lipstickLamp"].lit .lpGlit { opacity: 1; transition: opacity 1.1s ease 1.7s; }
+@keyframes lpFleck { 0% { opacity: .3; } 100% { opacity: .9; } }
+@keyframes lpGlint { 0%, 70%, 100% { opacity: 0; } 82% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"] .lpFl, .ornament[data-kind="lipstickLamp"] .lpGl, .ornament[data-kind="lipstickLamp"] .lpBullet, .ornament[data-kind="lipstickLamp"] .lpSpin { animation: none !important; } }
 .ornament[data-kind="lipstickLamp"].twistDown .lpShine { animation: lpShineBack .65s ease-in-out 2; }
 @keyframes lpShine { 0% { transform: translateX(0); opacity: 0; } 25%, 75% { opacity: 1; } 100% { transform: translateX(var(--run)); opacity: 0; } }
 @keyframes lpShineBack { 0% { transform: translateX(var(--run)); opacity: 0; } 25%, 75% { opacity: 1; } 100% { transform: translateX(0); opacity: 0; } }
@@ -2316,8 +2336,19 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 /* v303: in 3D the lamp's pool of light lies on the 3D floor; the flat screen-space glow and pool go */
 .shelf.is3d .lpMood, .shelf.is3d .ornament[data-kind="lipstickLamp"] .ornPool { display: none !important; }
 
-/* v307: in 3D the lipstick lamp is a real 3D model; the painting stays only as the tap target */
-.shelf.is3d .ornament[data-kind="lipstickLamp"]:not(.wsO) svg,
-.shelf.is3d .ornament[data-kind="lipstickLamp"]:not(.wsO) .ornGlow { opacity: 0 !important; }
+/* v329: in 3D the painted lipstick lamp shows again (osamu chose it over the model); the 3D scene gives it real light, its floor
+   pool, its cable and a floor shadow, so the flat glow and the painted foot shadow go */
+.shelf.is3d .ornament[data-kind="lipstickLamp"]:not(.wsO) .ornGlow, .shelf.is3d .ornament[data-kind="lipstickLamp"] .lpFoot { opacity: 0 !important; }
 /* v327: in 3D the gift boxes' and shopping bags' shadow is drawn on the 3D floor (it ends exactly at the back edge), so the flat one goes */
 .shelf.is3d .ornament:is([data-kind="giftBoxes"], [data-kind="shoppingBags"]) image[href*="-shadow"] { display: none; }
+/* v329: no halo round the bullet (osamu: the glitter shines IN the bullet, nothing floating around it) */
+.ornament[data-kind="lipstickLamp"] .lpHalo { display: none; }
+/* v331: osamu's new painted case with the photographed 3D bullet, in every mode. Down when off, up when lit; while lit it plays its
+   16 glint frames, and while it twists closet.js plays the 24 turning frames */
+.ornament[data-kind="lipstickLamp"] .lpB2 { transform: translateY(var(--rest)); }
+.ornament[data-kind="lipstickLamp"].lit .lpB2 { transform: none; }
+.ornament[data-kind="lipstickLamp"] .lpSheetG { display: none; }
+.ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpSheetG { display: inline; animation: lpGlRun 2.1s steps(16) infinite; }
+.ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpSheetT { display: none; }
+@keyframes lpGlRun { to { transform: translateX(-4288px); } }
+@media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .lpSheetG { animation: none; } }
