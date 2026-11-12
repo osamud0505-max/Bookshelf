@@ -544,9 +544,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
       // taken as solid, so it stays dark right up to the wall line and ends there, at the shelf's back edge
       const CW = 192, CH = 96, A = new Float32Array(CW * CH), n = zs.length;
       const zy = (z) => ((z - back) / (front - back)) * CH; // canvas y: 0 at the wall line, CH at the front of the patch
-      // v336 (osamu: between the bag and the boxes the shadow filled the whole gap, reading as a shadow on the wall): the side blur is
-      // a fixed small width on the shelf (about 2.5 units a pass), so the floor between two objects stays lit and the shelf's back edge shows
-      const R = Math.max(1, Math.round(2.5 / ((x1 - x0) / CW))), RY = 4, yMax = CH - RY * 2 - 2;
+      const R = 7, RY = 4, yMax = CH - RY * 2 - 2;
       for (let x = 0; x < CW; x++) {
         const u = (x / CW) * (x1 - x0) - m, k = Math.floor((u / ob.w) * n);
         if (u < 0 || k < 0 || k >= n || zs[k] == null) continue;
@@ -655,7 +653,6 @@ vec2 gLayer(vec3 p, float d, float sz) {
                 for (let y = c2.height - 1; y >= 0 && low < 0; y--) for (let x = x0; x < x1; x++) if (a[(y * c2.width + x) * 4 + 3] > 128) { low = y; break; }
                 foot.push(low < 0 ? null : (c2.height - 1 - low) / c2.height);
               }
-              const solid = foot.map((f) => f != null); // v336: which strips really hold something (the floor shadow skips the empty ones)
               // empty strips take their neighbour's footing; a strip never stands further back than the lower of its neighbours
               // plus a little, so one stray pixel doesn't tear the shadow
               for (let k = 0; k < NC; k++) if (foot[k] == null) { let d = 1; while (d < NC && foot[k - d] == null && foot[k + d] == null) d++; foot[k] = foot[k - d] ?? foot[k + d] ?? 0; }
@@ -667,7 +664,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
               }
               const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2)); geo.setIndex(idx);
               const mesh = new THREE.Mesh(geo, depth); mesh.castShadow = true; mesh.frustumCulled = false;
-              scene.add(mesh); rec = { mesh, tex, depth, img: ob.img, foot, NC, solid }; objs.set(ob.id, rec);
+              scene.add(mesh); rec = { mesh, tex, depth, img: ob.img, foot, NC }; objs.set(ob.id, rec);
             }
             rec.mesh.visible = ob.visible !== false;
             // v322: the gift box picture keeps only its own soft footprint shadow (drawn with the picture); the light's long cast
@@ -683,7 +680,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
                 P.array.set([X(xa), yb, z, X(xb), yb, z, X(xa), yt, z, X(xb), yt, z], k * 12); zs.push(onPile ? null : z);
               }
               P.needsUpdate = true; rec.mesh.geometry.computeBoundingSphere();
-              if (SOFT_FOOT.has(ob.kind) && !OWN_FOOT.has(ob.kind)) floorShadow(rec, ob, zs.map((z, k) => (rec.solid[k] ? z : null)), H, zw);
+              if (SOFT_FOOT.has(ob.kind) && !OWN_FOOT.has(ob.kind)) floorShadow(rec, ob, zs, H, zw);
             }
             // v322: osamu went back to a picture for the gift boxes (a Gemini render that looks 3D), so the hand-built model is off;
             // the picture casts its shadow through the hidden strips like the bags. buildGiftBoxes stays in case it comes back
