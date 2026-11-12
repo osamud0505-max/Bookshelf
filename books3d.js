@@ -338,17 +338,47 @@
             live.add(ob.id);
             let rec = objs.get(ob.id);
             if (!rec || rec.img !== ob.img) {
-              if (rec) { scene.remove(rec.mesh); if (rec.light) scene.remove(rec.light); if (rec.pool) { scene.remove(rec.pool); rec.pool.material.dispose(); } rec.tex.dispose(); rec.depth.dispose(); }
+              if (rec) { scene.remove(rec.mesh); if (rec.light) scene.remove(rec.light); if (rec.pool) { scene.remove(rec.pool); rec.pool.material.dispose(); } rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
               const c2 = document.createElement("canvas"); c2.width = Math.max(2, Math.round(ob.w * 2)); c2.height = Math.max(2, Math.round(ob.h * 2)); c2.getContext("2d").drawImage(ob.img, 0, 0, c2.width, c2.height);
               const tex = new THREE.CanvasTexture(c2);
               // three's shadow pass takes the cut-out's picture and alpha test from the object's own material
               const depth = new THREE.MeshBasicMaterial({ map: tex, alphaTest: 0.5, colorWrite: false, depthWrite: false, side: THREE.DoubleSide });
-              const mesh = new THREE.Mesh(unitPlane, depth); mesh.castShadow = true;
-              scene.add(mesh); rec = { mesh, tex, depth, img: ob.img }; objs.set(ob.id, rec);
+              // v306 (osamu: the bag at the back looked like it floats): a picture can hold several things one behind the other,
+              // the ones further back standing higher up the picture. So the cut-out is split into thin upright strips, and each
+              // strip stands on the shelf floor as far back as its own lowest solid point shows it standing
+              const NC = Math.max(8, Math.min(64, Math.round(ob.w / 4))), a = c2.getContext("2d").getImageData(0, 0, c2.width, c2.height).data;
+              const foot = []; // per strip: how far up from the picture's bottom its lowest solid point is (0..1)
+              for (let k = 0; k < NC; k++) {
+                const x0 = Math.floor((k / NC) * c2.width), x1 = Math.max(x0 + 1, Math.floor(((k + 1) / NC) * c2.width));
+                let low = -1;
+                for (let y = c2.height - 1; y >= 0 && low < 0; y--) for (let x = x0; x < x1; x++) if (a[(y * c2.width + x) * 4 + 3] > 128) { low = y; break; }
+                foot.push(low < 0 ? null : (c2.height - 1 - low) / c2.height);
+              }
+              // empty strips take their neighbour's footing; a strip never stands further back than the lower of its neighbours
+              // plus a little, so one stray pixel doesn't tear the shadow
+              for (let k = 0; k < NC; k++) if (foot[k] == null) { let d = 1; while (d < NC && foot[k - d] == null && foot[k + d] == null) d++; foot[k] = foot[k - d] ?? foot[k + d] ?? 0; }
+              const pos = new Float32Array(NC * 4 * 3), uv = new Float32Array(NC * 4 * 2), idx = [];
+              for (let k = 0; k < NC; k++) {
+                const u0 = Math.max(0, (k - 0.6) / NC), u1 = Math.min(1, (k + 1.6) / NC), v0 = foot[k]; // strips overlap so no light slips between them
+                uv.set([u0, v0, u1, v0, u0, 1, u1, 1], k * 8);
+                const q = k * 4; idx.push(q, q + 1, q + 3, q, q + 3, q + 2);
+              }
+              const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2)); geo.setIndex(idx);
+              const mesh = new THREE.Mesh(geo, depth); mesh.castShadow = true; mesh.frustumCulled = false;
+              scene.add(mesh); rec = { mesh, tex, depth, img: ob.img, foot, NC }; objs.set(ob.id, rec);
             }
-            const zc = -1; // v301: at the object's own base line, so its shadow starts right under it (osamu: a gap showed when it stood further back)
             rec.mesh.visible = ob.visible !== false;
-            rec.mesh.scale.set(ob.w, ob.h, 1); rec.mesh.position.set(ob.x + ob.w / 2, ob.y + ob.h / 2, zc);
+            { // place each strip: its foot on the floor where the floor shows at that height on screen, scaled for being further back
+              const P = rec.mesh.geometry.attributes.position, onPile = ob.y > 1;
+              for (let k = 0; k < rec.NC; k++) {
+                const sB = onPile ? 0 : rec.foot[k] * ob.h; // screen px above the floor's front line
+                const z = onPile ? -1 : Math.max(zw + 2, Math.min(-1, (sB * Dc) / (sB - eyeY))), sc = (Dc - z) / Dc;
+                const yb = onPile ? ob.y : 0, yt = yb + (ob.h - sB) * sc, xa = ob.x + Math.max(0, (k - 0.6) / rec.NC) * ob.w, xb = ob.x + Math.min(1, (k + 1.6) / rec.NC) * ob.w;
+                const X = (x) => cx + (x - cx) * sc;
+                P.array.set([X(xa), yb, z, X(xb), yb, z, X(xa), yt, z, X(xb), yt, z], k * 12);
+              }
+              P.needsUpdate = true; rec.mesh.geometry.computeBoundingSphere();
+            }
             // v302: a lit lipstick lamp lights the real books beside it, warm on the sides that face it (osamu: the flat
             // light boxes laid over the books looked bad)
             // v302/303: a lit lipstick lamp lights the real books beside it and lays a warm pool on the floor. v304 (osamu: the
@@ -370,7 +400,7 @@
               applyLamp(rec);
             }
           }
-          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.light) scene.remove(rec.light); if (rec.pool) { scene.remove(rec.pool); rec.pool.material.dispose(); } rec.tex.dispose(); rec.depth.dispose(); objs.delete(id); } }
+          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.light) scene.remove(rec.light); if (rec.pool) { scene.remove(rec.pool); rec.pool.material.dispose(); } rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
         { const x0 = -400, x1 = viewW + 400, yt = stageH + top + 400, P = roomGeo.attributes.position;
