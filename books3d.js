@@ -188,16 +188,13 @@
     const caseGeo = new THREE.LatheGeometry(prof, 72);
     // the bullet: a round stick with a rounded tip, tilted so it's high at the back left like the painting. v308: it had a flat,
     // sharp-edged cut that looked like the bullet was sliced in half (osamu)
-    const R = 17.6, bp = [new THREE.Vector2(0, -40), new THREE.Vector2(R, -40)];
-    for (let i = 0; i <= 8; i++) bp.push(new THREE.Vector2(R, -40 + i * 8));
-    for (let i = 1; i <= 16; i++) { const t = (i / 16) * Math.PI / 2; bp.push(new THREE.Vector2(Math.max(0.001, R * Math.cos(t)), 24 + 16 * Math.sin(t))); }
+    const R = 24.6, bp = [new THREE.Vector2(0, -40), new THREE.Vector2(R, -40)]; // v310: fills the tube like the real lamp
+    for (let i = 0; i <= 8; i++) bp.push(new THREE.Vector2(R, -40 + i * 7.5));
+    for (let i = 1; i <= 16; i++) { const t = (i / 16) * Math.PI / 2; bp.push(new THREE.Vector2(Math.max(0.001, R * Math.cos(t)), 20 + 20 * Math.sin(t))); }
     const bulletGeo = new THREE.LatheGeometry(bp, 56), pos = bulletGeo.attributes.position;
-    for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), z = pos.getZ(i), y = pos.getY(i), u = Math.min(1, Math.max(0, (y - 2) / 38)), w = u * u * (3 - 2 * u);
-      pos.setY(i, y - w * (((x + R) / (2 * R)) * 18 + ((z + R) / (2 * R)) * 3)); }
+    for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), z = pos.getZ(i), y = pos.getY(i), u = Math.min(1, Math.max(0, (y + 6) / 46)), w = u * u * (3 - 2 * u);
+      pos.setY(i, y - w * (((x + R) / (2 * R)) * 24 + ((z + R) / (2 * R)) * 3)); }
     bulletGeo.translate(0, 155, 0); bulletGeo.computeVertexNormals();
-    // v309: the inner gold sleeve that holds the bullet and rises with it, with a rolled rim and a fine groove (osamu: more detail)
-    const V = (r, y) => new THREE.Vector2(r, y);
-    const sleeveGeo = new THREE.LatheGeometry([V(17.4, 100), V(20.6, 100), V(20.6, 150.5), V(20.1, 151.2), V(20.6, 151.9), V(20.6, 155.2), V(20.2, 156.8), V(19.0, 157.6), V(17.9, 157.2), V(17.7, 156)], 64);
     // a soft room to reflect, so the gold shines like metal instead of going brown: bright ceiling, pink walls, a few light strips
     const ev = document.createElement("canvas"); ev.width = 256; ev.height = 128; const e = ev.getContext("2d"), eg = e.createLinearGradient(0, 0, 0, 128);
     [[0, "#fffdf6"], [0.35, "#fff3ec"], [0.55, "#e9c4cc"], [0.8, "#a07882"], [1, "#4e3a40"]].forEach(([o, col]) => eg.addColorStop(o, col));
@@ -205,12 +202,12 @@
     e.fillStyle = "rgba(255,255,250,.95)"; [[30, 14], [96, 8], [150, 18], [214, 10], [118, 3], [180, 4]].forEach(([x, w]) => e.fillRect(x, 16, w, 58));
     e.fillStyle = "rgba(60,30,30,.55)"; [[60, 12], [130, 10], [235, 9]].forEach(([x, w]) => e.fillRect(x, 10, w, 80));
     const envTex = new THREE.CanvasTexture(ev); envTex.colorSpace = THREE.SRGBColorSpace; envTex.mapping = THREE.EquirectangularReflectionMapping;
-    lipShared = { goldTex, caseGeo, bulletGeo, sleeveGeo, envTex };
+    lipShared = { goldTex, caseGeo, bulletGeo, envTex };
     return lipShared;
   }
   function buildLipstick() {
     const S = lipParts(), group = new THREE.Group();
-    const gold = new THREE.MeshStandardMaterial({ color: "#fff3d8", map: S.goldTex, metalness: 0.75, roughness: 0.24, envMap: S.envTex, envMapIntensity: 1.3, side: THREE.DoubleSide });
+    const gold = new THREE.MeshStandardMaterial({ color: "#fff6dc", map: S.goldTex, metalness: 0.9, roughness: 0.2, envMap: S.envTex, envMapIntensity: 1.6, side: THREE.DoubleSide });
     const cs = new THREE.Mesh(S.caseGeo, gold); cs.castShadow = true; cs.receiveShadow = true; group.add(cs);
     // v309: the glitter is IN the bullet (osamu: "the small glitters in it to shine, not sparkles around it"). Each fleck is a
     // tiny tilted mirror fixed in the lipstick: some catch the light and glint as it turns and twinkles, most stay a soft shimmer
@@ -236,7 +233,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
   totalEmissiveRadiance += (1. - uGlow) * glint * vec3(.35, .25, .28); }`);
     };
     const bullet = new THREE.Group(), bm = new THREE.Mesh(S.bulletGeo, redMat); bm.castShadow = true; bullet.add(bm);
-    const sl = new THREE.Mesh(S.sleeveGeo, gold); sl.castShadow = true; bullet.add(sl); group.add(bullet);
+    group.add(bullet);
     return { group, bullet, redMat, U, rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
   }
 
@@ -321,11 +318,16 @@ vec2 gLayer(vec3 p, float d, float sz) {
     // case on the same timing as the painted one; once up it glows, with sparkles twinkling round its tip and no light thrown
     // round the shelf (osamu: light only on the bullet, magical and sparkly, not spread out)
     const bez = (x1, y1, x2, y2) => (t) => { const c = (u, a, b) => 3 * a * u * (1 - u) ** 2 + 3 * b * u * u * (1 - u) + u ** 3; let lo = 0, hi = 1; for (let i = 0; i < 22; i++) { const m = (lo + hi) / 2; if (c(m, x1, x2) < t) lo = m; else hi = m; } return c((lo + hi) / 2, y1, y2); };
-    const EASE = bez(0.25, 0.1, 0.25, 1), UP = bez(0.45, 0.05, 0.25, 1), DOWN = bez(0.55, 0, 0.35, 1);
+    const EASE = bez(0.25, 0.1, 0.25, 1), STROKE = bez(0.42, 0, 0.4, 1);
+    // three twists of the hand, each easing in and out with a short pause to re-grip between them
+    const twists = (t) => { const i = Math.min(2, Math.floor(t * 3)), u = Math.min(1, (t * 3 - i) / 0.82); return (i + STROKE(u)) / 3; };
+    const UP = twists, DOWN = twists;
     const tween = (o, now) => { if (!o.tr) return; const k = (now - o.tr.t0) / o.tr.dur; if (k >= 1) { o.v = o.tr.to; o.tr = null; } else if (k > 0) o.v = o.tr.from + (o.tr.to - o.tr.from) * o.tr.fn(k); };
     function applyLip(rec, now) {
       const L = rec.lip; tween(L.rise, now); tween(L.glow, now);
-      L.bullet.position.y = -LIP_REST * (1 - L.rise.v);
+      // v310: it twists open like a real lipstick (osamu's videos): the bullet turns as it rides up, one full turn in all,
+      // in three hand twists, and comes to rest facing the way the painting does
+      L.bullet.position.y = -LIP_REST * (1 - L.rise.v); L.bullet.rotation.y = -Math.PI * 2 * (1 - L.rise.v);
       const g = L.glow.v;
       L.U.uTime.value = (now / 1000) % 1000; L.U.uGlow.value = L.glow.v;
     }
