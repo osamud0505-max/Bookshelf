@@ -171,6 +171,67 @@
     g.putImageData(img, 0, 0);
     const t = new THREE.CanvasTexture(c); softCache.set(edge, t); return t;
   }
+  // ---- the 3D lipstick lamp, measured off osamu's painting (units: the painting's 95.3 x 200 box, y up from the case's foot)
+  const LIP_VW = 95.3, LIP_CX = 36.7, LIP_BASE_R = 34.4, LIP_REST = 38.5;
+  let lipShared = null;
+  function lipParts() {
+    if (lipShared) return lipShared;
+    // brushed gold: bright and dark bands running round the tube, like the painted highlights
+    const c = document.createElement("canvas"); c.width = 256; c.height = 4; const g = c.getContext("2d"), gr = g.createLinearGradient(0, 0, 256, 0);
+    [[0, "#6b4a1c"], [0.12, "#b88a3e"], [0.24, "#f4dc98"], [0.3, "#fff4cc"], [0.37, "#e2b866"], [0.5, "#9b7030"], [0.62, "#c79a4c"], [0.72, "#f0d48a"], [0.82, "#a87b36"], [1, "#6b4a1c"]].forEach(([o, col]) => gr.addColorStop(o, col));
+    g.fillStyle = gr; g.fillRect(0, 0, 256, 4);
+    const goldTex = new THREE.CanvasTexture(c); goldTex.colorSpace = THREE.SRGBColorSpace; goldTex.wrapS = THREE.RepeatWrapping;
+    // a four-pointed sparkle, and a soft round glow
+    const star = document.createElement("canvas"); star.width = star.height = 64; const s = star.getContext("2d");
+    const ray = (w, h) => { const r = s.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.25, "rgba(255,236,240,.75)"); r.addColorStop(1, "rgba(255,200,215,0)"); s.fillStyle = r; s.beginPath(); s.ellipse(32, 32, w, h, 0, 0, Math.PI * 2); s.fill(); };
+    ray(32, 2.6); ray(2.6, 32); ray(9, 9);
+    const starTex = new THREE.CanvasTexture(star); starTex.colorSpace = THREE.SRGBColorSpace;
+    const glow = document.createElement("canvas"); glow.width = glow.height = 128; const q = glow.getContext("2d"), rg = q.createRadialGradient(64, 64, 0, 64, 64, 64);
+    [[0, "rgba(255,240,236,.9)"], [0.25, "rgba(255,170,175,.55)"], [0.55, "rgba(255,110,130,.18)"], [1, "rgba(255,90,120,0)"]].forEach(([o, col]) => rg.addColorStop(o, col));
+    q.fillStyle = rg; q.fillRect(0, 0, 128, 128);
+    const glowTex = new THREE.CanvasTexture(glow); glowTex.colorSpace = THREE.SRGBColorSpace;
+    // the case: a ridged foot, then the tube with a rolled lip, open at the top so the bullet sits inside it
+    const P = (r, y) => new THREE.Vector2(r, y), prof = [P(0, 0), P(31.5, 0), P(33.6, 1.6), P(34.2, 6)];
+    for (let i = 0; i < 5; i++) { const y = 6 + i * 9.2; prof.push(P(34.4, y + 1.2), P(34.4, y + 6.6), P(32.6, y + 7.8), P(32.6, y + 8.4), P(34.4, y + 9.2)); }
+    prof.push(P(33.2, 54.5), P(29, 57), P(27.7, 60), P(27.7, 150), P(28.4, 151.4), P(28.2, 153.4), P(26.6, 154.2), P(25.4, 152.6), P(25.4, 110));
+    const caseGeo = new THREE.LatheGeometry(prof, 72);
+    // the bullet: a round stick with its tip cut on a slant, high at the back left like the painting
+    const bulletGeo = new THREE.CylinderGeometry(17.6, 17.6, 80, 48, 24, false);
+    const pos = bulletGeo.attributes.position, R = 17.6, top = 40;
+    for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), z = pos.getZ(i), cut = top - ((x + R) / (2 * R)) * 19 - ((z + R) / (2 * R)) * 4; if (pos.getY(i) > cut) pos.setY(i, cut); }
+    bulletGeo.translate(0, 155, 0); bulletGeo.computeVertexNormals();
+    // a soft room to reflect, so the gold shines like metal instead of going brown: bright ceiling, pink walls, a few light strips
+    const ev = document.createElement("canvas"); ev.width = 256; ev.height = 128; const e = ev.getContext("2d"), eg = e.createLinearGradient(0, 0, 0, 128);
+    [[0, "#fffdf6"], [0.35, "#fff3ec"], [0.55, "#e9c4cc"], [0.8, "#a07882"], [1, "#4e3a40"]].forEach(([o, col]) => eg.addColorStop(o, col));
+    e.fillStyle = eg; e.fillRect(0, 0, 256, 128);
+    e.fillStyle = "rgba(255,255,250,.9)"; [[30, 14], [96, 8], [150, 18], [214, 10]].forEach(([x, w]) => e.fillRect(x, 20, w, 50));
+    const envTex = new THREE.CanvasTexture(ev); envTex.colorSpace = THREE.SRGBColorSpace; envTex.mapping = THREE.EquirectangularReflectionMapping;
+    // glitter for the lit bullet: a warm pink glow with tiny bright specks that drift, so it shimmers
+    const gl = document.createElement("canvas"); gl.width = gl.height = 128; const h = gl.getContext("2d");
+    h.fillStyle = "#7a1a2c"; h.fillRect(0, 0, 128, 128);
+    for (let i = 0; i < 200; i++) { const x = (i * 73.13) % 128, y = (i * 41.77 + (i * i) % 37) % 128, b = 160 + (i * 29) % 96; h.fillStyle = `rgb(255,${b},${Math.min(255, b + 20)})`; h.fillRect(x, y, 1, 1); }
+    const glitTex = new THREE.CanvasTexture(gl); glitTex.colorSpace = THREE.SRGBColorSpace; glitTex.wrapS = glitTex.wrapT = THREE.RepeatWrapping; glitTex.repeat.set(2, 1.5);
+    lipShared = { goldTex, starTex, glowTex, caseGeo, bulletGeo, envTex, glitTex };
+    return lipShared;
+  }
+  function buildLipstick() {
+    const S = lipParts(), group = new THREE.Group();
+    const gold = new THREE.MeshStandardMaterial({ color: "#fff3d8", map: S.goldTex, metalness: 0.7, roughness: 0.3, envMap: S.envTex, envMapIntensity: 1.25, side: THREE.DoubleSide });
+    const cs = new THREE.Mesh(S.caseGeo, gold); cs.castShadow = true; cs.receiveShadow = true; group.add(cs);
+    const redMat = new THREE.MeshStandardMaterial({ color: "#b3202c", roughness: 0.38, metalness: 0.05, emissive: "#ffffff", emissiveMap: S.glitTex.clone(), emissiveIntensity: 0, envMap: S.envTex, envMapIntensity: 0.5 });
+    redMat.emissiveMap.needsUpdate = true;
+    const bullet = new THREE.Group(), bm = new THREE.Mesh(S.bulletGeo, redMat); bm.castShadow = true; bullet.add(bm); group.add(bullet);
+    // the glow and sparkles ride with the bullet's tip
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: S.glowTex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending }));
+    halo.scale.set(96, 112, 1); halo.position.set(0, 186, 6); halo.renderOrder = 3; bullet.add(halo);
+    const sparks = [], spots = [[-24, 200, 22, 13], [21, 193, 20, 10], [-8, 214, 24, 16], [27, 176, 18, 9], [-27, 172, 20, 8], [8, 205, 22, 12], [-15, 188, 22, 7], [16, 214, 18, 9]];
+    spots.forEach(([x, y, z, sz], i) => {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: S.starTex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending, color: i % 3 ? "#ffffff" : "#ffd6e4" }));
+      sp.position.set(x, y, z); sp.renderOrder = 4; sp.userData = { ph: i * 1.7, sp: 1.6 + (i % 4) * 0.55, sz: sz * 1.9, rot: i * 0.7 }; sp.visible = false; bullet.add(sp); sparks.push(sp);
+    });
+    return { group, bullet, redMat, halo, sparks, rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
+  }
+
   // a round pool of light, brightest in the middle, fading smoothly to nothing at the rim
   let poolT = null;
   function poolTex() {
@@ -248,23 +309,35 @@
     const contactMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.3), transparent: true, opacity: 0.45, depthWrite: false, toneMapped: false });
     const haloMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.2), transparent: true, opacity: 0.3, depthWrite: false, toneMapped: false });
     const books = new Map(); // id -> { node, sig }
-    // the lamp light's level (0..1) eased like CSS "ease"; while one is fading the shelf redraws every frame
-    const ease = (t) => { const c = (u) => 3 * 0.1 * u * (1 - u) ** 2 + 3 * 1 * u * u * (1 - u) + u ** 3, x = (u) => 3 * 0.25 * u * (1 - u) ** 2 + 3 * 0.25 * u * u * (1 - u) + u ** 3; let lo = 0, hi = 1; for (let i = 0; i < 20; i++) { const m = (lo + hi) / 2; if (x(m) < t) lo = m; else hi = m; } return c((lo + hi) / 2); };
-    function applyLamp(rec) {
-      const tr = rec.tr;
-      if (tr) { const k = (performance.now() - tr.t0) / tr.dur; if (k >= 1) { rec.lv = tr.to; rec.tr = null; } else if (k > 0) rec.lv = tr.from + (tr.to - tr.from) * ease(k); }
-      rec.light.intensity = rec.full * rec.lv; rec.pool.material.opacity = 0.7 * rec.lv; rec.pool.visible = rec.lv > 0.002;
+    // v307: the lipstick lamp is a real 3D model (osamu chose it as the first object to make 3D). The bullet twists up out of the
+    // case on the same timing as the painted one; once up it glows, with sparkles twinkling round its tip and no light thrown
+    // round the shelf (osamu: light only on the bullet, magical and sparkly, not spread out)
+    const bez = (x1, y1, x2, y2) => (t) => { const c = (u, a, b) => 3 * a * u * (1 - u) ** 2 + 3 * b * u * u * (1 - u) + u ** 3; let lo = 0, hi = 1; for (let i = 0; i < 22; i++) { const m = (lo + hi) / 2; if (c(m, x1, x2) < t) lo = m; else hi = m; } return c((lo + hi) / 2, y1, y2); };
+    const EASE = bez(0.25, 0.1, 0.25, 1), UP = bez(0.45, 0.05, 0.25, 1), DOWN = bez(0.55, 0, 0.35, 1);
+    const tween = (o, now) => { if (!o.tr) return; const k = (now - o.tr.t0) / o.tr.dur; if (k >= 1) { o.v = o.tr.to; o.tr = null; } else if (k > 0) o.v = o.tr.from + (o.tr.to - o.tr.from) * o.tr.fn(k); };
+    function applyLip(rec, now) {
+      const L = rec.lip; tween(L.rise, now); tween(L.glow, now);
+      L.bullet.position.y = -LIP_REST * (1 - L.rise.v);
+      const g = L.glow.v;
+      const t = now / 1000;
+      L.redMat.emissiveIntensity = 0.9 * g; L.redMat.emissiveMap.offset.set((t * 0.05) % 1, (t * 0.031) % 1);
+      L.halo.material.opacity = 1.0 * g * (0.9 + 0.1 * Math.sin(t * 2.1)); L.halo.visible = g > 0.01;
+      L.sparks.forEach((sp, i) => { const ph = sp.userData.ph, tw = Math.max(0, Math.sin(t * sp.userData.sp + ph)) ** 2;
+        sp.material.opacity = g * tw; sp.visible = g > 0.01 && tw > 0.02; const sc = sp.userData.sz * (0.5 + 0.7 * tw); sp.scale.set(sc, sc, 1);
+        sp.material.rotation = sp.userData.rot + t * 0.6 * (i % 2 ? 1 : -1); });
     }
-    let lampRaf = 0;
+    let lampRaf = 0, lampLast = 0;
     function lampTick() {
       if (lampRaf || dead) return;
-      lampRaf = requestAnimationFrame(() => {
-        lampRaf = 0; let busy = false;
-        for (const rec of objs.values()) if (rec.light) { applyLamp(rec); if (rec.tr) busy = true; }
-        frameDirty = true; inst.render();
-        if (busy) lampTick();
+      lampRaf = requestAnimationFrame((ts) => {
+        lampRaf = 0; let moving = false, twinkling = false; const now = performance.now();
+        for (const rec of objs.values()) if (rec.lip) { applyLip(rec, now); if (rec.lip.rise.tr || rec.lip.glow.tr) moving = true; if (rec.lip.glow.v > 0.01) twinkling = true; }
+        // the twinkle alone runs at about 30 frames a second and reuses the shadows already drawn
+        if (moving || ts - lampLast > 32) { lampLast = ts; frameDirty = true; skipShadows = !moving; inst.render(); skipShadows = false; }
+        if ((moving || twinkling) && onScreen) lampTick();
       });
     }
+    let skipShadows = false;
     const objs = new Map(); // object id -> { mesh, tex, depth, img }
     let dead = false, W = 0, Hc = 0, top = 0, bottom = 0, frameDirty = false;
     const inst = {
@@ -338,7 +411,7 @@
             live.add(ob.id);
             let rec = objs.get(ob.id);
             if (!rec || rec.img !== ob.img) {
-              if (rec) { scene.remove(rec.mesh); if (rec.light) scene.remove(rec.light); if (rec.pool) { scene.remove(rec.pool); rec.pool.material.dispose(); } rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
+              if (rec) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
               const c2 = document.createElement("canvas"); c2.width = Math.max(2, Math.round(ob.w * 2)); c2.height = Math.max(2, Math.round(ob.h * 2)); c2.getContext("2d").drawImage(ob.img, 0, 0, c2.width, c2.height);
               const tex = new THREE.CanvasTexture(c2);
               // three's shadow pass takes the cut-out's picture and alpha test from the object's own material
@@ -379,28 +452,22 @@
               }
               P.needsUpdate = true; rec.mesh.geometry.computeBoundingSphere();
             }
-            // v302: a lit lipstick lamp lights the real books beside it, warm on the sides that face it (osamu: the flat
-            // light boxes laid over the books looked bad)
-            // v302/303: a lit lipstick lamp lights the real books beside it and lays a warm pool on the floor. v304 (osamu: the
-            // shelf light didn't keep time with the lamp): both fade exactly as the lamp's own glow does, in after the
-            // lipstick has twisted up (1.7 s, then 1.1 s), out at once over 0.6 s
-            if (ob.hasLamp && !rec.light) {
-              rec.light = new THREE.PointLight("#ffa66b", 0, H * 1.8, 2); scene.add(rec.light);
-              rec.pool = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ color: "#ffd1a0", map: poolTex(), transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
-              rec.pool.rotation.x = -Math.PI / 2; rec.pool.renderOrder = 2; scene.add(rec.pool);
-            }
-            if (rec.light) {
-              const on = !!ob.lamp && ob.visible !== false, now = performance.now();
-              if (rec.on === undefined) { rec.on = on; rec.lv = on ? 1 : 0; rec.tr = null; }
-              else if (on !== rec.on) { rec.on = on; rec.tr = { from: rec.lv, to: on ? 1 : 0, t0: now + (on ? 1700 : 0), dur: on ? 1100 : 600 }; lampTick(); }
-              rec.full = 9000 * (H / 100) ** 2 / 4;
-              rec.light.position.set(ob.x + ob.w * 0.39, ob.y + ob.h * 0.62, H * 0.12);
-              const pd = Math.min(H * 1.3, F - zw);
-              rec.pool.scale.set(H * 2.2, pd, 1); rec.pool.position.set(ob.x + ob.w * 0.39, 0.6, Math.min(F - pd / 2, -ob.w * 0.2));
-              applyLamp(rec);
+            if (ob.hasLamp) {
+              if (!rec.lip) { rec.lip = buildLipstick(); scene.add(rec.lip.group); }
+              const L = rec.lip, k = ob.w / LIP_VW, on = !!ob.lamp && ob.visible !== false, now = performance.now();
+              rec.mesh.visible = false; // the model casts its own shadow
+              L.group.visible = ob.visible !== false;
+              L.group.scale.setScalar(k); L.group.position.set(ob.x + LIP_CX * k, ob.y, -LIP_BASE_R * k - 1);
+              if (L.on === undefined) { L.on = on; L.rise.v = L.glow.v = on ? 1 : 0; }
+              else if (on !== L.on) {
+                L.on = on;
+                L.rise.tr = { from: L.rise.v, to: on ? 1 : 0, t0: now, dur: on ? 2300 : 1500, fn: on ? UP : DOWN };
+                L.glow.tr = { from: L.glow.v, to: on ? 1 : 0, t0: now + (on ? 1700 : 0), dur: on ? 1100 : 600, fn: EASE };
+              }
+              applyLip(rec, now); if (L.rise.tr || L.glow.tr || L.glow.v > 0.01) lampTick();
             }
           }
-          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.light) scene.remove(rec.light); if (rec.pool) { scene.remove(rec.pool); rec.pool.material.dispose(); } rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
+          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
         { const x0 = -400, x1 = viewW + 400, yt = stageH + top + 400, P = roomGeo.attributes.position;
@@ -440,7 +507,9 @@
         frameDirty = false;
         if (renderer.getContext().isContextLost()) return;
         renderer.setSize(W, Hc, false);
+        renderer.shadowMap.autoUpdate = !skipShadows; renderer.shadowMap.needsUpdate = !skipShadows;
         renderer.render(scene, camera);
+        renderer.shadowMap.autoUpdate = true;
         ctx.clearRect(0, 0, cv.width, cv.height);
         ctx.drawImage(renderer.domElement, 0, 0, cv.width, cv.height);
       },
