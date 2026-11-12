@@ -2343,7 +2343,12 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 .shelf.is3d .ornament:is([data-kind="giftBoxes"], [data-kind="shoppingBags"]) image[href*="-shadow"] { display: none; }
 /* v329: no halo round the bullet (osamu: the glitter shines IN the bullet, nothing floating around it) */
 .ornament[data-kind="lipstickLamp"] .lpHalo { display: none; }
-/* v330: the lipstick lamp in 3D is osamu's new painted case with the 3D bullet; flat mode keeps the painted bullet and old case */
-.ornament[data-kind="lipstickLamp"] .lpCase4 { display: none; }
-.shelf.is3d .ornament[data-kind="lipstickLamp"] .lpCase4 { display: inline; }
-.shelf.is3d .ornament[data-kind="lipstickLamp"] .lpFlatOnly { display: none; }
+/* v331: osamu's new painted case with the photographed 3D bullet, in every mode. Down when off, up when lit; while lit it plays its
+   16 glint frames, and while it twists closet.js plays the 24 turning frames */
+.ornament[data-kind="lipstickLamp"] .lpB2 { transform: translateY(var(--rest)); }
+.ornament[data-kind="lipstickLamp"].lit .lpB2 { transform: none; }
+.ornament[data-kind="lipstickLamp"] .lpSheetG { display: none; }
+.ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpSheetG { display: inline; animation: lpGlRun 2.1s steps(16) infinite; }
+.ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpSheetT { display: none; }
+@keyframes lpGlRun { to { transform: translateX(-4288px); } }
+@media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .lpSheetG { animation: none; } }

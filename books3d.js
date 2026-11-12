@@ -183,10 +183,10 @@
   const noCast = (o) => o.traverse((m) => { if (m.isMesh) m.castShadow = false; });
   // ---- the 3D lipstick lamp, measured off osamu's painting (units: the painting's 95.3 x 200 box, y up from the case's foot)
   const LIP_3D = false;
-  // v330 (osamu): the painted case (closet-lipstick-case4, its opening and the back of its rim cut out) with the 3D bullet. The 3D
+  // v331: off again; the lamp is all pictures now (closet.js). v330 (osamu): the painted case (closet-lipstick-case4, its opening and the back of its rim cut out) with the 3D bullet. The 3D
   // case stays behind it, so only its back rim and inside show through the cut, and the bullet rises in front of them. Its rim
   // sits LIP_DY lower than the model's to meet the painting
-  const LIP_HYBRID = true, LIP_DY = 0, LIP_RIM_S = 149.7; // LIP_RIM_S: the painted rim's height in picture units
+  const LIP_HYBRID = false, LIP_DY = 0, LIP_RIM_S = 149.7; // LIP_RIM_S: the painted rim's height in picture units
   const LIP_VW = 95.3, LIP_CX = 36.7, LIP_BASE_R = 34.4, LIP_REST = 38.5;
   let lipShared = null;
   function lipParts() {

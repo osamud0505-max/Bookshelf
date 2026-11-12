@@ -475,6 +475,11 @@
   // above the case's front lip). Tapping it twists the bullet slowly up out of the case, light running round the gold
   // tube as it turns (where a real lipstick turns), then it lights up; tapping again winds it back down. The bullet only ever moves; nothing is redrawn.
   const LIP_VW = 95.3, LIP_REST = 38.5;
+  // v331: the photographed 3D bullet's frame (picture units: x, y, w, h), its pixel size, and how far it sinks when down
+  const LIP_FR = [14.367, 17.006, 44.667, 76.167], LIP_FW = 268, LIP_FH = 457, LIP_DROP = 37.8;
+  const lipBez = (x1, y1, x2, y2) => (t) => { const c = (u, a, b) => 3 * a * u * (1 - u) ** 2 + 3 * b * u * u * (1 - u) + u ** 3; let lo = 0, hi = 1; for (let i = 0; i < 22; i++) { const m = (lo + hi) / 2; if (c(m, x1, x2) < t) lo = m; else hi = m; } return c((lo + hi) / 2, y1, y2); };
+  const LIP_STROKE = lipBez(0.42, 0, 0.4, 1);
+  const lipTwists = (t) => { const i = Math.min(2, Math.floor(t * 3)), u = Math.min(1, (t * 3 - i) / 0.82); return (i + LIP_STROKE(u)) / 3; };
   // v329: glitter flecks inside the bullet (painted x 18.5..54.4, y 2..60), in a band two turns wide so it can slide round as
   // the lipstick twists (one turn = LIP_SPIN): most are a soft shimmer, a few glint now and then
   const LIP_SPIN = 36, LIP_FLECKS = (() => {
@@ -491,10 +496,19 @@
   })();
   const lipDraw = (g) => D.ORNAMENTS.lipstickLamp._draw(g);
   D.ORNAMENTS.lipstickLamp = {
-    label: "Lipstick lamp", scale: 1.0, startOff: true, vw: LIP_VW, soft: true, flat: true, glow: "rgba(255,150,95,.42)", img: "obj/closet-lipstick-case2-cosy.webp",
-    draw: (g) => `<g class="lpFlatOnly">` + lipDraw(g) + `</g>`
-      // v330: in 3D, osamu's new painted case with its opening cut out; the 3D bullet rises out of it (books3d.js, LIP_HYBRID)
-      + `<image class="lpCase4" href="obj/closet-lipstick-case4-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`,
+    label: "Lipstick lamp", scale: 1.0, startOff: true, vw: LIP_VW, soft: true, flat: true, glow: "rgba(255,150,95,.42)", img: "obj/closet-lipstick-case4-cosy.webp",
+    // v331 (osamu: the painted case and the 3D bullet never lined up): every layer is a picture now, so it fits on every screen.
+    // osamu's new painted case is split in two: its inside and the back of its rim (behind), and the rest (in front). Between them
+    // the bullet is the 3D bullet osamu loved, photographed turning (24 frames, off) and glinting (16 frames, lit). It shows only
+    // above the rim or through the opening
+    draw: (g) => `<defs><mask id="${g}bm" maskUnits="userSpaceOnUse" x="-20" y="-80" width="140" height="300"><rect x="-20" y="-80" width="140" height="130" fill="#fff"/><ellipse cx="36.7" cy="50" rx="21.9" ry="4.3" fill="#fff"/></mask>`
+      + `<radialGradient id="${g}fp"><stop offset="0" stop-color="rgb(28,0,16)" stop-opacity=".42"/><stop offset=".8" stop-color="rgb(28,0,16)" stop-opacity=".42"/><stop offset=".9" stop-color="rgb(28,0,16)" stop-opacity=".21"/><stop offset="1" stop-color="rgb(28,0,16)" stop-opacity="0"/></radialGradient></defs>`
+      + `<ellipse class="lpFoot" cx="36.9" cy="187" rx="44" ry="15.4" fill="url(#${g}fp)"/>`
+      + `<image href="obj/closet-lipstick-case4back-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
+      + `<g mask="url(#${g}bm)"><g class="lpB2" style="--rest:${LIP_DROP}px"><clipPath id="${g}fc"><rect x="0" y="0" width="${LIP_FW}" height="${LIP_FH}"/></clipPath><g transform="translate(${LIP_FR[0]} ${LIP_FR[1]}) scale(${(LIP_FR[2] / LIP_FW).toFixed(5)})"><g clip-path="url(#${g}fc)">`
+      + `<image class="lpSheetT" href="obj/closet-lipstick-bullet3t.webp" x="0" y="0" width="${LIP_FW * 24}" height="${LIP_FH}" preserveAspectRatio="none"/>`
+      + `<image class="lpSheetG" href="obj/closet-lipstick-bullet3g.webp" x="0" y="0" width="${LIP_FW * 16}" height="${LIP_FH}" preserveAspectRatio="none"/></g></g></g></g>`
+      + `<image href="obj/closet-lipstick-case4-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`,
     _draw: (g) => `<defs><mask id="${g}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-clip.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-turn2.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<linearGradient id="${g}s" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d8" stop-opacity=".5"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`
@@ -517,6 +531,19 @@
       el.classList.add(out ? "twistDown" : "twistUp");
       el.classList.toggle("lit", !out);
       lipTwist(out ? 1.3 : 2.2);
+      // v331: the bullet turns as it rises, like the 3D one: one full turn in three twists of the hand, played from its 24 frames
+      const B = el.querySelector(".lpB2"), S = el.querySelector(".lpSheetT"), dur = out ? 1500 : 2300, t0 = performance.now();
+      if (B && S) {
+        cancelAnimationFrame(el._lpRaf); el.classList.add("lpTwisting");
+        const step = (now) => {
+          const t = Math.min(1, (now - t0) / dur), r = lipTwists(t), rise = out ? 1 - r : r;
+          B.style.transform = `translateY(${(LIP_DROP * (1 - rise)).toFixed(2)}px)`;
+          S.setAttribute("x", -(Math.round(rise * 24) % 24) * LIP_FW);
+          if (t < 1) el._lpRaf = requestAnimationFrame(step);
+          else { B.style.transform = ""; S.setAttribute("x", 0); el.classList.remove("lpTwisting"); }
+        };
+        el._lpRaf = requestAnimationFrame(step);
+      }
       clearTimeout(el._tw); el._tw = setTimeout(() => el.classList.remove("twistUp", "twistDown"), 2600);
     },
   };
