@@ -309,14 +309,18 @@ vec2 gLayer(vec3 p, float d, float sz) {
       V(kx + 6, 0.8, bfz + 13), V(kx + 16, 0.9, bfz + 9), V(kx + 12, 0.8, bfz + 4)], rw * 0.9, V(1, 0, 0.15)), satin, 0, 0, 0);
     // v314: three hatboxes wearing osamu's own Gemini print: each band, lid band and lid top is cut straight out of the
     // painting (obj/gift3d-hat*), unrolled from its curve so the bows, hydrangeas and the lace sit where she painted them
-    const tl = new THREE.TextureLoader(), tex = (n) => { const t = tl.load("obj/gift3d3-" + n + ".webp", () => onReady && onReady()); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
+    // v317: osamu's own seamless Gemini swatch (obj/gift3d4-print), wrapped at one scale: 200 model units of print per tile,
+    // a whole number of repeats round each box so it meets itself without a seam. The top lid keeps her lace and little bows
+    const tl = new THREE.TextureLoader(), load = (n) => { const t = tl.load("obj/gift3d4-" + n + ".webp", () => onReady && onReady()); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+    const printT = load("print"), laceT = load("hat3-lid"), TILE = 200;
+    const pm = (rx, ry, ox, oy) => { const t = printT.clone(); t.repeat.set(rx, ry); t.offset.set(ox, oy); return new THREE.MeshStandardMaterial({ map: t, roughness: 0.82 }); };
     let y = 0;
-    [["hat1", 238.3, 63.4, 66, 76, 20], ["hat2", 234.1, 57.7, 59.9, 59, 18.6], ["hat3", 234.0, 48.3, 50.3, 47, 15]].forEach(([n, hx, Rb, Rl, h, lid]) => {
-      const hz = -67.5, M = (t) => new THREE.MeshStandardMaterial({ map: tex(n + "-" + t), roughness: 0.82 });
-      add(new THREE.CylinderGeometry(Rb, Rb, h - lid + 0.5, 72, 1, true), M("body"), hx, y + (h - lid + 0.5) / 2, hz);
-      const bandM = M("lid");
+    [["hat1", 238.3, 63.4, 66, 76, 20], ["hat2", 234.1, 57.7, 59.9, 59, 18.6], ["hat3", 234.0, 48.3, 50.3, 47, 15]].forEach(([n, hx, Rb, Rl, h, lid], i) => {
+      const hz = -67.5, reps = Math.max(1, Math.round((2 * Math.PI * Rb) / TILE)), unit = (2 * Math.PI * Rb) / reps, oy = i * 0.31;
+      add(new THREE.CylinderGeometry(Rb, Rb, h - lid + 0.5, 72, 1, true), pm(reps, (h - lid) / unit, i * 0.17, oy), hx, y + (h - lid + 0.5) / 2, hz);
+      const bandM = n === "hat3" ? new THREE.MeshStandardMaterial({ map: laceT, roughness: 0.82 }) : pm(reps, lid / unit, i * 0.23, oy + 0.5);
       add(new THREE.CylinderGeometry(Rl, Rl, lid, 72, 1, true), bandM, hx, y + h - lid / 2, hz);
-      add(new THREE.CircleGeometry(Rl, 72), M("top"), hx, y + h, hz).rotation.x = -Math.PI / 2;
+      add(new THREE.CircleGeometry(Rl, 72), pm((2 * Rl) / TILE, (2 * Rl) / TILE, i * 0.37, i * 0.29), hx, y + h, hz).rotation.x = -Math.PI / 2;
       add(new THREE.TorusGeometry(Rl, 0.7, 8, 72), bandM, hx, y + h - 0.3, hz).rotation.x = Math.PI / 2;
       y += h;
     });
