@@ -171,6 +171,16 @@
     g.putImageData(img, 0, 0);
     const t = new THREE.CanvasTexture(c); softCache.set(edge, t); return t;
   }
+  // a round pool of light, brightest in the middle, fading smoothly to nothing at the rim
+  let poolT = null;
+  function poolTex() {
+    if (poolT) return poolT;
+    const N = 128, c = document.createElement("canvas"); c.width = c.height = N; const g = c.getContext("2d");
+    const gr = g.createRadialGradient(N / 2, N / 2, 0, N / 2, N / 2, N / 2);
+    [[0, 1], [0.2, 0.75], [0.45, 0.38], [0.7, 0.12], [1, 0]].forEach(([o, a]) => gr.addColorStop(o, `rgba(255,255,255,${a})`));
+    g.fillStyle = gr; g.fillRect(0, 0, N, N);
+    poolT = new THREE.CanvasTexture(c); return poolT;
+  }
   let sharedR = null;
   // v299: three's PCF takes 17 on/off samples spread 4 texels apart, which drew the soft edge as visible steps (osamu: "a bit
   // pixelated"). This swaps it for a smooth 6x6-texel box: 49 neighbouring samples, the outer ring weighted by where the
@@ -311,7 +321,7 @@
             live.add(ob.id);
             let rec = objs.get(ob.id);
             if (!rec || rec.img !== ob.img) {
-              if (rec) { scene.remove(rec.mesh); rec.tex.dispose(); rec.depth.dispose(); }
+              if (rec) { scene.remove(rec.mesh); if (rec.light) scene.remove(rec.light); if (rec.pool) { scene.remove(rec.pool); rec.pool.material.dispose(); } rec.tex.dispose(); rec.depth.dispose(); }
               const c2 = document.createElement("canvas"); c2.width = Math.max(2, Math.round(ob.w * 2)); c2.height = Math.max(2, Math.round(ob.h * 2)); c2.getContext("2d").drawImage(ob.img, 0, 0, c2.width, c2.height);
               const tex = new THREE.CanvasTexture(c2);
               // three's shadow pass takes the cut-out's picture and alpha test from the object's own material
@@ -322,8 +332,22 @@
             const zc = -1; // v301: at the object's own base line, so its shadow starts right under it (osamu: a gap showed when it stood further back)
             rec.mesh.visible = ob.visible !== false;
             rec.mesh.scale.set(ob.w, ob.h, 1); rec.mesh.position.set(ob.x + ob.w / 2, ob.y + ob.h / 2, zc);
+            // v302: a lit lipstick lamp lights the real books beside it, warm on the sides that face it (osamu: the flat
+            // light boxes laid over the books looked bad)
+            if (ob.lamp && !rec.light) { rec.light = new THREE.PointLight("#ffa66b", 0, H * 1.8, 2); scene.add(rec.light); }
+            if (rec.light) { rec.light.intensity = ob.lamp && ob.visible !== false ? 9000 * (H / 100) ** 2 / 4 : 0; rec.light.position.set(ob.x + ob.w * 0.39, ob.y + ob.h * 0.62, H * 0.12); }
+            // and its warm pool on the shelf floor, lying flat in the room (the books standing in it hide their part of it)
+            if (ob.lamp && !rec.pool) {
+              rec.pool = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ color: "#ffd1a0", map: poolTex(), transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false }));
+              rec.pool.rotation.x = -Math.PI / 2; rec.pool.renderOrder = 2; scene.add(rec.pool);
+            }
+            if (rec.pool) {
+              rec.pool.visible = !!ob.lamp && ob.visible !== false;
+              const pd = Math.min(H * 1.3, F - zw);
+              rec.pool.scale.set(H * 2.2, pd, 1); rec.pool.position.set(ob.x + ob.w * 0.39, 0.6, Math.min(F - pd / 2, -ob.w * 0.2));
+            }
           }
-          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); rec.tex.dispose(); rec.depth.dispose(); objs.delete(id); } }
+          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.light) scene.remove(rec.light); if (rec.pool) { scene.remove(rec.pool); rec.pool.material.dispose(); } rec.tex.dispose(); rec.depth.dispose(); objs.delete(id); } }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
         { const x0 = -400, x1 = viewW + 400, yt = stageH + top + 400, P = roomGeo.attributes.position;

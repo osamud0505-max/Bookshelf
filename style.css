@@ -2311,3 +2311,7 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 .shelf.is3d .ornament:is([data-kind="handbag"], [data-kind="pencilCup"], [data-kind="giftBoxes"], [data-kind="shoppingBags"], [data-kind="lipstickLamp"], [data-kind="callaCandle"], [data-kind="flowerVase"], [data-kind="vanityMirror"], [data-kind="lavender"]) { bottom: 0; }
 /* v300: in 3D the objects cast real shadows from the 3D light, so their flat wall-shadow copies go */
 .shelf.is3d .wsO { display: none !important; }
+/* v302: in 3D the lipstick lamp lights the real books (a 3D light); its flat lit-face boxes and wall shadows don't fit them */
+.shelf.is3d .lpFaces, .shelf.is3d .lpShadows { display: none !important; }
+/* v303: in 3D the lamp's pool of light lies on the 3D floor; the flat screen-space glow and pool go */
+.shelf.is3d .lpMood, .shelf.is3d .ornament[data-kind="lipstickLamp"] .ornPool { display: none !important; }
