@@ -181,19 +181,10 @@
     [[0, "#6b4a1c"], [0.12, "#b88a3e"], [0.24, "#f4dc98"], [0.3, "#fff4cc"], [0.37, "#e2b866"], [0.5, "#9b7030"], [0.62, "#c79a4c"], [0.72, "#f0d48a"], [0.82, "#a87b36"], [1, "#6b4a1c"]].forEach(([o, col]) => gr.addColorStop(o, col));
     g.fillStyle = gr; g.fillRect(0, 0, 256, 4);
     const goldTex = new THREE.CanvasTexture(c); goldTex.colorSpace = THREE.SRGBColorSpace; goldTex.wrapS = THREE.RepeatWrapping;
-    // a four-pointed sparkle, and a soft round glow
-    const star = document.createElement("canvas"); star.width = star.height = 64; const s = star.getContext("2d");
-    const ray = (w, h) => { const r = s.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.25, "rgba(255,236,240,.75)"); r.addColorStop(1, "rgba(255,200,215,0)"); s.fillStyle = r; s.beginPath(); s.ellipse(32, 32, w, h, 0, 0, Math.PI * 2); s.fill(); };
-    ray(32, 2.6); ray(2.6, 32); ray(9, 9);
-    const starTex = new THREE.CanvasTexture(star); starTex.colorSpace = THREE.SRGBColorSpace;
-    const glow = document.createElement("canvas"); glow.width = glow.height = 128; const q = glow.getContext("2d"), rg = q.createRadialGradient(64, 64, 0, 64, 64, 64);
-    [[0, "rgba(255,240,236,.9)"], [0.25, "rgba(255,170,175,.55)"], [0.55, "rgba(255,110,130,.18)"], [1, "rgba(255,90,120,0)"]].forEach(([o, col]) => rg.addColorStop(o, col));
-    q.fillStyle = rg; q.fillRect(0, 0, 128, 128);
-    const glowTex = new THREE.CanvasTexture(glow); glowTex.colorSpace = THREE.SRGBColorSpace;
     // the case: a ridged foot, then the tube with a rolled lip, open at the top so the bullet sits inside it
     const P = (r, y) => new THREE.Vector2(r, y), prof = [P(0, 0), P(31.5, 0), P(33.6, 1.6), P(34.2, 6)];
     for (let i = 0; i < 5; i++) { const y = 6 + i * 9.2; prof.push(P(34.4, y + 1.2), P(34.4, y + 6.6), P(32.6, y + 7.8), P(32.6, y + 8.4), P(34.4, y + 9.2)); }
-    prof.push(P(33.2, 54.5), P(29, 57), P(27.7, 60), P(27.7, 150), P(28.4, 151.4), P(28.2, 153.4), P(26.6, 154.2), P(25.4, 152.6), P(25.4, 110));
+    prof.push(P(33.2, 54.5), P(29, 57), P(27.7, 60), P(28.7, 61), P(28.7, 64.6), P(27.7, 65.6), P(27.7, 135.5), P(27.1, 136.4), P(27.7, 137.3), P(27.7, 140.5), P(27.1, 141.4), P(27.7, 142.3), P(27.7, 150), P(28.4, 151.4), P(28.2, 153.4), P(26.6, 154.2), P(25.4, 152.6), P(25.4, 110));
     const caseGeo = new THREE.LatheGeometry(prof, 72);
     // the bullet: a round stick with a rounded tip, tilted so it's high at the back left like the painting. v308: it had a flat,
     // sharp-edged cut that looked like the bullet was sliced in half (osamu)
@@ -204,37 +195,49 @@
     for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), z = pos.getZ(i), y = pos.getY(i), u = Math.min(1, Math.max(0, (y - 2) / 38)), w = u * u * (3 - 2 * u);
       pos.setY(i, y - w * (((x + R) / (2 * R)) * 18 + ((z + R) / (2 * R)) * 3)); }
     bulletGeo.translate(0, 155, 0); bulletGeo.computeVertexNormals();
+    // v309: the inner gold sleeve that holds the bullet and rises with it, with a rolled rim and a fine groove (osamu: more detail)
+    const V = (r, y) => new THREE.Vector2(r, y);
+    const sleeveGeo = new THREE.LatheGeometry([V(17.4, 100), V(20.6, 100), V(20.6, 150.5), V(20.1, 151.2), V(20.6, 151.9), V(20.6, 155.2), V(20.2, 156.8), V(19.0, 157.6), V(17.9, 157.2), V(17.7, 156)], 64);
     // a soft room to reflect, so the gold shines like metal instead of going brown: bright ceiling, pink walls, a few light strips
     const ev = document.createElement("canvas"); ev.width = 256; ev.height = 128; const e = ev.getContext("2d"), eg = e.createLinearGradient(0, 0, 0, 128);
     [[0, "#fffdf6"], [0.35, "#fff3ec"], [0.55, "#e9c4cc"], [0.8, "#a07882"], [1, "#4e3a40"]].forEach(([o, col]) => eg.addColorStop(o, col));
     e.fillStyle = eg; e.fillRect(0, 0, 256, 128);
-    e.fillStyle = "rgba(255,255,250,.9)"; [[30, 14], [96, 8], [150, 18], [214, 10]].forEach(([x, w]) => e.fillRect(x, 20, w, 50));
+    e.fillStyle = "rgba(255,255,250,.95)"; [[30, 14], [96, 8], [150, 18], [214, 10], [118, 3], [180, 4]].forEach(([x, w]) => e.fillRect(x, 16, w, 58));
+    e.fillStyle = "rgba(60,30,30,.55)"; [[60, 12], [130, 10], [235, 9]].forEach(([x, w]) => e.fillRect(x, 10, w, 80));
     const envTex = new THREE.CanvasTexture(ev); envTex.colorSpace = THREE.SRGBColorSpace; envTex.mapping = THREE.EquirectangularReflectionMapping;
-    // glitter for the lit bullet: a warm pink glow with tiny bright specks that drift, so it shimmers
-    const gl = document.createElement("canvas"); gl.width = gl.height = 256; const h = gl.getContext("2d");
-    h.fillStyle = "#6e1424"; h.fillRect(0, 0, 256, 256);
-    let sd = 7; const rnd = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
-    for (let i = 0; i < 1800; i++) { const x = rnd() * 256, y = rnd() * 256, r = 0.3 + rnd() * 0.45, b = rnd(); h.fillStyle = `rgba(255,${190 + b * 65 | 0},${205 + b * 50 | 0},${0.15 + b * b * 0.6})`; h.beginPath(); h.arc(x, y, r, 0, Math.PI * 2); h.fill(); }
-    const glitTex = new THREE.CanvasTexture(gl); glitTex.colorSpace = THREE.SRGBColorSpace; glitTex.wrapS = glitTex.wrapT = THREE.RepeatWrapping; glitTex.repeat.set(1, 1);
-    lipShared = { goldTex, starTex, glowTex, caseGeo, bulletGeo, envTex, glitTex };
+    lipShared = { goldTex, caseGeo, bulletGeo, sleeveGeo, envTex };
     return lipShared;
   }
   function buildLipstick() {
     const S = lipParts(), group = new THREE.Group();
-    const gold = new THREE.MeshStandardMaterial({ color: "#fff3d8", map: S.goldTex, metalness: 0.7, roughness: 0.3, envMap: S.envTex, envMapIntensity: 1.25, side: THREE.DoubleSide });
+    const gold = new THREE.MeshStandardMaterial({ color: "#fff3d8", map: S.goldTex, metalness: 0.75, roughness: 0.24, envMap: S.envTex, envMapIntensity: 1.3, side: THREE.DoubleSide });
     const cs = new THREE.Mesh(S.caseGeo, gold); cs.castShadow = true; cs.receiveShadow = true; group.add(cs);
-    const redMat = new THREE.MeshStandardMaterial({ color: "#a3182a", roughness: 0.22, metalness: 0.05, emissive: "#ffffff", emissiveMap: S.glitTex.clone(), emissiveIntensity: 0, envMap: S.envTex, envMapIntensity: 0.5 });
-    redMat.emissiveMap.needsUpdate = true;
-    const bullet = new THREE.Group(), bm = new THREE.Mesh(S.bulletGeo, redMat); bm.castShadow = true; bullet.add(bm); group.add(bullet);
-    // the glow and sparkles ride with the bullet's tip
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: S.glowTex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending }));
-    halo.scale.set(92, 120, 1); halo.position.set(0, 168, -14); halo.renderOrder = 3; bullet.add(halo); // behind the bullet, so it glows round its edges instead of washing its face out
-    const sparks = [], spots = [[-24, 200, 22, 13], [21, 193, 20, 10], [-8, 214, 24, 16], [27, 176, 18, 9], [-27, 172, 20, 8], [8, 205, 22, 12], [-15, 188, 22, 7], [16, 214, 18, 9]];
-    spots.forEach(([x, y, z, sz], i) => {
-      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: S.starTex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending, color: i % 3 ? "#ffffff" : "#ffd6e4" }));
-      sp.position.set(x, y, z); sp.renderOrder = 4; sp.userData = { ph: i * 1.7, sp: 1.6 + (i % 4) * 0.55, sz: sz * 1.9, rot: i * 0.7 }; sp.visible = false; bullet.add(sp); sparks.push(sp);
-    });
-    return { group, bullet, redMat, halo, sparks, rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
+    // v309: the glitter is IN the bullet (osamu: "the small glitters in it to shine, not sparkles around it"). Each fleck is a
+    // tiny tilted mirror fixed in the lipstick: some catch the light and glint as it turns and twinkles, most stay a soft shimmer
+    const U = { uTime: { value: 0 }, uGlow: { value: 0 } };
+    const redMat = new THREE.MeshStandardMaterial({ color: "#8e0f22", roughness: 0.26, metalness: 0.05, envMap: S.envTex, envMapIntensity: 0.55 });
+    redMat.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, U);
+      sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vGP;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvGP = position;");
+      sh.fragmentShader = sh.fragmentShader.replace("#include <common>", `#include <common>
+varying vec3 vGP; uniform float uTime; uniform float uGlow;
+vec3 gH(vec3 p) { p = fract(p * vec3(.1031, .1030, .0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }
+vec2 gLayer(vec3 p, float d, float sz) {
+  vec3 q = p * d, c = floor(q), f = fract(q), h = gH(c);
+  float m = smoothstep(sz, sz * .35, length(f - (.2 + .6 * h)));
+  float tw = pow(max(0., sin(uTime * (1.2 + 2.6 * h.x) + h.y * 40.)), 14.);
+  float st = step(.55, h.z);
+  return vec2(m, m * tw * st);
+}`).replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+{ vec2 a = gLayer(vGP, .42, .24), b = gLayer(vGP + 17.3, 1.0, .2);
+  float mica = a.x * .7 + b.x * .35, glint = max(a.y, b.y * .6);
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1., .42, .46), mica * .1);
+  totalEmissiveRadiance += uGlow * (vec3(.17, .012, .03) + mica * vec3(.3, .07, .1) + glint * vec3(4.5, 3.6, 3.8));
+  totalEmissiveRadiance += (1. - uGlow) * glint * vec3(.35, .25, .28); }`);
+    };
+    const bullet = new THREE.Group(), bm = new THREE.Mesh(S.bulletGeo, redMat); bm.castShadow = true; bullet.add(bm);
+    const sl = new THREE.Mesh(S.sleeveGeo, gold); sl.castShadow = true; bullet.add(sl); group.add(bullet);
+    return { group, bullet, redMat, U, rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
   }
 
   // a round pool of light, brightest in the middle, fading smoothly to nothing at the rim
@@ -324,12 +327,7 @@
       const L = rec.lip; tween(L.rise, now); tween(L.glow, now);
       L.bullet.position.y = -LIP_REST * (1 - L.rise.v);
       const g = L.glow.v;
-      const t = now / 1000;
-      L.redMat.emissiveIntensity = 1.0 * g; L.redMat.emissiveMap.offset.set((t * 0.05) % 1, (t * 0.031) % 1);
-      L.halo.material.opacity = 1.0 * g * (0.9 + 0.1 * Math.sin(t * 2.1)); L.halo.visible = g > 0.01;
-      L.sparks.forEach((sp, i) => { const ph = sp.userData.ph, tw = Math.max(0, Math.sin(t * sp.userData.sp + ph)) ** 2;
-        sp.material.opacity = g * tw; sp.visible = g > 0.01 && tw > 0.02; const sc = sp.userData.sz * (0.5 + 0.7 * tw); sp.scale.set(sc, sc, 1);
-        sp.material.rotation = sp.userData.rot + t * 0.6 * (i % 2 ? 1 : -1); });
+      L.U.uTime.value = (now / 1000) % 1000; L.U.uGlow.value = L.glow.v;
     }
     let lampRaf = 0, lampLast = 0;
     function lampTick() {
