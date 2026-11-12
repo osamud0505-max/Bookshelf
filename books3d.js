@@ -308,6 +308,17 @@ vec2 gLayer(vec3 p, float d, float sz) {
     [brown, pink].forEach((m) => { m.map = m.map.clone(); m.map.wrapS = m.map.wrapT = THREE.RepeatWrapping; m.map.repeat.set(1 / 70, 1 / 70); m.map.needsUpdate = true; });
     const crease = new THREE.MeshBasicMaterial({ color: "#000000", transparent: true, opacity: 0.12, depthWrite: false });
     const satin = new THREE.MeshStandardMaterial({ color: "#f3b8c4", roughness: 0.28, metalness: 0.08, side: THREE.DoubleSide });
+    // the satin bow, built round its own knot at the origin with "up" out of the surface it is tied on: two full loops that stand
+    // up and lean back, a round knot, and two short tails
+    const makeBow = () => {
+      const b = new THREE.Group(), w = 8 * 1.15, m = (geo) => { const x = new THREE.Mesh(geo, satin); x.castShadow = true; b.add(x); return x; };
+      [-1, 1].forEach((s) => {
+        m(ribbonGeo([V(s * 1.5, 0.5, -0.5), V(s * 7, 7, -8), V(s * 17, 13, -11), V(s * 28, 13, -6), V(s * 32, 8, 2), V(s * 26, 4, 9), V(s * 14, 2.5, 9), V(s * 4, 1, 3), V(s * 1.5, 0.5, 0.5)], w, V(0.22 * s, 0.85, 0.35)));
+        m(ribbonGeo([V(s * 1.5, 0.2, 2), V(s * 6, -0.8, 12), V(s * 10, -1.2, 22), V(s * 12, -1.4, 27)], 8 * 0.9, null));
+      });
+      m(new THREE.SphereGeometry(5.2, 20, 14)).scale.set(1.05, 0.8, 0.95); b.children[b.children.length - 1].position.set(0, 1.2, 1);
+      return b;
+    };
     // a box with a lid that overhangs it a little
     // v318 (osamu: "not detailed enough like boxes would be"): softly rounded card edges that catch the light, a lid that
     // overhangs with its own rim, a dark gap of shadow under the lid's edge, and paper grain at a real scale
@@ -371,11 +382,8 @@ vec2 gLayer(vec3 p, float d, float sz) {
         // below the lid, with a small 3D satin bow at the front
         const lh = lid * 1.15, lm = new THREE.MeshStandardMaterial({ map: laceTex(Math.round(2 * Math.PI * Rl / 6)), transparent: true, alphaTest: 0.25, side: THREE.DoubleSide, roughness: 0.9, depthWrite: true });
         const lc = add(new THREE.CylinderGeometry(Rl + 0.7, Rl + 1.1, lh, 96, 1, true), lm, hx, y + h - 1.2 - lh / 2, hz); lc.castShadow = false;
-        const by = y + h - 1.2 - lh * 0.42, bz = hz + Rl + 2, flat = { flatOn: V(0, 0, 1) }, bw = 3.4;
-        const bl = (s) => ribbonGeo([V(hx + s * 1, by, bz), V(hx + s * 5, by + 3.6, bz + 1.4), V(hx + s * 11, by + 4.6, bz + 1.8), V(hx + s * 14, by + 1.5, bz + 1.2), V(hx + s * 11, by - 1.6, bz + 1.6), V(hx + s * 5, by - 1.2, bz + 1.2), V(hx + s * 1, by, bz + 0.3)], bw, flat);
-        const bt = (s) => ribbonGeo([V(hx + s * 0.8, by - 0.5, bz + 0.8), V(hx + s * 3.5, by - 5, bz + 1.4), V(hx + s * 6, by - 10, bz + 1.1), V(hx + s * 7.5, by - 13.5, bz + 0.6)], bw * 0.9, flat);
-        [-1, 1].forEach((s) => { add(bl(s), satin, 0, 0, 0); add(bt(s), satin, 0, 0, 0); });
-        add(new THREE.SphereGeometry(1.9, 14, 10), satin, hx, by, bz + 1.5).scale.set(1, 0.9, 0.7);
+        // v319: the lace bow is a small copy of the big ribbon bow (osamu: it wasn't as nice), turned to face out from the lid
+        const lb = makeBow(); lb.scale.setScalar(0.4); lb.rotation.x = Math.PI / 2; lb.position.set(hx, y + h - 1.2 - lh * 0.42, hz + Rl + 1.6); group.add(lb);
       }
       y += h;
     });
