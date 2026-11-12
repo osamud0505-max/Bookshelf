@@ -18,9 +18,11 @@
   // the five candles (obj/vamp-candle0-4.webp): height in widths, and where the wick is across the candle
   const CA = [1.888, 3.35, 4.97, 6.76, 4.14], CW = [0.52, 0.488, 0.485, 0.491, 0.494];
   // [across the cloth, top of the candle in px on a 412px shelf, which candle]: no two neighbours level or alike
-  // v352 (osamu: lower, not touching the cloth): each candle's flame starts just below the cloth's hem where it hangs,
-  // the tallest where the hem rides highest and the stub under the middle swag, clear of the long corner tails
-  const CANDLES = [[0.2, 120, 3], [0.35, 165, 4], [0.5, 173, 0], [0.65, 174, 1], [0.8, 123, 2]];
+  // v353 (osamu's photo of floating candles in a lace-draped hall): fifteen candles per cloth, at three depths. The
+  // far ones (small, dim, soft) hang behind the cloth and may tuck up behind its hem; the middle and near ones float
+  // clear below the hem. [across the cloth, top in px on a 412px shelf, which candle, depth 0 far .. 2 near]
+  const CSC = [0.5, 0.75, 1];
+  const CANDLES = [[0.136, 141, 0, 1], [0.174, 92, 2, 0], [0.208, 117, 2, 2], [0.315, 114, 1, 0], [0.357, 164, 0, 2], [0.407, 114, 1, 0], [0.436, 156, 4, 1], [0.511, 163, 0, 2], [0.557, 179, 0, 1], [0.615, 159, 1, 0], [0.702, 137, 2, 1], [0.765, 126, 0, 2], [0.781, 178, 1, 0], [0.852, 126, 3, 2], [0.891, 156, 0, 1]];
   const reduce = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
 
   // osamu's picture (2026-11-10): the two halves of a velvet drape meet in the middle of the shelf under a gold knot
@@ -51,13 +53,13 @@
     // uneven heights, each bobbing on its own slow beat. The flames are drawn here so they can be lit and snuffed:
     // tapping a candle is the light switch, and it wobbles a little as if nudged in the air.
     const cwid = Math.max(9, 0.03 * cell);
-    for (let c = 0; c < n; c++) CANDLES.forEach(([u, top, i], j) => {
-      const h = cwid * CA[i], t = top * cell / 412;
-      drops.push({ cx: c * cell + u * cell, top: t, dh: h, hw: Math.max(14, cwid), len: 260, th: 0, om: 0, els: [], i, j: c * 5 + j, front: true });
+    for (let c = 0; c < n; c++) CANDLES.forEach(([u, top, i, z], j) => {
+      const cw = cwid * CSC[z], h = cw * CA[i], t = top * cell / 412;
+      drops.push({ cx: c * cell + u * cell, top: t, dh: h, cw, z, hw: Math.max(z ? 12 : 8, cw), len: 260, th: 0, om: 0, els: [], i, j: c * 15 + j, front: z > 0 });
     });
-    const front = drops.map((d) => `<div class="vCandle" style="left:${f1(d.cx - cwid / 2)}px;top:${f1(d.top)}px;width:${f1(cwid)}px;height:${f1(d.dh)}px;--j:${d.j % 7}"><div class="vBob">`
-      + `<i class="vHalo" style="width:${f1(cwid * 7)}px;height:${f1(cwid * 7)}px"></i>`
-      + `<i class="vFlame" style="left:${f1(cwid * (CW[d.i] - 0.42))}px;width:${f1(cwid * 0.84)}px;height:${f1(cwid * 2)}px"><i></i></i>`
+    const front = drops.map((d) => `<div class="vCandle vz${d.z}" style="left:${f1(d.cx - d.cw / 2)}px;top:${f1(d.top)}px;width:${f1(d.cw)}px;height:${f1(d.dh)}px;--j:${d.j % 11}"><div class="vBob">`
+      + `<i class="vHalo" style="width:${f1(d.cw * 7)}px;height:${f1(d.cw * 7)}px"></i>`
+      + `<i class="vFlame" style="left:${f1(d.cw * (CW[d.i] - 0.42))}px;width:${f1(d.cw * 0.84)}px;height:${f1(d.cw * 2)}px"><i></i></i>`
       + `<img src="obj/vamp-candle${d.i}.webp" alt="" draggable="false" decoding="async"></div></div>`).join("");
     const el = document.createElement("div");
     el.className = "lights vampDrapes" + (cfg.on ? " on" : "");
