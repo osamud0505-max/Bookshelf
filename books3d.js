@@ -248,6 +248,23 @@
     const contactMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.3), transparent: true, opacity: 0.45, depthWrite: false, toneMapped: false });
     const haloMat = new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.2), transparent: true, opacity: 0.3, depthWrite: false, toneMapped: false });
     const books = new Map(); // id -> { node, sig }
+    // the lamp light's level (0..1) eased like CSS "ease"; while one is fading the shelf redraws every frame
+    const ease = (t) => { const c = (u) => 3 * 0.1 * u * (1 - u) ** 2 + 3 * 1 * u * u * (1 - u) + u ** 3, x = (u) => 3 * 0.25 * u * (1 - u) ** 2 + 3 * 0.25 * u * u * (1 - u) + u ** 3; let lo = 0, hi = 1; for (let i = 0; i < 20; i++) { const m = (lo + hi) / 2; if (x(m) < t) lo = m; else hi = m; } return c((lo + hi) / 2); };
+    function applyLamp(rec) {
+      const tr = rec.tr;
+      if (tr) { const k = (performance.now() - tr.t0) / tr.dur; if (k >= 1) { rec.lv = tr.to; rec.tr = null; } else if (k > 0) rec.lv = tr.from + (tr.to - tr.from) * ease(k); }
+      rec.light.intensity = rec.full * rec.lv; rec.pool.material.opacity = 0.7 * rec.lv; rec.pool.visible = rec.lv > 0.002;
+    }
+    let lampRaf = 0;
+    function lampTick() {
+      if (lampRaf || dead) return;
+      lampRaf = requestAnimationFrame(() => {
+        lampRaf = 0; let busy = false;
+        for (const rec of objs.values()) if (rec.light) { applyLamp(rec); if (rec.tr) busy = true; }
+        frameDirty = true; inst.render();
+        if (busy) lampTick();
+      });
+    }
     const objs = new Map(); // object id -> { mesh, tex, depth, img }
     let dead = false, W = 0, Hc = 0, top = 0, bottom = 0, frameDirty = false;
     const inst = {
@@ -334,17 +351,23 @@
             rec.mesh.scale.set(ob.w, ob.h, 1); rec.mesh.position.set(ob.x + ob.w / 2, ob.y + ob.h / 2, zc);
             // v302: a lit lipstick lamp lights the real books beside it, warm on the sides that face it (osamu: the flat
             // light boxes laid over the books looked bad)
-            if (ob.lamp && !rec.light) { rec.light = new THREE.PointLight("#ffa66b", 0, H * 1.8, 2); scene.add(rec.light); }
-            if (rec.light) { rec.light.intensity = ob.lamp && ob.visible !== false ? 9000 * (H / 100) ** 2 / 4 : 0; rec.light.position.set(ob.x + ob.w * 0.39, ob.y + ob.h * 0.62, H * 0.12); }
-            // and its warm pool on the shelf floor, lying flat in the room (the books standing in it hide their part of it)
-            if (ob.lamp && !rec.pool) {
-              rec.pool = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ color: "#ffd1a0", map: poolTex(), transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false }));
+            // v302/303: a lit lipstick lamp lights the real books beside it and lays a warm pool on the floor. v304 (osamu: the
+            // shelf light didn't keep time with the lamp): both fade exactly as the lamp's own glow does, in after the
+            // lipstick has twisted up (1.7 s, then 1.1 s), out at once over 0.6 s
+            if (ob.hasLamp && !rec.light) {
+              rec.light = new THREE.PointLight("#ffa66b", 0, H * 1.8, 2); scene.add(rec.light);
+              rec.pool = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ color: "#ffd1a0", map: poolTex(), transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
               rec.pool.rotation.x = -Math.PI / 2; rec.pool.renderOrder = 2; scene.add(rec.pool);
             }
-            if (rec.pool) {
-              rec.pool.visible = !!ob.lamp && ob.visible !== false;
+            if (rec.light) {
+              const on = !!ob.lamp && ob.visible !== false, now = performance.now();
+              if (rec.on === undefined) { rec.on = on; rec.lv = on ? 1 : 0; rec.tr = null; }
+              else if (on !== rec.on) { rec.on = on; rec.tr = { from: rec.lv, to: on ? 1 : 0, t0: now + (on ? 1700 : 0), dur: on ? 1100 : 600 }; lampTick(); }
+              rec.full = 9000 * (H / 100) ** 2 / 4;
+              rec.light.position.set(ob.x + ob.w * 0.39, ob.y + ob.h * 0.62, H * 0.12);
               const pd = Math.min(H * 1.3, F - zw);
               rec.pool.scale.set(H * 2.2, pd, 1); rec.pool.position.set(ob.x + ob.w * 0.39, 0.6, Math.min(F - pd / 2, -ob.w * 0.2));
+              applyLamp(rec);
             }
           }
           for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.light) scene.remove(rec.light); if (rec.pool) { scene.remove(rec.pool); rec.pool.material.dispose(); } rec.tex.dispose(); rec.depth.dispose(); objs.delete(id); } }

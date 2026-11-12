@@ -1215,7 +1215,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           it.on = !el.classList.contains("lit"); if (D.ORNAMENTS[kind].startOff) it.lit = it.on;
           toggleFlame(el, !it.on);
           saveItems();
-          if (b3d) [0, 900, 1800].forEach((t) => setTimeout(() => b3d && layout(), t)); // the 3D lamp light follows the switch
+          if (b3d) requestAnimationFrame(() => b3d && layout()); // the 3D lamp light follows the switch (it fades itself)
         };
         armDrag(o);
         (hang ? hangLayer : stage).append(el);
@@ -1582,7 +1582,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
               o.box = { H, dx: r.left - sr.left - o.left, db: sr.bottom - r.bottom - (o.lift || 0), w: r.width, h: r.height };
             }
             objs.push({ id: o.it.id, img, x: o.left + o.box.dx, y: o.box.db + (o.lift || 0), w: o.box.w, h: o.box.h, visible: !o.el.classList.contains("placeholder"),
-              lamp: kind === "lipstickLamp" && o.el.classList.contains("lit") });
+              hasLamp: kind === "lipstickLamp", lamp: kind === "lipstickLamp" && o.el.classList.contains("lit") });
           }
           const fl = b3d.sync(items, { stageH: stage.clientHeight, viewW, H, topD, objs });
           // the painted shelf floor is stretched to the 3D floor's depth, so the real shadows land on it in the right place
