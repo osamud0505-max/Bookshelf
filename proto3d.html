@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shelf 3D test</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #e9e3da; font-family: system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: pan-y; }
+  .note { position: fixed; left: 16px; right: 16px; bottom: 16px; padding: 10px 14px; border-radius: 12px; background: rgba(20,20,24,.72); color: #f3efe8; font-size: 14px; line-height: 1.35; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="note">Test shelf with real 3D books. Tap a book to turn its cover to you; tap it again to put it back. Drag sideways to look along the shelf.</div>
+<script type="module">
+import * as THREE from "./lib/three.module.min.js";
+
+/* ---------- renderer, camera, light ---------- */
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.VSMShadowMap;           // soft, blurred shadows
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#e9e3da");
+const camera = new THREE.PerspectiveCamera(26, 1, 1, 400);
+
+// one key light from the front, upper left; a soft sky fill so shadows are never black
+const key = new THREE.DirectionalLight("#fff6ea", 1.9);
+key.position.set(-35, 80, 90);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.left = -60; key.shadow.camera.right = 60; key.shadow.camera.top = 50; key.shadow.camera.bottom = -20;
+key.shadow.camera.near = 10; key.shadow.camera.far = 200;
+key.shadow.radius = 14; key.shadow.blurSamples = 25; key.shadow.bias = -0.0004;
+scene.add(key);
+scene.add(new THREE.HemisphereLight("#fffaf2", "#a39a8a", 1.5));
+
+/* ---------- room: wall and a white shelf ---------- */
+const DEPTH = 26;                                   // shelf depth (cm)
+const wall = new THREE.Mesh(new THREE.PlaneGeometry(400, 160), new THREE.MeshStandardMaterial({ color: "#efe9df", roughness: .95 }));
+wall.position.set(0, 40, -DEPTH / 2); wall.receiveShadow = true; scene.add(wall);
+const shelfMat = new THREE.MeshStandardMaterial({ color: "#f4f1ec", roughness: .6 });
+const plank = new THREE.Mesh(new THREE.BoxGeometry(400, 2.4, DEPTH + 1), shelfMat);
+plank.position.set(0, -1.2, .5); plank.receiveShadow = true; scene.add(plank);
+
+/* ---------- textures drawn in code ---------- */
+function canvasTex(w, h, draw, repeat) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
+  return t;
+}
+// page edges: fine lines, one per few leaves
+const pageTex = canvasTex(256, 8, (g, w, h) => {
+  g.fillStyle = "#efe6d2"; g.fillRect(0, 0, w, h);
+  for (let x = 0; x < w; x += 2) { g.fillStyle = `rgba(120,100,70,${.08 + Math.random() * .12})`; g.fillRect(x, 0, 1, h); }
+}, true);
+// book cloth: soft weave noise, tinted by the material colour
+const clothTex = canvasTex(128, 128, (g, w, h) => {
+  g.fillStyle = "#fff"; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(0,0,0,${Math.random() * .07})`; g.fillRect(Math.random() * w, Math.random() * h, 1, 1 + Math.random() * 2); }
+  for (let y = 0; y < h; y += 2) { g.fillStyle = "rgba(0,0,0,.025)"; g.fillRect(0, y, w, 1); }
+}, true);
+clothTex.repeat.set(.25, .25);
+
+/* ---------- one book, built to its own size ----------
+   Seen from above, a hardcover is a U: two boards joined by a rounded spine, with the page block set inside it, a little shorter
+   than the boards top and bottom (the "squares") and pulled back from the fore-edge. That U is extruded up to the book's height,
+   so the covers really do stand higher than the pages and the spine really is round at both ends. */
+function makeBook(o) {
+  const { h, w, d, color, title } = o;
+  const t = .22;                     // board thickness
+  const bulge = d * .28;             // how far the round spine bows out
+  const sq = .3;                     // squares: boards stand this much above/below the pages
+  const g = new THREE.Group();
+
+  // the case (front board, spine, back board) as one U-shaped piece
+  const s = new THREE.Shape();
+  s.moveTo(-d / 2, 0);
+  s.lineTo(-d / 2, w - bulge);
+  s.absellipse(0, w - bulge, d / 2, bulge, Math.PI, 0, true);
+  s.lineTo(d / 2, 0);
+  s.lineTo(d / 2 - t, 0);
+  s.lineTo(d / 2 - t, w - bulge);
+  s.absellipse(0, w - bulge, d / 2 - t, bulge - t * .8, 0, Math.PI, false);
+  s.lineTo(-d / 2 + t, 0);
+  s.closePath();
+  const caseGeo = new THREE.ExtrudeGeometry(s, { depth: h, bevelEnabled: true, bevelThickness: .05, bevelSize: .05, bevelSegments: 2, curveSegments: 24 });
+  caseGeo.rotateX(Math.PI / 2); caseGeo.translate(0, h, -w / 2);
+  const cloth = new THREE.MeshStandardMaterial({ color, roughness: .78, metalness: 0, map: clothTex });
+  const caseMesh = new THREE.Mesh(caseGeo, cloth);
+  caseMesh.castShadow = caseMesh.receiveShadow = true; g.add(caseMesh);
+
+  // the page block: fills the inside of the U, shorter than the boards, set back from the fore-edge
+  const p = new THREE.Shape(), gap = .04, back = .25;
+  p.moveTo(-d / 2 + t + gap, back);
+  p.lineTo(-d / 2 + t + gap, w - bulge);
+  p.absellipse(0, w - bulge, d / 2 - t - gap, Math.max(.05, bulge - t - gap), Math.PI, 0, true);
+  p.lineTo(d / 2 - t - gap, back);
+  p.closePath();
+  const pagesGeo = new THREE.ExtrudeGeometry(p, { depth: h - sq * 2, bevelEnabled: false, curveSegments: 20 });
+  { // the top and bottom faces take this book's own page-top picture: across = thickness, down = from the spine back
+    const pos = pagesGeo.attributes.position, uv = pagesGeo.attributes.uv, D = h - sq * 2;
+    for (let k = 0; k < pos.count; k++) {
+      const z = pos.getZ(k);
+      if (Math.abs(z) < 1e-4 || Math.abs(z - D) < 1e-4) uv.setXY(k, (pos.getX(k) + d / 2) / d, 1 - pos.getY(k) / w);
+    }
+    uv.needsUpdate = true;
+  }
+  pagesGeo.rotateX(Math.PI / 2); pagesGeo.translate(0, h - sq, -w / 2);
+  // the page top is painted for this book's own size: leaf lines running back from the spine, and the shade the raised covers
+  // throw onto it, darkest against both boards and along the spine's curve, in the curve's own shape
+  const topTex = canvasTex(256, 512, (c, W, H) => {
+    c.fillStyle = "#f1e8d5"; c.fillRect(0, 0, W, H);
+    for (let x = 0; x < W; x += 3) { c.fillStyle = `rgba(110,90,60,${.05 + Math.random() * .1})`; c.fillRect(x, 0, 1.2, H); }
+    // canvas x = across the thickness, canvas y = depth with the spine at the top (y = 0)
+    const edge = W * .3;
+    let gr = c.createLinearGradient(0, 0, edge, 0); gr.addColorStop(0, "rgba(40,25,10,.6)"); gr.addColorStop(.35, "rgba(40,25,10,.22)"); gr.addColorStop(1, "rgba(40,25,10,0)");
+    c.fillStyle = gr; c.fillRect(0, 0, edge, H);
+    gr = c.createLinearGradient(W, 0, W - edge, 0); gr.addColorStop(0, "rgba(40,25,10,.5)"); gr.addColorStop(.35, "rgba(40,25,10,.18)"); gr.addColorStop(1, "rgba(40,25,10,0)");
+    c.fillStyle = gr; c.fillRect(W - edge, 0, edge, H);
+    // the spine end: the shade runs back from the inside of the spine's curve by the same distance all along it, so its edge
+    // has the curve's own shape (further forward in the middle, where the spine bows out)
+    const bv = bulge / w * H, k = Math.min(H * .5, 5 / w * H);
+    for (let x = 0; x < W; x++) {
+      const t = (x + .5) / W * 2 - 1, e = bv * (1 - Math.sqrt(Math.max(0, 1 - t * t)));
+      const g2 = c.createLinearGradient(0, e, 0, e + bv + k);
+      g2.addColorStop(0, "rgba(40,25,10,.75)"); g2.addColorStop(.4, "rgba(40,25,10,.45)"); g2.addColorStop(1, "rgba(40,25,10,0)");
+      c.fillStyle = g2; c.fillRect(x, 0, 1, e + bv + k);
+    }
+  });
+  topTex.flipY = false;
+  const pageTop = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: .95, map: topTex });
+  const pageSide = new THREE.MeshStandardMaterial({ color: "#efe6d2", roughness: .95, map: pageTex });
+  const pages = new THREE.Mesh(pagesGeo, [pageTop, pageSide]);
+  pages.castShadow = pages.receiveShadow = true; g.add(pages);
+
+  // the title on the spine
+  if (title) {
+    const lab = canvasTex(64, 512, (c, W, H) => {
+      c.clearRect(0, 0, W, H); c.save(); c.translate(W / 2, H / 2); c.rotate(Math.PI / 2);
+      c.fillStyle = "rgba(240,226,190,.92)"; c.font = "600 34px Georgia, serif"; c.textAlign = "center"; c.textBaseline = "middle";
+      c.fillText(title, 0, 0); c.restore();
+    });
+    const lw = d * .55, lh = Math.min(h * .62, lw * 8);
+    const label = new THREE.Mesh(new THREE.PlaneGeometry(lw, lh), new THREE.MeshStandardMaterial({ map: lab, transparent: true, roughness: .5, metalness: .2 }));
+    label.position.set(0, h * .55, w / 2 + .055);
+    g.add(label);
+  }
+  // pivot for turning: the book turns about its middle; it sits on the shelf at y = 0
+  const pivot = new THREE.Group(); pivot.add(g);
+  pivot.userData = { ...o, turn: 0, target: 0 };
+  return pivot;
+}
+
+/* ---------- a test row: varied heights, widths and thicknesses, some pushed further back, one leaning, a pile ---------- */
+const COLORS = ["#2f4f7a", "#7d1f2a", "#a4882e", "#5a1621", "#b5482a", "#2d4a6a", "#3c5240", "#6b5a44", "#1f2e4a", "#8a2d3a"];
+const SPEC = [
+  { h: 24, w: 16, d: 4.2, title: "STOKER" }, { h: 21, w: 14, d: 2.8, title: "DURAS" }, { h: 19.5, w: 13, d: 3.4 },
+  { h: 22, w: 15, d: 3.1, back: 1.2 }, { h: 20.5, w: 14, d: 3.8 }, { h: 23, w: 15.5, d: 2.6, back: .6 },
+  { h: 21.5, w: 14.5, d: 3.0, lean: true }, { pile: [{ h: 23, w: 15, d: 2.6 }, { h: 21, w: 14, d: 3.2 }, { h: 19, w: 13, d: 2.4 }] },
+  { h: 24.5, w: 16, d: 4.6, title: "CAMUS" }, { h: 20, w: 13.5, d: 2.9 }
+];
+const books = [], piles = [];
+let ci = 0;
+for (const sp of SPEC) {
+  if (sp.pile) {
+    const grp = new THREE.Group(); let y = 0;
+    sp.pile.forEach((b, k) => {
+      const bk = makeBook({ ...b, color: COLORS[ci++ % COLORS.length] });
+      bk.rotation.z = Math.PI / 2;              // lying on its back board, spine to the front
+      bk.position.set(b.h / 2 + (k % 2 ? .6 : -.4), y + b.d / 2, (k % 2 ? -.3 : .2));
+      bk.children[0].position.y = -b.h / 2;      // lie it centred on its height
+      bk.traverse(m => { if (m.isMesh) m.castShadow = m.receiveShadow = true; });
+      grp.add(bk); y += b.d;
+    });
+    grp.userData = { pile: true, width: Math.max(...sp.pile.map(b => b.h)) + 1.2 };
+    scene.add(grp); piles.push(grp); books.push(grp);
+  } else {
+    const bk = makeBook({ ...sp, color: COLORS[ci++ % COLORS.length] });
+    scene.add(bk); books.push(bk);
+  }
+}
+
+/* ---------- layout: left to right, touching; a turned book takes its cover's width ---------- */
+function layout() {
+  let x = -40;
+  for (let i = 0; i < books.length; i++) {
+    const b = books[i], u = b.userData;
+    if (u.pile) { b.position.set(x + .3, 0, 0); x += u.width; continue; }
+    const a = u.turn * Math.PI / 2;
+    const foot = u.d * Math.cos(a) + u.w * Math.sin(a);
+    if (u.lean && u.turn < .01) {
+      // leaning left onto the book before it: the top left corner rests on that book, the bottom right corner on the shelf
+      const ang = .24, c = Math.cos(ang), sn = Math.sin(ang);
+      const px = x + u.d / 2 * c + u.h * sn;
+      b.rotation.set(0, 0, ang);
+      b.position.set(px, -u.d / 2 * sn + u.d * sn, -(u.back || 0));
+      x = px + u.d / 2 * c + .05;
+      continue;
+    }
+    b.rotation.set(0, -a, 0);
+    b.position.set(x + foot / 2, 0, -(u.back || 0) * (1 - u.turn) + u.turn * (u.w / 2 - u.d / 2 + .8)); // turned: its cover comes up level with the spines' front
+    x += foot + .04;
+  }
+}
+
+/* ---------- camera framing, a little above the shelf ---------- */
+let pan = -24;
+function frame() {
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  renderer.setSize(W, H, false);
+  camera.aspect = W / H;
+  // keep about 30cm of shelf across a phone; more on wide screens
+  const span = Math.max(30, Math.min(110, 30 * camera.aspect / .46));
+  const dist = span / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / camera.aspect;
+  // seen from a little above, like the app's shelves: the tops of the books show
+  camera.position.set(pan, 11 + dist * .2, dist);
+  camera.lookAt(pan, 10, 0);
+  camera.updateProjectionMatrix();
+}
+window.addEventListener("resize", frame);
+frame();
+
+/* ---------- interaction: tap to turn, drag to pan ---------- */
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+let down = null;
+canvas.addEventListener("pointerdown", e => { down = { x: e.clientX, pan, moved: false }; });
+canvas.addEventListener("pointermove", e => {
+  if (!down) return; const dx = e.clientX - down.x;
+  if (Math.abs(dx) > 6) down.moved = true;
+  if (down.moved) { pan = Math.max(-40, Math.min(70, down.pan - dx * .06)); frame(); dirty = true; }
+});
+canvas.addEventListener("pointerup", e => {
+  if (down && !down.moved) {
+    const r = canvas.getBoundingClientRect();
+    ptr.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ptr, camera);
+    const hit = ray.intersectObjects(books.filter(b => !b.userData.pile), true)[0];
+    if (hit) {
+      let o = hit.object; while (o && !books.includes(o)) o = o.parent;
+      if (o && !o.userData.lean) { const was = o.userData.target; books.forEach(b => b.userData.target = 0); o.userData.target = was ? 0 : 1; }
+    }
+  }
+  down = null;
+});
+
+/* ---------- loop ---------- */
+window.__set = (i, t) => { books[i].userData.turn = books[i].userData.target = t; dirty = true; };
+window.__pan = v => { pan = v; frame(); dirty = true; };
+// draw only while something moves, so a phone isn't kept busy redrawing a still shelf
+let dirty = true;
+window.addEventListener("resize", () => dirty = true);
+function tick() {
+  let moving = false;
+  for (const b of books) { const u = b.userData; if (u.pile) continue; if (u.turn !== u.target) { moving = true; u.turn += (u.target - u.turn) * .12; if (Math.abs(u.target - u.turn) < .001) u.turn = u.target; } }
+  if (moving || dirty) { layout(); renderer.render(scene, camera); dirty = false; }
+  requestAnimationFrame(tick);
+}
+tick();
+window.__ready = true;
+</script>
+</body>
+</html>

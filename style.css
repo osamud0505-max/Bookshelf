@@ -2098,13 +2098,210 @@ html[data-bdk="closet"] .wsB { background: rgba(28,0,16,.62); }
 html[data-bdk="closet"] .nbSh { background: linear-gradient(90deg, rgba(28,0,16,.5), rgba(28,0,16,.22) 45%, transparent); }
 html[data-bdk="closet"] .slot.lying .nbSh { background: linear-gradient(270deg, rgba(28,0,16,.55), transparent); }
 
-/* v278 (osamu's close-up): the shadows run from each book's foot back across the shelf floor and up the wall as one, so the wall
-   layer is cut at the books' floor line instead of where the floor meets the wall. A pile gets its contact shadow under the bottom
-   book (its left edge, which faces down once turned). Each book in a pile shades the cover of the one below where it shows. */
-.wallSh { bottom: 1px; }
-.wsIn { bottom: -1px; }
-.wsB { -webkit-mask: linear-gradient(0deg, #000 0, #000 28%, rgba(0,0,0,.4) 100%); mask: linear-gradient(0deg, #000 0, #000 28%, rgba(0,0,0,.4) 100%); }
-.slot.lying.pileBase::before { display: block; left: -7px; right: auto; top: -3px; bottom: -3px; width: 12px; height: auto; border-radius: 50% / 40%; }
-.slot.lying .nbSh { right: calc(var(--shelf-h) * -.04); width: calc(var(--shelf-h) * .09);
-  background: linear-gradient(270deg, rgba(0,0,0,.2), rgba(0,0,0,.42) 44%, rgba(0,0,0,.3) 56%, transparent); }
-html[data-bdk="closet"] .slot.lying .nbSh { background: linear-gradient(270deg, rgba(28,0,16,.2), rgba(28,0,16,.42) 44%, rgba(28,0,16,.3) 56%, transparent); }
+/* v279: every book used to look from its own eye point, so neighbouring tops splayed apart at the joins (a notch between books).
+   A far-away eye with the same angle keeps the top edges almost straight up, so the tops of neighbours meet cleanly. */
+.book { perspective: 5000px; --eye: calc(var(--h) * 1.67); }
+
+/* v280: shadows as in osamu's own picture: wide and very soft, falling to the right of each book from its foot, running onto the
+   shelf floor and fading out before the front edge. No hard edges anywhere: a big blur, and nothing is cut at the wall line. */
+.wallSh { bottom: calc(var(--top-d) * -.5); top: -120px; }
+.wsIn { bottom: calc(var(--top-d) * .5); }
+.wsB { background: rgba(0,0,0,.5); border-radius: 6px; filter: blur(calc(var(--shelf-h) * .065));
+  -webkit-mask: none; mask: none; }
+.wsB.lying { background: rgba(0,0,0,.45); }
+html[data-bdk="closet"] .wsB { background: rgba(28,0,16,.5); }
+@media (min-width: 560px) { .wsB { filter: blur(calc(var(--shelf-h) * .065)); } }
+.wsO.ornament { filter: brightness(0) blur(calc(var(--shelf-h) * .05)); opacity: .36; }
+/* the shadow keeps its strength right beside the book and fades out wide to the right, like osamu's picture */
+.wsB { background: rgba(0,0,0,.4); filter: blur(calc(var(--shelf-h) * .025));
+  box-shadow: calc(var(--shelf-h) * .05) calc(var(--shelf-h) * .01) calc(var(--shelf-h) * .14) calc(var(--shelf-h) * .02) rgba(0,0,0,.32); }
+@media (min-width: 560px) { .wsB { filter: blur(calc(var(--shelf-h) * .025)); } }
+.wsB.lying { background: rgba(0,0,0,.36); }
+html[data-bdk="closet"] .wsB { background: rgba(28,0,16,.4); box-shadow: calc(var(--shelf-h) * .05) calc(var(--shelf-h) * .01) calc(var(--shelf-h) * .14) calc(var(--shelf-h) * .02) rgba(28,0,16,.32); }
+.wsB { background: rgba(0,0,0,.5); box-shadow: calc(var(--shelf-h) * .05) calc(var(--shelf-h) * .01) calc(var(--shelf-h) * .14) calc(var(--shelf-h) * .02) rgba(0,0,0,.4); }
+/* the light comes from above and in front: the wall darkens softly toward the shelf behind the books, and the shelf throws a long soft
+   shadow on the wall beneath it */
+.wallSh::before { content: ""; position: absolute; left: 0; right: 0; bottom: var(--top-d); height: calc(var(--shelf-h) * .45); pointer-events: none;
+  background: linear-gradient(0deg, rgba(0,0,0,.16), rgba(0,0,0,.07) 35%, transparent); }
+html[data-bdk="closet"] .wallSh::before { background: linear-gradient(0deg, rgba(28,0,16,.18), rgba(28,0,16,.07) 35%, transparent); }
+.plank { box-shadow: 0 12px 18px -8px rgba(0,0,0,.55), 0 26px 46px -6px rgba(0,0,0,.22); }
+/* the shadow layer must stay behind every book: on the books' own 3D faces it was showing through as a hard line at the wall line */
+.wallSh { z-index: -1; }
+/* v280: a lit object's glow ended in a line at the object's own base, but books stand a little lower (their spines reach
+   further forward), so their feet were cut out of the light. The glow now reaches to the shelf's front edge and fades out softly. */
+.stage .ornament:not(.hanging) .ornGlowBox { bottom: calc(var(--top-d) * -.5);
+  -webkit-mask-image: linear-gradient(to top, transparent 0, rgba(0,0,0,.5) 12px, #000 40px); mask-image: linear-gradient(to top, transparent 0, rgba(0,0,0,.5) 12px, #000 40px); }
+.stage .ornament:not(.hanging) .ornGlowIn { bottom: calc(var(--top-d) * .5); }
+/* the spine's near face reaches a little below the book's box (seen from above, it is nearer to you); the neighbour shading has to
+   reach that far too, or it stops in a hard line just above the foot */
+.nbSh { bottom: calc(var(--shelf-h) * -.045); }
+/* a book set further back: the books either side throw their shade onto its edges and it is a little darker overall */
+.depSh { position: absolute; left: 0; right: 0; top: 0; bottom: calc(var(--shelf-h) * -.045); z-index: 2; pointer-events: none;
+  opacity: var(--rec, 0);
+  background: linear-gradient(90deg, rgba(0,0,0,.42), rgba(0,0,0,.14) 28%, rgba(0,0,0,.1) 60%, rgba(0,0,0,.36)); }
+.slot.lying .depSh { display: none; }
+
+/* v282, from osamu's close-up: all books stand on the same line. A book set further back is in the shade of the books either side
+   (evenly darker), every join between two books is a thin dark crevice, and the wall darkens in a soft halo close around the
+   books' tops rather than in a shadow thrown off to one side. */
+.depSh { background: linear-gradient(90deg, rgba(0,0,0,.5), rgba(0,0,0,.3) 18%, rgba(0,0,0,.26) 50%, rgba(0,0,0,.3) 82%, rgba(0,0,0,.5)); }
+.slot:not(.lying):not(.addSlot)::after { display: block; content: ""; position: absolute; left: -1px; right: -1px; top: 0; bottom: calc(var(--shelf-h) * -.045);
+  width: auto; height: auto; border-radius: 0; z-index: 2; pointer-events: none; filter: none;
+  background: linear-gradient(90deg, rgba(0,0,0,.6) 0, rgba(0,0,0,.18) 2px, transparent 4px, transparent calc(100% - 3px), rgba(0,0,0,.45) calc(100% - 1px)); }
+.wsB { background: rgba(0,0,0,.42); border-radius: 2px; filter: blur(calc(var(--shelf-h) * .02));
+  box-shadow: calc(var(--shelf-h) * .015) calc(var(--shelf-h) * -.01) calc(var(--shelf-h) * .12) calc(var(--shelf-h) * .03) rgba(0,0,0,.34); }
+html[data-bdk="closet"] .wsB { background: rgba(28,0,16,.42); box-shadow: calc(var(--shelf-h) * .015) calc(var(--shelf-h) * -.01) calc(var(--shelf-h) * .12) calc(var(--shelf-h) * .03) rgba(28,0,16,.34); }
+.wsB { box-shadow: calc(var(--shelf-h) * .015) calc(var(--shelf-h) * -.01) calc(var(--shelf-h) * .13) calc(var(--shelf-h) * .035) rgba(0,0,0,.42); }
+html[data-bdk="closet"] .wsB { box-shadow: calc(var(--shelf-h) * .015) calc(var(--shelf-h) * -.01) calc(var(--shelf-h) * .13) calc(var(--shelf-h) * .035) rgba(28,0,16,.42); }
+/* every book's front face (spine, or cover while it turns) sits at the same depth, so seen from above all feet land on one line
+   whatever the book's width; before, wider books stuck out further and stood lower */
+.book .body { transform: translateZ(calc(-1 * (var(--w) * .5 * sin(var(--turn) * 90deg) + var(--d) * .5 * cos(var(--turn) * 90deg))))
+    rotateY(calc(var(--turn) * 90deg)); }
+.nbSh, .depSh, .slot:not(.lying):not(.addSlot)::after { bottom: 0; }
+
+/* v283: hardcover tops like osamu's reference: the two boards and the spine head stand up above the page block, which sits a few px
+   lower inside them, shaded where the boards rise beside it. The lid is the boards' top edges at full height; .top drops to the
+   page block. A paperback's card covers stay flush, so it has no lid. */
+.lid { display: none; }
+.book.hard .lid { display: block; left: 0; width: var(--w); top: calc(var(--h) / 2 - var(--d) / 2); height: var(--d); overflow: visible;
+  transform: rotateX(90deg) translateZ(calc(var(--h) / 2 - .5px)); background:
+    linear-gradient(90deg, var(--spine) 0 var(--sp), transparent var(--sp)),
+    linear-gradient(180deg, var(--spine) 0 var(--bd), transparent var(--bd) calc(100% - var(--bd)), var(--spine) calc(100% - var(--bd))); }
+.book.hard .lid::after { content: ""; position: absolute; inset: 0; background:
+    linear-gradient(180deg, rgba(255,255,255,.22) 0 .6px, transparent .6px calc(100% - var(--bd)), rgba(255,255,255,.16) calc(100% - var(--bd)) calc(100% - var(--bd) + .6px), transparent 0),
+    linear-gradient(90deg, rgba(0,0,0,.2) 0 .6px, transparent .6px);
+  -webkit-mask: linear-gradient(90deg, #000 0 var(--sp), transparent var(--sp)), linear-gradient(180deg, #000 0 var(--bd), transparent var(--bd) calc(100% - var(--bd)), #000 calc(100% - var(--bd)));
+  mask: linear-gradient(90deg, #000 0 var(--sp), transparent var(--sp)), linear-gradient(180deg, #000 0 var(--bd), transparent var(--bd) calc(100% - var(--bd)), #000 calc(100% - var(--bd))); }
+.book .lid, .book .top { --bd: 2.4px; --sp: 3px; }
+.book.hard .top { transform: rotateX(90deg) translateZ(calc(var(--h) / 2 - 3px)); background:
+    linear-gradient(180deg, rgba(0,0,0,.55) 0, rgba(0,0,0,.18) calc(var(--bd) + 2px), transparent 45%, transparent 70%, rgba(0,0,0,.25) calc(100% - var(--bd) - 2px), rgba(0,0,0,.5) 100%),
+    linear-gradient(90deg, rgba(0,0,0,.6) 0, rgba(0,0,0,.3) calc(var(--sp) + 3px), rgba(0,0,0,.08) 35%, transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,calc(var(--tsh, 0) * .45)), transparent 85%),
+    linear-gradient(180deg, rgba(40,30,20,.12), rgba(40,30,20,.3)),
+    repeating-linear-gradient(180deg, #efe4cc 0 1px, #cfbf9c 1px 2px); }
+.book.hard .top::after { background: linear-gradient(90deg, rgba(0,0,0,.12), rgba(255,255,255,.08) 45%, rgba(0,0,0,.06)); }
+.book.paper .top { background:
+    linear-gradient(90deg, var(--spine) 0 var(--sp), transparent var(--sp)),
+    linear-gradient(180deg, var(--spine) 0 var(--bd), transparent var(--bd) calc(100% - var(--bd)), var(--spine) calc(100% - var(--bd))),
+    linear-gradient(180deg, rgba(0,0,0,calc(var(--tsh, 0) * .45)), transparent 85%),
+    linear-gradient(180deg, rgba(0,0,0,.1), transparent 30%, transparent 70%, rgba(0,0,0,.1)),
+    repeating-linear-gradient(180deg, #f1e8d4 0 1px, #ddd0b4 1px 2px); }
+.book.paper .top { --bd: .8px; --sp: 1px; }
+.slot.lying .book .lid { display: none; }
+.slot.lying .book.hard .top { transform: rotateX(90deg) translateZ(calc(var(--h) / 2 - .5px)); }
+/* the spine head is the front of the raised rim: a thin lit edge where it rounds over, hiding the front of the sunken pages */
+.book.hard .spine::before { content: ""; position: absolute; left: 6%; right: 6%; top: 0; height: 1.3px; z-index: 3; border-radius: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.26) 30%, rgba(255,255,255,.18) 70%, transparent); }
+.slot.lying .book.hard .spine::before { display: none; }
+/* v284: the spine is a rounded back, so its outline is rounded too, the same shape its shadow takes on the floor: the head and foot
+   curve over at both edges (seen from a little above, the foot bows down in the middle), leaving small dark V's at every join */
+.book.hard .spine { border-radius: 50% 50% 50% 50% / 3px 3px 5px 5px; }
+.book.paper .spine { border-radius: 22% 22% 22% 22% / 1.5px 1.5px 2.5px 2.5px; }
+/* v284: the wall layer reached only to the stage's edge, so the soft halo round the first book was cut straight there and showed as a
+   separate grey strip beside it; let the layer run past both ends (the scroller still clips at the screen edge) */
+.wallSh { left: -60px; right: -60px; }
+.wsIn { left: 60px; right: 60px; }
+/* the crevice sits on the book's own edges, never outside them, and only on a side that touches another book */
+.slot:not(.lying):not(.addSlot)::after { left: 0; right: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,calc(var(--cl, 1) * .6)) 0, rgba(0,0,0,calc(var(--cl, 1) * .18)) 2px, transparent 4px, transparent calc(100% - 3px), rgba(0,0,0,calc(var(--cr, 1) * .45)) calc(100% - 1px)); }
+
+/* v285: a rounded spine seen from a little above: both its head and its foot bow down in the middle (a smile at each end), with
+   the board corners standing up at the head. The head is cut by an ellipse so the top of the page block shows through it, the
+   foot by rounded corners. The same --sag drives both, so top and bottom always match. */
+.book { --sag: calc(var(--d) * .13); }
+.book.paper { --sag: calc(var(--d) * .05); }
+.book.hard .spine, .book.paper .spine { border-radius: 0 0 50% 50% / 0 0 var(--sag) var(--sag);
+  -webkit-mask: radial-gradient(ellipse 50% var(--sag) at 50% 0, transparent calc(100% - .6px), #000 100%);
+  mask: radial-gradient(ellipse 50% var(--sag) at 50% 0, transparent calc(100% - .6px), #000 100%); }
+.slot.lying .book .spine { border-radius: 0; -webkit-mask: none; mask: none; }
+/* the rim light follows the head's curve instead of running straight across */
+.book.hard .spine::before { left: 0; right: 0; top: 0; height: calc(var(--sag) + 1.4px); border-radius: 0;
+  background: radial-gradient(ellipse 50% var(--sag) at 50% 0, transparent calc(100% - .6px), rgba(255,255,255,.22) 100%, transparent calc(100% + 1.2px)); }
+/* boards: thin and in the spine's own colour, a little darker, so they read as the cover's edge rather than separate pegs */
+.book .lid, .book .top { --bd: 1.6px; }
+.book.hard .lid { filter: brightness(.82); }
+/* where the foot curves away you see down to the floor right under the book, which is in deep contact shadow, never the lit floor */
+.ftSh { position: absolute; left: 0; right: 0; bottom: 0; height: 0; z-index: -1; pointer-events: none; }
+.slot:not(.lying):not(.addSlot) .ftSh { height: calc(var(--fsag, 3px) + 2px); background: linear-gradient(0deg, rgba(0,0,0,.72), rgba(0,0,0,.5)); }
+/* the contact shadow under the row is one continuous band: square where two books meet (it used to be a rounded blob per book,
+   which scalloped between them), soft and rounded only at a free end */
+.slot:not(.lying)::before { left: calc(var(--cl, 0) * 0px - (1 - var(--cl, 0)) * 2px); right: calc(var(--cr, 0) * 0px - (1 - var(--cr, 0)) * 2px);
+  border-radius: calc((1 - var(--cl, 0)) * 7px) calc((1 - var(--cr, 0)) * 7px) calc((1 - var(--cr, 0)) * 7px) calc((1 - var(--cl, 0)) * 7px) / 50%; }
+/* inside the head's curve you look onto the front of the page block just behind the spine, in shadow, not into the empty book */
+.head { width: var(--d); left: calc(var(--w) / 2 - var(--d) / 2); top: 3px; height: calc(var(--sag) + 2px);
+  transform: rotateY(-90deg) translateZ(calc(var(--w) / 2 - 1.5px));
+  background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.6)), repeating-linear-gradient(180deg, #e6d9bc 0 1px, #c9b993 1px 2px); }
+.book.paper .head { top: .5px; }
+.slot.lying .head { display: none; }
+/* the head is now the spine's own curve, so the lid is only the two boards (its old straight spine strip floated above the curve) */
+.book.hard .lid { background: linear-gradient(180deg, var(--spine) 0 var(--bd), transparent var(--bd) calc(100% - var(--bd)), var(--spine) calc(100% - var(--bd))); }
+.book.hard .lid::after { background: linear-gradient(180deg, rgba(255,255,255,.2) 0 .6px, transparent .6px calc(100% - var(--bd)), rgba(255,255,255,.14) calc(100% - var(--bd)) calc(100% - var(--bd) + .6px), transparent 0);
+  -webkit-mask: linear-gradient(180deg, #000 0 var(--bd), transparent var(--bd) calc(100% - var(--bd)), #000 calc(100% - var(--bd)));
+  mask: linear-gradient(180deg, #000 0 var(--bd), transparent var(--bd) calc(100% - var(--bd)), #000 calc(100% - var(--bd))); }
+/* the sunken page block: quiet page lines, darker toward the spine head and the boards it sits below, nothing bright or stripy */
+.book.hard .top { background:
+    linear-gradient(90deg, rgba(0,0,0,.42) 0, rgba(0,0,0,.2) 22%, rgba(0,0,0,.06) 50%, transparent 75%),
+    linear-gradient(180deg, rgba(0,0,0,.4) 0, transparent calc(var(--bd) + 3px), transparent calc(100% - var(--bd) - 3px), rgba(0,0,0,.34) 100%),
+    linear-gradient(180deg, rgba(0,0,0,calc(var(--tsh, 0) * .45)), transparent 85%),
+    linear-gradient(rgba(40,30,20,.18), rgba(40,30,20,.18)),
+    repeating-linear-gradient(180deg, #e9dcc0 0 1px, #ddcfae 1px 2px); }
+.book.hard .top::after { display: none; }
+/* a leaning book stands on one corner: no flat dark foot under it (it showed as a dark block beside the corner) */
+.slot.lean .ftSh { display: none; }
+
+/* v286: the shadow the raised covers throw onto the sunken pages, the same shape as the spine's end: a soft U that runs down the
+   inside of both boards and along the head's curve, darkest right against the cover and gone a few px in. It is drawn flat over
+   the visible strip of page top (that strip's height, --tP, comes from the book's size and the eye height). */
+.tShade { display: none; }
+.slot:not(.lying) .book.hard .tShade { display: block; position: absolute; pointer-events: none; z-index: 1;
+  left: calc(50% - var(--d) / 2 + var(--bd, 1.6px)); width: calc(var(--d) - 2 * var(--bd, 1.6px));
+  top: calc(3px - var(--tP)); height: calc(var(--tP) - 3px + var(--sag));
+  border-radius: 0 0 50% 50% / 0 0 var(--sag) var(--sag);
+  box-shadow: inset 0 calc(-1.5px - var(--sag) * .25) 3px -.5px rgba(0,0,0,.36), inset 2px 0 2.5px -1px rgba(0,0,0,.4), inset -1.5px 0 2.5px -1px rgba(0,0,0,.3);
+  opacity: clamp(0, (var(--turn) - .85) * 6.7, 1); }
+.book .tShade { --bd: 1.6px; }
+/* the page block just behind the spine head reads as the same page top in the same shade, not a separate dark band */
+.head { background: linear-gradient(rgba(0,0,0,.3), rgba(0,0,0,.3)), linear-gradient(rgba(40,30,20,.18), rgba(40,30,20,.18)), repeating-linear-gradient(180deg, #e9dcc0 0 1px, #ddcfae 1px 2px); }
+.book.hard .top { background:
+    linear-gradient(90deg, rgba(0,0,0,.3) 0, rgba(0,0,0,.12) 22%, transparent 50%),
+    linear-gradient(180deg, rgba(0,0,0,calc(var(--tsh, 0) * .45)), transparent 85%),
+    linear-gradient(rgba(40,30,20,.18), rgba(40,30,20,.18)),
+    repeating-linear-gradient(180deg, #e9dcc0 0 1px, #ddcfae 1px 2px); }
+/* v287: the strip of page block seen inside the head's curve had a darker tone and crosswise lines, so a straight seam ran across
+   the curve on narrow books; it now carries exactly the page top's tone and lines, and only the U shadow shapes it */
+.head { background: linear-gradient(rgba(0,0,0,.1), rgba(0,0,0,.1)), linear-gradient(rgba(40,30,20,.18), rgba(40,30,20,.18)), repeating-linear-gradient(90deg, #e9dcc0 0 1px, #ddcfae 1px 2px); }
+/* the U is now also the page top itself, drawn flat in one piece over the 3D faces below it, so no seam between the faces can show
+   through on any book; its bottom shadow is a thin soft line along the head's curve, not a band */
+.slot:not(.lying) .book.hard .tShade {
+  background: linear-gradient(90deg, rgba(0,0,0,calc(var(--tsh, 0) * .4)), transparent 80%), linear-gradient(rgba(40,30,20,.2), rgba(40,30,20,.2)),
+    repeating-linear-gradient(90deg, #e9dcc0 0 1px, #ddcfae 1px 2px);
+  box-shadow: inset 0 -1.2px 2px -.3px rgba(0,0,0,.42), inset 1.6px 0 2px -1px rgba(0,0,0,.42), inset -1.2px 0 2px -1px rgba(0,0,0,.3), inset 0 1px 1px -.5px rgba(0,0,0,.15); }
+/* a recessed book's shade and the crevices start at the top of its visible pages, not at the spine's top line: starting there drew a
+   straight dark band across the head's curve */
+.slot:not(.lying) .depSh, .slot:not(.lying):not(.addSlot)::after { top: calc(3px - var(--tP, 3px)); }
+.slot:not(.lying):has(.book.paper) .depSh, .slot:not(.lying):not(.addSlot):has(.book.paper)::after { top: calc(.5px - var(--tP, 3px)); }
+
+/* v288: 3D books. The canvas sits behind the row; the flat books stay where they are, invisible, so they still take every tap
+   and swipe. All the painted-on book shadows give way to the real ones. */
+.b3d { z-index: 0; }
+.shelf.is3d .slot:not(.addSlot) > .book { opacity: 0; }
+.shelf.is3d .slot::before, .shelf.is3d .slot::after, .shelf.is3d .nbSh, .shelf.is3d .depSh, .shelf.is3d .ftSh, .shelf.is3d .wsB { display: none !important; }
+/* v290: seen in 3D the row stood right at the back wall (osamu); it now stands further forward on the shelf, objects with it */
+.shelf.is3d .track > .stage { height: calc(100% - var(--top-d) * .32); }
+/* v293: 3D shelves. The painted floor is stretched (from JS) to the 3D floor's depth and the row stands where the 3D books'
+   fronts do, so the real shadows land on it; a swipe slides the row freely, a tap turns a book */
+.shelf.is3d .track > .stage { height: calc(100% - var(--b3off, 0px)); }
+.shelf.pick3d .scroller { scroll-snap-type: none; }
+/* v294: objects' wall shadows in 3D: cast by the same light as the books (offset from JS), cut off where the wall meets the 3D floor,
+   as dark and soft as the books' real ones */
+.shelf.is3d .wallSh { top: -260px; bottom: calc(var(--top-d) - var(--b3off, 0px)); }
+.shelf.is3d .wsIn { bottom: calc(var(--b3off, 0px) - var(--top-d)); }
+.shelf.is3d .wallSh::before { display: none; }
+.shelf.is3d .wsO.ornament { filter: brightness(0) blur(calc(var(--shelf-h) * .035)); opacity: .5; }
+html[data-bdk="closet"] .shelf.is3d .wsO.ornament { opacity: .45; }
+/* v295: in 3D the painted floor no longer darkens toward the wall (stretched deeper it read as a grey band, osamu); the real 3D
+   light does all the shading there */
+.shelf.is3d .track::before { background: linear-gradient(0deg, rgba(255,255,255,.22) 0, rgba(255,255,255,.1) 2px, rgba(255,255,255,0) 30%), var(--plank-top); }
+html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient(0deg, rgba(255,255,255,.22) 0, rgba(255,255,255,.1) 2px, rgba(255,255,255,0) 30%),
+    linear-gradient(90deg, rgba(255,255,255,0), rgba(255,230,244,.22) 30%, rgba(255,255,255,0) 50%, rgba(255,230,244,.12) 78%, rgba(255,255,255,0)), #e0408f; }
+.shelf.is3d[data-lights="cabinSwags"] .track::before { background: linear-gradient(0deg, rgba(255,255,255,.35) 0, rgba(255,255,255,.12) 3px, rgba(255,255,255,0) 40%), url(obj/cabin-snow-tex.webp) 0 0 / 220px 220px; }
