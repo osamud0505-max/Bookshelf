@@ -1582,7 +1582,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
               o.box = { H, dx: r.left - sr.left - o.left, db: sr.bottom - r.bottom - (o.lift || 0), w: r.width, h: r.height };
             }
             objs.push({ id: o.it.id, img, x: o.left + o.box.dx, y: o.box.db + (o.lift || 0), w: o.box.w, h: o.box.h, visible: !o.el.classList.contains("placeholder"),
-              hasLamp: kind === "lipstickLamp", lamp: kind === "lipstickLamp" && o.el.classList.contains("lit") });
+              kind, hasLamp: kind === "lipstickLamp", lamp: kind === "lipstickLamp" && o.el.classList.contains("lit") });
           }
           const fl = b3d.sync(items, { stageH: stage.clientHeight, viewW, H, topD, objs });
           // the painted shelf floor is stretched to the 3D floor's depth, so the real shadows land on it in the right place

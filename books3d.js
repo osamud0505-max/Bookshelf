@@ -171,6 +171,16 @@
     g.putImageData(img, 0, 0);
     const t = new THREE.CanvasTexture(c); softCache.set(edge, t); return t;
   }
+  // v321: 3D objects no longer cast the key light's long shadow (osamu: "the shadows are not right at all"; it fell off to
+  // the right as a hard dark block cut off at the wall). Each gets one soft footprint shadow instead, the shape of its base,
+  // like the painted objects: a dark core hugging the base and a softer spread a little wider, mostly to the right (the
+  // light is upper left) and in front. Nothing reaches behind the object's back, so nothing shows on the backdrop.
+  function footShadow(group, cx, cz, w, d, round) {
+    const mk = (pw, pd, edge, op) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(pw, pd), new THREE.MeshBasicMaterial({ color: "#1a0812", map: softTex(edge), transparent: true, opacity: op, depthWrite: false, toneMapped: false })); m.rotation.x = -Math.PI / 2; m.renderOrder = 1; group.add(m); return m; };
+    mk(w + 8, d + 16, round ? 0.42 : 0.14, 0.92).position.set(cx + 1, 0.3, cz + 8);
+    mk(w + 50, d + 50, 0.5, 0.55).position.set(cx + 10, 0.25, cz + 25);
+  }
+  const noCast = (o) => o.traverse((m) => { if (m.isMesh) m.castShadow = false; });
   // ---- the 3D lipstick lamp, measured off osamu's painting (units: the painting's 95.3 x 200 box, y up from the case's foot)
   const LIP_VW = 95.3, LIP_CX = 36.7, LIP_BASE_R = 34.4, LIP_REST = 38.5;
   let lipShared = null;
@@ -209,6 +219,7 @@
     const S = lipParts(), group = new THREE.Group();
     const gold = new THREE.MeshStandardMaterial({ color: "#fff6dc", map: S.goldTex, metalness: 0.9, roughness: 0.2, envMap: S.envTex, envMapIntensity: 1.6, side: THREE.DoubleSide });
     const cs = new THREE.Mesh(S.caseGeo, gold); cs.castShadow = true; cs.receiveShadow = true; group.add(cs);
+    footShadow(group, 0, 0, 2 * LIP_BASE_R, 2 * LIP_BASE_R, true);
     // v309: the glitter is IN the bullet (osamu: "the small glitters in it to shine, not sparkles around it"). Each fleck is a
     // tiny tilted mirror fixed in the lipstick: some catch the light and glint as it turns and twinkles, most stay a soft shimmer
     const U = { uTime: { value: 0 }, uGlow: { value: 0 } };
@@ -246,7 +257,153 @@ vec2 gLayer(vec3 p, float d, float sz) {
     pool.rotation.x = -Math.PI / 2; pool.renderOrder = 2; pool.visible = false;
     const cable = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: "#141214", roughness: 0.55, metalness: 0, clippingPlanes: [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)] }));
     cable.castShadow = true; cable.receiveShadow = true;
+    noCast(group);
     return { group, bullet, redMat, U, light, pool, cable, cableKey: "", rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
+  }
+
+  // ---------- v313: the closet's gift boxes in 3D (osamu chose them after the lipstick lamp) ----------
+  // Built in the painting's own units (GIFT_VW wide, 200 tall), fronts at z = 0: a chocolate box with a pink box on top tied
+  // with satin ribbon and a bow, its long tail running down to the shelf, and three round hatboxes printed with hydrangeas
+  // and little pink bows, the top one trimmed with lace, like osamu's painted stack
+  const GIFT_3D = false;
+  const GIFT_VW = 304.9;
+  let giftShared = null;
+  function giftParts() {
+    if (giftShared) return giftShared;
+    const cv = (w, h, fn) => { const c = document.createElement("canvas"); c.width = w; c.height = h; fn(c.getContext("2d"), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
+    let sd = 11; const rnd = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+    // cardboard: flat colour with a faint paper grain
+    const board = (base) => cv(512, 512, (g, w, h) => { g.fillStyle = base; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 9000; i++) { g.fillStyle = `rgba(${rnd() < .5 ? "255,255,255" : "0,0,0"},${.02 + rnd() * .04})`; g.fillRect(rnd() * w, rnd() * h, 1 + rnd() * 3, 1); }
+      g.lineWidth = 0.8; for (let i = 0; i < 260; i++) { const x = rnd() * w, y = rnd() * h, a = rnd() * 6.28, l = 4 + rnd() * 10; g.strokeStyle = `rgba(${rnd() < .5 ? "255,240,235" : "40,10,10"},${.05 + rnd() * .06})`; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a) * l * .5 + 2, y + Math.sin(a) * l * .5, x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); } });
+    giftShared = { brownTex: board("#5d3b36"), pinkTex: board("#b8676f") };
+    return giftShared;
+  }
+  // a satin ribbon along a path; its width runs along "across" (or flat on the surface below it when across is null)
+  function ribbonGeo(pts, width, across) {
+    const curve = new THREE.CatmullRomCurve3(pts, false, "centripetal"), N = Math.max(8, pts.length * 10), pos = [], uv = [], idx = [];
+    for (let i = 0; i <= N; i++) {
+      const t = i / N, p = curve.getPoint(t), T = curve.getTangent(t);
+      let S = across && across.flatOn ? new THREE.Vector3().crossVectors(T, across.flatOn) : across ? across.clone() : new THREE.Vector3().crossVectors(T, new THREE.Vector3(0, 1, 0));
+      S.addScaledVector(T, -S.dot(T)); if (S.lengthSq() < 1e-6) S.set(1, 0, 0); S.normalize().multiplyScalar(width / 2);
+      pos.push(p.x - S.x, p.y - S.y, p.z - S.z, p.x + S.x, p.y + S.y, p.z + S.z); uv.push(0, t, 1, t);
+      if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
+  }
+  // crisp lace: an ivory beading strip with pink ribbon threaded through, an openwork body and a scalloped, picot edge
+  let laceCache = null;
+  function laceTex(scallops) {
+    if (laceCache) return laceCache;
+    const W = 4096, H = 160, c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"), sw = W / scallops;
+    g.fillStyle = "#fffaf3"; g.fillRect(0, 0, W, 50);
+    g.strokeStyle = "#e9dccb"; g.lineWidth = 2; g.beginPath(); g.moveTo(0, 3); g.lineTo(W, 3); g.moveTo(0, 47); g.lineTo(W, 47); g.stroke();
+    for (let x = 0; x < W; x += sw / 2) { g.fillStyle = "#f2a9b8"; g.beginPath(); g.roundRect(x + sw * 0.08, 17, sw * 0.3, 14, 7); g.fill(); g.strokeStyle = "#d98c9c"; g.lineWidth = 1.5; g.stroke(); }
+    for (let i = 0; i < scallops; i++) {
+      const x = i * sw, cx = x + sw / 2;
+      g.fillStyle = "#fffaf3"; g.beginPath(); g.moveTo(x, 48); g.lineTo(x + sw, 48); g.lineTo(x + sw, 104);
+      g.bezierCurveTo(x + sw, 152, x, 152, x, 104); g.closePath(); g.fill();
+      g.fillStyle = "#fffaf3"; for (let k = 0; k < 7; k++) { const a = Math.PI * (k / 6); g.beginPath(); g.arc(cx + Math.cos(a) * sw * 0.5, 104 + Math.sin(a) * 36, 4.5, 0, Math.PI * 2); g.fill(); }
+      g.globalCompositeOperation = "destination-out";
+      g.beginPath(); g.arc(cx, 90, sw * 0.13, 0, Math.PI * 2); g.fill();
+      for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; g.beginPath(); g.ellipse(cx + Math.cos(a) * sw * 0.24, 90 + Math.sin(a) * sw * 0.24, sw * 0.07, sw * 0.04, a, 0, Math.PI * 2); g.fill(); }
+      [[0.18, 62], [0.82, 62], [0.3, 122], [0.7, 122]].forEach(([f, yy]) => { g.beginPath(); g.arc(x + sw * f, yy, sw * 0.045, 0, Math.PI * 2); g.fill(); });
+      g.globalCompositeOperation = "source-over";
+      g.strokeStyle = "rgba(200,180,160,.55)"; g.lineWidth = 1.4; g.beginPath(); g.arc(cx, 90, sw * 0.32, 0, Math.PI * 2); g.stroke();
+    }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; laceCache = t; return t;
+  }
+  function buildGiftBoxes(onReady) {
+    const S = giftParts(), group = new THREE.Group(), V = (x, y, z) => new THREE.Vector3(x, y, z);
+    const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; group.add(m); return m; };
+    const card = (tex) => new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, metalness: 0 });
+    const brown = card(S.brownTex), pink = card(S.pinkTex);
+    [brown, pink].forEach((m) => { m.map = m.map.clone(); m.map.wrapS = m.map.wrapT = THREE.RepeatWrapping; m.map.repeat.set(1 / 70, 1 / 70); m.map.needsUpdate = true; });
+    const crease = new THREE.MeshBasicMaterial({ color: "#000000", transparent: true, opacity: 0.12, depthWrite: false });
+    const satin = new THREE.MeshStandardMaterial({ color: "#f3b8c4", roughness: 0.28, metalness: 0.08, side: THREE.DoubleSide });
+    // the satin bow, built round its own knot at the origin with "up" out of the surface it is tied on: two full loops that stand
+    // up and lean back, a round knot, and two short tails
+    const makeBow = () => {
+      const b = new THREE.Group(), w = 8 * 1.15, m = (geo) => { const x = new THREE.Mesh(geo, satin); x.castShadow = true; b.add(x); return x; };
+      [-1, 1].forEach((s) => {
+        m(ribbonGeo([V(s * 1.5, 0.5, -0.5), V(s * 7, 7, -8), V(s * 17, 13, -11), V(s * 28, 13, -6), V(s * 32, 8, 2), V(s * 26, 4, 9), V(s * 14, 2.5, 9), V(s * 4, 1, 3), V(s * 1.5, 0.5, 0.5)], w, V(0.22 * s, 0.85, 0.35)));
+        m(ribbonGeo([V(s * 1.5, 0.2, 2), V(s * 6, -0.8, 12), V(s * 10, -1.2, 22), V(s * 12, -1.4, 27)], 8 * 0.9, null));
+      });
+      m(new THREE.SphereGeometry(5.2, 20, 14)).scale.set(1.05, 0.8, 0.95); b.children[b.children.length - 1].position.set(0, 1.2, 1);
+      return b;
+    };
+    // a box with a lid that overhangs it a little
+    // v318 (osamu: "not detailed enough like boxes would be"): softly rounded card edges that catch the light, a lid that
+    // overhangs with its own rim, a dark gap of shadow under the lid's edge, and paper grain at a real scale
+    const rbox = (w, h, d, r) => {
+      const sh = new THREE.Shape(), x = -w / 2 + r, y = -h / 2 + r, W = w - 2 * r, Hh = h - 2 * r;
+      sh.moveTo(x, y); sh.lineTo(x + W, y); sh.lineTo(x + W, y + Hh); sh.lineTo(x, y + Hh); sh.lineTo(x, y);
+      const g = new THREE.ExtrudeGeometry(sh, { depth: d - 2 * r, bevelEnabled: true, bevelThickness: r, bevelSize: r, bevelSegments: 3, curveSegments: 4 });
+      g.translate(0, 0, -(d - 2 * r) / 2); g.computeVertexNormals(); return g;
+    };
+    const gap = new THREE.MeshBasicMaterial({ color: "#1c0c0c", transparent: true, opacity: 0.55, depthWrite: false });
+    const box = (mat, cx, y0, w, h, d, cz, lidH) => {
+      add(rbox(w, h - lidH + 0.5, d, 0.9), mat, cx, y0 + (h - lidH + 0.5) / 2, cz);
+      add(rbox(w + 2.8, lidH, d + 2.8, 1.3), mat, cx, y0 + h - lidH / 2, cz);
+      // the shadowed gap just under the lid's rim
+      const sg = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 1.6, d + 0.6), gap); sg.position.set(cx, y0 + h - lidH - 0.6, cz); group.add(sg);
+      // a faint crease where each side of the box is folded up, a little in from the corners
+      [-1, 1].forEach((sx) => { const c = new THREE.Mesh(new THREE.BoxGeometry(0.35, h - lidH - 1.5, 0.3), crease); c.position.set(cx + sx * (w / 2 - 2.2), y0 + (h - lidH) / 2, cz + d / 2 + 0.05); group.add(c); });
+    };
+    // chocolate box on the floor, pink box on it, set a little back and to the right
+    const bw = 172, bh = 70, bd = 100, bcx = 88, bcz = -bd / 2 - 1.3;
+    box(brown, bcx, 0, bw, bh, bd, bcz, 13);
+    footShadow(group, bcx, bcz, bw, bd, false);
+    const pw = 150, ph = 46, pd = 86, pcx = 98, pcz = -pd / 2 - 7, py = bh;
+    box(pink, pcx, py, pw, ph, pd, pcz, 14);
+    // the ribbon tied round the pink box both ways, crossing on top under the bow
+    const t = 0.7, rw = 8, pTop = py + ph + 0.05, ex = pw / 2 + 1.35, ez = pd / 2 + 1.35, rx = pcx + 6, rz = pcz;
+    add(new THREE.BoxGeometry(pw + 2.7 + t * 2, t, rw), satin, pcx, pTop + t / 2, rz);
+    add(new THREE.BoxGeometry(rw, t, pd + 2.7 + t * 2), satin, rx, pTop + t / 2 + 0.05, pcz);
+    [-1, 1].forEach((s) => { add(new THREE.BoxGeometry(t, ph, rw), satin, pcx + s * (ex + t / 2), py + ph / 2, rz); add(new THREE.BoxGeometry(rw, ph, t), satin, rx, py + ph / 2, pcz + s * (ez + t / 2)); });
+    // the bow: two loops, a knot and two short tails, then one long tail that falls over the front and curls on the shelf
+    const ky = pTop + t + 2.2, kz = rz, kx = rx;
+    // v318: fuller, rounder loops that stand up and lean back a little, each a ribbon folded over on itself (osamu: the bow looked bad)
+    const loop = (s) => ribbonGeo([V(kx + s * 1.5, ky + 0.5, kz - 0.5), V(kx + s * 7, ky + 7, kz - 8), V(kx + s * 17, ky + 13, kz - 11), V(kx + s * 28, ky + 13, kz - 6),
+      V(kx + s * 32, ky + 8, kz + 2), V(kx + s * 26, ky + 4, kz + 9), V(kx + s * 14, ky + 2.5, kz + 9), V(kx + s * 4, ky + 1, kz + 3), V(kx + s * 1.5, ky + 0.5, kz + 0.5)], rw * 1.15, V(0.22 * s, 0.85, 0.35));
+    add(loop(-1), satin, 0, 0, 0); add(loop(1), satin, 0, 0, 0);
+    add(new THREE.SphereGeometry(5.2, 20, 14), satin, kx, ky + 1.2, kz + 1).scale.set(1.05, 0.8, 0.95);
+    add(ribbonGeo([V(kx - 2, ky, kz + 2), V(kx - 9, pTop + t + 1.2, kz + 14), V(kx - 16, pTop + t + 0.8, kz + 27), V(kx - 18, pTop + t + 0.6, pcz + pd / 2 - 2)], rw * 0.9, null), satin, 0, 0, 0);
+    const fz = pcz + ez + t + 0.6, bfz = bcz + bd / 2 + 1.3 + 0.7;
+    add(ribbonGeo([V(kx + 2, ky, kz + 2), V(kx + 6, pTop + t + 1, kz + 18), V(kx + 8, pTop + t + 0.8, fz - 3), V(kx + 8.5, pTop - 2, fz + 0.4), V(kx + 7, py + ph * 0.5, fz + 0.2),
+      V(kx + 4, py + 3, fz + 0.4), V(kx + 2, bh + 0.8, bfz - 2), V(kx + 1, bh - 2, bfz + 0.3), V(kx - 3, bh * 0.55, bfz + 0.4), V(kx - 5, 9, bfz + 0.6), V(kx - 3, 0.9, bfz + 6),
+      V(kx + 6, 0.8, bfz + 13), V(kx + 16, 0.9, bfz + 9), V(kx + 12, 0.8, bfz + 4)], rw * 0.9, V(1, 0, 0.15)), satin, 0, 0, 0);
+    // v314: three hatboxes wearing osamu's own Gemini print: each band, lid band and lid top is cut straight out of the
+    // painting (obj/gift3d-hat*), unrolled from its curve so the bows, hydrangeas and the lace sit where she painted them
+    // v317: osamu's own seamless Gemini swatch (obj/gift3d4-print), wrapped at one scale: 200 model units of print per tile,
+    // a whole number of repeats round each box so it meets itself without a seam. The top lid keeps her lace and little bows
+    const tl = new THREE.TextureLoader(), load = (n) => { const t = tl.load("obj/gift3d4-" + n + ".webp", () => onReady && onReady()); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+    const printT = load("print"), TILE = 200;
+    const pm = (rx, ry, ox, oy) => { const t = printT.clone(); t.repeat.set(rx, ry); t.offset.set(ox, oy); return new THREE.MeshStandardMaterial({ map: t, roughness: 0.82 }); };
+    footShadow(group, 238.3, -67.5, 2 * 66, 2 * 66, true);
+    let y = 0;
+    [["hat1", 238.3, 63.4, 66, 76, 20], ["hat2", 234.1, 57.7, 59.9, 59, 18.6], ["hat3", 234.0, 48.3, 50.3, 47, 15]].forEach(([n, hx, Rb, Rl, h, lid], i) => {
+      const hz = -67.5, reps = Math.max(1, Math.round((2 * Math.PI * Rb) / TILE)), unit = (2 * Math.PI * Rb) / reps, oy = i * 0.31;
+      add(new THREE.CylinderGeometry(Rb, Rb, h - lid + 0.5, 72, 1, true), pm(reps, (h - lid) / unit, i * 0.17, oy), hx, y + (h - lid + 0.5) / 2, hz);
+      const bandM = pm(reps, lid / unit, i * 0.23, oy + 0.5);
+      add(new THREE.CylinderGeometry(Rl, Rl, lid, 72, 1, true), bandM, hx, y + h - lid / 2, hz);
+      add(new THREE.CircleGeometry(Rl, 72), pm((2 * Rl) / TILE, (2 * Rl) / TILE, i * 0.37, i * 0.29), hx, y + h, hz).rotation.x = -Math.PI / 2;
+      add(new THREE.TorusGeometry(Rl, 0.7, 8, 72), bandM, hx, y + h - 0.3, hz).rotation.x = Math.PI / 2;
+      // the lid's rolled lower edge and the shadowed gap under it
+      add(new THREE.TorusGeometry(Rl, 0.55, 8, 72), bandM, hx, y + h - lid + 0.2, hz).rotation.x = Math.PI / 2;
+      const hg = new THREE.Mesh(new THREE.CylinderGeometry(Rb + 0.25, Rb + 0.25, 1.6, 72, 1, true), gap); hg.position.set(hx, y + h - lid - 0.6, hz); group.add(hg);
+      if (n === "hat3") {
+        // v318: the lace round the top lid, drawn crisp at full size (the painted lace was too small to blow up), hanging a little
+        // below the lid, with a small 3D satin bow at the front
+        const lh = lid * 1.15, lm = new THREE.MeshStandardMaterial({ map: laceTex(Math.round(2 * Math.PI * Rl / 6)), transparent: true, alphaTest: 0.25, side: THREE.DoubleSide, roughness: 0.9, depthWrite: true });
+        const lc = add(new THREE.CylinderGeometry(Rl + 0.7, Rl + 1.1, lh, 96, 1, true), lm, hx, y + h - 1.2 - lh / 2, hz); lc.castShadow = false;
+        // v319: the lace bow is a small copy of the big ribbon bow (osamu: it wasn't as nice), turned to face out from the lid
+        const lb = makeBow(); lb.scale.setScalar(0.4); lb.rotation.x = Math.PI / 2; lb.position.set(hx, y + h - 1.2 - lh * 0.42, hz + Rl + 1.6); group.add(lb);
+      }
+      y += h;
+    });
+    noCast(group);
+    return { group, depth: 2 * 66 + 3 };
   }
 
   // a round pool of light, brightest in the middle, fading smoothly to nothing at the rim
@@ -286,7 +443,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     if (sharedR && !sharedR.getContext().isContextLost()) return sharedR;
     smoothPCF();
     const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: false, powerPreference: "high-performance" });
-    r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    r.setPixelRatio(Math.min(3, window.devicePixelRatio || 1)); // v318: full phone sharpness (osamu: blurry)
     r.localClippingEnabled = true; r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
     r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.0;
     r.setClearColor(0x000000, 0);
@@ -301,7 +458,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     const cv = document.createElement("canvas"); cv.className = "b3d"; cv.setAttribute("aria-hidden", "true");
     const ctx = cv.getContext("2d");
     stage.prepend(cv);
-    const pr = Math.min(2, window.devicePixelRatio || 1);
+    const pr = Math.min(3, window.devicePixelRatio || 1);
     let onScreen = true;
     const io = new IntersectionObserver((es) => { onScreen = es[es.length - 1].isIntersecting; if (onScreen) inst.render(); }, { rootMargin: "200px" });
     io.observe(cv);
@@ -430,7 +587,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
             live.add(ob.id);
             let rec = objs.get(ob.id);
             if (!rec || rec.img !== ob.img) {
-              if (rec) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
+              if (rec) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
               const c2 = document.createElement("canvas"); c2.width = Math.max(2, Math.round(ob.w * 2)); c2.height = Math.max(2, Math.round(ob.h * 2)); c2.getContext("2d").drawImage(ob.img, 0, 0, c2.width, c2.height);
               const tex = new THREE.CanvasTexture(c2);
               // three's shadow pass takes the cut-out's picture and alpha test from the object's own material
@@ -460,6 +617,9 @@ vec2 gLayer(vec3 p, float d, float sz) {
               scene.add(mesh); rec = { mesh, tex, depth, img: ob.img, foot, NC }; objs.set(ob.id, rec);
             }
             rec.mesh.visible = ob.visible !== false;
+            // v322: the gift box picture keeps only its own soft footprint shadow (drawn with the picture); the light's long cast
+            // shadow fell to the right as a hard block cut off at the wall (osamu: "the shadows are not right at all")
+            rec.mesh.castShadow = ob.kind !== "giftBoxes";
             { // place each strip: its foot on the floor where the floor shows at that height on screen, scaled for being further back
               const P = rec.mesh.geometry.attributes.position, onPile = ob.y > 1;
               for (let k = 0; k < rec.NC; k++) {
@@ -470,6 +630,16 @@ vec2 gLayer(vec3 p, float d, float sz) {
                 P.array.set([X(xa), yb, z, X(xb), yb, z, X(xa), yt, z, X(xb), yt, z], k * 12);
               }
               P.needsUpdate = true; rec.mesh.geometry.computeBoundingSphere();
+            }
+            // v322: osamu went back to a picture for the gift boxes (a Gemini render that looks 3D), so the hand-built model is off;
+            // the picture casts its shadow through the hidden strips like the bags. buildGiftBoxes stays in case it comes back
+            if (GIFT_3D && ob.kind === "giftBoxes") {
+              if (!rec.gift) { rec.gift = buildGiftBoxes(() => { if (!dead) { frameDirty = true; inst.render(); } }); scene.add(rec.gift.group); }
+              const G = rec.gift, k = ob.w / GIFT_VW, room = -zw - 2;
+              rec.mesh.visible = false; // the model casts its own shadow
+              G.group.visible = ob.visible !== false;
+              // keep it inside the shelf: if the hatboxes are deeper than the space in front of the wall, press them flatter front to back
+              G.group.scale.set(k, k, Math.min(k, room / G.depth)); G.group.position.set(ob.x, ob.y, -1);
             }
             if (ob.hasLamp) {
               if (!rec.lip) { rec.lip = buildLipstick(); scene.add(rec.lip.group); }
@@ -500,7 +670,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
               applyLip(rec, now); if (L.rise.tr || L.glow.tr || L.glow.v > 0.01) lampTick();
             }
           }
-          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
+          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
         { const x0 = -400, x1 = viewW + 400, yt = stageH + top + 400, P = roomGeo.attributes.position;
