@@ -2374,3 +2374,9 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
   filter: brightness(.62); }
 .shelf.is3d[data-lights="vampDrapes"] .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
 .lights.vampDrapes .vCloth img { filter: drop-shadow(0 4px 4px rgba(10,0,4,.45)) brightness(.86); }
+/* v346: osamu's bat chandelier (vamp.js): one per shelf, behind the cloth; lit, the shades glow red from inside */
+.lights.vampDrapes .vBat img { filter: brightness(.7) saturate(.95) drop-shadow(0 3px 3px rgba(10,0,4,.5)); }
+.lights.vampDrapes .vBat .vBatLit { filter: none; opacity: 0; transition: opacity .45s ease; }
+.lights.vampDrapes.on .vBat img:not(.vBatLit) { filter: brightness(.8) saturate(.95) drop-shadow(0 3px 3px rgba(10,0,4,.5)); }
+.lights.vampDrapes.on .vBat .vBatLit { opacity: 1; filter: drop-shadow(0 0 6px rgba(255,50,60,.7)); }
+.lights.vampDrapes .vBat .vHalo { background: radial-gradient(closest-side, rgba(255,60,70,.5), rgba(200,10,40,.2) 50%, transparent 100%); }
