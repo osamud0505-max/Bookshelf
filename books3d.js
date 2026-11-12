@@ -244,7 +244,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     light.position.set(0, 176, 40); // just in front of the bullet (which ignores it), so it falls on the books and the case
     const pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: "#ff7684", map: poolTex(), transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
     pool.rotation.x = -Math.PI / 2; pool.renderOrder = 2; pool.visible = false;
-    const cable = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: "#f3eee8", roughness: 0.75, metalness: 0, clippingPlanes: [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)] }));
+    const cable = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: "#141214", roughness: 0.55, metalness: 0, clippingPlanes: [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)] }));
     cable.castShadow = true; cable.receiveShadow = true;
     return { group, bullet, redMat, U, light, pool, cable, cableKey: "", rise: { v: 0, tr: null }, glow: { v: 0, tr: null }, on: undefined };
   }
