@@ -2567,12 +2567,3 @@ html[data-bdk="cottageRoses"] .plank::before { display: block; content: ""; posi
   opacity: .45; mix-blend-mode: normal;
   background: url(obj/cot-rose2-garland.webp) 50% calc(36px - 1.8vw) / 100% auto no-repeat, linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,.25) 30%, rgba(0,0,0,0) 70%);
   filter: brightness(0) blur(8px); }
-
-/* v380 (osamu: leaves like the hanging garland on the forest shelf top): osamu's Gemini leaf carpet as the top,
-   darker towards the wall; the garland already covers the front */
-html[data-bdk="enchanted"] .shelf .plank { background: url(obj/forest-leaftop.webp) 0 0 / 500px auto; }
-html[data-bdk="enchanted"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
-  bottom: calc(var(--top-d) * -.5); height: var(--top-d);
-  background: linear-gradient(rgba(0,6,8,.55), rgba(0,6,8,0) 75%), url(obj/forest-leaftop.webp) 0 100% / 500px auto repeat; }
-html[data-bdk="enchanted"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
-html[data-bdk="enchanted"] .track::before { display: none; }
