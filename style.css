@@ -2400,3 +2400,14 @@ html[data-bdk="libraryStacks"] .shelf.is3d .stage::before { bottom: calc(var(--b
 html[data-bdk="libraryStacks"] .plank::before { content: ""; position: absolute; left: -10px; right: -10px; top: 6px; height: 150px; pointer-events: none; z-index: -1;
   background: url(obj/lib-valance.webp) 10px 14px / 432px 86px repeat-x, linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.45) 50%, rgba(0,0,0,0));
   filter: brightness(0) blur(8px); opacity: .9; }
+/* v357 (osamu: shadows under the shelves in every theme): each shelf casts a soft shadow down the wall under it,
+   darkest right under the front edge and fading away; hanging lights and cloths stay in front of it */
+html .shelf .plank { box-shadow: 0 6px 8px rgba(0,0,0,.5), 0 16px 18px rgba(0,0,0,.42), 0 30px 28px rgba(0,0,0,.34), 0 48px 40px rgba(0,0,0,.26), 0 72px 56px rgba(0,0,0,.18); }
+html[data-mat="steel"] .shelf .plank { box-shadow: 0 1px 0 rgba(0,0,0,.6), 0 3px 4px -1px rgba(0,0,0,.5), 0 6px 8px rgba(0,0,0,.5), 0 16px 18px rgba(0,0,0,.42), 0 30px 28px rgba(0,0,0,.34), 0 48px 40px rgba(0,0,0,.26), 0 72px 56px rgba(0,0,0,.18); }
+html[data-bdk="libraryStacks"] .shelf .plank { box-shadow: none; }
+/* the pieces hanging off a shelf's front cast their own deeper shadow onto the wall, like the shelf does */
+.lights.cabinSwags .cSnow { filter: drop-shadow(0 10px 12px rgba(0,0,0,.45)); }
+.lights.vampDrapes .vCloth img { filter: drop-shadow(0 10px 14px rgba(10,0,4,.6)) brightness(.86); }
+.lights.vampDrapes.on .vCloth img { filter: drop-shadow(0 10px 14px rgba(10,0,4,.6)) hue-rotate(6deg) brightness(.52) saturate(1.05); }
+.lights.closetRod .rod { filter: drop-shadow(0 8px 8px rgba(42,4,24,.45)); }
+.lights.cottageLotus .lBranch img { filter: drop-shadow(0 8px 8px rgba(60,35,15,.45)); }
