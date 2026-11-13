@@ -2514,19 +2514,19 @@ html[data-bdk="damask"] .plank::before { display: block; content: ""; position: 
 html[data-bdk="damask"] .track::before { display: none; }
 
 /* v375 (osamu: the Haunted castle shelf in the same stone as the backdrop, with moss and vines): osamu's Gemini stone
-   ledge on corbels (v376: osamu's second picture, magenta spill removed; one corbel repeats across the shelf, "round" so whole corbels fit) and the matching stone top */
+   slab (v377: osamu chose a plain slab with no corbels; magenta spill removed; the slab repeats seamlessly) and the matching stone top */
 html[data-bdk="castleIvy"] .shelf .plank { background: transparent; box-shadow: none; }
-html[data-bdk="castleIvy"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; top: -3px; height: 64px; z-index: 1;
+html[data-bdk="castleIvy"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; top: -2px; height: 28px; z-index: 1;
   opacity: 1; mix-blend-mode: normal; pointer-events: none;
-  background: url(obj/castle3-ledge.webp) 0 0 / 84px 64px round no-repeat;
+  background: url(obj/castle-slab.webp) 0 0 / 328px 28px repeat-x;
   filter: brightness(.85) drop-shadow(0 6px 6px rgba(0,0,0,.5)); }
-html[data-bdk="castleIvy"] .caption { padding-top: 60px; }
+html[data-bdk="castleIvy"] .caption { padding-top: 24px; }
 html[data-bdk="castleIvy"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
   bottom: calc(var(--top-d) * -.5); height: var(--top-d);
-  background: linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,0) 70%), url(obj/castle2-top.webp) 0 100% / 600px auto repeat; filter: brightness(.93); }
+  background: linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,0) 70%), url(obj/castle-slabtop.webp) 0 100% / 600px auto repeat; filter: brightness(.93); }
 html[data-bdk="castleIvy"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
 html[data-bdk="castleIvy"] .track::before { display: none; }
 html[data-bdk="castleIvy"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 8px; height: 130px; pointer-events: none; z-index: -2;
   opacity: .8; mix-blend-mode: normal;
-  background: url(obj/castle3-ledge.webp) 10px 10px / 84px 64px repeat-x, linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.35) 40%, rgba(0,0,0,0) 85%);
+  background: url(obj/castle-slab.webp) 10px 10px / 328px 28px repeat-x, linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.35) 40%, rgba(0,0,0,0) 85%);
   filter: brightness(0) blur(8px); }
