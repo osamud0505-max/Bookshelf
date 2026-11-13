@@ -517,15 +517,15 @@
       + `<image href="obj/closet-lipstick-case6back-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       + `<g mask="url(#${g}bm)"><g class="lpB2" style="--rest:${LIP_DROP}px"><clipPath id="${g}fc"><rect x="0" y="0" width="${LIP_FW}" height="${LIP_FH}"/></clipPath><g transform="translate(${LIP_FR[0]} ${LIP_FR[1]}) scale(${(LIP_FR[2] / LIP_FW).toFixed(5)})"><g clip-path="url(#${g}fc)">`
       + `<image class="lpSheetT" href="obj/closet-lipstick-bullet7t.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/>`
-      + `<image class="lpSheetL" href="obj/closet-lipstick-bullet7l.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none" opacity="0"/>`
-      + `<g class="lpGY"><image class="lpSheetG" href="obj/closet-lipstick-bullet7g.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/></g></g></g></g></g>`
+      + `<image class="lpSheetL" href="obj/closet-lipstick-bullet8l.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none" opacity="0"/>`
+      + `<g class="lpGY"><image class="lpSheetG" href="obj/closet-lipstick-bullet8g.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/></g></g></g></g></g>`
       + `<image href="obj/closet-lipstick-case6-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       // v333 (osamu's real lamp): lit, the light glows red round the rim's opening and falls warm on the gold edge
       + `<g class="lpRimGlow" style="mix-blend-mode:screen"><filter id="${g}rg" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="1.3"/></filter>`
-      + `<radialGradient id="${g}rs" gradientUnits="userSpaceOnUse" cx="36.6" cy="57.3" r="20" gradientTransform="translate(0 57.3) scale(1 .45) translate(0 -57.3)"><stop offset=".6" stop-color="#ff6e72" stop-opacity=".9"/><stop offset=".8" stop-color="#ff4e62" stop-opacity=".4"/><stop offset="1" stop-color="#ff5a6a" stop-opacity="0"/></radialGradient>`
+      + `<radialGradient id="${g}rs" gradientUnits="userSpaceOnUse" cx="36.6" cy="57.3" r="20" gradientTransform="translate(0 57.3) scale(1 .45) translate(0 -57.3)"><stop offset=".6" stop-color="#ff6a2c" stop-opacity=".95"/><stop offset=".8" stop-color="#ff4a22" stop-opacity=".45"/><stop offset="1" stop-color="#ff5a2a" stop-opacity="0"/></radialGradient>`
       + `<ellipse cx="36.6" cy="58.6" rx="20" ry="9" fill="url(#${g}rs)"/>`
-      + `</g><g class="lpRimGlow"><path d="M20.5 57.3A16.1 6.7 0 0 0 52.7 57.3" fill="none" stroke="#ff3248" stroke-width="2.2" stroke-linecap="round" opacity=".8" filter="url(#${g}rg)"/>`
-      + `<path d="M21 57.3A15.6 6.4 0 0 0 52.2 57.3" fill="none" stroke="#ff9a9a" stroke-width=".6" stroke-linecap="round" opacity=".85"/></g>`,
+      + `</g><g class="lpRimGlow"><path d="M20.5 57.3A16.1 6.7 0 0 0 52.7 57.3" fill="none" stroke="#ff2a14" stroke-width="2.4" stroke-linecap="round" opacity=".85" filter="url(#${g}rg)"/>`
+      + `<path d="M21 57.3A15.6 6.4 0 0 0 52.2 57.3" fill="none" stroke="#ff8a4a" stroke-width=".7" stroke-linecap="round" opacity=".85"/></g>`,
     _draw: (g) => `<defs><mask id="${g}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-clip.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<mask id="${g}r" maskUnits="userSpaceOnUse" x="0" y="0" width="${LIP_VW}" height="200"><image href="obj/closet-lipstick-turn2.png" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/></mask>`
       + `<linearGradient id="${g}s" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d8" stop-opacity=".5"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`
