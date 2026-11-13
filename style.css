@@ -2454,3 +2454,15 @@ html[data-bdk="loftDusk"] .stage::before { content: ""; position: absolute; left
   background: linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,0) 75%), url(obj/loft-steel.webp) 0 100% / 700px auto repeat; }
 html[data-bdk="loftDusk"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
 .lights.loftSpider .spTrimFace { background: url(obj/loft-trim.webp) 0 0 / auto 18px repeat-x; -webkit-mask: none; mask: none; }
+
+/* v365 (osamu: the starry night shelf in the same colours but more realistic): osamu's Gemini polished ebony on the shelf
+   top and front, and osamu's Gemini scalloped star trim (stars keyed see-through, so the warm glow behind still shows) */
+html[data-bdk="night"] .shelf .plank { background:
+    linear-gradient(to bottom, rgba(255,230,200,.3) 0, rgba(255,230,200,.08) 1px, transparent 2px, transparent 45%, rgba(0,0,0,.4) 100%),
+    url(obj/starry-ebony.webp) 0 35% / 700px auto; }
+html[data-bdk="night"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d);
+  background: linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,0) 75%), url(obj/starry-ebony.webp) 0 100% / 700px auto repeat; }
+html[data-bdk="night"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+.lights.starCurtain .starTrim { background: url(obj/starry-trim.webp) 0 0 / auto 24px repeat-x; -webkit-mask: none; mask: none; }
+.lights.starCurtain .starTrimGlow { -webkit-mask: url(obj/starry-trim-mask.webp) 0 0 / auto 24px repeat-x; mask: url(obj/starry-trim-mask.webp) 0 0 / auto 24px repeat-x; }
