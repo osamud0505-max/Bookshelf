@@ -1000,7 +1000,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
   // which lights hang under a shelf: each shelf picks its own in the ✦ menu (kept per look); until then it shows the look's.
   // several can be on at once, e.g. wisteria with fireflies drifting around it
   const NO_SWITCH = ["fireflies", "closetRod"]; // always alive, no cord needed
-  const TALLEST = ["closetRod", "vampDrapes", "cottageLotus", "forestCatchers", "starCurtain", "loftCages", "loftSpider", "cabinSwags", "teaBeads", "wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
+  const TALLEST = ["closetRod", "vampDrapes", "cottageLotus", "forestCatchers", "starCurtain", "loftCages", "loftSpider", "cabinSwags", "teaBeads", "witchWeb", "wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
   // the look's own lights; a save made before a look got its lights (cottage, vampire) still says "none"
   function lookLights() {
     const s = state.settings.lights || {}, L = D.LOOKS[lookId()], def = L && L.set && L.set.lights;
@@ -1179,8 +1179,13 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     let webs = [];
     function buildWebs() {
       webs.forEach((w) => w.el.remove()); webs = [];
-      if (lookId() !== "witch" || !window.ShelfWebs) return;
-      const W = window.ShelfWebs, top = Math.max(0, (root.querySelector(".plank") || {}).offsetHeight - 1 || 0);
+      // v392: osamu replaced the thread webs with stained-glass corner webs (the witchWeb light style), so none are spun now
+      if (true || lookId() !== "witch" || !window.ShelfWebs) return;
+      const W = window.ShelfWebs, pl = root.querySelector(".plank");
+      let top = Math.max(0, (pl || {}).offsetHeight - 1 || 0);
+      // v391: a painted shelf front (the plank's ::after) can hang lower than the plank itself; tuck the webs under it, not across it
+      const af = pl && getComputedStyle(pl, "::after");
+      if (af && af.display !== "none" && af.position === "absolute") { const b = (parseFloat(af.top) || 0) + (parseFloat(af.height) || 0) - 3; if (b > top) top = Math.round(b); }
       const hk = hash([...key].reduce((s, c) => s * 31 + c.charCodeAt(0), 7) >>> 0);
       // every shelf has at least one corner web; most have both
       const left = hk % 5 !== 3, right = !left || hk % 7 !== 2;
@@ -1738,7 +1743,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
               setShelfLights(key, { styles }); keepOpen(); render();
             }));
             menu.append(lc);
-            if (L.styles.some((k) => !["wisteria", "chinese", "closetRod", "vampDrapes", "cottageLotus", "forestCatchers", "starCurtain", "loftCages", "loftSpider", "cabinSwags", "teaBeads"].includes(k))) {
+            if (L.styles.some((k) => !["wisteria", "chinese", "closetRod", "vampDrapes", "cottageLotus", "forestCatchers", "starCurtain", "loftCages", "loftSpider", "cabinSwags", "teaBeads", "witchWeb"].includes(k))) {
               const cc = h(`<div class="colors small">${Object.entries(D.LIGHT_COLOURS).map(([k, [l, c]]) => `<button class="colorItem" data-v="${k}" aria-pressed="${L.colour === k}"><span class="dot ${L.colour === k ? "on" : ""}" style="background:${c || "conic-gradient(#ff6b6b,#ffd166,#5be3a5,#5cc8f5,#c792ff,#ff6b6b)"};box-shadow:0 0 10px ${c || "#ffd166"}88"></span>${esc(l)}</button>`).join("")}</div>`);
               cc.querySelectorAll("button").forEach((b) => (b.onclick = () => { setShelfLights(key, { colour: b.dataset.v }); keepOpen(); render(); }));
               menu.append(cc);

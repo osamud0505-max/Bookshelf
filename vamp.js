@@ -603,9 +603,61 @@
     return el;
   }
 
+  // ------------------------------------------------------------------ the witch's tower: dewy webs and dew spiders
+  // osamu's idea (2026-11-13, from their photos): a big and a small dew-covered cobweb under each shelf (which side gets the
+  // big one alternates by shelf), and three spiders woven out of the same dewy silk, hanging on single threads. The spiders
+  // are the light: a cold moonlight glows inside them, and when they light up they let themselves down a little on their
+  // threads; switching off they climb back up as they dim. The web's drops twinkle finely. All pictures are osamu's Gemini
+  // paintings (black background, cut out by brightness); the lit twins are made in code. Tap a spider to switch, swipe to swing.
+  D.LIGHT_STYLES.witchWeb = "Dew webs & spiders";
+  const WEB = { big: { ar: 587 / 900, tw: [[0.331, 0.531], [0.509, 0.625], [0.801, 0.324], [0.686, 0.509], [0.204, 0.321], [0.418, 0.606], [0.228, 0.727], [0.394, 0.22], [0.431, 0.502], [0.149, 0.14], [0.294, 0.327], [0.843, 0.233], [0.729, 0.451], [0.404, 0.425], [0.331, 0.047], [0.324, 0.218], [0.658, 0.351], [0.894, 0.135], [0.417, 0.078], [0.49, 0.552], [0.74, 0.349], [0.537, 0.152]] },
+    small: { ar: 435 / 540, tw: [[0.59, 0.245], [0.206, 0.197], [0.253, 0.223], [0.146, 0.133], [0.634, 0.408], [0.839, 0.215], [0.703, 0.376], [0.247, 0.506], [0.245, 0.575], [0.435, 0.384], [0.739, 0.439], [0.856, 0.324]] } };
+  const SPTW = [[[0.536, 0.412], [0.448, 0.766], [0.554, 0.542], [0.688, 0.29], [0.749, 0.813], [0.839, 0.357]], [[0.17, 0.309], [0.384, 0.562], [0.375, 0.405], [0.636, 0.202], [0.062, 0.529], [0.46, 0.169]], [[0.438, 0.419], [0.366, 0.74], [0.855, 0.299], [0.239, 0.28], [0.757, 0.557], [0.504, 0.765]]]; // where the spiders' drops twinkle
+  // spider pictures: size in css px at full size, and where the thread meets the spider (fractions of the picture)
+  const SPI = [{ src: 1, w: 77, h: 96, ax: 0.510, ay: 0.401 }, { src: 2, w: 72, h: 93.5, ax: 0.495, ay: 0.160 }, { src: 3, w: 44.5, h: 96, ax: 0.490, ay: 0.417 }];
+  function witchEl(w, cfg) {
+    const phone = w < 600, k = phone ? 0.82 : 1;
+    const bw = Math.min(w * 0.7, 380), bh = bw * WEB.big.ar, sw_ = Math.min(w * 0.42, 230), sh_ = sw_ * WEB.small.ar;
+    let seed = 7; for (const c of String(cfg.seed || "")) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
+    const flip = seed % 2 === 1; // big web on the right on every other shelf
+    const X = (x) => (flip ? w - x : x);
+    const webHtml = (kind, ww, wh, right) => `<div class="wWeb" style="${right ? "right" : "left"}:0;top:0;width:${f1(ww)}px;height:${f1(wh)}px${right ? ";transform:scaleX(-1)" : ""}">`
+      + `<img class="tOff" src="obj/witch-dew-${kind}.webp" alt="" draggable="false" decoding="async"><img class="tOn" src="obj/witch-dew-${kind}-gem.webp" alt="" draggable="false" decoding="async">`
+      + WEB[kind].tw.map(([x, y], j) => `<i class="wTw" style="left:${f1(x * 100)}%;top:${f1(y * 100)}%;--j:${j}"></i>`).join("") + `</div>`;
+    const webs = webHtml("big", bw, bh, flip) + webHtml("small", sw_, sh_, !flip);
+    // two spiders under the big web, one under the small one, at different heights
+    // v395 (osamu: the middle spider was lost in the web): each spider hangs from the web's lower edge on its own thread,
+    // well clear of the web. t0 = where the thread leaves the web (its edge at that spot), gap = bare thread above the spider.
+    // v396 (osamu: the thread wasn't attached to the web): each thread now starts inside a real drop on the web's lowest strand
+    // (measured on the pictures), so it reads as the web's own silk running down to the spider.
+    const spots = [{ x: bw * 0.128, t0: bh * 0.157, gap: 24, s: 2 }, { x: bw * 0.644, t0: bh * 0.503, gap: 27, s: 0 }, { x: w - sw_ * 0.551, t0: sh_ * 0.483, gap: 22, s: 1 }];
+    const drops = spots.map((p, i) => {
+      const S = SPI[p.s], sw = S.w * k, sh = S.h * k, cx = X(p.x), chain = p.t0 + p.gap;
+      return { cx, sw, sh, S, t0: p.t0, chain, top: chain, dh: sh, hw: sw * 0.42, len: chain + sh * 0.5, th: 0, om: 0, els: [], mir: flip !== (i === 2) };
+    });
+    const html = drops.map((d, i) => {
+      const ax = d.mir ? 1 - d.S.ax : d.S.ax, ay = d.sh * d.S.ay;
+      return `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - ax * d.sw)}px;top:0;width:${f1(d.sw)}px;height:${f1(d.chain + d.sh)}px;transform-origin:${f1(ax * 100)}% ${f1(d.t0)}px;--i:${i}">`
+        + `<i class="wThread" style="left:${f1(ax * d.sw - 2.5)}px;top:${f1(d.t0)}px;height:${f1(d.chain - d.t0 + ay + 2)}px"></i>`
+        + `<div class="wSp" style="top:${f1(d.chain)}px;height:${f1(d.sh)}px${d.mir ? ";transform:scaleX(-1)" : ""}">`
+        + `<img class="tOff" src="obj/witch-dewspider${d.S.src}.webp" alt="" draggable="false" decoding="async">`
+        + `<img class="tOn" src="obj/witch-dewspider${d.S.src}-gem.webp" alt="" draggable="false" decoding="async">`
+        + SPTW[d.S.src - 1].map(([x, y], j) => `<i class="wTw" style="left:${f1(x * 100)}%;top:${f1(y * 100)}%;--j:${j + i * 3}"></i>`).join("") + `</div></div>`;
+    }).join("");
+    const el = document.createElement("div");
+    el.className = "lights witchWeb" + (cfg.on ? " on" : "");
+    el.style.height = Math.ceil(Math.max(bh, sh_, ...drops.map((d) => d.chain + d.sh + 16)) + 8) + "px";
+    el.innerHTML = `<div class="vIn">${webs}${html}</div>`;
+    el.querySelectorAll(".vDrop").forEach((e, i) => drops[i].els.push(e));
+    setTimeout(() => el.classList.add("tReady"), 1000);
+    touch(el, drops, [], { quiet: true });
+    return el;
+  }
+
   const baseLights = D.lightsEl;
-  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : cfg && cfg.style === "loftSpider" ? spiderEl(w, cfg) : cfg && cfg.style === "cabinSwags" ? cabinEl(w, cfg) : cfg && cfg.style === "teaBeads" ? teaEl(w, cfg) : baseLights(w, cfg));
+  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : cfg && cfg.style === "loftSpider" ? spiderEl(w, cfg) : cfg && cfg.style === "cabinSwags" ? cabinEl(w, cfg) : cfg && cfg.style === "teaBeads" ? teaEl(w, cfg) : cfg && cfg.style === "witchWeb" ? witchEl(w, cfg) : baseLights(w, cfg));
   if (D.LOOKS && D.LOOKS.teahouse) D.LOOKS.teahouse.set.lights = { style: "teaBeads", colour: "warm", on: true };
+  if (D.LOOKS && D.LOOKS.witch) D.LOOKS.witch.set.lights = { style: "witchWeb", colour: "warm", on: true };
   // the vampire room hangs them under every shelf, lit
   if (D.LOOKS && D.LOOKS.vampire) D.LOOKS.vampire.set.lights = { style: "vampDrapes", colour: "warm", on: true };
   // the cottage no longer hangs its flower lamps by default (v379, rose shelf); they stay in the ✦ menu
