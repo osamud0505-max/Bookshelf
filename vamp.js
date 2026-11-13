@@ -603,9 +603,42 @@
     return el;
   }
 
+  // ------------------------------------------------------------------ the witch's tower: stained-glass webs and a beaded spider
+  // osamu's idea (2026-11-13, from their suncatcher photo): a stained-glass corner web tucked under each shelf corner (the right
+  // one mirrored), and a beaded wire spider hanging on a fine silver chain from each web's tip. The spider is the light: its
+  // yellow crackle-glass body glows and lights the glass. Both are osamu's Gemini paintings; the lit twins are made in code.
+  // Tapping a spider is the switch; a swipe sets it swinging.
+  D.LIGHT_STYLES.witchWeb = "Stained-glass spider webs";
+  const WB = { ringX: 1230 / 1259, ringY: 1240 / 1252, ar: 1252 / 1259, sar: 1065 / 990, beadY: 215 / 1065 };
+  function witchEl(w, cfg) {
+    const phone = w < 600, ww = phone ? 104 : 132, sw = phone ? 60 : 72, sh = sw * WB.sar, wh = ww * WB.ar;
+    const chains = [phone ? 30 : 38, phone ? 52 : 62];
+    const drops = [0, 1].map((i) => {
+      const right = i === 1, rx = right ? w - ww * WB.ringX : ww * WB.ringX, ry = wh * WB.ringY, chain = chains[i];
+      return { cx: rx, ry, chain, sw, sh, top: ry + chain, dh: sh, hw: sw * 0.5, len: chain + sh * 0.35, th: 0, om: 0, els: [], right };
+    });
+    const webs = [0, 1].map((i) => `<div class="wWeb" style="${i ? "right" : "left"}:0;top:0;width:${ww}px;height:${f1(wh)}px${i ? ";transform:scaleX(-1)" : ""}">`
+      + `<img class="wwOff" src="obj/witch-web.webp" alt="" draggable="false" decoding="async"><img class="wwOn" src="obj/witch-web-lit.webp" alt="" draggable="false" decoding="async"></div>`).join("");
+    const html = drops.map((d, i) => `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - d.sw / 2)}px;top:${f1(d.ry)}px;width:${f1(d.sw)}px;height:${f1(d.chain + d.sh)}px;transform-origin:50% 0;--i:${i}">`
+      + `<i class="wChain" style="height:${f1(d.chain + 2)}px"></i>`
+      + `<i class="vHalo" style="top:${f1(d.chain + d.sh * WB.beadY)}px;width:${f1(d.sw * 2.6)}px;height:${f1(d.sw * 2.6)}px"></i>`
+      + `<img class="tOff" src="obj/witch-spider.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(d.sh)}px${d.right ? ";transform:scaleX(-1)" : ""}">`
+      + `<img class="tOn" src="obj/witch-spider-lit.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(d.sh)}px${d.right ? ";transform:scaleX(-1)" : ""}">`
+      + `</div>`).join("");
+    const el = document.createElement("div");
+    el.className = "lights witchWeb" + (cfg.on ? " on" : "");
+    el.style.height = Math.ceil(Math.max(wh, ...drops.map((d) => d.ry + d.chain + d.sh)) + 8) + "px";
+    el.innerHTML = `<div class="vIn">${webs}${html}</div>`;
+    el.querySelectorAll(".vDrop").forEach((e, i) => drops[i].els.push(e));
+    setTimeout(() => el.classList.add("tReady"), 1000);
+    touch(el, drops, [], { quiet: true });
+    return el;
+  }
+
   const baseLights = D.lightsEl;
-  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : cfg && cfg.style === "loftSpider" ? spiderEl(w, cfg) : cfg && cfg.style === "cabinSwags" ? cabinEl(w, cfg) : cfg && cfg.style === "teaBeads" ? teaEl(w, cfg) : baseLights(w, cfg));
+  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : cfg && cfg.style === "loftSpider" ? spiderEl(w, cfg) : cfg && cfg.style === "cabinSwags" ? cabinEl(w, cfg) : cfg && cfg.style === "teaBeads" ? teaEl(w, cfg) : cfg && cfg.style === "witchWeb" ? witchEl(w, cfg) : baseLights(w, cfg));
   if (D.LOOKS && D.LOOKS.teahouse) D.LOOKS.teahouse.set.lights = { style: "teaBeads", colour: "warm", on: true };
+  if (D.LOOKS && D.LOOKS.witch) D.LOOKS.witch.set.lights = { style: "witchWeb", colour: "warm", on: true };
   // the vampire room hangs them under every shelf, lit
   if (D.LOOKS && D.LOOKS.vampire) D.LOOKS.vampire.set.lights = { style: "vampDrapes", colour: "warm", on: true };
   // the cottage no longer hangs its flower lamps by default (v379, rose shelf); they stay in the ✦ menu
