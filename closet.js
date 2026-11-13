@@ -483,7 +483,7 @@
   // tube as it turns (where a real lipstick turns), then it lights up; tapping again winds it back down. The bullet only ever moves; nothing is redrawn.
   const LIP_VW = 95.3, LIP_REST = 38.5;
   // v331: the photographed 3D bullet's frame (picture units: x, y, w, h), its pixel size, and how far it sinks when down
-  // v406 (osamu's chrome Barbie case): the rosy glitter bullet on its chrome sleeve, rendered by sources/lipshot6.js
+  // v406 (osamu's chrome Barbie case): the rosy glitter bullet (v407: no sleeve, straight out of the case), rendered by sources/lipshot6.js
   const LIP_FR = [18.6, 3.26, 36, 66], LIP_FW = 144, LIP_FH = 264, LIP_DROP = 52;
   // v332: 72 frames a turn (5° each, so the twist flows like the 3D one), in a grid 12 frames wide; and how its light comes on
   const LIP_N = 72, LIP_COLS = 12, LIP_CW = 152, LIP_CH = 272; // each frame sits in a cell with a clear gap, so no frame bleeds into the next
@@ -516,9 +516,9 @@
       + `<ellipse class="lpFoot" cx="36.9" cy="189.5" rx="33" ry="12.5" fill="url(#${g}fp)"/>`
       + `<image href="obj/closet-lipstick-case6back-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       + `<g mask="url(#${g}bm)"><g class="lpB2" style="--rest:${LIP_DROP}px"><clipPath id="${g}fc"><rect x="0" y="0" width="${LIP_FW}" height="${LIP_FH}"/></clipPath><g transform="translate(${LIP_FR[0]} ${LIP_FR[1]}) scale(${(LIP_FR[2] / LIP_FW).toFixed(5)})"><g clip-path="url(#${g}fc)">`
-      + `<image class="lpSheetT" href="obj/closet-lipstick-bullet6t.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/>`
-      + `<image class="lpSheetL" href="obj/closet-lipstick-bullet6l.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none" opacity="0"/>`
-      + `<g class="lpGY"><image class="lpSheetG" href="obj/closet-lipstick-bullet6g.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/></g></g></g></g></g>`
+      + `<image class="lpSheetT" href="obj/closet-lipstick-bullet7t.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/>`
+      + `<image class="lpSheetL" href="obj/closet-lipstick-bullet7l.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none" opacity="0"/>`
+      + `<g class="lpGY"><image class="lpSheetG" href="obj/closet-lipstick-bullet7g.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/></g></g></g></g></g>`
       + `<image href="obj/closet-lipstick-case6-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       // v333 (osamu's real lamp): lit, the light glows red round the rim's opening and falls warm on the gold edge
       + `<g class="lpRimGlow" style="mix-blend-mode:screen"><filter id="${g}rg" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="1.3"/></filter>`
