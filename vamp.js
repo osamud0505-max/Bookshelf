@@ -265,26 +265,18 @@
   // few seconds. The dust is drawn on a canvas; it leaves the lower edges of the purple flower clusters (FLOW, measured
   // on osamu's painting obj/forest-wisteria2.webp as fractions of it).
   D.LIGHT_STYLES.forestDust = "Wisteria & fairy dust";
-  const FLOW = [[0.017,0.38],[0.017,0.42],[0.042,0.742],[0.046,0.345],[0.049,0.602],[0.07,0.505],[0.071,0.469],[0.074,0.354],[0.077,0.863],[0.086,0.935],[0.101,0.839],[0.107,0.85],[0.119,0.386],[0.12,0.742],[0.133,0.645],[0.152,0.193],[0.159,0.514],[0.16,0.65],[0.171,0.419],[0.176,0.314],[0.181,0.451],[0.184,0.328],[0.189,0.633],[0.206,0.225],[0.214,0.386],[0.219,0.386],[0.222,0.633],[0.228,0.473],[0.232,0.611],[0.234,0.416],[0.292,0.412],[0.296,0.483],[0.339,0.225],[0.344,0.243],[0.354,0.27],[0.374,0.322],[0.402,0.346],[0.406,0.225],[0.427,0.257],[0.432,0.256],[0.456,0.289],[0.464,0.298],[0.499,0.419],[0.504,0.193],[0.518,0.417],[0.549,0.128],[0.567,0.354],[0.569,0.456],[0.605,0.322],[0.606,0.354],[0.616,0.339],[0.624,0.322],[0.63,0.183],[0.642,0.386],[0.66,0.225],[0.661,0.442],[0.684,0.314],[0.687,0.398],[0.696,0.289],[0.707,0.417],[0.716,0.193],[0.731,0.386],[0.746,0.289],[0.766,0.534],[0.767,0.496],[0.772,0.58],[0.781,0.509],[0.782,0.354],[0.787,0.645],[0.822,0.448],[0.855,0.483],[0.856,0.257],[0.864,0.419],[0.865,0.45],[0.874,0.225],[0.879,0.289],[0.899,0.208],[0.906,0.548],[0.909,0.382],[0.917,0.22],[0.919,0.707],[0.921,0.413],[0.924,0.381],[0.926,0.483],[0.941,0.415],[0.946,0.225],[0.946,0.792],[0.949,0.541],[0.965,0.288],[0.976,0.645]];
-  const DUST_RGB = ["232,200,255", "255,205,240", "255,232,180", "255,255,255", "200,170,255", "245,225,255"];
-  let dustSprites = null;
-  const dustSprite = () => dustSprites || (dustSprites = DUST_RGB.map((c) => {
-    const s = document.createElement("canvas"); s.width = s.height = 32; const g = s.getContext("2d");
-    const r = g.createRadialGradient(16, 16, 0, 16, 16, 16);
-    r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.12, `rgba(${c},.95)`); r.addColorStop(0.35, `rgba(${c},.35)`); r.addColorStop(1, `rgba(${c},0)`);
-    g.fillStyle = r; g.fillRect(0, 0, 32, 32);
-    // a fine four-point glint through the middle
-    g.globalCompositeOperation = "lighter"; g.fillStyle = `rgba(${c},.55)`;
-    g.fillRect(15.4, 2, 1.2, 28); g.fillRect(2, 15.4, 28, 1.2);
-    return s;
-  }));
+  // v400 (osamu: v399 was big sparkles, not fairy dust): fine glittering powder. Tiny specks (about 1px) shed from all over the
+  // petals (PETALS = points on the purple flowers of obj/forest-wisteria2.webp), a few at a time in little puffs, drifting
+  // down slowly with a shimmer and faint trails. No stars or crosses.
+  const PETALS = [[0.024,0.371],[0.025,0.53],[0.035,0.592],[0.035,0.729],[0.036,0.231],[0.036,0.394],[0.036,0.464],[0.037,0.72],[0.038,0.665],[0.038,0.78],[0.045,0.673],[0.049,0.371],[0.049,0.743],[0.051,0.441],[0.054,0.627],[0.056,0.866],[0.061,0.494],[0.066,0.601],[0.075,0.394],[0.075,0.693],[0.078,0.58],[0.084,0.441],[0.087,0.836],[0.088,0.673],[0.089,0.208],[0.089,0.539],[0.089,0.934],[0.097,0.72],[0.101,0.208],[0.108,0.255],[0.111,0.65],[0.115,0.441],[0.124,0.72],[0.126,0.65],[0.128,0.673],[0.128,0.743],[0.131,0.766],[0.137,0.417],[0.139,0.324],[0.149,0.278],[0.153,0.553],[0.154,0.297],[0.159,0.624],[0.162,0.348],[0.164,0.301],[0.165,0.557],[0.166,0.51],[0.175,0.557],[0.175,0.58],[0.176,0.371],[0.176,0.51],[0.18,0.557],[0.187,0.632],[0.188,0.627],[0.191,0.417],[0.204,0.464],[0.208,0.601],[0.212,0.324],[0.216,0.348],[0.218,0.58],[0.219,0.627],[0.22,0.632],[0.228,0.553],[0.231,0.348],[0.234,0.557],[0.235,0.324],[0.235,0.441],[0.239,0.301],[0.242,0.278],[0.254,0.401],[0.254,0.487],[0.265,0.585],[0.266,0.371],[0.267,0.208],[0.268,0.324],[0.278,0.394],[0.278,0.557],[0.279,0.441],[0.283,0.557],[0.289,0.366],[0.289,0.417],[0.291,0.487],[0.293,0.301],[0.295,0.185],[0.317,0.255],[0.317,0.324],[0.319,0.208],[0.327,0.231],[0.329,0.208],[0.332,0.255],[0.332,0.278],[0.332,0.348],[0.341,0.3],[0.344,0.255],[0.356,0.278],[0.357,0.301],[0.359,0.208],[0.36,0.429],[0.362,0.324],[0.369,0.16],[0.369,0.255],[0.374,0.319],[0.38,0.301],[0.387,0.348],[0.393,0.371],[0.394,0.115],[0.397,0.278],[0.406,0.185],[0.421,0.231],[0.423,0.138],[0.434,0.324],[0.436,0.255],[0.436,0.276],[0.436,0.381],[0.445,0.428],[0.446,0.231],[0.456,0.278],[0.462,0.115],[0.478,0.394],[0.485,0.301],[0.487,0.419],[0.488,0.348],[0.497,0.185],[0.498,0.324],[0.498,0.417],[0.501,0.149],[0.51,0.231],[0.514,0.138],[0.514,0.255],[0.516,0.417],[0.523,0.115],[0.524,0.301],[0.525,0.31],[0.529,0.255],[0.54,0.465],[0.552,0.323],[0.554,0.227],[0.561,0.092],[0.564,0.208],[0.573,0.275],[0.576,0.395],[0.578,0.348],[0.581,0.355],[0.592,0.092],[0.599,0.255],[0.6,0.115],[0.601,0.185],[0.614,0.348],[0.617,0.183],[0.619,0.154],[0.62,0.371],[0.621,0.138],[0.638,0.444],[0.639,0.348],[0.639,0.371],[0.645,0.441],[0.65,0.255],[0.651,0.278],[0.653,0.324],[0.654,0.348],[0.654,0.371],[0.656,0.412],[0.658,0.301],[0.67,0.255],[0.677,0.231],[0.678,0.324],[0.68,0.208],[0.681,0.394],[0.682,0.231],[0.694,0.366],[0.705,0.255],[0.706,0.348],[0.706,0.413],[0.706,0.441],[0.714,0.509],[0.718,0.301],[0.724,0.394],[0.73,0.464],[0.73,0.487],[0.731,0.58],[0.734,0.278],[0.74,0.534],[0.741,0.51],[0.743,0.487],[0.744,0.231],[0.758,0.295],[0.765,0.51],[0.767,0.417],[0.768,0.348],[0.77,0.487],[0.78,0.464],[0.78,0.509],[0.794,0.556],[0.796,0.255],[0.796,0.464],[0.797,0.253],[0.799,0.621],[0.805,0.371],[0.806,0.208],[0.809,0.417],[0.819,0.417],[0.82,0.255],[0.821,0.487],[0.83,0.486],[0.835,0.394],[0.835,0.534],[0.841,0.301],[0.842,0.592],[0.844,0.324],[0.844,0.487],[0.844,0.51],[0.845,0.185],[0.856,0.441],[0.859,0.231],[0.859,0.324],[0.86,0.301],[0.861,0.638],[0.869,0.743],[0.871,0.776],[0.872,0.673],[0.874,0.696],[0.879,0.278],[0.881,0.394],[0.882,0.65],[0.882,0.673],[0.883,0.534],[0.886,0.897],[0.886,0.938],[0.897,0.185],[0.897,0.673],[0.897,0.836],[0.897,0.857],[0.898,0.789],[0.899,0.487],[0.908,0.534],[0.91,0.929],[0.911,0.231],[0.911,0.51],[0.911,0.813],[0.912,0.673],[0.917,0.441],[0.918,0.743],[0.919,0.598],[0.921,0.255],[0.921,0.301],[0.921,0.58],[0.924,0.929],[0.926,0.478],[0.926,0.881],[0.931,0.231],[0.931,0.348],[0.934,0.323],[0.935,0.301],[0.935,0.859],[0.937,0.673],[0.947,0.231],[0.951,0.371],[0.954,0.411],[0.965,0.426],[0.966,0.579]];
+  const DUST_RGB = ["255,226,160", "255,240,205", "255,214,140", "236,208,255", "255,205,236", "255,250,235"];
   function dustEl(w, cfg) {
     const n = Math.max(1, Math.round(w / 430)), cell = w / n, gw = cell * 1.15, wh = gw * WI.h / WI.w, lift = WI.tuck * wh + 16;
     const garlands = [], src = [];
     for (let c = 0; c < n; c++) {
       const gl = c * cell + (cell - gw) / 2;
       garlands.push(`<div class="vSwag fWis" style="left:${f1(gl)}px;top:${f1(-lift)}px;width:${f1(gw)}px;height:${f1(wh)}px;transform-origin:50% 0"><img src="obj/forest-wisteria2.webp" alt="" draggable="false" decoding="async"></div>`);
-      FLOW.forEach(([fx, fy]) => { const x = gl + fx * gw; if (x > 2 && x < w - 2) src.push([x, fy * wh]); });
+      PETALS.forEach(([fx, fy]) => { const x = gl + fx * gw; if (x > 2 && x < w - 2) src.push([x, fy * wh]); });
     }
     const EXTRA = 90, H = wh - lift, CH = wh + EXTRA; // the canvas starts at the garland's top and reaches below it
     const el = document.createElement("div");
@@ -294,34 +286,39 @@
     const cv = el.querySelector("canvas"), g = cv.getContext("2d"), dpr = Math.min(2, window.devicePixelRatio || 1);
     cv.width = Math.round(w * dpr); cv.height = Math.round(CH * dpr);
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const parts = [], MAXP = reduce ? 90 : 420, BASE = (reduce ? 6 : 16) * n; // particles a second while calm
+    const parts = [], MAXP = reduce ? 250 : 1100, BASE = (reduce ? 4 : 9) * n; // puffs a second while calm
     let boost = 0, acc = 0, raf = 0, last = 0, seen = false;
-    const spawn = (x, y, kick) => {
+    const speck = (x, y, kick) => {
       if (parts.length >= MAXP) return;
-      const big = Math.random() < 0.12;
-      parts.push({ x: x + (Math.random() - 0.5) * 6, y: y + Math.random() * 4, vx: (Math.random() - 0.5) * (6 + kick * 22), vy: 6 + Math.random() * 12 + kick * 10,
-        t: 0, life: 3.2 + Math.random() * 3.6, s: big ? 7 + Math.random() * 4 : 3 + Math.random() * 3.2, c: (Math.random() * DUST_RGB.length) | 0,
-        ph: Math.random() * 6.28, tw: 3 + Math.random() * 5, sw: 4 + Math.random() * 8, sf: 0.6 + Math.random() * 1.2 });
+      parts.push({ x, y, vx: (Math.random() - 0.5) * (3 + kick * 14), vy: 7 + Math.random() * 9 + kick * 8,
+        t: 0, life: 4 + Math.random() * 4, r: 0.35 + Math.random() * Math.random() * 0.9, c: (Math.random() * DUST_RGB.length) | 0,
+        ph: Math.random() * 6.28, tw: 6 + Math.random() * 14, sw: 2 + Math.random() * 5, sf: 0.5 + Math.random() * 1.5 });
     };
+    // a puff: a few specks shaken out of one spot on a petal, spread a little
+    const puff = (p, k, kick) => { for (let i = 0; i < k; i++) speck(p[0] + (Math.random() - 0.5) * 12, p[1] + (Math.random() - 0.5) * 8, kick); };
     const frame = (now) => {
       raf = 0;
       if (!el.isConnected) return;
       const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
       boost *= Math.exp(-dt / 2.2); // a shake settles back to the gentle fall over a few seconds
       acc += BASE * (1 + boost) * dt;
-      while (acc >= 1 && src.length) { acc -= 1; const p = src[(Math.random() * src.length) | 0]; spawn(p[0], p[1], Math.min(1, boost / 4)); }
-      const sp = dustSprite();
-      g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, CH); g.globalCompositeOperation = "lighter";
+      while (acc >= 1 && src.length) { acc -= 1; puff(src[(Math.random() * src.length) | 0], 3 + ((Math.random() * 5) | 0), Math.min(1, boost / 4)); }
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // faint trails: the last frame fades instead of vanishing
+      g.globalCompositeOperation = "destination-out"; g.globalAlpha = Math.min(1, dt * 22); g.fillRect(0, 0, w, CH);
+      g.globalCompositeOperation = "lighter";
       for (let i = parts.length - 1; i >= 0; i--) {
         const q = parts[i]; q.t += dt;
         if (q.t > q.life || q.y > CH) { parts.splice(i, 1); continue; }
-        q.vy += 9 * dt; q.vy = Math.min(q.vy, 34); q.vx *= Math.exp(-dt * 1.5);
-        q.x += (q.vx + Math.sin(q.t * q.sf + q.ph) * q.sw * 0.6) * dt; q.y += q.vy * dt;
-        const fade = Math.min(1, q.t / 0.35) * Math.min(1, (q.life - q.t) / 1.2) * Math.min(1, (CH - q.y) / 40);
-        const a = fade * (0.7 + 0.3 * Math.sin(q.t * q.tw + q.ph));
-        if (a <= 0.02) continue;
-        g.globalAlpha = a; const z = q.s * (0.8 + 0.25 * Math.sin(q.t * q.tw * 0.5 + q.ph));
-        g.drawImage(sp[q.c], q.x - z, q.y - z, z * 2, z * 2);
+        q.vy += 5 * dt; q.vy = Math.min(q.vy, 26); q.vx *= Math.exp(-dt * 1.2);
+        q.x += (q.vx + Math.sin(q.t * q.sf + q.ph) * q.sw) * dt; q.y += q.vy * dt;
+        const fade = Math.min(1, q.t / 0.25) * Math.min(1, (q.life - q.t) / 1.4) * Math.min(1, (CH - q.y) / 40);
+        // glitter: each speck flickers quickly as it catches the light
+        const a = fade * (0.35 + 0.65 * Math.max(0, Math.sin(q.t * q.tw + q.ph)));
+        if (a <= 0.03) continue;
+        const c = DUST_RGB[q.c];
+        g.globalAlpha = a * 0.18; g.fillStyle = `rgb(${c})`; g.beginPath(); g.arc(q.x, q.y, q.r * 2.2, 0, 6.283); g.fill();
+        g.globalAlpha = a; g.fillRect(q.x - q.r, q.y - q.r, q.r * 2, q.r * 2);
       }
       g.globalAlpha = 1;
       if (seen && !document.hidden) raf = requestAnimationFrame(frame);
@@ -332,12 +329,12 @@
       setTimeout(() => io.observe(el), 0);
     } else { seen = true; setTimeout(run, 0); }
     document.addEventListener("visibilitychange", run);
-    // touching or brushing the garland shakes loose a shower right where the finger is, then more from everywhere
+    // touching or brushing the flowers shakes loose a cloud of dust right where the finger is, then more from everywhere
     const shake = (ev, amt) => {
       const r = el.getBoundingClientRect(), x = ev.clientX - r.left;
       boost = Math.min(9, boost + amt);
       const near = src.filter((p) => Math.abs(p[0] - x) < cell * 0.22);
-      for (let i = 0; i < amt * 14 && near.length; i++) { const p = near[(Math.random() * near.length) | 0]; spawn(p[0], p[1], 1); }
+      for (let i = 0; i < amt * 10 && near.length; i++) puff(near[(Math.random() * near.length) | 0], 4 + ((Math.random() * 6) | 0), 1);
       run();
     };
     let lastX = null;
