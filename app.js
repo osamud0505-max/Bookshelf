@@ -133,6 +133,12 @@
         const d = JSON.parse(raw);
         state.books = Array.isArray(d.books) ? d.books : [];
         state.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) };
+        // v379: the cottage look no longer hangs flower lamps by default; take them off shelves once (still addable from ✦)
+        if (!state.settings.cotLampsOff) {
+          const sd = state.settings.shelfDecor || {};
+          Object.values(sd).forEach((z) => { const c = z && z.lightsBy && z.lightsBy.cottage; if (c && Array.isArray(c.styles)) c.styles = c.styles.filter((k) => k !== "cottageLotus"); if (c && c.style === "cottageLotus") c.style = c.styles && c.styles[0] || "none"; });
+          state.settings.cotLampsOff = true;
+        }
         return;
       }
     } catch (e) { console.warn("Could not read saved shelf", e); }

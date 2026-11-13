@@ -571,8 +571,8 @@
   D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : cfg && cfg.style === "loftSpider" ? spiderEl(w, cfg) : cfg && cfg.style === "cabinSwags" ? cabinEl(w, cfg) : baseLights(w, cfg));
   // the vampire room hangs them under every shelf, lit
   if (D.LOOKS && D.LOOKS.vampire) D.LOOKS.vampire.set.lights = { style: "vampDrapes", colour: "warm", on: true };
-  // and the cottage hangs its flower lamps under every shelf, lit
-  if (D.LOOKS && D.LOOKS.cottage) D.LOOKS.cottage.set.lights = { style: "cottageLotus", colour: "warm", on: true };
+  // the cottage no longer hangs its flower lamps by default (v379, rose shelf); they stay in the ✦ menu
+  if (D.LOOKS && D.LOOKS.cottage) D.LOOKS.cottage.set.lights = { style: "none", colour: "warm", on: false };
   // the enchanted forest's wisteria becomes the painted garland with suncatchers, fireflies still drifting about
   if (D.LOOKS && D.LOOKS.forest) D.LOOKS.forest.set.lights = { style: "forestCatchers", styles: ["forestCatchers", "fireflies"], colour: "warm", on: true };
   // starry night: the light curtain and star trim instead of the old string of stars
