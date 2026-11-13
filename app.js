@@ -999,7 +999,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
   const plankWidth = () => Math.min(innerWidth, 1200);
   // which lights hang under a shelf: each shelf picks its own in the ✦ menu (kept per look); until then it shows the look's.
   // several can be on at once, e.g. wisteria with fireflies drifting around it
-  const NO_SWITCH = ["fireflies", "closetRod"]; // always alive, no cord needed
+  const NO_SWITCH = ["fireflies", "closetRod", "witchWeb"]; // v398 osamu: witch's tower webs always lit, no switch // always alive, no cord needed
   const TALLEST = ["closetRod", "vampDrapes", "cottageLotus", "forestCatchers", "starCurtain", "loftCages", "loftSpider", "cabinSwags", "teaBeads", "witchWeb", "wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
   // the look's own lights; a save made before a look got its lights (cottage, vampire) still says "none"
   function lookLights() {
