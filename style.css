@@ -2541,7 +2541,7 @@ html[data-bdk="witchTower"] .plank::after { display: block; content: ""; positio
 html[data-bdk="witchTower"] .caption { padding-top: 38px; }
 html[data-bdk="witchTower"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
   bottom: calc(var(--top-d) * -.5); height: var(--top-d);
-  background: linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,0) 70%), url(obj/witch-top.webp) 0 100% / 420px auto repeat; filter: brightness(.6); }
+  background: linear-gradient(rgba(0,0,0,.22), rgba(0,0,0,0) 60%), url(obj/witch-top2.webp) 0 100% / 420px auto repeat; filter: brightness(.68); } /* v414 (osamu: top and front didn't match): top recoloured to the front plank's colours, same brightness */
 html[data-bdk="witchTower"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
 html[data-bdk="witchTower"] .track::before { display: none; }
 html[data-bdk="witchTower"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 8px; height: 130px; pointer-events: none; z-index: -2;
