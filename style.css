@@ -2657,13 +2657,13 @@ html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { pad
 /* v394 (osamu: the thread was too thick, not attached, not like web): a hair-thin silk line strung with tiny dew drops at uneven
    spacing (two drop rows with different periods), running right down into the spider */
 .lights.witchWeb .wThread { position: absolute; width: 5px;
-  /* v396 (osamu: drops should be different sizes): three drop rows with different sizes and co-prime spacings, so big, medium
-     and tiny beads fall irregularly along the hair line */
+  /* v396: three drop rows of different sizes and spacings. v402 (osamu: the thread didn't look connected to the spider):
+     the rows are counted from the spider end, so no big drop sits on the spider's back; the bare silk runs into the body */
   background:
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,.95) 0 .7px, rgba(225,232,245,.75) 1.3px, rgba(200,212,235,.3) 1.75px, transparent 2.1px) 0 9px / 5px 37px repeat-y,
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,.9) 0 .45px, rgba(215,225,240,.5) .9px, transparent 1.25px) 0 2px / 5px 17px repeat-y,
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,.75) 0 .25px, rgba(215,225,240,.35) .5px, transparent .75px) 0 5px / 5px 7px repeat-y,
-    linear-gradient(90deg, transparent 2.25px, rgba(220,228,242,.34) 2.25px 2.75px, transparent 2.75px); }
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.95) 0 .7px, rgba(225,232,245,.75) 1.3px, rgba(200,212,235,.3) 1.75px, transparent 2.1px) 0 calc(100% - 3.5px) / 5px 37px repeat-y,
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.9) 0 .45px, rgba(215,225,240,.5) .9px, transparent 1.25px) 0 calc(100% - 2.5px) / 5px 17px repeat-y,
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.75) 0 .25px, rgba(215,225,240,.35) .5px, transparent .75px) 0 calc(100% - .5px) / 5px 7px repeat-y,
+    linear-gradient(90deg, transparent 2.25px, rgba(220,228,242,.42) 2.25px 2.75px, transparent 2.75px); }
 .lights.witchWeb.on .wThread { filter: brightness(1.35); }
 .lights.witchWeb .wSp { position: absolute; left: 0; width: 100%; }
 /* v397 (osamu: make the spiders shinier so on and off differ): off they sit a little dimmer; the lit twins (-gem2) are much
