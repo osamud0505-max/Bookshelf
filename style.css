@@ -2603,7 +2603,7 @@ html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { pad
 .shelf[data-lights="teaBeads"] .pullCord:focus-visible { opacity: 1; }
 .lights.teaBeads .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
 .lights.teaBeads .vDrop { position: absolute; pointer-events: none; will-change: transform; backface-visibility: hidden; }
-.lights.teaBeads .vChain { position: absolute; top: 0; background: url(obj/tea-redcord.webp) 0 100% repeat-y; }
+.lights.teaBeads .vChain { position: absolute; top: 0; background: url(obj/tea-cord-smooth.webp) 0 100% repeat-y; }
 .lights.teaBeads .vDrop > img { position: absolute; left: 0; width: 100%; -webkit-user-drag: none; user-select: none; filter: drop-shadow(0 6px 6px rgba(0,0,0,.45)); }
 .lights.teaBeads .vDrop > img.tOn { filter: none; opacity: 0; }
 .lights.teaBeads.on .vDrop > img.tOn { opacity: 1; animation: tFlicker 3.7s linear infinite; animation-delay: calc(var(--i) * -.83s); }

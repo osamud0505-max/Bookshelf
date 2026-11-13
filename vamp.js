@@ -572,7 +572,7 @@
   // below the red lambrequin valance. Two Gemini paintings (unlit and lit, matched pixel for pixel), repeated at different
   // sizes and heights, every other one mirrored. Tapping a lantern is the light switch; a swipe sets them swaying.
   D.LIGHT_STYLES.teaBeads = "Beaded silk lanterns";
-  const TL = { w: 240, h: 599, globeTop: 0.285, globeMid: 0.488, src: 1068, cordW: 32, cordH: 300, flameX: 0.497, flameY: 0.498 }; // flameX/Y: the foot of the painted candle flame // 1068px wide at source; the cord tile is cut from its own cord
+  const TL = { w: 240, h: 599, globeTop: 0.285, globeMid: 0.488, src: 1068, cordW: 32, cordH: 300, flameX: 0.497, flameY: 0.498, ringTop: 140 / 599 }; // flameX/Y: the foot of the painted candle flame // 1068px wide at source; the cord tile is cut from its own cord
   const TDROP = [134, 168, 146, 176, 138, 160, 150]; // how far below the shelf each lantern's silk globe starts, repeating
   const TSIZE = [1, 0.86, 0.94, 0.8, 1.04, 0.9, 0.84];
   function teaEl(w, cfg) {
@@ -585,12 +585,12 @@
       drops.push({ cx, lw, chain, top: chain + lh * TL.globeTop, dh: lh * (1 - TL.globeTop), hw: lw * 0.5, len: chain + lh * TL.globeMid, th: 0, om: 0, els: [], flip: i % 2 === 1 });
     }
     const html = drops.map((d, i) => {
-      const lh = d.lw * TL.h / TL.w, sh = Math.max(0, d.chain + 1), k = d.lw / TL.src;
+      const lh = d.lw * TL.h / TL.w, sh = Math.max(0, d.chain + lh * TL.ringTop), k = d.lw / TL.src; // v389: our one cord runs all the way down behind the ring (the painted cord is erased)
       return `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - d.lw / 2)}px;top:0;width:${f1(d.lw)}px;height:${f1(d.chain + lh)}px;transform-origin:50% 0;--i:${i}">`
         + `<i class="vChain" style="left:${f1(d.lw / 2 - TL.cordW / 2 * k)}px;width:${f1(TL.cordW * k)}px;height:${f1(sh)}px;background-size:${f1(TL.cordW * k)}px ${f1(TL.cordH * k)}px"></i>`
         + `<i class="vHalo" style="top:${f1(d.chain + lh * TL.globeMid)}px;width:${f1(d.lw * 2.4)}px;height:${f1(d.lw * 2.4)}px"></i>`
-        + `<img class="tOff" src="obj/tea-paper-off.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}">`
-        + `<img class="tOn" src="obj/tea-paper-glow.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}">`
+        + `<img class="tOff" src="obj/tea-paper-off2.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}">`
+        + `<img class="tOn" src="obj/tea-paper-glow2.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}">`
         + `</div>`;
     }).join("");
     const el = document.createElement("div");
