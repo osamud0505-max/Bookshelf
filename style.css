@@ -2466,3 +2466,27 @@ html[data-bdk="night"] .stage::before { content: ""; position: absolute; left: 0
 html[data-bdk="night"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
 .lights.starCurtain .starTrim { background: url(obj/starry-trim.webp) 0 0 / auto 24px repeat-x; -webkit-mask: none; mask: none; }
 .lights.starCurtain .starTrimGlow { -webkit-mask: url(obj/starry-trim-mask.webp) 0 0 / auto 24px repeat-x; mask: url(obj/starry-trim-mask.webp) 0 0 / auto 24px repeat-x; }
+
+/* v366 (osamu's photo of a carved Victorian valance, in a colour that suits the green damask): osamu's Gemini dark walnut
+   valance with gold-leaf carving, one per shelf with the carving centred; its cornice moulding is the shelf's front edge.
+   Cut in five: the two scroll ends and the centre carving keep their shape, the two plain waves stretch to the width */
+html[data-bdk="greenDamask"] .shelf .plank { background: url(obj/vic-walnut.webp) 0 40% / 700px auto; box-shadow: none; }
+html[data-bdk="greenDamask"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; top: -2px; height: 84px; z-index: 1;
+  opacity: 1; mix-blend-mode: normal; pointer-events: none;
+  background:
+    url(obj/vic-valance-l.webp) left 0 top 0 / 50px 84px no-repeat,
+    url(obj/vic-valance-r.webp) right 0 top 0 / 50px 84px no-repeat,
+    url(obj/vic-valance-c.webp) 50% 0 / 196.33px 84px no-repeat,
+    url(obj/vic-valance-wl.webp) left 49px top 0 / calc(50% - 145px) 84px no-repeat,
+    url(obj/vic-valance-wr.webp) right 49px top 0 / calc(50% - 145px) 84px no-repeat;
+  filter: drop-shadow(0 6px 6px rgba(0,0,0,.5)); }
+html[data-bdk="greenDamask"] .caption { padding-top: 78px; }
+html[data-bdk="greenDamask"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d);
+  background: linear-gradient(rgba(10,4,2,.5), rgba(10,4,2,0) 70%), url(obj/vic-walnut.webp) 0 100% / 700px auto repeat; }
+html[data-bdk="greenDamask"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+/* the valance's blurred, blacked-out shape is the shelf's shadow on the damask below */
+html[data-bdk="greenDamask"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 8px; height: 150px; pointer-events: none; z-index: -1;
+  opacity: .85; mix-blend-mode: normal;
+  background: url(obj/vic-valance-c.webp) 50% 12px / 196.33px 84px no-repeat, linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.4) 40%, rgba(0,0,0,0) 85%);
+  filter: brightness(0) blur(9px); }
