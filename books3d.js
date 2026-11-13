@@ -187,7 +187,7 @@
   // case stays behind it, so only its back rim and inside show through the cut, and the bullet rises in front of them. Its rim
   // sits LIP_DY lower than the model's to meet the painting
   const LIP_HYBRID = false, LIP_DY = 0, LIP_RIM_S = 149.7; // LIP_RIM_S: the painted rim's height in picture units
-  const LIP_VW = 95.3, LIP_CX = 36.7, LIP_BASE_R = 34.4, LIP_REST = 38.5;
+  const LIP_VW = 95.3, LIP_CX = 36.6, LIP_BASE_R = 25.3, LIP_REST = 52; // v406: osamu's slim chrome Barbie case
   let lipShared = null;
   function lipParts() {
     if (lipShared) return lipShared;
@@ -197,19 +197,19 @@
     g.fillStyle = gr; g.fillRect(0, 0, 256, 4);
     const goldTex = new THREE.CanvasTexture(c); goldTex.colorSpace = THREE.SRGBColorSpace; goldTex.wrapS = THREE.RepeatWrapping;
     // the case: a ridged foot, then the tube with a rolled lip, open at the top so the bullet sits inside it
-    const P = (r, y) => new THREE.Vector2(r, y), prof = [P(0, 0), P(31.5, 0), P(33.6, 1.6), P(34.2, 6)];
-    for (let i = 0; i < 5; i++) { const y = 6 + i * 9.2; prof.push(P(34.4, y + 1.2), P(34.4, y + 6.6), P(32.6, y + 7.8), P(32.6, y + 8.4), P(34.4, y + 9.2)); }
-    prof.push(P(33.2, 54.5), P(29, 57), P(27.7, 60), P(28.7, 61), P(28.7, 64.6), P(27.7, 65.6), P(27.7, 135.5), P(27.1, 136.4), P(27.7, 137.3), P(27.7, 140.5), P(27.1, 141.4), P(27.7, 142.3), P(27.7, 150), P(28.4, 151.4), P(28.2, 153.4), P(26.6, 154.2), P(25.4, 152.6), P(25.4, 110));
+    // v406: only casts the shadow now, so it follows osamu's chrome case: body, stepped collars, slim top tube open at 142.6
+    const P = (r, y) => new THREE.Vector2(r, y), prof = [P(0, 0), P(24.4, 0), P(25.25, 1.5), P(25.25, 86.5), P(22.8, 87), P(22.8, 90.7), P(20.9, 91), P(20.9, 94.9),
+      P(20.3, 95.2), P(20.3, 99.1), P(19.7, 99.4), P(19.7, 105.5), P(16.6, 106), P(16.6, 142.6), P(15, 142.6), P(15, 110)];
     const caseGeo = new THREE.LatheGeometry(prof, 72);
     // the bullet: a round stick with a rounded tip, tilted so it's high at the back left like the painting. v308: it had a flat,
     // sharp-edged cut that looked like the bullet was sliced in half (osamu)
-    const R = 24.6, bp = [new THREE.Vector2(0, -40), new THREE.Vector2(R, -40)]; // v310: fills the tube like the real lamp
+    const R = 14.5, bp = [new THREE.Vector2(0, -40), new THREE.Vector2(R, -40)]; // v310: fills the tube like the real lamp
     for (let i = 0; i <= 8; i++) bp.push(new THREE.Vector2(R, -40 + i * 7.5));
     for (let i = 1; i <= 16; i++) { const t = (i / 16) * Math.PI / 2; bp.push(new THREE.Vector2(Math.max(0.001, R * Math.cos(t)), 20 + 20 * Math.sin(t))); }
     const bulletGeo = new THREE.LatheGeometry(bp, 56), pos = bulletGeo.attributes.position;
     for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), z = pos.getZ(i), y = pos.getY(i), u = Math.min(1, Math.max(0, (y + 6) / 46)), w = u * u * (3 - 2 * u);
-      pos.setY(i, y - w * (((x + R) / (2 * R)) * 24 + ((z + R) / (2 * R)) * 3)); }
-    bulletGeo.translate(0, 155, 0); bulletGeo.computeVertexNormals();
+      pos.setY(i, y - w * (((x + R) / (2 * R)) * 12 + ((z + R) / (2 * R)) * 2)); }
+    bulletGeo.translate(0, 143.6, 0); bulletGeo.computeVertexNormals();
     // a soft room to reflect, so the gold shines like metal instead of going brown: bright ceiling, pink walls, a few light strips
     const ev = document.createElement("canvas"); ev.width = 256; ev.height = 128; const e = ev.getContext("2d"), eg = e.createLinearGradient(0, 0, 0, 128);
     [[0, "#fffdf6"], [0.35, "#fff3ec"], [0.55, "#e9c4cc"], [0.8, "#a07882"], [1, "#4e3a40"]].forEach(([o, col]) => eg.addColorStop(o, col));
@@ -257,7 +257,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     // v311: real light from the bullet (osamu): a warm red lamp that lights the books and objects round it, and a soft pool of
     // its colour on the shelf floor under it
     const light = new THREE.PointLight("#ff5a64", 0, 0, 2); light.visible = false; bullet.add(light);
-    light.position.set(0, 176, 40); // just in front of the bullet (which ignores it), so it falls on the books and the case
+    light.position.set(0, 170, 30); // just in front of the bullet (which ignores it), so it falls on the books and the case
     const pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: "#ff7684", map: poolTex(), transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
     pool.rotation.x = -Math.PI / 2; pool.renderOrder = 2; pool.visible = false;
     const cable = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: "#141214", roughness: 0.55, metalness: 0, clippingPlanes: [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)] }));
