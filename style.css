@@ -2417,3 +2417,6 @@ html[data-bdk="libraryStacks"] .shelf .plank { box-shadow: none; }
 html .shelf[data-lights="cabinSwags"] .plank { box-shadow: none; }
 .lights.cabinSwags::before { content: ""; position: absolute; left: 0; right: 0; top: -27px; height: 22px; z-index: 6; pointer-events: none;
   background: linear-gradient(rgba(246,248,252,0), rgba(246,248,252,.95) 50%, rgba(249,251,254,0)); }
+/* v359 (osamu: faint white vertical lines on the black steel shelf front): the "mill scale" streaks drawn across the
+   steel bar read as stray lines, so they're gone; the bar keeps its bright top edge and brushed shading */
+html[data-mat="steel"] .plank::before { display: none; }
