@@ -2614,22 +2614,7 @@ html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { pad
 .lights.teaBeads.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
 .lights.teaBeads .vDrop.yank .vChain { transform-origin: 50% 0; animation: vChainPull 1s ease both; }
 @media (prefers-reduced-motion: reduce) { .lights.teaBeads.on .vHalo { animation: none; } .lights.teaBeads .vDrop.yank * { animation: none !important; } }
-/* v384: a candle in a paper lantern: the warm light breathes and flickers a little, never blinks (opacity only) */
+/* v385: osamu's unlit lantern lit from inside by code; the warm light breathes and flickers a little, never blinks (opacity only) */
 @keyframes tFlicker { 0% { opacity: 1; } 9% { opacity: .9; } 14% { opacity: .97; } 31% { opacity: .88; } 38% { opacity: 1; } 55% { opacity: .93; } 61% { opacity: .85; } 67% { opacity: .96; } 82% { opacity: .91; } 100% { opacity: 1; } }
 @keyframes tHalo { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 9% { opacity: .82; } 31% { opacity: .74; transform: translate(-50%, -50%) scale(.95); } 38% { opacity: 1; } 61% { opacity: .7; transform: translate(-50%, -50%) scale(.93); } 82% { opacity: .86; } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .lights.teaBeads.on .vDrop > img.tOn { animation: none; } }
-/* the candle flame inside the paper lantern: it leans, stretches and gutters like a real flame (transform/opacity only) */
-.lights.teaBeads .tFlame, .lights.teaBeads .tCore { position: absolute; pointer-events: none; opacity: 0; transition: opacity .5s ease; }
-.lights.teaBeads .tFlame { border-radius: 50% 50% 46% 46% / 64% 64% 36% 36%; transform-origin: 50% 100%;
-  background: radial-gradient(ellipse 50% 60% at 50% 72%, #fffbe8 0 28%, #ffd27a 48%, rgba(255,140,40,.75) 72%, rgba(255,90,20,0) 100%); filter: blur(.35px); }
-.lights.teaBeads .tCore { transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(closest-side, rgba(255,225,150,.75), rgba(255,170,80,.35) 45%, rgba(255,120,40,0)); }
-.lights.teaBeads.on .tFlame { opacity: 1; animation: tFlameDance 1.3s ease-in-out infinite; animation-delay: calc(var(--i) * -.37s); }
-.lights.teaBeads.on .tCore { opacity: 1; animation: tCorePulse 1.9s ease-in-out infinite; animation-delay: calc(var(--i) * -.53s); }
-@keyframes tFlameDance {
-  0% { transform: scale(1, 1) skewX(0deg); } 12% { transform: scale(.94, 1.12) skewX(-5deg) translateX(-.2px); }
-  24% { transform: scale(1.04, .92) skewX(3deg); } 37% { transform: scale(.9, 1.18) skewX(6deg) translateX(.25px); }
-  49% { transform: scale(1.02, .96) skewX(-2deg); } 63% { transform: scale(.96, 1.08) skewX(-7deg) translateX(-.3px); }
-  78% { transform: scale(1.06, .9) skewX(2deg); } 90% { transform: scale(.95, 1.1) skewX(4deg); } 100% { transform: scale(1, 1) skewX(0deg); } }
-@keyframes tCorePulse { 0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 21% { opacity: .82; transform: translate(-50%, -50%) scale(.92); }
-  46% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); } 58% { opacity: .76; transform: translate(-50%, -50%) scale(.9); } 80% { opacity: .95; transform: translate(-50%, -50%) scale(1.02); } }
-@media (prefers-reduced-motion: reduce) { .lights.teaBeads.on .tFlame, .lights.teaBeads.on .tCore { animation: none; } }

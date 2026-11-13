@@ -590,10 +590,8 @@
         + `<i class="vChain" style="left:${f1(d.lw / 2 - TL.cordW / 2 * k)}px;width:${f1(TL.cordW * k)}px;height:${f1(sh)}px;background-size:${f1(TL.cordW * k)}px ${f1(TL.cordH * k)}px"></i>`
         + `<i class="vHalo" style="top:${f1(d.chain + lh * TL.globeMid)}px;width:${f1(d.lw * 2.4)}px;height:${f1(d.lw * 2.4)}px"></i>`
         + `<img class="tOff" src="obj/tea-paper-off.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}">`
-        + `<img class="tOn" src="obj/tea-paper-lit.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}">`
-        // the candle inside: a soft glow and a living flame over the painted one, seen through the paper
-        + `<i class="tCore" style="left:${f1(d.lw * TL.flameX)}px;top:${f1(d.chain + lh * TL.flameY - d.lw * 0.06)}px;width:${f1(d.lw * 0.5)}px;height:${f1(d.lw * 0.5)}px"></i>`
-        + `<i class="tFlame" style="left:${f1(d.lw * TL.flameX - d.lw * 0.035)}px;top:${f1(d.chain + lh * TL.flameY - d.lw * 0.15)}px;width:${f1(d.lw * 0.07)}px;height:${f1(d.lw * 0.15)}px"></i></div>`;
+        + `<img class="tOn" src="obj/tea-paper-glow.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}">`
+        + `</div>`;
     }).join("");
     const el = document.createElement("div");
     el.className = "lights teaBeads" + (cfg.on ? " on" : "");
