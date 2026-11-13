@@ -628,7 +628,9 @@
     // two spiders under the big web, one under the small one, at different heights
     // v395 (osamu: the middle spider was lost in the web): each spider hangs from the web's lower edge on its own thread,
     // well clear of the web. t0 = where the thread leaves the web (its edge at that spot), gap = bare thread above the spider.
-    const spots = [{ x: bw * 0.12, t0: bh * 0.13, gap: 26, s: 2 }, { x: bw * 0.66, t0: bh * 0.5, gap: 30, s: 0 }, { x: w - sw_ * 0.55, t0: sh_ * 0.46, gap: 24, s: 1 }];
+    // v396 (osamu: the thread wasn't attached to the web): each thread now starts inside a real drop on the web's lowest strand
+    // (measured on the pictures), so it reads as the web's own silk running down to the spider.
+    const spots = [{ x: bw * 0.128, t0: bh * 0.157, gap: 24, s: 2 }, { x: bw * 0.644, t0: bh * 0.503, gap: 27, s: 0 }, { x: w - sw_ * 0.551, t0: sh_ * 0.483, gap: 22, s: 1 }];
     const drops = spots.map((p, i) => {
       const S = SPI[p.s], sw = S.w * k, sh = S.h * k, cx = X(p.x), chain = p.t0 + p.gap;
       return { cx, sw, sh, S, t0: p.t0, chain, top: chain, dh: sh, hw: sw * 0.42, len: chain + sh * 0.5, th: 0, om: 0, els: [], mir: flip !== (i === 2) };
@@ -636,7 +638,7 @@
     const html = drops.map((d, i) => {
       const ax = d.mir ? 1 - d.S.ax : d.S.ax, ay = d.sh * d.S.ay;
       return `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - ax * d.sw)}px;top:0;width:${f1(d.sw)}px;height:${f1(d.chain + d.sh)}px;transform-origin:${f1(ax * 100)}% ${f1(d.t0)}px;--i:${i}">`
-        + `<i class="wThread" style="left:${f1(ax * d.sw - 1.5)}px;top:${f1(d.t0)}px;height:${f1(d.chain - d.t0 + ay + 2)}px"></i>`
+        + `<i class="wThread" style="left:${f1(ax * d.sw - 2.5)}px;top:${f1(d.t0)}px;height:${f1(d.chain - d.t0 + ay + 2)}px"></i>`
         + `<div class="wSp" style="top:${f1(d.chain)}px;height:${f1(d.sh)}px${d.mir ? ";transform:scaleX(-1)" : ""}">`
         + `<img class="tOff" src="obj/witch-dewspider${d.S.src}.webp" alt="" draggable="false" decoding="async">`
         + `<img class="tOn" src="obj/witch-dewspider${d.S.src}-gem.webp" alt="" draggable="false" decoding="async">`
