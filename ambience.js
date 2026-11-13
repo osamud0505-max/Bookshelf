@@ -410,7 +410,9 @@
   const ROOMS = {
     // wind is only outdoors (forest, starry night); in the castle and the witch's tower it is faint and far off
     cabin: [["fire", "Fireplace", (R) => S.bed(R, "sounds/cabin/fire.mp3", 0.65)], ["bed", "Outside", (R) => S.bed(R, "sounds/cabin/outside.mp3?w=2", 0.55)],
-      ["voice", "Company", (R) => S.voices(R, ["sounds/cabin/group.mp3"], 0.55, 8000, 20000, 0.5)]],
+      ["voice", "Company", (R) => S.voices(R, ["sounds/cabin/group.mp3"], 0.55, 8000, 20000, 0.5)],
+      // v422 (osamu): the family's Christmas get-together going on in the next room, muffled and quiet
+      ["family", "Family", (R) => S.bed(R, "sounds/cabin/family.mp3", 0.45)]],
     // two street recordings of different lengths play together, so the mix never repeats the same way
     loft: [["bed", "Background", (R) => { S.bed(R, "sounds/loft/bgA.mp3", 0.6); S.bed(R, "sounds/loft/bgB.mp3", 0.45); }],
       ["voice", "Voices", (R) => S.voices(R, Array.from({ length: 8 }, (_, i) => `sounds/loft/v${i + 1}.mp3`), 0.7, 18000, 45000, 0.65)],
