@@ -2549,3 +2549,21 @@ html[data-bdk="study"] .plank::before { display: block; content: ""; position: a
   opacity: .8; mix-blend-mode: normal;
   background: url(obj/acad-valance.webp) 10px 12px / 309.33px 76px repeat-x, linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.35) 40%, rgba(0,0,0,0) 85%);
   filter: brightness(0) blur(8px); }
+
+/* v379 (osamu: the cottage shelf like their carved rose wall shelf): osamu's Gemini ivory shelf with beaded front edge,
+   cut straight like a regular shelf front (repeating), and the rose garland under it across the full width, plus the matching cream top */
+html[data-bdk="cottageRoses"] .shelf .plank { background: transparent; box-shadow: none; }
+html[data-bdk="cottageRoses"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; top: -3px; height: calc(30px + 13.4vw); z-index: 1;
+  opacity: 1; mix-blend-mode: normal; pointer-events: none;
+  background: url(obj/cot-rose2-garland.webp) 50% calc(26px - 1.8vw) / 100% auto no-repeat, url(obj/cot-rose2-m.webp) 0 0 / 140px 26px repeat-x;
+  filter: drop-shadow(0 4px 4px rgba(70,40,30,.35)); }
+html[data-bdk="cottageRoses"] .caption { padding-top: calc(20px + 12vw); }
+html[data-bdk="cottageRoses"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d);
+  background: linear-gradient(rgba(80,55,40,.3), rgba(80,55,40,0) 70%), url(obj/cot-rose2-top.webp) 0 100% / 700px auto repeat; }
+html[data-bdk="cottageRoses"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+html[data-bdk="cottageRoses"] .track::before { display: none; }
+html[data-bdk="cottageRoses"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 6px; height: calc(60px + 16vw); pointer-events: none; z-index: -2;
+  opacity: .45; mix-blend-mode: normal;
+  background: url(obj/cot-rose2-garland.webp) 50% calc(36px - 1.8vw) / 100% auto no-repeat, linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,.25) 30%, rgba(0,0,0,0) 70%);
+  filter: brightness(0) blur(8px); }
