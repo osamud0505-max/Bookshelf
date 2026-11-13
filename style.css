@@ -2530,6 +2530,12 @@ html[data-bdk="castleIvy"] .stage::before { content: ""; position: absolute; lef
   bottom: calc(var(--top-d) * -.5); height: var(--top-d);
   background: linear-gradient(rgba(0,0,0,.3), rgba(0,0,0,0) 55%), url(obj/castle-skull-top.webp) 0 100% / 400px 400px repeat; filter: brightness(.85); } /* v417: osamu's matching top, shade matched to the skull front's slab, same brightness */
 html[data-bdk="castleIvy"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+/* v418 (osamu: one shelf with the skull, the next plain, then skull again): every other shelf (.shAlt) gets osamu's plain
+   slab painting instead, cut at its catch-light edge; the front is as thick as the skull shelf's slab and both halves tile together */
+html[data-bdk="castleIvy"] .shelf.shAlt .plank::after { --ph: calc(min(100vw, 638px) * .0469); height: calc(var(--ph) * 1.05);
+  background: url(obj/castle-plain-front.webp) 0 0 / calc(var(--ph) * 11.459) var(--ph) repeat-x; }
+html[data-bdk="castleIvy"] .shelf.shAlt .stage::before { background: linear-gradient(rgba(0,0,0,.3), rgba(0,0,0,0) 55%), url(obj/castle-plain-top.webp) 0 0 / calc(min(100vw, 638px) * .0469 * 11.459) 100% repeat-x; }
+html[data-bdk="castleIvy"] .shelf.shAlt .caption { padding-top: 24px; }
 html[data-bdk="castleIvy"] .track::before { display: none; }
 html[data-bdk="castleIvy"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 8px; height: 130px; pointer-events: none; z-index: -2;
   opacity: .8; mix-blend-mode: normal;
