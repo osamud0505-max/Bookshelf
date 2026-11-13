@@ -1572,7 +1572,7 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 /* v240 (osamu): the lipstick lamp's light is warm, wide and moody: a candle-warm amber-rose glow that spreads far and
    fades slowly, over a deeper shadow sinking the wall around it */
 .ornament[data-kind="lipstickLamp"] .ornGlow { mix-blend-mode: screen;
-  background: radial-gradient(closest-side, rgba(255,228,196,.92), rgba(255,188,132,.78) 9%, rgba(255,152,98,.52) 17%, rgba(242,120,82,.34) 27%, rgba(222,94,70,.21) 39%, rgba(194,72,60,.12) 53%, rgba(165,52,50,.055) 69%, rgba(140,40,45,.018) 85%, transparent) !important; }
+  background: radial-gradient(closest-side, rgba(255,160,175,.92), rgba(255,117,147,.78) 9%, rgba(255,94,119,.52) 17%, rgba(242,74,94,.34) 27%, rgba(222,58,77,.21) 39%, rgba(194,45,66,.12) 53%, rgba(165,32,55,.055) 69%, rgba(140,40,45,.018) 85%, transparent) !important; }
 /* centred on the bullet (the case sits left of the picture's middle) */
 .ornament[data-kind="lipstickLamp"] .ornGlow { left: 38.7%; top: 12.5%; width: 660px; height: 540px; }
 .ornament[data-kind="lipstickLamp"] .lpHalo, .ornament[data-kind="lipstickLamp"] .lpCast { opacity: 0; transition: opacity .6s ease; }
@@ -1583,7 +1583,7 @@ html[data-bdk="closet"] .slot::before { background: rgba(28,0,16,.8); box-shadow
 .ornament[data-kind="lipstickLamp"].lit .ornGlowIn::before { opacity: 1; transition: opacity 1.4s ease 1.8s; }
 .ornament[data-kind="lipstickLamp"].lit .ornGlow { animation: lpBreathe 6s ease-in-out 3s infinite alternate; }
 @keyframes lpBreathe { from { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: .82; transform: translate(-50%, -50%) scale(.94); } }
-.ornament[data-kind="lipstickLamp"] .ornPool { --pc: rgba(255,150,92,.95) !important; width: 360%; height: 18px; }
+.ornament[data-kind="lipstickLamp"] .ornPool { --pc: rgba(255,93,117,.95) !important; width: 360%; height: 18px; }
 .ornament[data-kind="lipstickLamp"].lit .lpRed { filter: brightness(1.45) saturate(1.25); }
 @media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .ornGlow { animation: none; } }
 
@@ -1785,10 +1785,10 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 /* v246 (osamu: "not moody, just bright"): the room around the lit lamp falls into deep shadow and the lamp's light
    is a low amber that warms what it touches (overlay, no white core) instead of brightening the pink wall */
 .ornament[data-kind="lipstickLamp"] .ornGlow { mix-blend-mode: overlay;
-  background: radial-gradient(closest-side, rgba(255,170,90,.95), rgba(255,140,70,.8) 14%, rgba(240,110,60,.55) 30%, rgba(200,80,50,.3) 48%, rgba(160,55,45,.12) 68%, rgba(130,40,40,.04) 85%, transparent) !important; }
+  background: radial-gradient(closest-side, rgba(255,105,133,.95), rgba(255,87,109,.8) 14%, rgba(240,68,86,.55) 30%, rgba(200,50,62,.3) 48%, rgba(160,34,50,.12) 68%, rgba(130,40,40,.04) 85%, transparent) !important; }
 .ornament[data-kind="lipstickLamp"] .ornGlowIn::before { width: 1700px; height: 1300px;
   background: radial-gradient(closest-side, rgba(28,4,12,0) 0, rgba(28,4,12,.08) 9%, rgba(28,4,12,.32) 20%, rgba(24,3,10,.55) 34%, rgba(20,2,8,.66) 55%, rgba(20,2,8,.62) 85%, rgba(20,2,8,0)); }
-.ornament[data-kind="lipstickLamp"] .ornPool { --pc: rgba(255,140,80,.6) !important; }
+.ornament[data-kind="lipstickLamp"] .ornPool { --pc: rgba(255,87,109,.6) !important; }
 .lpMood { position: absolute; left: calc(-1 * var(--gutter)); right: calc(-1 * var(--gutter)); top: 100%; height: 360px; z-index: 3; pointer-events: none;
   background: radial-gradient(circle at var(--lx, 50%) var(--ly, 50%), rgba(22,3,9,0) 0, rgba(22,3,9,.1) 55px, rgba(22,3,9,.4) 125px, rgba(20,2,8,.64) 215px, rgba(16,2,7,.77) 330px, rgba(14,2,6,.8) 600px);
   -webkit-mask-image: linear-gradient(#000 calc(100% - 200px), transparent); mask-image: linear-gradient(#000 calc(100% - 200px), transparent);
@@ -1798,7 +1798,7 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lpMood.on { opacity: 1; transition: opacity 1.4s ease 1.6s; }
 /* the lamp's warm light, cast onto everything around it */
 .lpMood::before { content: ""; position: absolute; inset: 0; mix-blend-mode: overlay;
-  background: radial-gradient(circle at var(--lx, 50%) var(--ly, 50%), rgba(255,165,95,.9) 0, rgba(255,140,80,.62) 45px, rgba(235,110,65,.36) 100px, rgba(200,80,55,.16) 170px, rgba(160,55,45,.05) 250px, rgba(150,50,45,0) 330px); }
+  background: radial-gradient(circle at var(--lx, 50%) var(--ly, 50%), rgba(255,102,129,.95) 0, rgba(255,87,109,.68) 30px, rgba(235,68,86,.38) 68px, rgba(200,50,62,.15) 115px, rgba(160,34,50,.04) 165px, rgba(150,31,50,0) 215px); }
 .ornament[data-kind="lipstickLamp"] .ornGlow { display: none; }
 /* v247: the lamp's light falls on the things around it: shadows on the wall away from it, lit faces towards it */
 .lpFx { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
@@ -1807,8 +1807,8 @@ html[data-bdk="closet"] .ornament .shBlack, html:not([data-bdk="closet"]) .ornam
 .lpFx i { position: absolute; display: block; }
 .lpShadows i { border-radius: 6px; background: rgb(26,3,10); filter: blur(7px); }
 .lpFaces i { mix-blend-mode: overlay; border-radius: 2px; }
-.lpFaces i.fL { background: linear-gradient(90deg, rgba(255,170,100,.95) 0, rgba(255,150,90,.5) 18%, rgba(255,140,80,.18) 45%, rgba(255,140,80,0) 75%); }
-.lpFaces i.fR { background: linear-gradient(270deg, rgba(255,170,100,.95) 0, rgba(255,150,90,.5) 18%, rgba(255,140,80,.18) 45%, rgba(255,140,80,0) 75%); }
+.lpFaces i.fL { background: linear-gradient(90deg, rgba(255,105,133,.95) 0, rgba(255,93,117,.5) 18%, rgba(255,87,109,.18) 45%, rgba(255,87,109,0) 75%); }
+.lpFaces i.fR { background: linear-gradient(270deg, rgba(255,105,133,.95) 0, rgba(255,93,117,.5) 18%, rgba(255,87,109,.18) 45%, rgba(255,87,109,0) 75%); }
 .lpShadows i.fl { border-radius: 50%; filter: blur(3px); }
 /* v249 loft (osamu: like the photo): small cages on thin jute rope looped over a darker pole, vines everywhere */
 .shelf.hasLights[data-lights="loftCages"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
