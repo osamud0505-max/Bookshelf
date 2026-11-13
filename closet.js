@@ -229,10 +229,7 @@
     const parts = items.map((it, i) => {
       const { m, s } = it, top = rodTop - m.inner * s;
       bottom = Math.max(bottom, top + m.h * s);
-      // v404 (osamu, seen through the closet hearts: the hook heads looked broken where little rod patches covered the
-      // tips): no patches any more. The whole rod is drawn in front of the hangers instead, so every hook simply comes
-      // up behind it and curls over the top, one seamless rod.
-      const tips = "";
+      const tips = m.hooks.map((h) => tube(it.x + h[1] * s - 0.5, (h[2] - h[1]) * s + 1)).join("");
       const shoe = it.amp > 3;
       const inner = m.pieces.map(([f, x, y, pw, ph, px, py], j) => {
         const n = pcs.length;
@@ -254,7 +251,7 @@
     const lift = rodTop - 2.5;
     const el = document.createElement("div");
     el.className = "lights closetRod rail on";
-    el.innerHTML = `<div class="railIn" style="top:${f1(-lift)}px">${parts.join("")}${rodEl}</div><i class="underShade"></i>`;
+    el.innerHTML = `<div class="railIn" style="top:${f1(-lift)}px">${rodEl}${parts.join("")}</div><i class="underShade"></i>`;
     el.style.height = Math.ceil(bottom - lift + 10) + "px";
     const pcEls = el.querySelectorAll(".pc");
     pcs.forEach((p, n) => { p.el = pcEls[n]; p.img = pcEls[n].firstChild; });
