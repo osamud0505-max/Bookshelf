@@ -2388,7 +2388,7 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
    front, hanging from the shelf's front edge, and the same painted mahogany on its top, back to the wall */
 html[data-bdk="libraryStacks"] .plank { background: url(obj/lib-woodtop.webp) 0 50% / 700px auto; box-shadow: none; }
 html[data-bdk="libraryStacks"] .plank::after { display: block; content: ""; position: absolute; left: 0; right: 0; top: 0; height: 86px; inset: 0 0 auto;
-  opacity: 1; mix-blend-mode: normal; pointer-events: none; background: url(obj/lib-valance.webp) 0 0 / 432px 86px repeat-x;
+  opacity: 1; mix-blend-mode: normal; pointer-events: none; background: url(obj/lib-valance-arch2.webp) 0 0 / 72px 86px round no-repeat; /* v413 (osamu: half arch at the edge): whole arches only, ends on a drop */
   filter: brightness(.82) drop-shadow(0 6px 6px rgba(0,0,0,.5)); }
 html[data-bdk="libraryStacks"] .caption { padding-top: 80px; }
 html[data-bdk="libraryStacks"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
@@ -2398,7 +2398,7 @@ html[data-bdk="libraryStacks"] .shelf.is3d .stage::before { bottom: calc(var(--b
 /* v356 (osamu: shadow under the shelves): the library shelf and its valance cast a soft shadow down onto the bookcase
    behind: the valance's own shape, blacked out, blurred and dropped a little, over a soft band under the whole shelf */
 html[data-bdk="libraryStacks"] .plank::before { content: ""; position: absolute; left: -10px; right: -10px; top: 6px; height: 150px; pointer-events: none; z-index: -1;
-  background: url(obj/lib-valance.webp) 10px 14px / 432px 86px repeat-x, linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.45) 50%, rgba(0,0,0,0));
+  background: url(obj/lib-valance-arch2.webp) 10px 14px / 72px 86px round no-repeat, linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.45) 50%, rgba(0,0,0,0));
   filter: brightness(0) blur(8px); opacity: .9; }
 /* v357 (osamu: shadows under the shelves in every theme): each shelf casts a soft shadow down the wall under it,
    darkest right under the front edge and fading away; hanging lights and cloths stay in front of it */
