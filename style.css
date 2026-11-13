@@ -2467,26 +2467,26 @@ html[data-bdk="night"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0p
 .lights.starCurtain .starTrim { background: url(obj/starry-trim.webp) 0 0 / auto 24px repeat-x; -webkit-mask: none; mask: none; }
 .lights.starCurtain .starTrimGlow { -webkit-mask: url(obj/starry-trim-mask.webp) 0 0 / auto 24px repeat-x; mask: url(obj/starry-trim-mask.webp) 0 0 / auto 24px repeat-x; }
 
-/* v367 (osamu's photo of a carved Victorian valance, in a colour that suits the green damask): osamu's Gemini dark walnut
-   valance board with gold-leaf carving hangs under each shelf, carving centred. Cut in five: the two scrolled ends and
-   the centre carving keep their shape, the two plain waves stretch to the shelf's width */
-html[data-bdk="greenDamask"] .shelf .plank { background: linear-gradient(rgba(255,225,190,.22), rgba(255,225,190,0) 2px, rgba(0,0,0,0) 60%, rgba(0,0,0,.3)), url(obj/vic2-walnut.webp) 0 40% / 700px auto; box-shadow: none; }
-html[data-bdk="greenDamask"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; top: 15px; height: 80px; z-index: -1;
+/* v368 (osamu's Gemini picture of the whole Victorian shelf, straight on: walnut top, crown-moulded front edge and a
+   carved gold-leaf valance): one painting split at the front edge, so the top behind the books and the front below join
+   seamlessly. The front is cut in five: the two ends and the centre carving keep their shape, the plain waves stretch */
+html[data-bdk="greenDamask"] .shelf .plank { background: transparent; box-shadow: none; }
+html[data-bdk="greenDamask"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; top: 0; height: 84px; z-index: 1;
   opacity: 1; mix-blend-mode: normal; pointer-events: none;
   background:
-    url(obj/vic2-valance-l.webp) left 0 top 0 / 88px 80px no-repeat,
-    url(obj/vic2-valance-r.webp) right 0 top 0 / 88px 80px no-repeat,
-    url(obj/vic2-valance-c.webp) 50% 0 / 191px 80px no-repeat,
-    url(obj/vic2-valance-wl.webp) left 78px top 0 / calc(50% - 163px) 80px no-repeat,
-    url(obj/vic2-valance-wr.webp) right 78px top 0 / calc(50% - 163px) 80px no-repeat;
+    url(obj/vic3-front-l.webp) left 0 top 0 / 47px 84px no-repeat,
+    url(obj/vic3-front-r.webp) right 0 top 0 / 47px 84px no-repeat,
+    url(obj/vic3-front-c.webp) 50% 0 / 152px 84px no-repeat,
+    url(obj/vic3-front-wl.webp) left 37px top 0 / calc(50% - 103px) 84px no-repeat,
+    url(obj/vic3-front-wr.webp) right 37px top 0 / calc(50% - 103px) 84px no-repeat;
   filter: drop-shadow(0 6px 6px rgba(0,0,0,.5)); }
-html[data-bdk="greenDamask"] .caption { padding-top: 90px; }
+html[data-bdk="greenDamask"] .caption { padding-top: 76px; }
 html[data-bdk="greenDamask"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
   bottom: calc(var(--top-d) * -.5); height: var(--top-d);
-  background: linear-gradient(rgba(10,4,2,.5), rgba(10,4,2,0) 70%), url(obj/vic2-walnut.webp) 0 100% / 700px auto repeat; }
+  background: linear-gradient(rgba(10,4,2,.35), rgba(10,4,2,0) 60%), url(obj/vic3-top.webp) 0 0 / 1060px 100% repeat-x; }
 html[data-bdk="greenDamask"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
 /* the valance's blurred, blacked-out shape is the shelf's shadow on the damask below */
 html[data-bdk="greenDamask"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 8px; height: 150px; pointer-events: none; z-index: -2;
   opacity: .85; mix-blend-mode: normal;
-  background: url(obj/vic2-valance-c.webp) 50% 26px / 191px 80px no-repeat, linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.4) 40%, rgba(0,0,0,0) 85%);
+  background: url(obj/vic3-front-c.webp) 50% 12px / 152px 84px no-repeat, linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.4) 40%, rgba(0,0,0,0) 85%);
   filter: brightness(0) blur(9px); }
