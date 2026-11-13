@@ -2576,3 +2576,21 @@ html[data-bdk="enchanted"] .stage::before { content: ""; position: absolute; lef
   background: linear-gradient(rgba(4,8,20,.6), rgba(4,8,20,0) 75%), url(obj/forest-driftwood.webp) 0 100% / 600px auto repeat; }
 html[data-bdk="enchanted"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
 html[data-bdk="enchanted"] .track::before { display: none; }
+
+/* v381 (osamu: tea house shelf trim like their lambrequin picture): osamu's Gemini red-lacquer lambrequin with gold edging
+   and tassels repeating along the front, the red lanterns hang lower behind it, rosewood top recoloured towards the front */
+html[data-bdk="teaNight"] .shelf .plank { background: transparent; box-shadow: none; }
+html[data-bdk="teaNight"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; top: -2px; height: 130px; z-index: 1;
+  opacity: 1; mix-blend-mode: normal; pointer-events: none;
+  background: url(obj/tea-valance.webp) 0 0 / 66px 129.75px repeat-x;
+  filter: drop-shadow(0 5px 5px rgba(0,0,0,.55)); }
+html[data-bdk="teaNight"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d);
+  background: linear-gradient(rgba(10,2,2,.55), rgba(10,2,2,0) 75%), url(obj/tea-top.webp) 0 100% / 700px auto repeat; }
+html[data-bdk="teaNight"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+html[data-bdk="teaNight"] .track::before { display: none; }
+html[data-bdk="teaNight"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 8px; height: 170px; pointer-events: none; z-index: -2;
+  opacity: .75; mix-blend-mode: normal;
+  background: url(obj/tea-valance.webp) 8px 12px / 66px 129.75px repeat-x, linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.3) 40%, rgba(0,0,0,0) 85%);
+  filter: brightness(0) blur(8px); }
+html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption, html[data-bdk="teaNight"] .caption { padding-top: 170px; }
