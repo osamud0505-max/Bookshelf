@@ -333,8 +333,10 @@
     // toward the rims, lacquered gold caps with ridges, a hook ring and cord, a gold medallion, and a knotted tassel
     const on = !!cfg.on, n = Math.max(2, Math.round(w / 120)), gap = w / n, id = "lg" + lid++;
     let out = "", H = 0;
+    // the tea house valance hangs in front of the shelf, so its lanterns hang lower behind it
+    const drop = document.documentElement.dataset.bdk === "teaNight" ? 72 : 0;
     for (let i = 0; i < n; i++) {
-      const x = gap * (i + 0.5) + ((i * 23) % 13) - 6, cord = 6 + ((i * 37) % 3) * 9, rx = 20, ry = 16, cy = cord + 6 + ry;
+      const x = gap * (i + 0.5) + ((i * 23) % 13) - 6, cord = drop + 6 + ((i * 37) % 3) * 9, rx = 20, ry = 16, cy = cord + 6 + ry;
       H = Math.max(H, cy + ry + 34);
       let ribs = "";
       for (const f of [-0.86, -0.6, -0.3, 0, 0.3, 0.6, 0.86]) {
