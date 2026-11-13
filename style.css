@@ -2531,6 +2531,24 @@ html[data-bdk="castleIvy"] .plank::before { display: block; content: ""; positio
   background: url(obj/castle-slab.webp) 10px 10px / 328px 28px repeat-x, linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.35) 40%, rgba(0,0,0,0) 85%);
   filter: brightness(0) blur(8px); }
 
+/* v390 (osamu: the Witch's tower shelf in old, cracked, weathered wood, damaged but not broken): osamu's Gemini plank front
+   (chipped, splintered bottom edge, worm holes, rusty nails; magenta keyed, ends blended so it repeats) and the matching top */
+html[data-bdk="witchTower"] .shelf .plank { background: transparent; box-shadow: none; }
+html[data-bdk="witchTower"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; top: -2px; height: 42px; z-index: 1;
+  opacity: 1; mix-blend-mode: normal; pointer-events: none;
+  background: url(obj/witch-plank.webp) 0 0 / 190px 42px repeat-x;
+  filter: brightness(.68) drop-shadow(0 6px 6px rgba(0,0,0,.5)); }
+html[data-bdk="witchTower"] .caption { padding-top: 38px; }
+html[data-bdk="witchTower"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d);
+  background: linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,0) 70%), url(obj/witch-top.webp) 0 100% / 420px auto repeat; filter: brightness(.6); }
+html[data-bdk="witchTower"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+html[data-bdk="witchTower"] .track::before { display: none; }
+html[data-bdk="witchTower"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 8px; height: 130px; pointer-events: none; z-index: -2;
+  opacity: .8; mix-blend-mode: normal;
+  background: url(obj/witch-plank.webp) 10px 10px / 190px 42px repeat-x, linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.35) 40%, rgba(0,0,0,0) 85%);
+  filter: brightness(0) blur(8px); }
+
 /* v378 (osamu's photo of a carved cornice with a green damask valance, cord loops and tassels): Dark academia gets
    osamu's Gemini carved walnut cornice + forest-green velvet valance (six swags per tile, repeated across the shelf);
    the cornice is the shelf's front edge, with the matching walnut top behind the books */
