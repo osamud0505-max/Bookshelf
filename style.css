@@ -2442,3 +2442,15 @@ html[data-bdk="cottageRoses"] .stage::before { content: ""; position: absolute; 
   bottom: calc(var(--top-d) * -.5); height: var(--top-d);
   background: linear-gradient(rgba(60,40,50,.28), rgba(60,40,50,0) 75%), url(obj/cottage-woodtop.webp) 0 100% / 600px 200px repeat; }
 html[data-bdk="cottageRoses"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+
+/* v364 (osamu: keep the loft's steel shelf and perforated trim, same colours but more realistic): osamu's Gemini blackened
+   steel on the shelf top and front, and osamu's Gemini perforated strip as the trim (holes keyed see-through, so the amber
+   glow behind still shows through them when the lights are on) */
+html[data-bdk="loftDusk"] .shelf .plank { background:
+    linear-gradient(to bottom, rgba(255,236,210,.38) 0, rgba(255,236,210,.1) 1px, transparent 2px, transparent 40%, rgba(0,0,0,.45) 100%),
+    url(obj/loft-steel.webp) 0 30% / 700px auto; }
+html[data-bdk="loftDusk"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d);
+  background: linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,0) 75%), url(obj/loft-steel.webp) 0 100% / 700px auto repeat; }
+html[data-bdk="loftDusk"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+.lights.loftSpider .spTrimFace { background: url(obj/loft-trim.webp) 0 0 / auto 18px repeat-x; -webkit-mask: none; mask: none; }
