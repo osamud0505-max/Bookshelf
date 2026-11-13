@@ -2605,18 +2605,22 @@ html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { pad
 .lights.teaBeads .vDrop { position: absolute; pointer-events: none; will-change: transform; backface-visibility: hidden; }
 .lights.teaBeads .vChain { position: absolute; top: 0; background: url(obj/tea-redcord.webp) 0 100% repeat-y; }
 .lights.teaBeads .vDrop > img { position: absolute; left: 0; width: 100%; -webkit-user-drag: none; user-select: none; filter: drop-shadow(0 6px 6px rgba(0,0,0,.45)); }
-.lights.teaBeads .vDrop > img.tOn { filter: none; opacity: 0; transition: opacity .5s ease; }
+.lights.teaBeads .vDrop > img.tOn { filter: none; opacity: 0; }
 .lights.teaBeads.on .vDrop > img.tOn { opacity: 1; animation: tFlicker 3.7s linear infinite; animation-delay: calc(var(--i) * -.83s); }
 .lights.teaBeads .vHalo { position: absolute; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
-  background: radial-gradient(closest-side, rgba(255,150,70,.5), rgba(255,90,40,.2) 55%, transparent); opacity: 0; transition: opacity .5s ease; }
+  background: radial-gradient(closest-side, rgba(255,150,70,.5), rgba(255,90,40,.2) 55%, transparent); opacity: 0; }
 .lights.teaBeads.on .vHalo { opacity: 1; animation: tHalo 3.7s linear infinite; animation-delay: calc(var(--i) * -.83s); }
-.lights.teaBeads .vDrop.yank > img, .lights.teaBeads .vDrop.yank .vHalo { animation: vPull 1s ease both; }
-.lights.teaBeads.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
-/* v386: the lit picture rides the pull with the unlit one (it used to stay put and show a second lantern) */
-.lights.teaBeads.on .vDrop.yank > img.tOn { animation: vPull 1s ease both, tFlicker 3.7s linear infinite; animation-delay: 0s, calc(var(--i) * -.83s); }
-.lights.teaBeads .vDrop.yank .vChain { transform-origin: 50% 0; animation: vChainPull 1s ease both; }
-@media (prefers-reduced-motion: reduce) { .lights.teaBeads.on .vHalo { animation: none; } .lights.teaBeads .vDrop.yank * { animation: none !important; } }
-/* v385: osamu's unlit lantern lit from inside by code; the warm light breathes and flickers a little, never blinks (opacity only) */
+/* v387 (osamu: no bobbing; on/off must look like a lantern flame): no tug on tap. Switching ON, each candle catches one after
+   another (sputters, then grows to full); OFF, each one gutters and dies down. Only after the first second (.tReady), so a page load never plays it. */
+.lights.teaBeads.tReady.on .vDrop > img.tOn { animation: tIgnite 1.3s ease-out both, tFlicker 3.7s linear infinite; animation-delay: calc(var(--i) * .16s), calc(var(--i) * .16s + 1.3s); }
+.lights.teaBeads.tReady.on .vHalo { animation: tIgniteHalo 1.3s ease-out both, tHalo 3.7s linear infinite; animation-delay: calc(var(--i) * .16s), calc(var(--i) * .16s + 1.3s); }
+.lights.teaBeads.tReady:not(.on) .vDrop > img.tOn { animation: tDouse 1s ease-in both; animation-delay: calc(var(--i) * .08s); }
+.lights.teaBeads.tReady:not(.on) .vHalo { animation: tDouseHalo 1s ease-in both; animation-delay: calc(var(--i) * .08s); }
+@keyframes tIgnite { 0% { opacity: 0; } 7% { opacity: .32; } 13% { opacity: .1; } 22% { opacity: .46; } 29% { opacity: .3; } 41% { opacity: .68; } 50% { opacity: .55; } 66% { opacity: .9; } 76% { opacity: .8; } 100% { opacity: 1; } }
+@keyframes tIgniteHalo { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.45); } 7% { opacity: .25; } 13% { opacity: .05; } 22% { opacity: .4; } 29% { opacity: .22; } 41% { opacity: .62; transform: translate(-50%, -50%) scale(.78); } 50% { opacity: .5; } 66% { opacity: .9; } 76% { opacity: .78; } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes tDouse { 0% { opacity: 1; } 12% { opacity: .72; } 20% { opacity: .9; } 34% { opacity: .45; } 42% { opacity: .58; } 60% { opacity: .2; } 70% { opacity: .28; } 100% { opacity: 0; } }
+@keyframes tDouseHalo { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 12% { opacity: .65; } 20% { opacity: .85; } 34% { opacity: .38; transform: translate(-50%, -50%) scale(.85); } 42% { opacity: .5; } 60% { opacity: .14; } 70% { opacity: .2; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(.6); } }
+/* the warm light breathes and flickers a little, never blinks (opacity only) */
 @keyframes tFlicker { 0% { opacity: 1; } 9% { opacity: .9; } 14% { opacity: .97; } 31% { opacity: .88; } 38% { opacity: 1; } 55% { opacity: .93; } 61% { opacity: .85; } 67% { opacity: .96; } 82% { opacity: .91; } 100% { opacity: 1; } }
 @keyframes tHalo { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 9% { opacity: .82; } 31% { opacity: .74; transform: translate(-50%, -50%) scale(.95); } 38% { opacity: 1; } 61% { opacity: .7; transform: translate(-50%, -50%) scale(.93); } 82% { opacity: .86; } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
-@media (prefers-reduced-motion: reduce) { .lights.teaBeads.on .vDrop > img.tOn { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .lights.teaBeads .vDrop > img.tOn, .lights.teaBeads .vHalo { animation: none !important; transition: opacity .4s ease; } }
