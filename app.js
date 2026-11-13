@@ -1180,7 +1180,11 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     function buildWebs() {
       webs.forEach((w) => w.el.remove()); webs = [];
       if (lookId() !== "witch" || !window.ShelfWebs) return;
-      const W = window.ShelfWebs, top = Math.max(0, (root.querySelector(".plank") || {}).offsetHeight - 1 || 0);
+      const W = window.ShelfWebs, pl = root.querySelector(".plank");
+      let top = Math.max(0, (pl || {}).offsetHeight - 1 || 0);
+      // v391: a painted shelf front (the plank's ::after) can hang lower than the plank itself; tuck the webs under it, not across it
+      const af = pl && getComputedStyle(pl, "::after");
+      if (af && af.display !== "none" && af.position === "absolute") { const b = (parseFloat(af.top) || 0) + (parseFloat(af.height) || 0) - 3; if (b > top) top = Math.round(b); }
       const hk = hash([...key].reduce((s, c) => s * 31 + c.charCodeAt(0), 7) >>> 0);
       // every shelf has at least one corner web; most have both
       const left = hk % 5 !== 3, right = !left || hk % 7 !== 2;
