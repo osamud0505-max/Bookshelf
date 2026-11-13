@@ -2442,17 +2442,3 @@ html[data-bdk="cottageRoses"] .stage::before { content: ""; position: absolute; 
   bottom: calc(var(--top-d) * -.5); height: var(--top-d);
   background: linear-gradient(rgba(60,40,50,.28), rgba(60,40,50,0) 75%), url(obj/cottage-woodtop.webp) 0 100% / 600px 200px repeat; }
 html[data-bdk="cottageRoses"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
-/* v362 (osamu's photo of industrial loft shelving): the loft shelf becomes osamu's Gemini reclaimed pine, top and
-   front, held by two of osamu's black iron pipe brackets that drop from its underside and turn back into the wall */
-html[data-bdk="loftDusk"] .shelf .plank { background: linear-gradient(rgba(255,230,190,.25), rgba(255,230,190,0) 2px, rgba(0,0,0,0) 70%, rgba(0,0,0,.28)), url(obj/loft-woodtop.webp) 0 45% / 640px auto; }
-html[data-bdk="loftDusk"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; top: 15px; height: 90px; z-index: -1;
-  opacity: 1; mix-blend-mode: normal; pointer-events: none;
-  background: url(obj/loft-bracket2.webp) 2.5% 0 / auto 90px no-repeat, url(obj/loft-bracket2.webp) 97.5% 0 / auto 90px no-repeat;
-  filter: brightness(.85) drop-shadow(3px 5px 4px rgba(0,0,0,.55)); }
-html[data-bdk="loftDusk"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
-  bottom: calc(var(--top-d) * -.5); height: var(--top-d);
-  background: linear-gradient(rgba(20,10,4,.5), rgba(20,10,4,0) 75%), url(obj/loft-woodtop.webp) 0 100% / 640px 220px repeat; filter: brightness(.85); }
-html[data-bdk="loftDusk"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
-/* the wooden loft shelf has no black perforated steel trim under it (osamu's photo has none) */
-html[data-bdk="loftDusk"] .lights.loftSpider .spTrim { display: none; }
-html[data-bdk="loftDusk"] .plank::after { filter: drop-shadow(3px 5px 4px rgba(0,0,0,.55)); }
