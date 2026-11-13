@@ -2530,3 +2530,22 @@ html[data-bdk="castleIvy"] .plank::before { display: block; content: ""; positio
   opacity: .8; mix-blend-mode: normal;
   background: url(obj/castle-slab.webp) 10px 10px / 328px 28px repeat-x, linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.35) 40%, rgba(0,0,0,0) 85%);
   filter: brightness(0) blur(8px); }
+
+/* v378 (osamu's photo of a carved cornice with a green damask valance, cord loops and tassels): Dark academia gets
+   osamu's Gemini carved walnut cornice + forest-green velvet valance (six swags per tile, repeated across the shelf);
+   the cornice is the shelf's front edge, with the matching walnut top behind the books */
+html[data-bdk="study"] .shelf .plank { background: transparent; box-shadow: none; }
+html[data-bdk="study"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; top: -2px; height: 76px; z-index: 1;
+  opacity: 1; mix-blend-mode: normal; pointer-events: none;
+  background: url(obj/acad-valance.webp) 0 0 / 309.33px 76px repeat-x;
+  filter: drop-shadow(0 6px 6px rgba(0,0,0,.55)); }
+html[data-bdk="study"] .caption { padding-top: 72px; }
+html[data-bdk="study"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d);
+  background: linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,0) 70%), url(obj/acad-top.webp) 0 100% / 600px auto repeat; }
+html[data-bdk="study"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+html[data-bdk="study"] .track::before { display: none; }
+html[data-bdk="study"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 8px; height: 150px; pointer-events: none; z-index: -2;
+  opacity: .8; mix-blend-mode: normal;
+  background: url(obj/acad-valance.webp) 10px 12px / 309.33px 76px repeat-x, linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.35) 40%, rgba(0,0,0,0) 85%);
+  filter: brightness(0) blur(8px); }
