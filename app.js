@@ -999,8 +999,8 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
   const plankWidth = () => Math.min(innerWidth, 1200);
   // which lights hang under a shelf: each shelf picks its own in the ✦ menu (kept per look); until then it shows the look's.
   // several can be on at once, e.g. wisteria with fireflies drifting around it
-  const NO_SWITCH = ["fireflies", "closetRod", "witchWeb"]; // v398 osamu: witch's tower webs always lit, no switch // always alive, no cord needed
-  const TALLEST = ["closetRod", "vampDrapes", "cottageLotus", "forestCatchers", "starCurtain", "loftCages", "loftSpider", "cabinSwags", "teaBeads", "witchWeb", "wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
+  const NO_SWITCH = ["fireflies", "closetRod", "witchWeb", "forestDust"]; // v398 osamu: witch's tower webs always lit, no switch // always alive, no cord needed
+  const TALLEST = ["closetRod", "vampDrapes", "cottageLotus", "forestCatchers", "forestDust", "starCurtain", "loftCages", "loftSpider", "cabinSwags", "teaBeads", "witchWeb", "wisteria", "chinese", "candles", "lanterns", "globe", "stars", "fairy", "fireflies"];
   // the look's own lights; a save made before a look got its lights (cottage, vampire) still says "none"
   function lookLights() {
     const s = state.settings.lights || {}, L = D.LOOKS[lookId()], def = L && L.set && L.set.lights;
@@ -1743,7 +1743,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
               setShelfLights(key, { styles }); keepOpen(); render();
             }));
             menu.append(lc);
-            if (L.styles.some((k) => !["wisteria", "chinese", "closetRod", "vampDrapes", "cottageLotus", "forestCatchers", "starCurtain", "loftCages", "loftSpider", "cabinSwags", "teaBeads", "witchWeb"].includes(k))) {
+            if (L.styles.some((k) => !["wisteria", "chinese", "closetRod", "vampDrapes", "cottageLotus", "forestCatchers", "starCurtain", "loftCages", "loftSpider", "cabinSwags", "teaBeads", "witchWeb", "forestDust"].includes(k))) {
               const cc = h(`<div class="colors small">${Object.entries(D.LIGHT_COLOURS).map(([k, [l, c]]) => `<button class="colorItem" data-v="${k}" aria-pressed="${L.colour === k}"><span class="dot ${L.colour === k ? "on" : ""}" style="background:${c || "conic-gradient(#ff6b6b,#ffd166,#5be3a5,#5cc8f5,#c792ff,#ff6b6b)"};box-shadow:0 0 10px ${c || "#ffd166"}88"></span>${esc(l)}</button>`).join("")}</div>`);
               cc.querySelectorAll("button").forEach((b) => (b.onclick = () => { setShelfLights(key, { colour: b.dataset.v }); keepOpen(); render(); }));
               menu.append(cc);

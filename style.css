@@ -2683,3 +2683,11 @@ html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { pad
 @keyframes wGemOn { 0% { opacity: 0; } 20% { opacity: .6; } 32% { opacity: .3; } 55% { opacity: .9; } 68% { opacity: .7; } 100% { opacity: 1; } }
 @keyframes wGemOff { 0% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .lights.witchWeb .wTw, .lights.witchWeb img.tOn { animation: none !important; } }
+
+/* v399 (osamu): enchanted forest = wisteria garland shedding fairy dust, always on, touch/swipe shakes loose more */
+.shelf.hasLights[data-lights="forestDust"] .caption { padding-top: calc(var(--lights-h, 120px) - 4px); }
+.lights.forestDust { overflow-x: clip; -webkit-user-select: none; user-select: none; }
+.lights.forestDust .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.lights.forestDust .vSwag { position: absolute; pointer-events: none; will-change: transform; backface-visibility: hidden; }
+.lights.forestDust .vSwag img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; filter: drop-shadow(0 4px 5px rgba(0,0,20,.35)); }
+.lights.forestDust .fDust { position: absolute; left: 0; width: 100%; pointer-events: none; }

@@ -208,7 +208,8 @@
   // osamu's idea (2026-11-10): a wisteria garland across each shelf, long at the ends and short in the middle like an
   // arch, and three wire-spiral suncatchers hanging at different heights on beaded brass chains from behind the
   // flowers. The suncatchers are the light: lit, they glow and throw little rainbow spots; tapping one is the switch.
-  D.LIGHT_STYLES.forestCatchers = "Wisteria & suncatchers";
+  // v399: osamu removed the suncatchers; old saves are swapped to forestDust (LIGHT_SWAP), so the style is no longer offered
+  // D.LIGHT_STYLES.forestCatchers = "Wisteria & suncatchers";
   const WI = { w: 1400, h: 774, tuck: 0.035 };
   const SC = { w: 360, h: 845, chainX: 170.1, hook: 170, tileL: 147.6, tileW: 47, tileH: 92 };
   // osamu's mock-up (2026-11-10): six small suncatchers per arch, [across, the hook's depth below the shelf] in arch
@@ -254,6 +255,98 @@
     el.innerHTML = `<div class="vIn">${back}${front}${garlands.join("")}<div class="fSpots">${spots.join("")}</div></div>`;
     const swags = [...el.querySelectorAll(".vSwag")].map((s2) => ({ el: s2, b: 0, bv: 0 }));
     touch(el, drops, swags);
+    return el;
+  }
+
+
+  // ------------------------------------------------------------------ the enchanted forest: wisteria shedding fairy dust
+  // v399 (osamu, 2026-11-13): the suncatchers are gone. Sparkling fairy dust falls from the purple wisteria all the time
+  // (no switch); touching or swiping the garland shakes loose a lot more, which thins back out to the gentle fall after a
+  // few seconds. The dust is drawn on a canvas; it leaves the lower edges of the purple flower clusters (FLOW, measured
+  // on osamu's painting obj/forest-wisteria2.webp as fractions of it).
+  D.LIGHT_STYLES.forestDust = "Wisteria & fairy dust";
+  const FLOW = [[0.017,0.38],[0.017,0.42],[0.042,0.742],[0.046,0.345],[0.049,0.602],[0.07,0.505],[0.071,0.469],[0.074,0.354],[0.077,0.863],[0.086,0.935],[0.101,0.839],[0.107,0.85],[0.119,0.386],[0.12,0.742],[0.133,0.645],[0.152,0.193],[0.159,0.514],[0.16,0.65],[0.171,0.419],[0.176,0.314],[0.181,0.451],[0.184,0.328],[0.189,0.633],[0.206,0.225],[0.214,0.386],[0.219,0.386],[0.222,0.633],[0.228,0.473],[0.232,0.611],[0.234,0.416],[0.292,0.412],[0.296,0.483],[0.339,0.225],[0.344,0.243],[0.354,0.27],[0.374,0.322],[0.402,0.346],[0.406,0.225],[0.427,0.257],[0.432,0.256],[0.456,0.289],[0.464,0.298],[0.499,0.419],[0.504,0.193],[0.518,0.417],[0.549,0.128],[0.567,0.354],[0.569,0.456],[0.605,0.322],[0.606,0.354],[0.616,0.339],[0.624,0.322],[0.63,0.183],[0.642,0.386],[0.66,0.225],[0.661,0.442],[0.684,0.314],[0.687,0.398],[0.696,0.289],[0.707,0.417],[0.716,0.193],[0.731,0.386],[0.746,0.289],[0.766,0.534],[0.767,0.496],[0.772,0.58],[0.781,0.509],[0.782,0.354],[0.787,0.645],[0.822,0.448],[0.855,0.483],[0.856,0.257],[0.864,0.419],[0.865,0.45],[0.874,0.225],[0.879,0.289],[0.899,0.208],[0.906,0.548],[0.909,0.382],[0.917,0.22],[0.919,0.707],[0.921,0.413],[0.924,0.381],[0.926,0.483],[0.941,0.415],[0.946,0.225],[0.946,0.792],[0.949,0.541],[0.965,0.288],[0.976,0.645]];
+  const DUST_RGB = ["232,200,255", "255,205,240", "255,232,180", "255,255,255", "200,170,255", "245,225,255"];
+  let dustSprites = null;
+  const dustSprite = () => dustSprites || (dustSprites = DUST_RGB.map((c) => {
+    const s = document.createElement("canvas"); s.width = s.height = 32; const g = s.getContext("2d");
+    const r = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+    r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.12, `rgba(${c},.95)`); r.addColorStop(0.35, `rgba(${c},.35)`); r.addColorStop(1, `rgba(${c},0)`);
+    g.fillStyle = r; g.fillRect(0, 0, 32, 32);
+    // a fine four-point glint through the middle
+    g.globalCompositeOperation = "lighter"; g.fillStyle = `rgba(${c},.55)`;
+    g.fillRect(15.4, 2, 1.2, 28); g.fillRect(2, 15.4, 28, 1.2);
+    return s;
+  }));
+  function dustEl(w, cfg) {
+    const n = Math.max(1, Math.round(w / 430)), cell = w / n, gw = cell * 1.15, wh = gw * WI.h / WI.w, lift = WI.tuck * wh + 16;
+    const garlands = [], src = [];
+    for (let c = 0; c < n; c++) {
+      const gl = c * cell + (cell - gw) / 2;
+      garlands.push(`<div class="vSwag fWis" style="left:${f1(gl)}px;top:${f1(-lift)}px;width:${f1(gw)}px;height:${f1(wh)}px;transform-origin:50% 0"><img src="obj/forest-wisteria2.webp" alt="" draggable="false" decoding="async"></div>`);
+      FLOW.forEach(([fx, fy]) => { const x = gl + fx * gw; if (x > 2 && x < w - 2) src.push([x, fy * wh]); });
+    }
+    const EXTRA = 90, H = wh - lift, CH = wh + EXTRA; // the canvas starts at the garland's top and reaches below it
+    const el = document.createElement("div");
+    el.className = "lights forestDust on";
+    el.style.height = Math.ceil(H + 10) + "px";
+    el.innerHTML = `<div class="vIn">${garlands.join("")}</div><canvas class="fDust" style="top:${f1(-lift)}px;height:${f1(CH)}px" aria-hidden="true"></canvas>`;
+    const cv = el.querySelector("canvas"), g = cv.getContext("2d"), dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(w * dpr); cv.height = Math.round(CH * dpr);
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const parts = [], MAXP = reduce ? 90 : 420, BASE = (reduce ? 6 : 16) * n; // particles a second while calm
+    let boost = 0, acc = 0, raf = 0, last = 0, seen = false;
+    const spawn = (x, y, kick) => {
+      if (parts.length >= MAXP) return;
+      const big = Math.random() < 0.12;
+      parts.push({ x: x + (Math.random() - 0.5) * 6, y: y + Math.random() * 4, vx: (Math.random() - 0.5) * (6 + kick * 22), vy: 6 + Math.random() * 12 + kick * 10,
+        t: 0, life: 3.2 + Math.random() * 3.6, s: big ? 7 + Math.random() * 4 : 3 + Math.random() * 3.2, c: (Math.random() * DUST_RGB.length) | 0,
+        ph: Math.random() * 6.28, tw: 3 + Math.random() * 5, sw: 4 + Math.random() * 8, sf: 0.6 + Math.random() * 1.2 });
+    };
+    const frame = (now) => {
+      raf = 0;
+      if (!el.isConnected) return;
+      const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
+      boost *= Math.exp(-dt / 2.2); // a shake settles back to the gentle fall over a few seconds
+      acc += BASE * (1 + boost) * dt;
+      while (acc >= 1 && src.length) { acc -= 1; const p = src[(Math.random() * src.length) | 0]; spawn(p[0], p[1], Math.min(1, boost / 4)); }
+      const sp = dustSprite();
+      g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, CH); g.globalCompositeOperation = "lighter";
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const q = parts[i]; q.t += dt;
+        if (q.t > q.life || q.y > CH) { parts.splice(i, 1); continue; }
+        q.vy += 9 * dt; q.vy = Math.min(q.vy, 34); q.vx *= Math.exp(-dt * 1.5);
+        q.x += (q.vx + Math.sin(q.t * q.sf + q.ph) * q.sw * 0.6) * dt; q.y += q.vy * dt;
+        const fade = Math.min(1, q.t / 0.35) * Math.min(1, (q.life - q.t) / 1.2) * Math.min(1, (CH - q.y) / 40);
+        const a = fade * (0.7 + 0.3 * Math.sin(q.t * q.tw + q.ph));
+        if (a <= 0.02) continue;
+        g.globalAlpha = a; const z = q.s * (0.8 + 0.25 * Math.sin(q.t * q.tw * 0.5 + q.ph));
+        g.drawImage(sp[q.c], q.x - z, q.y - z, z * 2, z * 2);
+      }
+      g.globalAlpha = 1;
+      if (seen && !document.hidden) raf = requestAnimationFrame(frame);
+    };
+    const run = () => { if (!raf && seen && el.isConnected) { last = performance.now(); raf = requestAnimationFrame(frame); } };
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver((es) => { seen = es.some((e) => e.isIntersecting); if (seen) run(); }, { rootMargin: "120px" });
+      setTimeout(() => io.observe(el), 0);
+    } else { seen = true; setTimeout(run, 0); }
+    document.addEventListener("visibilitychange", run);
+    // touching or brushing the garland shakes loose a shower right where the finger is, then more from everywhere
+    const shake = (ev, amt) => {
+      const r = el.getBoundingClientRect(), x = ev.clientX - r.left;
+      boost = Math.min(9, boost + amt);
+      const near = src.filter((p) => Math.abs(p[0] - x) < cell * 0.22);
+      for (let i = 0; i < amt * 14 && near.length; i++) { const p = near[(Math.random() * near.length) | 0]; spawn(p[0], p[1], 1); }
+      run();
+    };
+    let lastX = null;
+    el.addEventListener("pointerdown", (ev) => { lastX = ev.clientX; shake(ev, 2.5); });
+    el.addEventListener("pointermove", (ev) => { if (lastX === null) return; const d = Math.abs(ev.clientX - lastX); if (d > 12) { lastX = ev.clientX; shake(ev, Math.min(1.5, d / 30)); } });
+    const up = () => { lastX = null; };
+    el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up); el.addEventListener("pointerleave", up);
+    const swags = [...el.querySelectorAll(".vSwag")].map((s2) => ({ el: s2, b: 0, bv: 0 }));
+    touch(el, [], swags, { quiet: true });
     return el;
   }
 
@@ -655,7 +748,7 @@
   }
 
   const baseLights = D.lightsEl;
-  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : cfg && cfg.style === "loftSpider" ? spiderEl(w, cfg) : cfg && cfg.style === "cabinSwags" ? cabinEl(w, cfg) : cfg && cfg.style === "teaBeads" ? teaEl(w, cfg) : cfg && cfg.style === "witchWeb" ? witchEl(w, cfg) : baseLights(w, cfg));
+  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "forestDust" ? dustEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : cfg && cfg.style === "loftSpider" ? spiderEl(w, cfg) : cfg && cfg.style === "cabinSwags" ? cabinEl(w, cfg) : cfg && cfg.style === "teaBeads" ? teaEl(w, cfg) : cfg && cfg.style === "witchWeb" ? witchEl(w, cfg) : baseLights(w, cfg));
   if (D.LOOKS && D.LOOKS.teahouse) D.LOOKS.teahouse.set.lights = { style: "teaBeads", colour: "warm", on: true };
   if (D.LOOKS && D.LOOKS.witch) D.LOOKS.witch.set.lights = { style: "witchWeb", colour: "warm", on: true };
   // the vampire room hangs them under every shelf, lit
@@ -663,11 +756,11 @@
   // the cottage no longer hangs its flower lamps by default (v379, rose shelf); they stay in the ✦ menu
   if (D.LOOKS && D.LOOKS.cottage) D.LOOKS.cottage.set.lights = { style: "none", colour: "warm", on: false };
   // the enchanted forest's wisteria becomes the painted garland with suncatchers, fireflies still drifting about
-  if (D.LOOKS && D.LOOKS.forest) D.LOOKS.forest.set.lights = { style: "forestCatchers", styles: ["forestCatchers", "fireflies"], colour: "warm", on: true };
+  if (D.LOOKS && D.LOOKS.forest) D.LOOKS.forest.set.lights = { style: "forestDust", styles: ["forestDust", "fireflies"], colour: "warm", on: true };
   // starry night: the light curtain and star trim instead of the old string of stars
   if (D.LOOKS && D.LOOKS.starry) D.LOOKS.starry.set.lights = { style: "starCurtain", colour: "warm", on: true };
   // the brick loft: the bamboo pole with cage lamps instead of the old globe string
   if (D.LOOKS && D.LOOKS.loft) D.LOOKS.loft.set.lights = { style: "loftSpider", colour: "warm", on: true };
   if (D.LOOKS && D.LOOKS.cabin) D.LOOKS.cabin.set.lights = { style: "cabinSwags", colour: "warm", on: true };
-  D.LIGHT_SWAP = { forest: { wisteria: "forestCatchers" }, starry: { stars: "starCurtain" }, loft: { globe: "loftSpider", loftCages: "loftSpider" }, cabin: { fairy: "cabinSwags" }, teahouse: { chinese: "teaBeads" } };
+  D.LIGHT_SWAP = { forest: { wisteria: "forestDust", forestCatchers: "forestDust" }, starry: { stars: "starCurtain" }, loft: { globe: "loftSpider", loftCages: "loftSpider" }, cabin: { fairy: "cabinSwags" }, teahouse: { chinese: "teaBeads" } };
 })();
