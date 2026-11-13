@@ -2612,6 +2612,8 @@ html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { pad
 .lights.teaBeads.on .vHalo { opacity: 1; animation: tHalo 3.7s linear infinite; animation-delay: calc(var(--i) * -.83s); }
 .lights.teaBeads .vDrop.yank > img, .lights.teaBeads .vDrop.yank .vHalo { animation: vPull 1s ease both; }
 .lights.teaBeads.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
+/* v386: the lit picture rides the pull with the unlit one (it used to stay put and show a second lantern) */
+.lights.teaBeads.on .vDrop.yank > img.tOn { animation: vPull 1s ease both, tFlicker 3.7s linear infinite; animation-delay: 0s, calc(var(--i) * -.83s); }
 .lights.teaBeads .vDrop.yank .vChain { transform-origin: 50% 0; animation: vChainPull 1s ease both; }
 @media (prefers-reduced-motion: reduce) { .lights.teaBeads.on .vHalo { animation: none; } .lights.teaBeads .vDrop.yank * { animation: none !important; } }
 /* v385: osamu's unlit lantern lit from inside by code; the warm light breathes and flickers a little, never blinks (opacity only) */
