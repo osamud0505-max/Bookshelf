@@ -610,8 +610,9 @@
   // threads; switching off they climb back up as they dim. The web's drops twinkle finely. All pictures are osamu's Gemini
   // paintings (black background, cut out by brightness); the lit twins are made in code. Tap a spider to switch, swipe to swing.
   D.LIGHT_STYLES.witchWeb = "Dew webs & spiders";
-  const WEB = { big: { ar: 587 / 900, tw: [[0.203, 0.303], [0.36, 0.483], [0.499, 0.433], [0.846, 0.22], [0.235, 0.394], [0.418, 0.594], [0.436, 0.811], [0.644, 0.49], [0.734, 0.344], [0.55, 0.522], [0.567, 0.1]] },
-    small: { ar: 435 / 540, tw: [[0.205, 0.183], [0.59, 0.227], [0.835, 0.203], [0.372, 0.895], [0.245, 0.566], [0.702, 0.37]] } };
+  const WEB = { big: { ar: 587 / 900, tw: [[0.331, 0.531], [0.509, 0.625], [0.801, 0.324], [0.686, 0.509], [0.204, 0.321], [0.418, 0.606], [0.228, 0.727], [0.394, 0.22], [0.431, 0.502], [0.149, 0.14], [0.294, 0.327], [0.843, 0.233], [0.729, 0.451], [0.404, 0.425], [0.331, 0.047], [0.324, 0.218], [0.658, 0.351], [0.894, 0.135], [0.417, 0.078], [0.49, 0.552], [0.74, 0.349], [0.537, 0.152]] },
+    small: { ar: 435 / 540, tw: [[0.59, 0.245], [0.206, 0.197], [0.253, 0.223], [0.146, 0.133], [0.634, 0.408], [0.839, 0.215], [0.703, 0.376], [0.247, 0.506], [0.245, 0.575], [0.435, 0.384], [0.739, 0.439], [0.856, 0.324]] } };
+  const SPTW = [[[0.536, 0.412], [0.448, 0.766], [0.554, 0.542], [0.688, 0.29], [0.749, 0.813], [0.839, 0.357]], [[0.17, 0.309], [0.384, 0.562], [0.375, 0.405], [0.636, 0.202], [0.062, 0.529], [0.46, 0.169]], [[0.438, 0.419], [0.366, 0.74], [0.855, 0.299], [0.239, 0.28], [0.757, 0.557], [0.504, 0.765]]]; // where the spiders' drops twinkle
   // spider pictures: size in css px at full size, and where the thread meets the spider (fractions of the picture)
   const SPI = [{ src: 1, w: 77, h: 96, ax: 0.510, ay: 0.401 }, { src: 2, w: 72, h: 93.5, ax: 0.495, ay: 0.160 }, { src: 3, w: 44.5, h: 96, ax: 0.490, ay: 0.417 }];
   function witchEl(w, cfg) {
@@ -621,7 +622,7 @@
     const flip = seed % 2 === 1; // big web on the right on every other shelf
     const X = (x) => (flip ? w - x : x);
     const webHtml = (kind, ww, wh, right) => `<div class="wWeb" style="${right ? "right" : "left"}:0;top:0;width:${f1(ww)}px;height:${f1(wh)}px${right ? ";transform:scaleX(-1)" : ""}">`
-      + `<img src="obj/witch-dew-${kind}.webp" alt="" draggable="false" decoding="async">`
+      + `<img class="tOff" src="obj/witch-dew-${kind}.webp" alt="" draggable="false" decoding="async"><img class="tOn" src="obj/witch-dew-${kind}-gem.webp" alt="" draggable="false" decoding="async">`
       + WEB[kind].tw.map(([x, y], j) => `<i class="wTw" style="left:${f1(x * 100)}%;top:${f1(y * 100)}%;--j:${j}"></i>`).join("") + `</div>`;
     const webs = webHtml("big", bw, bh, flip) + webHtml("small", sw_, sh_, !flip);
     // two spiders under the big web, one under the small one, at different heights
@@ -633,11 +634,11 @@
     const html = drops.map((d, i) => {
       const ax = d.mir ? 1 - d.S.ax : d.S.ax, thread = d.chain + d.sh * d.S.ay;
       return `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - ax * d.sw)}px;top:0;width:${f1(d.sw)}px;height:${f1(d.chain + d.sh)}px;transform-origin:${f1(ax * 100)}% 0;--i:${i};--L:${f1(thread)}px">`
-        + `<i class="wThread" style="left:${f1(ax * d.sw - 0.5)}px;height:${f1(thread)}px"></i>`
+        + `<i class="wThread" style="left:${f1(ax * d.sw - 0.5)}px;height:${f1(thread + 3)}px"></i>`
         + `<div class="wSp" style="top:${f1(d.chain)}px;height:${f1(d.sh)}px${d.mir ? ";transform:scaleX(-1)" : ""}">`
-        + `<i class="vHalo"></i>`
         + `<img class="tOff" src="obj/witch-dewspider${d.S.src}.webp" alt="" draggable="false" decoding="async">`
-        + `<img class="tOn" src="obj/witch-dewspider${d.S.src}-lit.webp" alt="" draggable="false" decoding="async"></div></div>`;
+        + `<img class="tOn" src="obj/witch-dewspider${d.S.src}-gem.webp" alt="" draggable="false" decoding="async">`
+        + SPTW[d.S.src - 1].map(([x, y], j) => `<i class="wTw" style="left:${f1(x * 100)}%;top:${f1(y * 100)}%;--j:${j + i * 3}"></i>`).join("") + `</div></div>`;
     }).join("");
     const el = document.createElement("div");
     el.className = "lights witchWeb" + (cfg.on ? " on" : "");
