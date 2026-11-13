@@ -2435,3 +2435,10 @@ html[data-bdk="galleryWall"] .stage::before { content: ""; position: absolute; l
   bottom: calc(var(--top-d) * -.5); height: var(--top-d);
   background: linear-gradient(rgba(10,4,2,.55), rgba(10,4,2,0) 70%), url(obj/candle-woodtop.webp) 0 0 / 700px 100% repeat-x; filter: brightness(.85); }
 html[data-bdk="galleryWall"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+/* v361 (osamu: the cottage shelf in the same driftwood as the lotus lamps' branch): osamu's Gemini driftwood on the
+   shelf top (back to the wall) and its front strip, in place of the streaky painted white */
+html[data-bdk="cottageRoses"] .shelf .plank { background: url(obj/cottage-woodtop.webp) 0 40% / 600px auto; }
+html[data-bdk="cottageRoses"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d);
+  background: linear-gradient(rgba(60,40,50,.28), rgba(60,40,50,0) 75%), url(obj/cottage-woodtop.webp) 0 100% / 600px 200px repeat; }
+html[data-bdk="cottageRoses"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
