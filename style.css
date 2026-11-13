@@ -2497,15 +2497,15 @@ html[data-bdk="greenDamask"] .plank::before { display: block; content: ""; posit
 html[data-bdk="damask"] .shelf .plank { background: transparent; box-shadow: none; }
 html[data-bdk="damask"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; top: 0; height: 80px; z-index: 1;
   opacity: 1; mix-blend-mode: normal; pointer-events: none;
-  background: url(obj/goth2-arcade.webp) 0 0 / 67.67px 80px round no-repeat;
+  background: url(obj/goth3-arcade.webp) 0 0 / 67.33px 80px round no-repeat;
   filter: drop-shadow(0 6px 6px rgba(0,0,0,.55)); }
 html[data-bdk="damask"] .caption { padding-top: 76px; }
 html[data-bdk="damask"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
   bottom: calc(var(--top-d) * -.5); height: var(--top-d);
-  background: linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,0) 70%), url(obj/goth2-top.webp) 0 100% / 600px auto repeat; }
+  background: linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,0) 70%), url(obj/goth3-top.webp) 0 100% / 600px auto repeat; }
 html[data-bdk="damask"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
 /* the arcade's blurred, blacked-out shape is the shelf's shadow on the damask below */
 html[data-bdk="damask"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 8px; height: 160px; pointer-events: none; z-index: -2;
   opacity: .8; mix-blend-mode: normal;
-  background: url(obj/goth2-arcade.webp) 10px 12px / 67.67px 80px repeat-x, linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.35) 40%, rgba(0,0,0,0) 85%);
+  background: url(obj/goth3-arcade.webp) 10px 12px / 67.33px 80px repeat-x, linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.35) 40%, rgba(0,0,0,0) 85%);
   filter: brightness(0) blur(8px); }
