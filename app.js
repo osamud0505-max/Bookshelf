@@ -1064,7 +1064,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
   function shelfEl(key, books, opts = {}) {
     const root = h(`<div class="shelf">
       <div class="scroller" tabindex="0" role="group" aria-roledescription="shelf"><div class="track"><div class="stage"></div></div></div>
-      <div class="plank"></div>
+      <div class="plank"><i class="skEye"></i><i class="skEye r"></i></div>
       <div class="caption"></div></div>`);
     if ((opts.idx || 0) % 2) root.classList.add("shAlt"); // every other shelf (v418: castle skull / plain slab alternate)
     const scroller = root.querySelector(".scroller"), track = root.querySelector(".track"), stage = root.querySelector(".stage"), caption = root.querySelector(".caption");
