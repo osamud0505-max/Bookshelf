@@ -1417,7 +1417,8 @@
     } else if (kind === "motes") {
       for (let i = 0; i < 26; i++) {
         const warm = R() > 0.4;
-        out += `<i class="mote" style="left:${(R() * 100).toFixed(1)}%;top:${(15 + R() * 85).toFixed(1)}%;--c:${warm ? "#ffd977" : "#8ff7e4"};--s:${(2 + R() * 3.5).toFixed(1)}px;--t:${(9 + R() * 12).toFixed(1)}s;--p:${(2 + R() * 3).toFixed(1)}s;--d:-${(R() * 20).toFixed(1)}s;--dx:${((R() - 0.5) * 90).toFixed(0)}px;--dy:${(-40 - R() * 120).toFixed(0)}px"></i>`;
+        // v401 (osamu: they looked like balls of light): fireflies, i.e. only the soft glow they give off, blinking
+        out += `<i class="mote ffly" style="left:${(R() * 100).toFixed(1)}%;top:${(15 + R() * 85).toFixed(1)}%;--c:${warm ? "255,226,120" : "214,255,130"};--s:${(2 + R() * 3.5).toFixed(1)}px;--t:${(9 + R() * 12).toFixed(1)}s;--p:${(2 + R() * 3).toFixed(1)}s;--d:-${(R() * 20).toFixed(1)}s;--dx:${((R() - 0.5) * 90).toFixed(0)}px;--dy:${(-40 - R() * 120).toFixed(0)}px"></i>`;
       }
     }
     return out;
