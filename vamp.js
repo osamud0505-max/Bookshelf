@@ -568,15 +568,15 @@
   }
 
   // ------------------------------------------------------------------ the tea house's beaded silk lanterns
-  // osamu's idea (2026-11-13, from their photo): a black-framed palace lantern with silk panels and flowers, hanging
-  // below the red lambrequin valance. One Gemini painting (unlit; the lit copy is made from it), repeated at different
+  // osamu's idea (2026-11-13, from their photo): embroidered silk lanterns dripping with pearls and crystals, hanging
+  // below the red lambrequin valance. One Gemini painting (lit; the unlit copy is made from it), repeated at different
   // sizes and heights, every other one mirrored. Tapping a lantern is the light switch; a swipe sets them swaying.
   D.LIGHT_STYLES.teaBeads = "Beaded silk lanterns";
-  const TL = { w: 240, h: 505, globeTop: 0.13, globeMid: 0.356, src: 1202, cordW: 32, cordH: 200 }; // the picture is 1202px wide at source; the cord tile is cut from its own cord
+  const TL = { w: 240, h: 798, globeTop: 0.214, globeMid: 0.347 };
   const TDROP = [134, 168, 146, 176, 138, 160, 150]; // how far below the shelf each lantern's silk globe starts, repeating
   const TSIZE = [1, 0.86, 0.94, 0.8, 1.04, 0.9, 0.84];
   function teaEl(w, cfg) {
-    const phone = w < 600, base = phone ? 64 : 72;
+    const phone = w < 600, base = phone ? 52 : 58;
     const n = Math.max(3, Math.round(w / (phone ? 98 : 120))), gap = w / n;
     const drops = [];
     for (let i = 0; i < n; i++) {
@@ -585,12 +585,12 @@
       drops.push({ cx, lw, chain, top: chain + lh * TL.globeTop, dh: lh * (1 - TL.globeTop), hw: lw * 0.5, len: chain + lh * TL.globeMid, th: 0, om: 0, els: [], flip: i % 2 === 1 });
     }
     const html = drops.map((d, i) => {
-      const lh = d.lw * TL.h / TL.w, sh = Math.max(0, d.chain + 1), k = d.lw / TL.src;
+      const lh = d.lw * TL.h / TL.w, sh = Math.max(0, d.chain + 2);
       return `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - d.lw / 2)}px;top:0;width:${f1(d.lw)}px;height:${f1(d.chain + lh)}px;transform-origin:50% 0;--i:${i}">`
-        + `<i class="vChain" style="left:${f1(d.lw / 2 - TL.cordW / 2 * k)}px;width:${f1(TL.cordW * k)}px;height:${f1(sh)}px;background-size:${f1(TL.cordW * k)}px ${f1(TL.cordH * k)}px"></i>`
+        + `<i class="vChain" style="left:${f1(d.lw / 2 - 1.6)}px;width:3.2px;height:${f1(sh)}px"></i>`
         + `<i class="vHalo" style="top:${f1(d.chain + lh * TL.globeMid)}px;width:${f1(d.lw * 2.4)}px;height:${f1(d.lw * 2.4)}px"></i>`
-        + `<img class="tOff" src="obj/tea-sakura-off.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}">`
-        + `<img class="tOn" src="obj/tea-sakura-lit.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}"></div>`;
+        + `<img class="tOff" src="obj/tea-lantern-off2.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}">`
+        + `<img class="tOn" src="obj/tea-lantern-lit.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}"></div>`;
     }).join("");
     const el = document.createElement("div");
     el.className = "lights teaBeads" + (cfg.on ? " on" : "");
