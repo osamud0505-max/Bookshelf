@@ -2666,6 +2666,10 @@ html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { pad
     linear-gradient(90deg, transparent 2.25px, rgba(220,228,242,.34) 2.25px 2.75px, transparent 2.75px); }
 .lights.witchWeb.on .wThread { filter: brightness(1.35); }
 .lights.witchWeb .wSp { position: absolute; left: 0; width: 100%; }
+/* v397 (osamu: make the spiders shinier so on and off differ): off they sit a little dimmer; the lit twins (-gem2) are much
+   brighter, with icy bloom and a hint of rainbow fire in the drops */
+.lights.witchWeb .wSp img.tOff { filter: brightness(.82); }
+.lights.witchWeb.on .wSp img.tOff { opacity: 0; transition: opacity .9s; }
 .lights.witchWeb img.tOn { opacity: 0; }
 .lights.witchWeb.on img.tOn { opacity: 1; }
 .lights.witchWeb .wTw { position: absolute; width: 6px; height: 6px; margin: -3px 0 0 -3px; pointer-events: none; opacity: 0;
