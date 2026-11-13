@@ -641,7 +641,7 @@
         + `<i class="wThread" style="left:${f1(ax * d.sw - 2.5)}px;top:${f1(d.t0)}px;height:${f1(d.chain - d.t0 + ay + 2)}px"></i>`
         + `<div class="wSp" style="top:${f1(d.chain)}px;height:${f1(d.sh)}px${d.mir ? ";transform:scaleX(-1)" : ""}">`
         + `<img class="tOff" src="obj/witch-dewspider${d.S.src}.webp" alt="" draggable="false" decoding="async">`
-        + `<img class="tOn" src="obj/witch-dewspider${d.S.src}-gem.webp" alt="" draggable="false" decoding="async">`
+        + `<img class="tOn" src="obj/witch-dewspider${d.S.src}-gem2.webp" alt="" draggable="false" decoding="async">`
         + SPTW[d.S.src - 1].map(([x, y], j) => `<i class="wTw" style="left:${f1(x * 100)}%;top:${f1(y * 100)}%;--j:${j + i * 3}"></i>`).join("") + `</div></div>`;
     }).join("");
     const el = document.createElement("div");
