@@ -2691,3 +2691,14 @@ html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { pad
 .lights.forestDust .vSwag { position: absolute; pointer-events: none; will-change: transform; backface-visibility: hidden; }
 .lights.forestDust .vSwag img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; filter: drop-shadow(0 4px 5px rgba(0,0,20,.35)); }
 .lights.forestDust .fDust { position: absolute; left: 0; width: 100%; pointer-events: none; }
+
+/* v401 (osamu: the fireflies looked like balls of light): fireflies too small to see, only their light. No solid dot or
+   ring: a soft glow with a faint brighter centre, dark most of the time, flashing up and fading like a real firefly. */
+#backdrop .mote.ffly { width: calc(var(--s) * 3.2); height: calc(var(--s) * 3.2); margin: calc(var(--s) * -1.1) 0 0 calc(var(--s) * -1.1); box-shadow: none;
+  background: radial-gradient(circle, rgba(var(--c),.95) 0, rgba(var(--c),.55) 9%, rgba(var(--c),.18) 32%, rgba(var(--c),0) 68%);
+  animation: moteDrift var(--t) ease-in-out infinite alternate, fflyBlink calc(var(--p) * 1.6) linear infinite; animation-delay: var(--d); }
+.lights.fireflies i { width: 14px; height: 14px; margin: -7px 0 0 -7px; box-shadow: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--c) 40%, #fff) 0, color-mix(in srgb, var(--c) 60%, transparent) 9%, color-mix(in srgb, var(--c) 18%, transparent) 32%, transparent 68%); }
+.lights.fireflies.on i { animation: drift var(--t) ease-in-out infinite alternate, fflyBlink calc(var(--t) * .8) linear infinite; animation-delay: var(--d); }
+@keyframes fflyBlink { 0%, 52% { opacity: 0; } 60% { opacity: 1; } 66% { opacity: .85; } 80% { opacity: .25; } 92%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #backdrop .mote.ffly, .lights.fireflies.on i { animation: none; opacity: .6; } }
