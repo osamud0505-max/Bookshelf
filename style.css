@@ -2411,3 +2411,9 @@ html[data-bdk="libraryStacks"] .shelf .plank { box-shadow: none; }
 .lights.vampDrapes.on .vCloth img { filter: drop-shadow(0 10px 14px rgba(10,0,4,.6)) hue-rotate(6deg) brightness(.52) saturate(1.05); }
 .lights.closetRod .rod { filter: drop-shadow(0 8px 8px rgba(42,4,24,.45)); }
 .lights.cottageLotus .lBranch img { filter: drop-shadow(0 8px 8px rgba(60,35,15,.45)); }
+/* v358 (osamu: a hard line where the cabin snow's top meets its front lip, not in their picture): the cabin shelf's
+   own shadow is left to the snow lip (the plank sits hidden behind it), and a soft band of the snow's colour blends
+   the seam between the top piece and the lip */
+html .shelf[data-lights="cabinSwags"] .plank { box-shadow: none; }
+.lights.cabinSwags::before { content: ""; position: absolute; left: 0; right: 0; top: -27px; height: 22px; z-index: 6; pointer-events: none;
+  background: linear-gradient(rgba(246,248,252,0), rgba(246,248,252,.95) 50%, rgba(249,251,254,0)); }
