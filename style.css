@@ -2420,3 +2420,18 @@ html .shelf[data-lights="cabinSwags"] .plank { box-shadow: none; }
 /* v359 (osamu: faint white vertical lines on the black steel shelf front): the "mill scale" streaks drawn across the
    steel bar read as stray lines, so they're gone; the bar keeps its bright top edge and brushed shading */
 html[data-mat="steel"] .plank::before { display: none; }
+/* v360 (osamu: a carved openwork shelf, in the same antique gilded gold as the Candlelit look's picture frame):
+   osamu's Gemini gilt apron hangs from the shelf's front edge, one carving per phone-wide stretch (wider screens fit
+   whole carvings, stretched a touch), the top is osamu's painted walnut, and the carving casts its shadow below */
+html[data-bdk="galleryWall"] .shelf .plank { background: url(obj/candle-woodtop.webp) 0 50% / 700px auto; box-shadow: none; }
+html[data-bdk="galleryWall"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; height: 85px;
+  opacity: 1; mix-blend-mode: normal; pointer-events: none; background: url(obj/candle-apron.webp) 0 0 / 412px 85px round no-repeat;
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,.45)); }
+html[data-bdk="galleryWall"] .plank::before { content: ""; position: absolute; left: -10px; right: -10px; top: 6px; height: 150px; pointer-events: none; z-index: -1;
+  background: url(obj/candle-apron.webp) 10px 14px / 412px 85px round no-repeat, linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.45) 50%, rgba(0,0,0,0));
+  filter: brightness(0) blur(8px); opacity: .85; }
+html[data-bdk="galleryWall"] .caption, html[data-bdk="galleryWall"] .shelf.hasLights .caption { padding-top: 84px; }
+html[data-bdk="galleryWall"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d);
+  background: linear-gradient(rgba(10,4,2,.55), rgba(10,4,2,0) 70%), url(obj/candle-woodtop.webp) 0 0 / 700px 100% repeat-x; filter: brightness(.85); }
+html[data-bdk="galleryWall"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
