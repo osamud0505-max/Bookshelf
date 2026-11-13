@@ -603,31 +603,45 @@
     return el;
   }
 
-  // ------------------------------------------------------------------ the witch's tower: stained-glass webs and a beaded spider
-  // osamu's idea (2026-11-13, from their suncatcher photo): a stained-glass corner web tucked under each shelf corner (the right
-  // one mirrored), and a beaded wire spider hanging on a fine silver chain from each web's tip. The spider is the light: its
-  // yellow crackle-glass body glows and lights the glass. Both are osamu's Gemini paintings; the lit twins are made in code.
-  // Tapping a spider is the switch; a swipe sets it swinging.
-  D.LIGHT_STYLES.witchWeb = "Stained-glass spider webs";
-  const WB = { ringX: 1230 / 1259, ringY: 1240 / 1252, ar: 1252 / 1259, sar: 1065 / 990, beadY: 215 / 1065 };
+  // ------------------------------------------------------------------ the witch's tower: dewy webs and dew spiders
+  // osamu's idea (2026-11-13, from their photos): a big and a small dew-covered cobweb under each shelf (which side gets the
+  // big one alternates by shelf), and three spiders woven out of the same dewy silk, hanging on single threads. The spiders
+  // are the light: a cold moonlight glows inside them, and when they light up they let themselves down a little on their
+  // threads; switching off they climb back up as they dim. The web's drops twinkle finely. All pictures are osamu's Gemini
+  // paintings (black background, cut out by brightness); the lit twins are made in code. Tap a spider to switch, swipe to swing.
+  D.LIGHT_STYLES.witchWeb = "Dew webs & spiders";
+  const WEB = { big: { ar: 587 / 900, tw: [[0.203, 0.303], [0.36, 0.483], [0.499, 0.433], [0.846, 0.22], [0.235, 0.394], [0.418, 0.594], [0.436, 0.811], [0.644, 0.49], [0.734, 0.344], [0.55, 0.522], [0.567, 0.1]] },
+    small: { ar: 435 / 540, tw: [[0.205, 0.183], [0.59, 0.227], [0.835, 0.203], [0.372, 0.895], [0.245, 0.566], [0.702, 0.37]] } };
+  // spider pictures: size in css px at full size, and where the thread meets the spider (fractions of the picture)
+  const SPI = [{ src: 1, w: 77, h: 96, ax: 0.510, ay: 0.401 }, { src: 2, w: 72, h: 93.5, ax: 0.495, ay: 0.160 }, { src: 3, w: 44.5, h: 96, ax: 0.490, ay: 0.417 }];
   function witchEl(w, cfg) {
-    const phone = w < 600, ww = phone ? 104 : 132, sw = phone ? 60 : 72, sh = sw * WB.sar, wh = ww * WB.ar;
-    const chains = [phone ? 30 : 38, phone ? 52 : 62];
-    const drops = [0, 1].map((i) => {
-      const right = i === 1, rx = right ? w - ww * WB.ringX : ww * WB.ringX, ry = wh * WB.ringY, chain = chains[i];
-      return { cx: rx, ry, chain, sw, sh, top: ry + chain, dh: sh, hw: sw * 0.5, len: chain + sh * 0.35, th: 0, om: 0, els: [], right };
+    const phone = w < 600, k = phone ? 0.82 : 1;
+    const bw = Math.min(w * 0.7, 380), bh = bw * WEB.big.ar, sw_ = Math.min(w * 0.42, 230), sh_ = sw_ * WEB.small.ar;
+    let seed = 7; for (const c of String(cfg.seed || "")) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
+    const flip = seed % 2 === 1; // big web on the right on every other shelf
+    const X = (x) => (flip ? w - x : x);
+    const webHtml = (kind, ww, wh, right) => `<div class="wWeb" style="${right ? "right" : "left"}:0;top:0;width:${f1(ww)}px;height:${f1(wh)}px${right ? ";transform:scaleX(-1)" : ""}">`
+      + `<img src="obj/witch-dew-${kind}.webp" alt="" draggable="false" decoding="async">`
+      + WEB[kind].tw.map(([x, y], j) => `<i class="wTw" style="left:${f1(x * 100)}%;top:${f1(y * 100)}%;--j:${j}"></i>`).join("") + `</div>`;
+    const webs = webHtml("big", bw, bh, flip) + webHtml("small", sw_, sh_, !flip);
+    // two spiders under the big web, one under the small one, at different heights
+    const spots = [{ x: bw * 0.3, len: bh * 0.62, s: 0 }, { x: bw * 0.74, len: bh * 0.36, s: 1 }, { x: w - sw_ * 0.5, len: sh_ * 0.95, s: 2 }];
+    const drops = spots.map((p, i) => {
+      const S = SPI[p.s], sw = S.w * k, sh = S.h * k, cx = X(p.x), chain = p.len - sh * S.ay;
+      return { cx, sw, sh, S, chain, top: chain, dh: sh, hw: sw * 0.42, len: chain + sh * 0.5, th: 0, om: 0, els: [], mir: flip !== (i === 2) };
     });
-    const webs = [0, 1].map((i) => `<div class="wWeb" style="${i ? "right" : "left"}:0;top:0;width:${ww}px;height:${f1(wh)}px${i ? ";transform:scaleX(-1)" : ""}">`
-      + `<img class="wwOff" src="obj/witch-web.webp" alt="" draggable="false" decoding="async"><img class="wwOn" src="obj/witch-web-lit.webp" alt="" draggable="false" decoding="async"></div>`).join("");
-    const html = drops.map((d, i) => `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - d.sw / 2)}px;top:${f1(d.ry)}px;width:${f1(d.sw)}px;height:${f1(d.chain + d.sh)}px;transform-origin:50% 0;--i:${i}">`
-      + `<i class="wChain" style="height:${f1(d.chain + 2)}px"></i>`
-      + `<i class="vHalo" style="top:${f1(d.chain + d.sh * WB.beadY)}px;width:${f1(d.sw * 2.6)}px;height:${f1(d.sw * 2.6)}px"></i>`
-      + `<img class="tOff" src="obj/witch-spider.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(d.sh)}px${d.right ? ";transform:scaleX(-1)" : ""}">`
-      + `<img class="tOn" src="obj/witch-spider-lit.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(d.sh)}px${d.right ? ";transform:scaleX(-1)" : ""}">`
-      + `</div>`).join("");
+    const html = drops.map((d, i) => {
+      const ax = d.mir ? 1 - d.S.ax : d.S.ax, thread = d.chain + d.sh * d.S.ay;
+      return `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - ax * d.sw)}px;top:0;width:${f1(d.sw)}px;height:${f1(d.chain + d.sh)}px;transform-origin:${f1(ax * 100)}% 0;--i:${i};--L:${f1(thread)}px">`
+        + `<i class="wThread" style="left:${f1(ax * d.sw - 0.5)}px;height:${f1(thread)}px"></i>`
+        + `<div class="wSp" style="top:${f1(d.chain)}px;height:${f1(d.sh)}px${d.mir ? ";transform:scaleX(-1)" : ""}">`
+        + `<i class="vHalo"></i>`
+        + `<img class="tOff" src="obj/witch-dewspider${d.S.src}.webp" alt="" draggable="false" decoding="async">`
+        + `<img class="tOn" src="obj/witch-dewspider${d.S.src}-lit.webp" alt="" draggable="false" decoding="async"></div></div>`;
+    }).join("");
     const el = document.createElement("div");
     el.className = "lights witchWeb" + (cfg.on ? " on" : "");
-    el.style.height = Math.ceil(Math.max(wh, ...drops.map((d) => d.ry + d.chain + d.sh)) + 8) + "px";
+    el.style.height = Math.ceil(Math.max(bh, sh_, ...drops.map((d) => d.chain + d.sh + 16)) + 8) + "px";
     el.innerHTML = `<div class="vIn">${webs}${html}</div>`;
     el.querySelectorAll(".vDrop").forEach((e, i) => drops[i].els.push(e));
     setTimeout(() => el.classList.add("tReady"), 1000);

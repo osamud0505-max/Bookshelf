@@ -2643,28 +2643,38 @@ html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { pad
 @keyframes tHalo { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 9% { opacity: .82; } 31% { opacity: .74; transform: translate(-50%, -50%) scale(.95); } 38% { opacity: 1; } 61% { opacity: .7; transform: translate(-50%, -50%) scale(.93); } 82% { opacity: .86; } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .lights.teaBeads .vDrop > img.tOn, .lights.teaBeads .vHalo { animation: none !important; transition: opacity .4s ease; } }
 
-/* v392 (osamu's suncatcher photo): Witch's tower lights = stained-glass corner webs under the shelf, each with a beaded spider
-   on a fine silver chain; the spider is the switch. Lit twins swap by opacity; switching on catches and settles, off fades down. */
+/* v392 (osamu's dew photos): Witch's tower lights = a big and a small dewy cobweb under each shelf, with three spiders woven of
+   dew hanging on single silk threads. The spiders are the switch. On: a cold moonlight glows inside them and they let themselves
+   down a little on their threads; off: they climb back up as the glow fades. The web's drops twinkle finely (small, never big). */
 .shelf.hasLights[data-lights="witchWeb"] .caption { padding-top: calc(var(--lights-h, 200px) - 6px); }
 .shelf[data-lights="witchWeb"] .pullCord { opacity: 0; pointer-events: none; }
 .shelf[data-lights="witchWeb"] .pullCord:focus-visible { opacity: 1; }
-html[data-bdk="witchTower"] .lights.witchWeb { margin-top: var(--wweb-top, 0px); }
 .lights.witchWeb .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
-.lights.witchWeb .wWeb { position: absolute; pointer-events: none; filter: drop-shadow(0 4px 5px rgba(0,0,0,.45)); }
-.lights.witchWeb .wWeb img { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; }
-.lights.witchWeb .wWeb .wwOn { opacity: 0; }
-.lights.witchWeb.on .wWeb .wwOn { opacity: 1; }
+.lights.witchWeb .wWeb { position: absolute; pointer-events: none; }
+.lights.witchWeb .wWeb img { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; filter: brightness(1.25); }
+.lights.witchWeb .wTw { position: absolute; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; pointer-events: none; opacity: 0;
+  background: radial-gradient(closest-side, rgba(255,255,255,.95), rgba(255,255,255,0) 60%),
+    linear-gradient(90deg, transparent 46%, rgba(235,242,255,.9) 50%, transparent 54%), linear-gradient(transparent 46%, rgba(235,242,255,.9) 50%, transparent 54%);
+  animation: wTwinkle 4.6s ease-in-out infinite; animation-delay: calc(var(--j) * -1.37s); }
+.lights.witchWeb.on .wTw { animation-duration: 3.1s; }
+@keyframes wTwinkle { 0%, 62%, 100% { opacity: 0; transform: scale(.3) rotate(0deg); } 72% { opacity: .9; transform: scale(1) rotate(20deg); } 82% { opacity: 0; transform: scale(.4) rotate(40deg); } }
 .lights.witchWeb .vDrop { position: absolute; pointer-events: none; will-change: transform; backface-visibility: hidden; }
-.lights.witchWeb .wChain { position: absolute; top: -2px; left: calc(50% - .75px); width: 1.5px;
-  background: repeating-linear-gradient(to bottom, #c4c8cf 0 1.6px, #80848d 1.6px 2.4px, #a9adb5 2.4px 3.8px, #5d6169 3.8px 4.4px); border-radius: 1px; }
-.lights.witchWeb .vDrop > img { position: absolute; left: 0; width: 100%; -webkit-user-drag: none; user-select: none; filter: drop-shadow(0 5px 5px rgba(0,0,0,.45)); }
-.lights.witchWeb .vDrop > img.tOn { filter: none; opacity: 0; }
-.lights.witchWeb.on .vDrop > img.tOn { opacity: 1; animation: tFlicker 4.3s linear infinite; animation-delay: calc(var(--i) * -1.7s); }
-.lights.witchWeb .vHalo { position: absolute; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
-  background: radial-gradient(closest-side, rgba(255,205,110,.5), rgba(255,160,70,.18) 55%, transparent); opacity: 0; }
-.lights.witchWeb.on .vHalo { opacity: 1; animation: tHalo 4.3s linear infinite; animation-delay: calc(var(--i) * -1.7s); }
-.lights.witchWeb.tReady.on .vDrop > img.tOn, .lights.witchWeb.tReady.on .wWeb .wwOn { animation: tIgnite 1.3s ease-out both, tFlicker 4.3s linear infinite; animation-delay: calc(var(--i, 0) * .2s), calc(var(--i, 0) * .2s + 1.3s); }
-.lights.witchWeb.tReady.on .vHalo { animation: tIgniteHalo 1.3s ease-out both, tHalo 4.3s linear infinite; animation-delay: calc(var(--i) * .2s), calc(var(--i) * .2s + 1.3s); }
-.lights.witchWeb.tReady:not(.on) .vDrop > img.tOn, .lights.witchWeb.tReady:not(.on) .wWeb .wwOn { animation: tDouse 1s ease-in both; }
-.lights.witchWeb.tReady:not(.on) .vHalo { animation: tDouseHalo 1s ease-in both; }
-@media (prefers-reduced-motion: reduce) { .lights.witchWeb .vDrop > img.tOn, .lights.witchWeb .vHalo, .lights.witchWeb .wwOn { animation: none !important; transition: opacity .4s ease; } }
+.lights.witchWeb .wThread { position: absolute; top: -2px; width: 1px; background: linear-gradient(rgba(225,232,245,.25), rgba(225,232,245,.6));
+  transform-origin: 50% 0; transition: transform 1.8s cubic-bezier(.45,.05,.3,1); }
+.lights.witchWeb .wSp { position: absolute; left: 0; width: 100%; transition: translate 1.8s cubic-bezier(.45,.05,.3,1); }
+.lights.witchWeb.on .wSp { translate: 0 14px; }
+.lights.witchWeb.on .wThread { transform: scaleY(calc((var(--L) + 14px) / var(--L))); }
+.lights.witchWeb .wSp img { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; }
+.lights.witchWeb .wSp .tOn { opacity: 0; }
+.lights.witchWeb .vHalo { position: absolute; left: 50%; top: 55%; width: 170%; height: 120%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(190,210,255,.28), rgba(170,190,255,.1) 55%, transparent); opacity: 0; }
+.lights.witchWeb.on .wSp .tOn { opacity: 1; animation: wBreathe 5.3s ease-in-out infinite; animation-delay: calc(var(--i) * -1.9s); }
+.lights.witchWeb.on .vHalo { opacity: 1; animation: wBreathe 5.3s ease-in-out infinite; animation-delay: calc(var(--i) * -1.9s); }
+.lights.witchWeb.tReady.on .wSp .tOn, .lights.witchWeb.tReady.on .vHalo { animation: wGlowOn 1.8s ease-out both, wBreathe 5.3s ease-in-out infinite; animation-delay: calc(var(--i) * .25s), calc(var(--i) * .25s + 1.8s); }
+.lights.witchWeb.tReady:not(.on) .wSp .tOn, .lights.witchWeb.tReady:not(.on) .vHalo { animation: wGlowOff 1.4s ease-in both; animation-delay: calc(var(--i) * .15s); }
+.lights.witchWeb.tReady .wSp, .lights.witchWeb.tReady .wThread { transition-delay: calc(var(--i) * .25s); }
+@keyframes wBreathe { 0%, 100% { opacity: 1; } 50% { opacity: .8; } }
+@keyframes wGlowOn { 0% { opacity: 0; } 30% { opacity: .35; } 45% { opacity: .25; } 100% { opacity: 1; } }
+@keyframes wGlowOff { 0% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .lights.witchWeb .wTw, .lights.witchWeb .wSp .tOn, .lights.witchWeb .vHalo { animation: none !important; }
+  .lights.witchWeb .wSp, .lights.witchWeb .wThread { transition: none; } }
