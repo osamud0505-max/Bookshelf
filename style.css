@@ -2528,7 +2528,7 @@ html[data-bdk="castleIvy"] .plank::after { display: block; content: ""; position
 html[data-bdk="castleIvy"] .caption { padding-top: min(21vw, 130px); }
 html[data-bdk="castleIvy"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
   bottom: calc(var(--top-d) * -.5); height: var(--top-d);
-  background: linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,0) 70%), url(obj/castle-slabtop.webp) 0 100% / 600px auto repeat; filter: brightness(.93); }
+  background: linear-gradient(rgba(0,0,0,.3), rgba(0,0,0,0) 55%), url(obj/castle-skull-top.webp) 0 100% / 400px 400px repeat; filter: brightness(.85); } /* v417: osamu's matching top, shade matched to the skull front's slab, same brightness */
 html[data-bdk="castleIvy"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
 html[data-bdk="castleIvy"] .track::before { display: none; }
 html[data-bdk="castleIvy"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 8px; height: 130px; pointer-events: none; z-index: -2;
