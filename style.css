@@ -2567,3 +2567,12 @@ html[data-bdk="cottageRoses"] .plank::before { display: block; content: ""; posi
   opacity: .45; mix-blend-mode: normal;
   background: url(obj/cot-rose2-garland.webp) 50% calc(36px - 1.8vw) / 100% auto no-repeat, linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,.25) 30%, rgba(0,0,0,0) 70%);
   filter: brightness(0) blur(8px); }
+
+/* v380 (osamu: a wood that goes with the forest garland): osamu's Gemini moonlit silver driftwood on the shelf top,
+   darker towards the wall and dimmed for the night scene; the garland covers the front */
+html[data-bdk="enchanted"] .shelf .plank { background: linear-gradient(rgba(4,8,20,.3), rgba(4,8,20,.3)), url(obj/forest-driftwood.webp) 0 0 / 600px auto; }
+html[data-bdk="enchanted"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d); filter: brightness(.72);
+  background: linear-gradient(rgba(4,8,20,.6), rgba(4,8,20,0) 75%), url(obj/forest-driftwood.webp) 0 100% / 600px auto repeat; }
+html[data-bdk="enchanted"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+html[data-bdk="enchanted"] .track::before { display: none; }
