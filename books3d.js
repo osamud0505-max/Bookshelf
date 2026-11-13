@@ -224,7 +224,7 @@
     const S = lipParts(), group = new THREE.Group();
     const gold = new THREE.MeshStandardMaterial({ color: "#fff6dc", map: S.goldTex, metalness: 0.9, roughness: 0.2, envMap: S.envTex, envMapIntensity: 1.6, side: THREE.DoubleSide });
     const cs = new THREE.Mesh(S.caseGeo, gold); cs.castShadow = true; cs.receiveShadow = true; group.add(cs);
-    const fs0 = group.children.length; footShadow(group, 0, 0, 2 * LIP_BASE_R, 2 * LIP_BASE_R, true); const feet = group.children.slice(fs0);
+    // v411 (osamu: two shadows, only the one falling behind is wanted): no round footprint shadow, just the real cast shadow
     // v309: the glitter is IN the bullet (osamu: "the small glitters in it to shine, not sparkles around it"). Each fleck is a
     // tiny tilted mirror fixed in the lipstick: some catch the light and glint as it turns and twinkles, most stay a soft shimmer
     const U = { uTime: { value: 0 }, uGlow: { value: 0 } };
