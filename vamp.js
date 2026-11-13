@@ -15,13 +15,6 @@
   const KN = { w: 108, h: 449, cx: 50, cy: 35 };
   const DR = { w: 212, h: 877 };
   const CL = { w: 1300, h: 584, hem: 0.347 }; // hem: the middle swag's lowest point, in cloth widths // osamu's tablecloth front (obj/vamp-cloth-front.webp)
-  // v354 (osamu: the scattered candles were horrible): osamu's Gemini picture of a whole floating-candle cluster, each
-  // candle cut out where Gemini painted it (obj/vamp-fc0-15.webp). [left, top, width, height] in cluster widths, the
-  // wick across the candle, and 1 for the soft faraway ones, which hang behind the cloth.
-  const FC = [[0.2396, 0.0376, 0.0571, 0.3696, 0.493, 0], [0.6143, 0.0486, 0.0395, 0.2951, 0.498, 0], [0.732, 0.0672, 0.0634, 0.3696, 0.579, 0], [0.3412, 0.0833, 0.035, 0.2484, 0.492, 0], [0.4343, 0.0878, 0.0341, 0.1711, 0.487, 0], [0.5723, 0.09, 0.03, 0.2061, 0.485, 0], [0.1878, 0.095, 0.0319, 0.1553, 0.484, 0], [0.0489, 0.1253, 0.0246, 0.1184, 0.5, 1], [0.5385, 0.1278, 0.0189, 0.0887, 0.5, 1], [0.9271, 0.131, 0.0253, 0.1184, 0.5, 1], [0.4763, 0.1338, 0.0483, 0.2333, 0.489, 0], [0.3097, 0.1364, 0.018, 0.0732, 0.5, 1], [0.6771, 0.1386, 0.0303, 0.1496, 0.496, 0], [0.1181, 0.1525, 0.0439, 0.196, 0.487, 0], [0.392, 0.1645, 0.0256, 0.1711, 0.49, 0], [0.845, 0.184, 0.0388, 0.1831, 0.51, 0]];
-  // the cloth's lowest point every 2.5% across it (in cloth widths, from obj/vamp-cloth-front.webp's alpha)
-  const HEM = [0.447, 0.447, 0.445, 0.442, 0.316, 0.225, 0.223, 0.218, 0.185, 0.238, 0.253, 0.261, 0.295, 0.3, 0.301, 0.31, 0.323, 0.335, 0.342, 0.347, 0.348, 0.346, 0.344, 0.338, 0.327, 0.312, 0.298, 0.29, 0.284, 0.267, 0.258, 0.249, 0.196, 0.22, 0.225, 0.244, 0.432, 0.442, 0.445, 0.447, 0.447];
-  const hemAt = (u) => { const t = Math.max(0, Math.min(40, u * 40)), i = Math.min(39, Math.floor(t)); return Math.max(HEM[i], HEM[i + 1]); };
   const reduce = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
 
   // osamu's picture (2026-11-10): the two halves of a velvet drape meet in the middle of the shelf under a gold knot
@@ -47,29 +40,14 @@
     }
     // v350 (osamu: "remove the light, I don't like it"): no hanging light under the cloth any more, just the tablecloth
     drops.length = 0;
-    const back = "";
-    // v351 (osamu's photo): floating taper candles in front of the cloth, osamu's Gemini candles, five per cloth at
-    // uneven heights, each bobbing on its own slow beat. The flames are drawn here so they can be lit and snuffed:
-    // tapping a candle is the light switch, and it wobbles a little as if nudged in the air.
-    // the cluster spans the cloth; it hangs as high as it can with every near candle's flame clear below the hem
-    let Y = 0;
-    FC.forEach(([x, y, w, h, wk, far]) => { if (!far) Y = Math.max(Y, hemAt(x + w / 2) * cell - 16 + 1.85 * w * cell + 4 - y * cell); });
-    for (let c = 0; c < n; c++) FC.forEach(([x, y, w, h, wk, far], j) => {
-      const cw = w * cell;
-      drops.push({ cx: c * cell + (x + w * wk) * cell, x: c * cell + x * cell, top: Y + y * cell, dh: h * cell, cw, wk, z: far ? 0 : (w > 0.045 ? 2 : 1), hw: Math.max(12, cw), len: 260, th: 0, om: 0, els: [], i: j, j: c * 16 + j, front: !far });
-    });
-    const front = drops.map((d) => `<div class="vCandle vz${d.z}" style="left:${f1(d.x)}px;top:${f1(d.top)}px;width:${f1(d.cw)}px;height:${f1(d.dh)}px;--j:${d.j % 11}"><div class="vBob">`
-      + `<i class="vHalo" style="width:${f1(Math.min(d.cw * 7, 100))}px;height:${f1(Math.min(d.cw * 7, 100))}px"></i>`
-      + `<i class="vFlame" style="left:${f1(d.cw * (d.wk - 0.42))}px;width:${f1(d.cw * 0.84)}px;height:${f1(d.cw * 1.75)}px"><i></i></i>`
-      + `<img src="obj/vamp-fc${d.i}.webp" alt="" draggable="false" decoding="async"></div></div>`).join("");
+    const back = "", front = "";
     const el = document.createElement("div");
     el.className = "lights vampDrapes" + (cfg.on ? " on" : "");
-    const bottom = Math.max(clH - 16, ...drops.map((d) => d.top + d.dh + 6)) + 8;
+    const bottom = clH - 16 + 8;
     el.style.height = Math.ceil(bottom) + "px";
     el.innerHTML = `<div class="vIn">${back}${front}${parts.join("")}</div>`;
     el.style.setProperty("--vcell", f1(cell) + "px"); requestAnimationFrame(() => { const sh = el.closest(".shelf"); if (sh) sh.style.setProperty("--vcell", f1(cell) + "px"); });
     const swags = [...el.querySelectorAll(".vSwag")].map((s) => ({ el: s, b: 0, bv: 0 }));
-    el.querySelectorAll(".vCandle").forEach((e, k) => { drops[k].els.push(e); });
     touch(el, drops, swags);
     return el;
   }
@@ -147,8 +125,7 @@
       return m.a[(py * m.w + px) * 4 + 3] > 60;
     });
     swags.forEach((s) => maskOf(s.el.querySelector("img").getAttribute("src")));
-    const onCandle = (x, y) => drops.find((d) => d.front && Math.abs(x - d.cx) < d.hw && y > d.top - d.hw * 1.6 && y < d.top + d.dh + 4);
-    const nearDrop = (x, y) => onCandle(x, y) || (onVelvet(x, y) ? null : drops.find((d) => !d.noTap && Math.abs(x - d.cx) < (d.hw || Math.max(14, d.dh * 0.16)) && y > d.top - 6 && y < d.top + d.dh + 4));
+    const nearDrop = (x, y) => onVelvet(x, y) ? null : drops.find((d) => !d.noTap && Math.abs(x - d.cx) < (d.hw || Math.max(14, d.dh * 0.16)) && y > d.top - 6 && y < d.top + d.dh + 4);
     el.addEventListener("pointerdown", (ev) => {
       const [x, y] = local(ev);
       down = { x, y, t: performance.now(), lx: x, lt: performance.now(), moved: false };
