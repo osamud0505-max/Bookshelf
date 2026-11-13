@@ -2603,14 +2603,18 @@ html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { pad
 .shelf[data-lights="teaBeads"] .pullCord:focus-visible { opacity: 1; }
 .lights.teaBeads .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
 .lights.teaBeads .vDrop { position: absolute; pointer-events: none; will-change: transform; backface-visibility: hidden; }
-.lights.teaBeads .vChain { position: absolute; top: 0; background: url(obj/tea-string.webp) 50% 0 / 3.2px auto repeat-y; }
+.lights.teaBeads .vChain { position: absolute; top: 0; background: url(obj/tea-cord.webp) 0 100% repeat-y; }
 .lights.teaBeads .vDrop > img { position: absolute; left: 0; width: 100%; -webkit-user-drag: none; user-select: none; filter: drop-shadow(0 6px 6px rgba(0,0,0,.45)); }
 .lights.teaBeads .vDrop > img.tOn { filter: none; opacity: 0; transition: opacity .5s ease; }
-.lights.teaBeads.on .vDrop > img.tOn { opacity: 1; }
+.lights.teaBeads.on .vDrop > img.tOn { opacity: 1; animation: tFlicker 3.7s linear infinite; animation-delay: calc(var(--i) * -.83s); }
 .lights.teaBeads .vHalo { position: absolute; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
-  background: radial-gradient(closest-side, rgba(255,150,70,.5), rgba(255,90,40,.2) 55%, transparent); opacity: 0; transition: opacity .5s ease; }
-.lights.teaBeads.on .vHalo { opacity: 1; animation: vGlow 4.8s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -1.3s); }
+  background: radial-gradient(closest-side, rgba(255,170,90,.42), rgba(255,120,50,.16) 55%, transparent); opacity: 0; transition: opacity .5s ease; }
+.lights.teaBeads.on .vHalo { opacity: 1; animation: tHalo 3.7s linear infinite; animation-delay: calc(var(--i) * -.83s); }
 .lights.teaBeads .vDrop.yank > img, .lights.teaBeads .vDrop.yank .vHalo { animation: vPull 1s ease both; }
 .lights.teaBeads.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
 .lights.teaBeads .vDrop.yank .vChain { transform-origin: 50% 0; animation: vChainPull 1s ease both; }
 @media (prefers-reduced-motion: reduce) { .lights.teaBeads.on .vHalo { animation: none; } .lights.teaBeads .vDrop.yank * { animation: none !important; } }
+/* v384: a candle in a silk lantern: the warm light breathes and flickers a little, never blinks (opacity only) */
+@keyframes tFlicker { 0% { opacity: 1; } 9% { opacity: .9; } 14% { opacity: .97; } 31% { opacity: .88; } 38% { opacity: 1; } 55% { opacity: .93; } 61% { opacity: .85; } 67% { opacity: .96; } 82% { opacity: .91; } 100% { opacity: 1; } }
+@keyframes tHalo { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 9% { opacity: .82; } 31% { opacity: .74; transform: translate(-50%, -50%) scale(.95); } 38% { opacity: 1; } 61% { opacity: .7; transform: translate(-50%, -50%) scale(.93); } 82% { opacity: .86; } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .lights.teaBeads.on .vDrop > img.tOn { animation: none; } }
