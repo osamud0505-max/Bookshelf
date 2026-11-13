@@ -229,7 +229,11 @@
     const parts = items.map((it, i) => {
       const { m, s } = it, top = rodTop - m.inner * s;
       bottom = Math.max(bottom, top + m.h * s);
-      const tips = m.hooks.map((h) => tube(it.x + h[1] * s - 0.5, (h[2] - h[1]) * s + 1)).join("");
+      // v405 (osamu: through the closet hearts the hook heads looked broken): each hook tip is covered by a clipped window
+      // onto an exact copy of the whole rod (same element, same filter, whole-pixel offsets), so the rod over the tip
+      // matches the rod beside it pixel for pixel and the hook reads as going over the rod and down behind it. The
+      // window is a little wider than the tip so the bit that wraps round the front is hidden too.
+      const tips = m.hooks.map((h) => { const l = Math.floor(it.x + h[1] * s - 1), r = Math.ceil(it.x + h[1] * s + (h[2] - h[1]) * s * 1.45 + 1); return `\u0000${l},${r - l}\u0000`; }).join("");
       const shoe = it.amp > 3;
       const inner = m.pieces.map(([f, x, y, pw, ph, px, py], j) => {
         const n = pcs.length;
@@ -248,6 +252,9 @@
       + `<img src="${railPic("rail-rod-r")}" alt="" style="left:${f1(w - inset - rw)}px;top:${f1(rodC - rod.r[2] * rs)}px;width:${f1(rw)}px;height:${f1(rod.r[1] * rs)}px"></div>`;
     // the rod sits right under the shelf: the shelf's front edge hides the brackets that hold it up, so only the rod
     // and the hooks over it show. The rail is lifted and clipped at the shelf's bottom edge, just above the rod
+    const rodWin = (l, wd) => `<div class="rodPatch" style="left:${l}px;top:0;width:${wd}px;height:${f1(rodC + rodD + 3)}px"><div class="rod" style="left:${-l}px;right:auto;width:${w}px;top:0;height:${f1(rodC + rodD)}px">`
+      + tube(inset + lw - 2, w - 2 * inset - lw - rw + 4) + `</div></div>`;
+    for (let i = 0; i < parts.length; i++) parts[i] = parts[i].replace(/\u0000(-?\d+),(\d+)\u0000/g, (_, l, wd) => rodWin(+l, +wd));
     const lift = rodTop - 2.5;
     const el = document.createElement("div");
     el.className = "lights closetRod rail on";

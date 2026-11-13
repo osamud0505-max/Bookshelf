@@ -2721,3 +2721,5 @@ html[data-bdk="closet"] .plank::before { display: block; content: ""; position: 
   background: url(obj/closet-heart-apron2.webp) 8px 10px / 59.8px 60px repeat-x;
   filter: brightness(0) blur(7px); }
 html[data-bdk="closet"] .track::before { display: none; }
+/* v405: the rod windows over the hook tips fade in over a pixel or two at their sides, so no edge shows */
+.lights.closetRod .rodPatch { -webkit-mask-image: linear-gradient(90deg, transparent, #000 2px, #000 calc(100% - 2px), transparent); mask-image: linear-gradient(90deg, transparent, #000 2px, #000 calc(100% - 2px), transparent); }
