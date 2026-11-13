@@ -589,7 +589,7 @@
       return `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - d.lw / 2)}px;top:0;width:${f1(d.lw)}px;height:${f1(d.chain + lh)}px;transform-origin:50% 0;--i:${i}">`
         + `<i class="vChain" style="left:${f1(d.lw / 2 - 1.6)}px;width:3.2px;height:${f1(sh)}px"></i>`
         + `<i class="vHalo" style="top:${f1(d.chain + lh * TL.globeMid)}px;width:${f1(d.lw * 2.4)}px;height:${f1(d.lw * 2.4)}px"></i>`
-        + `<img class="tOff" src="obj/tea-lantern-off.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}">`
+        + `<img class="tOff" src="obj/tea-lantern-off2.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}">`
         + `<img class="tOn" src="obj/tea-lantern-lit.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}"></div>`;
     }).join("");
     const el = document.createElement("div");
