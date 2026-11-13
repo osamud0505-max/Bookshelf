@@ -441,7 +441,7 @@
       });
     } catch (e) { /* no sound */ }
   }
-  const preloadCloset = () => { for (let i = 1; i <= 5; i++) { sfxBuf(`sounds/closet/dust${i}.mp3`); sfxBuf(`sounds/closet/porcelain${i}.mp3`); } sfxBuf("sounds/closet/lamp-on.mp3"); };
+  const preloadCloset = () => { for (let i = 1; i <= 5; i++) { sfxBuf(`sounds/closet/dust${i}.mp3`); sfxBuf(`sounds/closet/porcelain${i}.mp3`); } sfxBuf("sounds/closet/lamp-on2.mp3"); sfxBuf("sounds/closet/lamp-off.mp3"); };
   let lastDust = 0;
   // touching the clothes shakes a little fairy dust off them
   function hangerTick() {
@@ -580,8 +580,10 @@
       el.classList.add(out ? "twistDown" : "twistUp");
       el.classList.toggle("lit", !out);
       lipTwist(out ? 1.3 : 2.2);
-      // v420: lighting it up gets a magical bloom whose chord lands as the light comes on (1.7s in)
-      if (!out) playTake("lamp-on", 0, 0.3, 1, 0.75);
+      // v421 (osamu: the lamp's sound must move with the bullet): its notes climb in three little runs, one per twist of the
+      // bullet (timed from lipTwists over the same 2.3s), then a chord swells with the light (1.7s in, over 1.1s). Turning it
+      // off, the light's shimmer fades in 0.6s and the notes step back down with the bullet over 1.5s
+      playTake(out ? "lamp-off" : "lamp-on2", 0, out ? 0.26 : 0.3, 1);
       // v332: the bullet turns as it rises, like the 3D one: one full turn in three twists of the hand, from 72 frames. Its own light
       // comes on and goes off exactly with the lamp's light round it (on: after 1.7s, over 1.1s; off: over 0.6s), as the 3D one did
       const B = el.querySelector(".lpB2"), S = el.querySelector(".lpSheetT"), SL = el.querySelector(".lpSheetL"), RG = el.querySelectorAll(".lpRimGlow"), dur = out ? 1500 : 2300, t0 = performance.now();
