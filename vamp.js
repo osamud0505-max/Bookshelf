@@ -598,6 +598,7 @@
     el.style.height = Math.ceil(Math.max(...drops.map((d) => d.chain + d.lw * TL.h / TL.w)) + 8) + "px";
     el.innerHTML = `<div class="vIn">${html}</div>`;
     el.querySelectorAll(".vDrop").forEach((e, i) => drops[i].els.push(e));
+    setTimeout(() => el.classList.add("tReady"), 1000);
     touch(el, drops, [], { quiet: true });
     return el;
   }
