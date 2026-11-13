@@ -2395,3 +2395,8 @@ html[data-bdk="libraryStacks"] .stage::before { content: ""; position: absolute;
   bottom: calc(var(--top-d) * -.5); height: var(--top-d);
   background: linear-gradient(rgba(10,4,2,.55), rgba(10,4,2,0) 70%), url(obj/lib-woodtop.webp) 0 0 / 700px 100% repeat-x; filter: brightness(.8); }
 html[data-bdk="libraryStacks"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+/* v356 (osamu: shadow under the shelves): the library shelf and its valance cast a soft shadow down onto the bookcase
+   behind: the valance's own shape, blacked out, blurred and dropped a little, over a soft band under the whole shelf */
+html[data-bdk="libraryStacks"] .plank::before { content: ""; position: absolute; left: -10px; right: -10px; top: 6px; height: 150px; pointer-events: none; z-index: -1;
+  background: url(obj/lib-valance.webp) 10px 14px / 432px 86px repeat-x, linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.45) 50%, rgba(0,0,0,0));
+  filter: brightness(0) blur(8px); opacity: .9; }
