@@ -2656,11 +2656,10 @@ html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { pad
 .lights.witchWeb .vDrop { position: absolute; pointer-events: none; will-change: transform; backface-visibility: hidden; }
 /* v394 (osamu: the thread was too thick, not attached, not like web): a hair-thin silk line strung with tiny dew drops at uneven
    spacing (two drop rows with different periods), running right down into the spider */
-.lights.witchWeb .wThread { position: absolute; top: -2px; width: 5px; margin-left: -2px;
+.lights.witchWeb .wThread { position: absolute; width: 3px;
   background:
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,.95) 0 .6px, rgba(215,225,240,.55) .9px, transparent 1.3px) 0 2px / 5px 11px repeat-y,
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,.85) 0 .45px, rgba(215,225,240,.45) .7px, transparent 1px) 0 6px / 5px 17px repeat-y,
-    linear-gradient(90deg, transparent 2.2px, rgba(215,225,240,.38) 2.2px 2.8px, transparent 2.8px); }
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.9) 0 .45px, rgba(215,225,240,.4) .75px, transparent 1.05px) 0 3px / 3px 13px repeat-y,
+    linear-gradient(90deg, transparent 1.25px, rgba(220,228,242,.32) 1.25px 1.75px, transparent 1.75px); }
 .lights.witchWeb.on .wThread { filter: brightness(1.35); }
 .lights.witchWeb .wSp { position: absolute; left: 0; width: 100%; }
 .lights.witchWeb img.tOn { opacity: 0; }
