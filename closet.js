@@ -304,6 +304,7 @@
     return !!m.a[Math.floor(ly / p.h * m.H) * m.W + Math.floor(lx / p.w * m.W)];
   }
   function railTouch(el, inner, pcs) {
+    preloadCloset();
     el.style.pointerEvents = "auto";
     el.style.touchAction = "pan-y";
     let raf = 0, last = 0, down = null, lastSound = 0;
@@ -414,9 +415,41 @@
   const baseLights = D.lightsEl;
   D.lightsEl = (w, cfg) => (cfg && cfg.style === "closetRod" ? closetRodEl(w, cfg) : baseLights(w, cfg));
 
-  // the soft tick of a hanger on a chrome rod
   let actx = null;
-  function hangerTick(empty) {
+  // v420 (osamu): the closet's own sounds are little recordings in sounds/closet (made offline): fairy dust when clothes are
+  // touched, porcelain clinks for the shoes, and a magical bloom when the lipstick lamp lights. Each plays a random take at a
+  // slightly different speed, so no two touches sound the same; the lamp's bloom is a tune and a chord, the dust never is
+  const SFXB = {};
+  const ac = () => { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); return actx; };
+  function sfxBuf(url) {
+    if (!SFXB[url]) SFXB[url] = fetch(url).then((r) => r.arrayBuffer()).then((b) => new Promise((ok, no) => ac().decodeAudioData(b, ok, no))).catch(() => null);
+    return SFXB[url];
+  }
+  const lastTake = {};
+  function playTake(name, n, gain, rate, delay = 0) {
+    try {
+      const c = ac(); if (c.state === "suspended") c.resume();
+      const lvl = window.ShelfSfxLevel ? window.ShelfSfxLevel() : 1; if (!lvl) return;
+      let k = n > 1 ? 1 + Math.floor(Math.random() * n) : 0;
+      if (n > 1 && k === lastTake[name]) k = 1 + (k % n);
+      lastTake[name] = k;
+      sfxBuf(`sounds/closet/${name}${k || ""}.mp3`).then((buf) => {
+        if (!buf) return;
+        const src = c.createBufferSource(), g = c.createGain();
+        src.buffer = buf; src.playbackRate.value = rate; g.gain.value = gain * lvl;
+        src.connect(g).connect(c.destination); src.start(c.currentTime + delay);
+      });
+    } catch (e) { /* no sound */ }
+  }
+  const preloadCloset = () => { for (let i = 1; i <= 5; i++) { sfxBuf(`sounds/closet/dust${i}.mp3`); sfxBuf(`sounds/closet/porcelain${i}.mp3`); } sfxBuf("sounds/closet/lamp-on.mp3"); };
+  let lastDust = 0;
+  // touching the clothes shakes a little fairy dust off them
+  function hangerTick() {
+    const now = performance.now(); if (now - lastDust < 320) return; lastDust = now;
+    playTake("dust", 5, 0.2, 0.9 + Math.random() * 0.22);
+  }
+  // the old chrome-rod tick, no longer used (v420)
+  function hangerTickOld(empty) {
     try {
       actx = actx || new (window.AudioContext || window.webkitAudioContext)();
       if (actx.state === "suspended") actx.resume();
@@ -432,7 +465,9 @@
   }
 
   // a heel knocking the one beside it: a short bright clink of patent and metal, louder the harder they meet
-  function shoeClink(force) {
+  // v420 (osamu): the heels clink like porcelain
+  function shoeClink(force) { playTake("porcelain", 5, 0.26 * (0.35 + 0.65 * Math.min(1, force)), 0.93 + Math.random() * 0.15); }
+  function shoeClinkOld(force) {
     try {
       actx = actx || new (window.AudioContext || window.webkitAudioContext)();
       if (actx.state === "suspended") actx.resume();
@@ -545,6 +580,8 @@
       el.classList.add(out ? "twistDown" : "twistUp");
       el.classList.toggle("lit", !out);
       lipTwist(out ? 1.3 : 2.2);
+      // v420: lighting it up gets a magical bloom whose chord lands as the light comes on (1.7s in)
+      if (!out) playTake("lamp-on", 0, 0.3, 1, 0.75);
       // v332: the bullet turns as it rises, like the 3D one: one full turn in three twists of the hand, from 72 frames. Its own light
       // comes on and goes off exactly with the lamp's light round it (on: after 1.7s, over 1.1s; off: over 0.6s), as the 3D one did
       const B = el.querySelector(".lpB2"), S = el.querySelector(".lpSheetT"), SL = el.querySelector(".lpSheetL"), RG = el.querySelectorAll(".lpRimGlow"), dur = out ? 1500 : 2300, t0 = performance.now();

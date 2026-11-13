@@ -431,6 +431,8 @@
       ["fireworks", "Fireworks", (R) => S.fireworks(R)]],
     // a quiet room, and music playing somewhere further off: muffled, with the room's echo on it
     candle: [["bed", "Room", (R) => S.bed(R, "sounds/candle/room.mp3", 0.7)], ["music", "Music", (R) => S.bed(R, "sounds/candle/music.mp3", 0.42)]],
+    // v420: osamu's princess closet: a very distant, muffled room and their waltz, a little way off
+    closet: [["bed", "Room", (R) => S.bed(R, "sounds/closet/room.mp3", 0.6)], ["music", "Music", (R) => S.bed(R, "sounds/closet/music.mp3", 0.42)]],
     witch: [["pot", "Bubbling pot", (R) => S.bed(R, "sounds/witch/pot.mp3", 0.6)], ["music", "Music", (R) => S.bed(R, "sounds/witch/music.mp3", 0.3)],
       ["voice", "Chant", (R) => S.voices(R, ["sounds/witch/chant.mp3"], 0.6, 25000, 60000, 0.4)]],
   };
@@ -444,7 +446,7 @@
   }
 
   // evens out how loud the rooms are against each other
-  const ROOM_GAIN = { nook: 3, cottage: 1, starry: 1, forest: 1, castle: 1, library: 1.5, candle: 1, vampire: 1, victorian: 1.8, bordello: 1, academia: 1.4, loft: 1, teahouse: 0.8 };
+  const ROOM_GAIN = { nook: 3, cottage: 1, starry: 1, forest: 1, castle: 1, library: 1.5, candle: 1, vampire: 1, victorian: 1.8, bordello: 1, academia: 1.4, loft: 1, teahouse: 0.8, closet: 1 };
   // ------------------------------------------------------------------ playing the right room
   const look = () => { try { return (window.Shelf && window.Shelf.lookKey && window.Shelf.lookKey()) || ""; } catch (e) { return ""; } };
   const level = () => (pref.on && !reading ? pref.vol * (ducked ? 0.3 : 1) : 0);
