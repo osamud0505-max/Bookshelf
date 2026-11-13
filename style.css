@@ -2509,3 +2509,6 @@ html[data-bdk="damask"] .plank::before { display: block; content: ""; position: 
   opacity: .8; mix-blend-mode: normal;
   background: url(obj/goth3-arcade.webp) 10px 12px / 67.33px 80px repeat-x, linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.35) 40%, rgba(0,0,0,0) 85%);
   filter: brightness(0) blur(8px); }
+/* v374 (osamu: a light line of the old shelf showed at the back edge): the old brass top (.track::before) peeked out 1px
+   above the painted black top, so it is hidden here; the painted top covers the same band */
+html[data-bdk="damask"] .track::before { display: none; }
