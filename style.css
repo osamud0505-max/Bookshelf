@@ -2483,7 +2483,7 @@ html[data-bdk="greenDamask"] .plank::after { display: block; content: ""; positi
 html[data-bdk="greenDamask"] .caption { padding-top: 76px; }
 html[data-bdk="greenDamask"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
   bottom: calc(var(--top-d) * -.5); height: var(--top-d);
-  background: linear-gradient(rgba(10,4,2,.35), rgba(10,4,2,0) 60%), url(obj/vic3-top2.webp) 0 0 / 1060px 100% repeat-x; }
+  background: linear-gradient(rgba(10,4,2,.35), rgba(10,4,2,0) 60%), url(obj/vic3-top3.webp) 0 100% / 700px auto repeat; }
 html[data-bdk="greenDamask"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
 /* the valance's blurred, blacked-out shape is the shelf's shadow on the damask below */
 html[data-bdk="greenDamask"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 8px; height: 150px; pointer-events: none; z-index: -2;
