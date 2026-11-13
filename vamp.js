@@ -567,8 +567,43 @@
     return el;
   }
 
+  // ------------------------------------------------------------------ the tea house's beaded silk lanterns
+  // osamu's idea (2026-11-13, from their photo): embroidered silk lanterns dripping with pearls and crystals, hanging
+  // below the red lambrequin valance. One Gemini painting (lit; the unlit copy is made from it), repeated at different
+  // sizes and heights, every other one mirrored. Tapping a lantern is the light switch; a swipe sets them swaying.
+  D.LIGHT_STYLES.teaBeads = "Beaded silk lanterns";
+  const TL = { w: 240, h: 798, globeTop: 0.214, globeMid: 0.347 };
+  const TDROP = [134, 168, 146, 176, 138, 160, 150]; // how far below the shelf each lantern's silk globe starts, repeating
+  const TSIZE = [1, 0.86, 0.94, 0.8, 1.04, 0.9, 0.84];
+  function teaEl(w, cfg) {
+    const phone = w < 600, base = phone ? 52 : 58;
+    const n = Math.max(3, Math.round(w / (phone ? 98 : 120))), gap = w / n;
+    const drops = [];
+    for (let i = 0; i < n; i++) {
+      const lw = base * TSIZE[i % TSIZE.length], lh = lw * TL.h / TL.w, chain = TDROP[i % TDROP.length] * (phone ? 0.9 : 1) - lh * TL.globeTop;
+      const cx = gap * (i + 0.5) + ((i * 29) % 11) - 5;
+      drops.push({ cx, lw, chain, top: chain + lh * TL.globeTop, dh: lh * (1 - TL.globeTop), hw: lw * 0.5, len: chain + lh * TL.globeMid, th: 0, om: 0, els: [], flip: i % 2 === 1 });
+    }
+    const html = drops.map((d, i) => {
+      const lh = d.lw * TL.h / TL.w, sh = Math.max(0, d.chain + 2);
+      return `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - d.lw / 2)}px;top:0;width:${f1(d.lw)}px;height:${f1(d.chain + lh)}px;transform-origin:50% 0;--i:${i}">`
+        + `<i class="vChain" style="left:${f1(d.lw / 2 - 1.6)}px;width:3.2px;height:${f1(sh)}px"></i>`
+        + `<i class="vHalo" style="top:${f1(d.chain + lh * TL.globeMid)}px;width:${f1(d.lw * 2.4)}px;height:${f1(d.lw * 2.4)}px"></i>`
+        + `<img class="tOff" src="obj/tea-lantern-off.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}">`
+        + `<img class="tOn" src="obj/tea-lantern-lit.webp" alt="" draggable="false" decoding="async" style="top:${f1(d.chain)}px;height:${f1(lh)}px${d.flip ? ";transform:scaleX(-1)" : ""}"></div>`;
+    }).join("");
+    const el = document.createElement("div");
+    el.className = "lights teaBeads" + (cfg.on ? " on" : "");
+    el.style.height = Math.ceil(Math.max(...drops.map((d) => d.chain + d.lw * TL.h / TL.w)) + 8) + "px";
+    el.innerHTML = `<div class="vIn">${html}</div>`;
+    el.querySelectorAll(".vDrop").forEach((e, i) => drops[i].els.push(e));
+    touch(el, drops, [], { quiet: true });
+    return el;
+  }
+
   const baseLights = D.lightsEl;
-  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : cfg && cfg.style === "loftSpider" ? spiderEl(w, cfg) : cfg && cfg.style === "cabinSwags" ? cabinEl(w, cfg) : baseLights(w, cfg));
+  D.lightsEl = (w, cfg) => (cfg && cfg.style === "vampDrapes" ? drapesEl(w, cfg) : cfg && cfg.style === "cottageLotus" ? lotusEl(w, cfg) : cfg && cfg.style === "forestCatchers" ? forestEl(w, cfg) : cfg && cfg.style === "starCurtain" ? curtainEl(w, cfg) : cfg && cfg.style === "loftCages" ? loftEl(w, cfg) : cfg && cfg.style === "loftSpider" ? spiderEl(w, cfg) : cfg && cfg.style === "cabinSwags" ? cabinEl(w, cfg) : cfg && cfg.style === "teaBeads" ? teaEl(w, cfg) : baseLights(w, cfg));
+  if (D.LOOKS && D.LOOKS.teahouse) D.LOOKS.teahouse.set.lights = { style: "teaBeads", colour: "warm", on: true };
   // the vampire room hangs them under every shelf, lit
   if (D.LOOKS && D.LOOKS.vampire) D.LOOKS.vampire.set.lights = { style: "vampDrapes", colour: "warm", on: true };
   // the cottage no longer hangs its flower lamps by default (v379, rose shelf); they stay in the ✦ menu
@@ -580,5 +615,5 @@
   // the brick loft: the bamboo pole with cage lamps instead of the old globe string
   if (D.LOOKS && D.LOOKS.loft) D.LOOKS.loft.set.lights = { style: "loftSpider", colour: "warm", on: true };
   if (D.LOOKS && D.LOOKS.cabin) D.LOOKS.cabin.set.lights = { style: "cabinSwags", colour: "warm", on: true };
-  D.LIGHT_SWAP = { forest: { wisteria: "forestCatchers" }, starry: { stars: "starCurtain" }, loft: { globe: "loftSpider", loftCages: "loftSpider" }, cabin: { fairy: "cabinSwags" } };
+  D.LIGHT_SWAP = { forest: { wisteria: "forestCatchers" }, starry: { stars: "starCurtain" }, loft: { globe: "loftSpider", loftCages: "loftSpider" }, cabin: { fairy: "cabinSwags" }, teahouse: { chinese: "teaBeads" } };
 })();

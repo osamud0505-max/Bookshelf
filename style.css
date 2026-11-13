@@ -2593,4 +2593,24 @@ html[data-bdk="teaNight"] .plank::before { display: block; content: ""; position
   opacity: .75; mix-blend-mode: normal;
   background: url(obj/tea-valance.webp) 8px 12px / 66px 129.75px repeat-x, linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.3) 40%, rgba(0,0,0,0) 85%);
   filter: brightness(0) blur(8px); }
-html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption, html[data-bdk="teaNight"] .caption { padding-top: 170px; }
+html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { padding-top: 170px; }
+
+/* v382 (osamu: the tea house lights as their beaded silk lantern photo): osamu's Gemini lantern (lit; unlit copy made
+   from it) on a gold bead string, repeated at different sizes and drops, every other one mirrored. Switching only fades
+   the lit picture and its halo (filter transitions flicker on phones). Tap a lantern = switch, swipe = sway. */
+.shelf.hasLights[data-lights="teaBeads"] .caption { padding-top: calc(var(--lights-h, 200px) - 6px); }
+.shelf[data-lights="teaBeads"] .pullCord { opacity: 0; pointer-events: none; }
+.shelf[data-lights="teaBeads"] .pullCord:focus-visible { opacity: 1; }
+.lights.teaBeads .vIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.lights.teaBeads .vDrop { position: absolute; pointer-events: none; will-change: transform; backface-visibility: hidden; }
+.lights.teaBeads .vChain { position: absolute; top: 0; background: url(obj/tea-string.webp) 50% 0 / 3.2px auto repeat-y; }
+.lights.teaBeads .vDrop > img { position: absolute; left: 0; width: 100%; -webkit-user-drag: none; user-select: none; filter: drop-shadow(0 6px 6px rgba(0,0,0,.45)); }
+.lights.teaBeads .vDrop > img.tOn { filter: none; opacity: 0; transition: opacity .5s ease; }
+.lights.teaBeads.on .vDrop > img.tOn { opacity: 1; }
+.lights.teaBeads .vHalo { position: absolute; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255,150,70,.5), rgba(255,90,40,.2) 55%, transparent); opacity: 0; transition: opacity .5s ease; }
+.lights.teaBeads.on .vHalo { opacity: 1; animation: vGlow 4.8s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -1.3s); }
+.lights.teaBeads .vDrop.yank > img, .lights.teaBeads .vDrop.yank .vHalo { animation: vPull 1s ease both; }
+.lights.teaBeads.on .vDrop.yank .vHalo { animation: vPullHalo 1s ease both; }
+.lights.teaBeads .vDrop.yank .vChain { transform-origin: 50% 0; animation: vChainPull 1s ease both; }
+@media (prefers-reduced-motion: reduce) { .lights.teaBeads.on .vHalo { animation: none; } .lights.teaBeads .vDrop.yank * { animation: none !important; } }
