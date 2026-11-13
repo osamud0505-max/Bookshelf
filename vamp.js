@@ -704,7 +704,8 @@
     small: { ar: 435 / 540, tw: [[0.59, 0.245], [0.206, 0.197], [0.253, 0.223], [0.146, 0.133], [0.634, 0.408], [0.839, 0.215], [0.703, 0.376], [0.247, 0.506], [0.245, 0.575], [0.435, 0.384], [0.739, 0.439], [0.856, 0.324]] } };
   const SPTW = [[[0.536, 0.412], [0.448, 0.766], [0.554, 0.542], [0.688, 0.29], [0.749, 0.813], [0.839, 0.357]], [[0.17, 0.309], [0.384, 0.562], [0.375, 0.405], [0.636, 0.202], [0.062, 0.529], [0.46, 0.169]], [[0.438, 0.419], [0.366, 0.74], [0.855, 0.299], [0.239, 0.28], [0.757, 0.557], [0.504, 0.765]]]; // where the spiders' drops twinkle
   // spider pictures: size in css px at full size, and where the thread meets the spider (fractions of the picture)
-  const SPI = [{ src: 1, w: 77, h: 96, ax: 0.510, ay: 0.401 }, { src: 2, w: 72, h: 93.5, ax: 0.495, ay: 0.160 }, { src: 3, w: 44.5, h: 96, ax: 0.490, ay: 0.417 }];
+  // v402: ay = where the body starts right under the thread (measured on the pictures), ayM the same when mirrored
+  const SPI = [{ src: 1, w: 77, h: 96, ax: 0.510, ay: 0.421, ayM: 0.401 }, { src: 2, w: 72, h: 93.5, ax: 0.495, ay: 0.152, ayM: 0.152 }, { src: 3, w: 44.5, h: 96, ax: 0.490, ay: 0.423, ayM: 0.409 }];
   function witchEl(w, cfg) {
     const phone = w < 600, k = phone ? 0.82 : 1;
     const bw = Math.min(w * 0.7, 380), bh = bw * WEB.big.ar, sw_ = Math.min(w * 0.42, 230), sh_ = sw_ * WEB.small.ar;
@@ -726,9 +727,9 @@
       return { cx, sw, sh, S, t0: p.t0, chain, top: chain, dh: sh, hw: sw * 0.42, len: chain + sh * 0.5, th: 0, om: 0, els: [], mir: flip !== (i === 2) };
     });
     const html = drops.map((d, i) => {
-      const ax = d.mir ? 1 - d.S.ax : d.S.ax, ay = d.sh * d.S.ay;
+      const ax = d.mir ? 1 - d.S.ax : d.S.ax, ay = d.sh * (d.mir ? d.S.ayM : d.S.ay);
       return `<div class="vDrop" data-n="${i}" style="left:${f1(d.cx - ax * d.sw)}px;top:0;width:${f1(d.sw)}px;height:${f1(d.chain + d.sh)}px;transform-origin:${f1(ax * 100)}% ${f1(d.t0)}px;--i:${i}">`
-        + `<i class="wThread" style="left:${f1(ax * d.sw - 2.5)}px;top:${f1(d.t0)}px;height:${f1(d.chain - d.t0 + ay + 2)}px"></i>`
+        + `<i class="wThread" style="left:${f1(ax * d.sw - 2.5)}px;top:${f1(d.t0)}px;height:${f1(d.chain - d.t0 + ay + 1.2)}px"></i>`
         + `<div class="wSp" style="top:${f1(d.chain)}px;height:${f1(d.sh)}px${d.mir ? ";transform:scaleX(-1)" : ""}">`
         + `<img class="tOff" src="obj/witch-dewspider${d.S.src}.webp" alt="" draggable="false" decoding="async">`
         + `<img class="tOn" src="obj/witch-dewspider${d.S.src}-gem2.webp" alt="" draggable="false" decoding="async">`
