@@ -2702,3 +2702,22 @@ html[data-bdk="teaNight"] .shelf.hasLights[data-lights="chinese"] .caption { pad
 .lights.fireflies.on i { animation: drift var(--t) ease-in-out infinite alternate, fflyBlink calc(var(--t) * .8) linear infinite; animation-delay: var(--d); }
 @keyframes fflyBlink { 0%, 52% { opacity: 0; } 60% { opacity: 1; } 66% { opacity: .85; } 80% { opacity: .25; } 92%, 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { #backdrop .mote.ffly, .lights.fireflies.on i { animation: none; opacity: .6; } }
+
+/* v403 (osamu's heart shelf photo): the Princess closet shelf gets osamu's Gemini pink apron, a scalloped board with a heart
+   cut out over every scallop (one repeat, scallop dip to scallop dip, tiled "round" so whole repeats fit). Its moulded top
+   edge is the shelf's front edge; the clothes rail hangs behind it, its hooks peeking through the hearts. The matching
+   pink lacquer top is behind the books. */
+html[data-bdk="closet"] .shelf .plank { background: transparent; box-shadow: none; }
+html[data-bdk="closet"] .plank::after { display: block; content: ""; position: absolute; inset: 0 0 auto; top: 0; height: 60px; z-index: 1;
+  opacity: 1; mix-blend-mode: normal; pointer-events: none;
+  background: url(obj/closet-heart-apron2.webp) 0 0 / 59.8px 60px round no-repeat;
+  filter: drop-shadow(0 4px 4px rgba(42,4,24,.45)); }
+html[data-bdk="closet"] .stage::before { content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  bottom: calc(var(--top-d) * -.5); height: var(--top-d);
+  background: linear-gradient(rgba(60,0,30,.35), rgba(60,0,30,0) 70%), url(obj/closet-heart-top.webp) 0 100% / 500px auto repeat; }
+html[data-bdk="closet"] .shelf.is3d .stage::before { bottom: calc(var(--b3off, 0px) * -1); }
+html[data-bdk="closet"] .plank::before { display: block; content: ""; position: absolute; left: -10px; right: -10px; top: 8px; height: 110px; pointer-events: none; z-index: -2;
+  opacity: .55; mix-blend-mode: normal;
+  background: url(obj/closet-heart-apron2.webp) 8px 10px / 59.8px 60px repeat-x;
+  filter: brightness(0) blur(7px); }
+html[data-bdk="closet"] .track::before { display: none; }
