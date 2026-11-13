@@ -2355,8 +2355,8 @@ html[data-bdk="closet"] .shelf.is3d .track::before { background: linear-gradient
 .ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpSheetT { display: none; }
 .ornament[data-kind="lipstickLamp"] .lpRimGlow { opacity: 0; }
 .ornament[data-kind="lipstickLamp"].lit:not(.lpTwisting) .lpRimGlow { opacity: 1; }
-@keyframes lpGlX { to { transform: translateX(-3312px); } }
-@keyframes lpGlY { to { transform: translateY(-1488px); } }
+@keyframes lpGlX { to { transform: translateX(-1824px); } }
+@keyframes lpGlY { to { transform: translateY(-1632px); } }
 @media (prefers-reduced-motion: reduce) { .ornament[data-kind="lipstickLamp"].lit .lpSheetG, .ornament[data-kind="lipstickLamp"].lit .lpGY { animation: none; } }
 /* v338 (osamu: the cabin's snow top no longer fit the deeper 3D shelf floor): in 3D the snow's top face covers the whole 3D floor,
    from its front edge (b3off under the stage) back to the wall line, so its soft back edge sits on the wall line, not mid-floor */
