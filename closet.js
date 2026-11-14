@@ -553,8 +553,8 @@
       + `<image class="lpRimGlow" href="obj/closet-lipstick-case6backlit-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       + `<g mask="url(#${g}bm)"><g class="lpB2" style="--rest:${LIP_DROP}px"><clipPath id="${g}fc"><rect x="0" y="0" width="${LIP_FW}" height="${LIP_FH}"/></clipPath><g transform="translate(${LIP_FR[0]} ${LIP_FR[1]}) scale(${(LIP_FR[2] / LIP_FW).toFixed(5)})"><g clip-path="url(#${g}fc)">`
       + `<image class="lpSheetT" href="obj/closet-lipstick-bullet10t.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/>`
-      + `<image class="lpSheetL" href="obj/closet-lipstick-bullet10l.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none" opacity="0"/>`
-      + `<g class="lpGY"><image class="lpSheetG" href="obj/closet-lipstick-bullet10g.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/></g></g></g></g></g>`
+      + `<image class="lpSheetL" href="obj/closet-lipstick-bullet11l.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none" opacity="0"/>`
+      + `<g class="lpGY"><image class="lpSheetG" href="obj/closet-lipstick-bullet11g.webp" x="0" y="0" width="${LIP_CW * LIP_COLS}" height="${LIP_CH * 6}" preserveAspectRatio="none"/></g></g></g></g></g>`
       + `<image href="obj/closet-lipstick-case6-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`
       // v409 (osamu: the rim ring didn't look like light): lit, the chrome by the opening reflects the bullet's rose light (code-lit twins of osamu's case)
       + `<image class="lpRimGlow" href="obj/closet-lipstick-case6lit-cosy.webp" x="0" y="0" width="${LIP_VW}" height="200" preserveAspectRatio="none"/>`,
