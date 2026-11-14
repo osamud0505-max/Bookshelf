@@ -640,7 +640,8 @@ vec2 gLayer(vec3 p, float d, float sz) {
             rec.box = { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys), lean, foot: xs[ys.indexOf(Math.min(...ys))],
               depth: it.w * Math.sin(q) + it.d * Math.cos(q), zc: rec.node.position.z, lying: Math.abs(b) >= 0.98 }; }
           const cover = rec.node.userData.cover;
-          if (cover) cover.visible = it.open > 0.02;
+          // v426 (osamu: a leaning book showed a bare black side, "like there isn't a cover"): the front cover always shows, as on a real book
+          if (cover) cover.visible = true;
         }
         // objects: an unseen cut-out of each one's silhouette, standing a little back from the front of the shelf. Only the light
         // sees it, so it throws the object's real shadow onto the floor and the wall alongside the books'
