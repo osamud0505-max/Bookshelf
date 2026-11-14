@@ -482,8 +482,6 @@ vec2 gLayer(vec3 p, float d, float sz) {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera();
     const key = new THREE.DirectionalLight("#fff4e6", 1.8); key.castShadow = true;
-    // v424: 1024 map with the filter one texel wide = the same softness as 2048 with 2 texels, at a quarter of the memory per shelf
-    // (several 2048 maps per page could make a phone drop the 3D context: shelves going blank or flat)
     key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 2; // v305: finer map, same softness (osamu: stepped edges on the floor shadows) key.shadow.blurSamples = 24; key.shadow.bias = -0.0005;
     scene.add(key, key.target);
     const hemi = new THREE.HemisphereLight("#fffaf2", "#8f8577", 1.25); scene.add(hemi);
@@ -815,6 +813,57 @@ vec2 gLayer(vec3 p, float d, float sz) {
     (node.userData.mats || []).forEach((m) => { if (m.map && !texCache.has(m.map.image && m.map.image.src) && m.map !== clothTex) m.map.dispose(); m.dispose(); });
   }
 
+
+  // ---------- v427: the book on its own page (osamu: the info page still showed the old flat book) ----------
+  // the same 3D book as on the shelf, front cover towards you, turned a little so the spine shows on the left
+  function hero(box, o, turn0) {
+    const renderer = shared();
+    const pad = Math.round(o.h * 0.06), cssW = Math.round(o.w + o.d * 0.6 + pad * 2), cssH = Math.round(o.h + pad * 2);
+    const pr = Math.min(3, window.devicePixelRatio || 1);
+    const cv = document.createElement("canvas"); cv.className = "b3dHero"; cv.setAttribute("aria-hidden", "true");
+    cv.width = Math.round(cssW * pr); cv.height = Math.round(cssH * pr);
+    cv.style.cssText = `display:block;width:${cssW}px;height:${cssH}px`;
+    const ctx = cv.getContext("2d");
+    box.append(cv);
+    const scene = new THREE.Scene();
+    const fov = 18, dist = cssH / 2 / Math.tan((fov * Math.PI) / 360);
+    const camera = new THREE.PerspectiveCamera(fov, cssW / cssH, 10, dist * 3);
+    camera.position.set(0, 0, dist); camera.lookAt(0, 0, 0);
+    const key = new THREE.DirectionalLight("#fff4e6", 1.8); key.position.set(-0.6, 0.8, 1).multiplyScalar(400); scene.add(key);
+    scene.add(new THREE.HemisphereLight("#fffaf2", "#8f8577", 1.25));
+    let dead = false, raf = 0;
+    const draw = () => {
+      raf = 0; if (dead) return;
+      const r = shared(); if (r.getContext().isContextLost()) return;
+      for (const m of [node.userData.cover && node.userData.cover.material, node.userData.spine]) {
+        if (!m || !m.userData) continue;
+        const want = m.userData.ct && m.userData.ct.userData.ok ? m.userData.ct : m.userData.plain;
+        if (want && m.map !== want) { m.map = want; m.needsUpdate = true; }
+      }
+      if (cssW > bufW || cssH > bufH) { bufW = Math.max(bufW, cssW); bufH = Math.max(bufH, cssH); r.setSize(bufW, bufH, false); }
+      r.setViewport(0, 0, cssW, cssH);
+      r.render(scene, camera);
+      const rp = r.getPixelRatio(), src = r.domElement;
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(src, 0, src.height - Math.round(cssH * rp), Math.round(cssW * rp), Math.round(cssH * rp), 0, 0, cv.width, cv.height);
+    };
+    const ask = () => { if (!raf && !dead) raf = requestAnimationFrame(draw); };
+    const node = buildBook({ ...o, onTex: ask });
+    node.userData.cover.visible = true;
+    const pivot = new THREE.Group(); pivot.add(node); node.position.set(0, -o.h / 2, 0); scene.add(pivot);
+    let turn = turn0 || 0;
+    const place = () => { pivot.rotation.y = -(Math.PI / 2) * (1 - turn * 1.25); pivot.position.x = o.d * 0.25 * (1 - turn); };
+    place(); draw(); // drawn at once, so the page never shows an empty frame
+    const inst = {
+      canvas: cv, get dead() { return dead; },
+      setTurn(v) { turn = v; place(); ask(); },
+      redraw: ask,
+      dispose() { if (dead) return; dead = true; live.delete(inst); cancelAnimationFrame(raf); disposeBook(node); cv.remove(); },
+    };
+    live.add(inst); // so a lost 3D context redraws it, and it is cleared away once its page is closed
+    return inst;
+  }
+
   let sweepT = 0;
   window.Books3D = {
     ready: () => !!THREE,
@@ -827,6 +876,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
       return create(stage, opts);
     },
     // shelves that were not taken back are dropped a little later, so phones don't run out of memory
+    hero(box, o, turn) { return hero(box, o, turn); },
     sweep() { clearTimeout(sweepT); sweepT = setTimeout(() => { for (const s of [...live]) if (!s.canvas.isConnected) s.dispose(); }, 1200); },
   };
 })();
