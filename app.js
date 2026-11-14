@@ -1061,6 +1061,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
 
   // ---------------------------------------------------------------- the turning shelf
   const scrollMemory = new Map(); // section key -> front index
+  const geom3 = new Map(); // section key -> the 3D floor's depth last time, so a rebuilt shelf starts at the right size
   function shelfEl(key, books, opts = {}) {
     const root = h(`<div class="shelf">
       <div class="scroller" tabindex="0" role="group" aria-roledescription="shelf"><div class="track"><div class="stage"></div></div></div>
@@ -1078,10 +1079,12 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     root.querySelector(".stage").prepend(wallSh);
     const bookSh = [];
     // v288: real 3D books (Customize > Books > 3D); the flat books stay, invisible, as the thing you touch
-    let b3d = null, topD = 0;
+    let b3d = null, topD = 0, b3dErr = false;
     // v293 (osamu chose the 3D test shelf's feel): in 3D a tap turns a book to you in place and the others slide aside; a swipe
     // just slides the row along. Each book eases on its own, as on the test shelf.
-    const is3dMode = !!(state.settings.books3d && window.Books3D);
+    // v424 (osamu): 3D books only. The flat books stay in the page, never seen, as the thing you touch; they only show if this
+    // device can't run 3D at all
+    const is3dMode = !!(window.Books3D && !window.Books3D.failed);
     let pick = -1, anim3 = 0, follow3 = false;
     const op3 = [];
     if (is3dMode) root.classList.add("pick3d");
@@ -1102,14 +1105,16 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       pick = i; userMoved = true; follow3 = true;
       if (!anim3) anim3 = requestAnimationFrame(step3);
     }
-    if (state.settings.books3d && window.Books3D) {
-      // the flat books only hide once the 3D ones are really there; if 3D can't start on this device, the flat ones stay
+    if (is3dMode) {
+      // v424: the shelf is in 3D from its first frame (it used to show the flat books until the 3D ones were built, and its floor
+      // jumped when the 3D floor's depth arrived); the depth it had last time is put back straight away
+      root.classList.add("is3d");
+      const g3 = geom3.get(key); if (g3) { root.style.setProperty("--top-d", g3.depth); root.style.setProperty("--b3off", g3.below); }
       window.Books3D.whenReady(() => {
         try {
+          b3d = window.Books3D.create(stage, { key, tint: document.documentElement.dataset.bdk === "closet" ? "#1c0010" : "#000000" });
           window.Books3D.sweep();
-          b3d = window.Books3D.create(stage, { tint: document.documentElement.dataset.bdk === "closet" ? "#1c0010" : "#000000" });
-          root.classList.add("is3d");
-        } catch (e) { console.warn("3D books could not start", e); b3d = null; root.classList.remove("is3d"); }
+        } catch (e) { console.warn("3D books could not start", e); b3d = null; window.Books3D.failed = true; root.classList.remove("is3d"); }
         requestAnimationFrame(() => layout());
       });
     }
@@ -1601,11 +1606,14 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           if (fl) {
             const cur = root.style.getPropertyValue("--top-d"), want = fl.depth.toFixed(1) + "px";
             if (cur !== want) { root.style.setProperty("--top-d", want); root.style.setProperty("--b3off", fl.below.toFixed(1) + "px"); topD = fl.depth; }
+            geom3.set(key, { depth: want, below: fl.below.toFixed(1) + "px" });
             const nsh = { x: fl.shX, y: fl.shY };
             if (!sh3 || Math.abs(sh3.x - nsh.x) > 0.5 || Math.abs(sh3.y - nsh.y) > 0.5) { sh3 = nsh; requestAnimationFrame(() => layout()); }
           }
         }
-        catch (e) { console.warn("3D books failed", e); b3d.dispose(); b3d = null; root.classList.remove("is3d"); }
+        // v424: one bad frame used to throw the whole shelf back to the flat books until the page was rebuilt (books flashing between
+        // flat and 3D). Now the 3D shelf stays and simply tries again on the next frame
+        catch (e) { console.warn("3D frame skipped", e); if (!b3dErr) { b3dErr = true; setTimeout(() => { b3dErr = false; layout(); }, 300); } }
       }
       let n = Math.round(g); if (n < 0 || n > count - 1) n = -1; n = Math.min(n, books.length - 1);
       if (n >= 0 && lyingAt(n)) n = front; // passing over a lying book picks nothing and makes no sound
@@ -2308,11 +2316,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       });
       body.append(looks);
 
-      // v288: real 3D books, on trial next to the flat ones
-      const b3g = h(`<div class="group"><h3 class="label">Books</h3><p class="hint">3D books are real shapes with real shadows. They're new, so the flat ones stay here to switch back to.</p>
-        <div class="chips" id="b3dPick"><button data-v="0" aria-pressed="${!s.books3d}">Flat</button><button data-v="1" aria-pressed="${!!s.books3d}">3D (new)</button></div></div>`);
-      b3g.querySelectorAll("#b3dPick button").forEach((b) => (b.onclick = () => set({ books3d: b.dataset.v === "1" })));
-      body.append(b3g);
+      // v424 (osamu): books are always 3D now; the Flat / 3D switch is gone
 
       // Minimal can be tuned, quietly: a few colours, an accent, the shelf colour and the lettering
       if (current === "minimal") {
@@ -2447,15 +2451,17 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
   // Fill in summaries for seeded/older books that don't have one yet,
   // and give older books a spine colour taken from their cover's edge.
   (async () => {
+    let measured = false;
     for (const b of state.books.filter((x) => x.coverUrl && (x.edgeV || 0) < 2)) {
       const m = await measureCover(b.coverUrl);
       if (!m.aspect) continue; // cover didn't load (offline?): try again next visit
       b.edgeV = 2;
       if (m.inset != null) b.edgeInset = m.inset;
       if (m.color && !b.spineManual) b.spineColor = m.color;
-      render();
-      save(true);
+      measured = true;
     }
+    // v424: one rebuild after all covers are measured (it rebuilt every shelf once per book)
+    if (measured) { render(); save(true); }
     for (const b of state.books.filter((x) => !x.summary && !x.summaryTried)) {
       const s = await findSummary(b);
       b.summaryTried = true;

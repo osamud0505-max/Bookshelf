@@ -104,11 +104,11 @@
       if (j < N) { const q = j * 2; idx.push(q, q + 2, q + 1, q + 1, q + 2, q + 3); }
     }
     const sg = new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); sg.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2)); sg.setIndex(idx); sg.computeVertexNormals();
-    let spineMap = null;
-    if (o.spineUrl) spineMap = urlTex(o.spineUrl, o.onTex);
-    else spineMap = titleTex(o);
-    const spineMat = new THREE.MeshStandardMaterial({ map: spineMap, roughness: o.glossy ? 0.4 : 0.8, color: "#ffffff" });
-    mats.push(spineMat);
+    // v424: a painted spine still loading (or one that failed) showed as a black spine; the title spine stands in until it is ready
+    const spinePlain = titleTex(o), spineUt = o.spineUrl ? urlTex(o.spineUrl, o.onTex) : null;
+    const spineMat = new THREE.MeshStandardMaterial({ map: spineUt && spineUt.userData.ok ? spineUt : spinePlain, roughness: o.glossy ? 0.4 : 0.8, color: "#ffffff" });
+    spineMat.userData = { plain: spinePlain, ct: spineUt };
+    mats.push(spineMat); g.userData.spine = spineMat;
     const spineMesh = new THREE.Mesh(sg, spineMat); spineMesh.receiveShadow = true; g.add(spineMesh);
 
     // the front cover, on the board that turns towards you: the cover picture, or until it loads (or if its site won't share it)
@@ -117,7 +117,7 @@
       const plain = plainCover(o);
       const ct = o.coverUrl ? urlTex(o.coverUrl, o.onTex) : null;
       const cw = w - bulge - 0.5;
-      const cm = new THREE.MeshStandardMaterial({ map: plain, roughness: o.glossy ? 0.35 : 0.75 });
+      const cm = new THREE.MeshStandardMaterial({ map: ct && ct.userData.ok ? ct : plain, roughness: o.glossy ? 0.35 : 0.75 });
       cm.userData = { plain, ct }; mats.push(cm);
       const cover = new THREE.Mesh(new THREE.PlaneGeometry(cw, h - 0.6), cm);
       cover.rotation.y = Math.PI / 2; cover.position.set(d / 2 + bev + 0.45, h / 2, -w / 2 + cw / 2);
@@ -431,7 +431,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
     g.fillStyle = gr; g.fillRect(0, 0, N, N);
     poolT = new THREE.CanvasTexture(c); return poolT;
   }
-  let sharedR = null;
+  let sharedR = null, bufW = 0, bufH = 0;
   // v299: three's PCF takes 17 on/off samples spread 4 texels apart, which drew the soft edge as visible steps (osamu: "a bit
   // pixelated"). This swaps it for a smooth 6x6-texel box: 49 neighbouring samples, the outer ring weighted by where the
   // point falls between texels, so the edge fades evenly however the shadow map's grid lines up with the screen.
@@ -456,6 +456,8 @@ vec2 gLayer(vec3 p, float d, float sz) {
   }
   function shared() {
     if (sharedR && !sharedR.getContext().isContextLost()) return sharedR;
+    // v424: a phone can drop the 3D context; a fresh renderer takes over and every shelf draws again with it
+    if (sharedR) { try { sharedR.dispose(); } catch (e) { /* gone */ } sharedR = null; bufW = bufH = 0; setTimeout(() => live.forEach((s) => s.redraw()), 0); }
     smoothPCF();
     const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: false, powerPreference: "high-performance" });
     r.setPixelRatio(Math.min(3, window.devicePixelRatio || 1)); // v318: full phone sharpness (osamu: blurry)
@@ -469,7 +471,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
   function create(stage, opts = {}) {
     // every shelf draws through ONE shared WebGL renderer and copies the picture into its own plain canvas: phones only allow a
     // few WebGL canvases, and with one per shelf the extra shelves went blank
-    const renderer = shared();
+    shared();
     const cv = document.createElement("canvas"); cv.className = "b3d"; cv.setAttribute("aria-hidden", "true");
     const ctx = cv.getContext("2d");
     stage.prepend(cv);
@@ -480,6 +482,8 @@ vec2 gLayer(vec3 p, float d, float sz) {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera();
     const key = new THREE.DirectionalLight("#fff4e6", 1.8); key.castShadow = true;
+    // v424: 1024 map with the filter one texel wide = the same softness as 2048 with 2 texels, at a quarter of the memory per shelf
+    // (several 2048 maps per page could make a phone drop the 3D context: shelves going blank or flat)
     key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 2; // v305: finer map, same softness (osamu: stepped edges on the floor shadows) key.shadow.blurSamples = 24; key.shadow.bias = -0.0005;
     scene.add(key, key.target);
     const hemi = new THREE.HemisphereLight("#fffaf2", "#8f8577", 1.25); scene.add(hemi);
@@ -568,6 +572,14 @@ vec2 gLayer(vec3 p, float d, float sz) {
       const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; if (rec.fs.material.map) rec.fs.material.map.dispose(); rec.fs.material.map = t; rec.fs.material.alphaMap = null; rec.fs.material.needsUpdate = true;
       rec.fs.scale.set(x1 - x0, front - back, 1); rec.fs.position.set((x0 + x1) / 2, 0.3, (front + back) / 2); rec.fs.visible = ob.visible !== false;
     }
+    // a cover or painted spine that has loaded replaces its stand-in on the next frame
+    function swapMaps() {
+      for (const rec of books.values()) for (const m of [rec.node.userData.cover && rec.node.userData.cover.material, rec.node.userData.spine]) {
+        if (!m || !m.userData) continue;
+        const want = m.userData.ct && m.userData.ct.userData.ok ? m.userData.ct : m.userData.plain;
+        if (want && m.map !== want) { m.map = want; m.needsUpdate = true; }
+      }
+    }
     const objs = new Map(); // object id -> { mesh, tex, depth, img }
     let dead = false, W = 0, Hc = 0, top = 0, bottom = 0, frameDirty = false;
     const inst = {
@@ -628,11 +640,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
             rec.box = { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys), lean, foot: xs[ys.indexOf(Math.min(...ys))],
               depth: it.w * Math.sin(q) + it.d * Math.cos(q), zc: rec.node.position.z, lying: Math.abs(b) >= 0.98 }; }
           const cover = rec.node.userData.cover;
-          if (cover) {
-            const m = cover.material, want = m.userData.ct && m.userData.ct.userData.ok ? m.userData.ct : m.userData.plain;
-            if (m.map !== want) { m.map = want; m.needsUpdate = true; }
-            cover.visible = it.open > 0.02;
-          }
+          if (cover) cover.visible = it.open > 0.02;
         }
         // objects: an unseen cut-out of each one's silhouette, standing a little back from the front of the shelf. Only the light
         // sees it, so it throws the object's real shadow onto the floor and the wall alongside the books'
@@ -768,15 +776,25 @@ vec2 gLayer(vec3 p, float d, float sz) {
       },
       render() {
         if (dead || !frameDirty || !W || !onScreen) return;
-        frameDirty = false;
+        const renderer = shared();
         if (renderer.getContext().isContextLost()) return;
-        renderer.setSize(W, Hc, false);
+        frameDirty = false;
+        swapMaps();
+        // v424: the shared drawing buffer used to be resized to each shelf in turn on every frame (a new GPU buffer each time,
+        // stutters and dropped frames on phones). It now only grows, and each shelf draws into its lower left corner
+        if (W > bufW || Hc > bufH) { bufW = Math.max(bufW, W); bufH = Math.max(bufH, Hc); renderer.setSize(bufW, bufH, false); }
+        renderer.setViewport(0, 0, W, Hc);
         renderer.shadowMap.autoUpdate = !skipShadows; renderer.shadowMap.needsUpdate = !skipShadows;
         renderer.render(scene, camera);
         renderer.shadowMap.autoUpdate = true;
+        const rp = renderer.getPixelRatio(), src = renderer.domElement;
         ctx.clearRect(0, 0, cv.width, cv.height);
-        ctx.drawImage(renderer.domElement, 0, 0, cv.width, cv.height);
+        ctx.drawImage(src, 0, src.height - Math.round(Hc * rp), Math.round(W * rp), Math.round(Hc * rp), 0, 0, cv.width, cv.height);
       },
+      // the page was rebuilt: the same shelf's scene moves into the new shelf, keeping its picture, textures and shadows
+      adopt(stage2) { stage2.prepend(cv); onScreen = true; io.observe(cv); frameDirty = true; },
+      redraw() { frameDirty = true; inst.render(); },
+      key: opts.key, tint,
       dispose() {
         if (dead) return; dead = true; live.delete(inst);
         for (const rec of books.values()) disposeBook(rec.node);
@@ -796,11 +814,18 @@ vec2 gLayer(vec3 p, float d, float sz) {
     (node.userData.mats || []).forEach((m) => { if (m.map && !texCache.has(m.map.image && m.map.image.src) && m.map !== clothTex) m.map.dispose(); m.dispose(); });
   }
 
+  let sweepT = 0;
   window.Books3D = {
     ready: () => !!THREE,
+    failed: false,
     whenReady(f) { if (THREE) f(); else waiting.push(f); },
-    create: (stage, opts) => create(stage, opts),
-    // shelves rebuilt by the app: drop the ones whose canvas has left the page, so phones don't run out of WebGL slots
-    sweep() { for (const s of [...live]) if (!s.canvas.isConnected) s.dispose(); },
+    // v424: when the page is rebuilt, a shelf takes back its own 3D scene instead of building a new one (a new one showed the
+    // flat books for a moment, reloaded every texture and redrew the shadows from nothing)
+    create(stage, opts = {}) {
+      if (opts.key) for (const s of live) if (s.key === opts.key && !s.canvas.isConnected && s.tint === (opts.tint || "#000000")) { s.adopt(stage); return s; }
+      return create(stage, opts);
+    },
+    // shelves that were not taken back are dropped a little later, so phones don't run out of memory
+    sweep() { clearTimeout(sweepT); sweepT = setTimeout(() => { for (const s of [...live]) if (!s.canvas.isConnected) s.dispose(); }, 1200); },
   };
 })();
