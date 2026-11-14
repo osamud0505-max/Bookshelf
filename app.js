@@ -1079,7 +1079,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     root.querySelector(".stage").prepend(wallSh);
     const bookSh = [];
     // v288: real 3D books (Customize > Books > 3D); the flat books stay, invisible, as the thing you touch
-    let b3d = null, topD = 0, b3dErr = false;
+    let b3d = null, topD = 0, b3dErr = false, b3dWait = false, b3dTries = 0;
     // v293 (osamu chose the 3D test shelf's feel): in 3D a tap turns a book to you in place and the others slide aside; a swipe
     // just slides the row along. Each book eases on its own, as on the test shelf.
     // v424 (osamu): 3D books only. The flat books stay in the page, never seen, as the thing you touch; they only show if this
@@ -1570,7 +1570,11 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         let dx = 0; if (r > viewW - PAD) dx = r - (viewW - PAD); if (l - dx < PAD) dx = l - PAD;
         if (Math.abs(dx) > 0.5) scroller.scrollLeft = Math.max(0, Math.min(maxOff, offset + dx));
       }
-      if (b3d) {
+      // v426: a shelf being rebuilt can have no height for a moment; a 3D frame drawn then squashed the books up into the heading
+      // and stayed that way until something else redrew the shelf. Skip that frame and try again once the shelf has its height
+      if (b3d && (!stage.isConnected || stage.clientHeight < 20)) { if (stage.isConnected && !b3dWait && b3dTries < 40) { b3dWait = true; b3dTries++; setTimeout(() => { b3dWait = false; layout(); }, 50); } }
+      else if (b3d) {
+        b3dTries = 0;
         if (!topD) topD = parseFloat(getComputedStyle(root).getPropertyValue("--top-d")) || 30;
         const items = [];
         for (let i = 0; i < books.length; i++) {
