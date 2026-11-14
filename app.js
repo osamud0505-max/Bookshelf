@@ -143,7 +143,7 @@
         const st_ = state.settings, onOther = st_.lookKey ? st_.lookKey !== "minimal" : !!(st_.backdrop && st_.backdrop !== "none");
         if (onOther && D && D.LOOKS && D.LOOKS.minimal) {
           const sd = Object.fromEntries(Object.entries(st_.shelfDecor || {}).map(([k, v]) => { const { lightsOn, ...rest } = v || {}; return [k, rest]; }));
-          state.settings = { ...st_, ...JSON.parse(JSON.stringify(D.LOOKS.minimal.set)), shelfDecor: sd, lookKey: "minimal" };
+          state.settings = { ...st_, ...JSON.parse(JSON.stringify(D.LOOKS.minimal.set)), shelfDecor: sd, lookKey: "minimal", lastLook: st_.lookKey || st_.lastLook || null };
         }
         return;
       }
@@ -152,6 +152,39 @@
     save();
   }
 
+
+  // v428: every picture a look needs (its wall, and the painted shelf, trims and lights its stylesheet rules name), fetched ahead
+  // of time at low priority, so picking it later only waits for what is already in the browser's cache
+  const warmed = new Set(); let warmQueue = [], warmBusy = false;
+  function lookUrls(k) {
+    const L = D.LOOKS[k] || (k.startsWith("mine:") && ((state.settings.looks || []).find((x) => "mine:" + x.id === k) || {})); if (!L || !L.set) return [];
+    const bdk = L.set.backdrop || "", urls = new Set(), re = /url\(["']?([^"')]+)["']?\)/g;
+    const B = D.BACKDROPS && D.BACKDROPS[bdk];
+    if (B && typeof B.css === "function") { try { for (const m of B.css().matchAll(re)) urls.add(new URL(m[1], location.href).href); } catch (e) { /* no picture */ } }
+    if (bdk) {
+      const tag = `data-bdk="${bdk}"`;
+      const walk = (rules, base) => { for (const r of rules) { if (r.cssRules && !r.selectorText) { walk(r.cssRules, base); continue; } if (r.selectorText && r.selectorText.includes(tag)) for (const m of r.cssText.matchAll(re)) if (!m[1].startsWith("data:")) urls.add(new URL(m[1], base).href); } };
+      for (const sh of document.styleSheets) { try { walk(sh.cssRules, sh.href || location.href); } catch (e) { /* another site's sheet */ } }
+    }
+    return [...urls].filter((u) => !/\.(mp4|webm)(\?|$)/.test(u));
+  }
+  function warmLook(k, first) {
+    if (!k || warmed.has(k)) return; warmed.add(k);
+    const list = lookUrls(k); if (first) warmQueue.unshift(...list); else warmQueue.push(...list);
+    pumpWarm();
+  }
+  function pumpWarm() {
+    if (warmBusy || !warmQueue.length) return;
+    warmBusy = true; const u = warmQueue.shift(), im = new Image();
+    try { im.fetchPriority = "low"; } catch (e) { /* older browsers */ }
+    im.onload = im.onerror = () => { warmBusy = false; setTimeout(pumpWarm, 30); };
+    im.src = u;
+  }
+  function warmLooks(current, last) {
+    const c = navigator.connection; if (c && (c.saveData || /2g/.test(c.effectiveType || ""))) return; // spare a slow or capped connection
+    if (last && last !== current) warmLook(last, true);
+    for (const k of Object.keys(D.LOOKS)) if (k !== current) warmLook(k);
+  }
   // v427 (osamu: picking a theme must open smoothly, no glitches): the page dips softly to dark, the new look is built behind
   // the veil, and the veil lifts only once its pictures are loaded and the shelves have drawn, so nothing pops in piece by piece
   function lookVeil(apply, after) {
@@ -613,6 +646,29 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       extra: { show: false, text: "", font: "sans", size: 7, pos: 8, shift: 0, spacing: 20, tcase: "upper", bold: false, color: null, soft: true },
     };
   }
+
+  // v428: the same spine layout for the 3D books: every shown line with its final font, size (at this book's height), place and colour
+  function design3d(b, hh) {
+    if (spineUrl(b)) return null; // a painted spine is a picture, not a layout
+    const dsn = b.spineDesign || autoDesign(b), ink = spineInk(b.spineColor), scale = hh / 230, parts = [];
+    for (const key of ["title", "author", "extra"]) {
+      const part = dsn[key];
+      if (!part || !part.show || !part.text || !part.text.trim()) continue;
+      const f = FONTS[part.font] || FONTS.classic;
+      parts.push({ text: part.tcase === "upper" ? part.text.toUpperCase() : part.tcase === "lower" ? part.text.toLowerCase() : part.text,
+        family: f.family, weight: part.bold ? 800 : f.weight, size: +(part.size * scale).toFixed(2), spacing: (part.spacing || 0) / 100,
+        pos: part.pos, shift: part.shift || 0, color: part.color || mix(ink, b.spineColor, part.soft ? 0.22 : 0.08) });
+    }
+    return { dir: dsn.dir, parts };
+  }
+
+  // one book's 3D description at a given size, for the book page and the spine preview
+  function book3dOpts(b, base) {
+    const D_ = dims(b, base), fk = FONTS[b.spineFont] ? b.spineFont : FONTS[state.settings.spineFont] ? state.settings.spineFont : "classic";
+    return { h: D_.h, w: D_.w, d: D_.d, color: b.spineColor, spineUrl: spineUrl(b), coverUrl: b.coverUrl || null, ink: spineInk(b.spineColor),
+      font: FONTS[fk], title: b.title, author: b.author, hard: b.binding !== "paper", glossy: b.finish === "glossy", design: design3d(b, D_.h) };
+  }
+  const can3d = () => !!(window.Books3D && window.Books3D.ready() && !window.Books3D.failed);
 
   function spineTextEl(part, dir, scale) {
     const f = FONTS[part.font] || FONTS.classic;
@@ -1620,7 +1676,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
             ox: base[i] * (isNaN(to[0]) ? 0.5 : to[0]), oy: D_.h * (isNaN(to[1]) ? 0.5 : to[1]),
             rec: parseFloat(slot.style.getPropertyValue("--rec") || 0) * 2, visible: slot.style.visibility !== "hidden",
             color: b.spineColor, spineUrl: spineUrl(b), coverUrl: b.coverUrl || null, ink: spineInk(b.spineColor), font: FONTS[fk],
-            title: b.title, author: b.author, hard: b.binding !== "paper", glossy: b.finish === "glossy" });
+            title: b.title, author: b.author, hard: b.binding !== "paper", glossy: b.finish === "glossy", design: design3d(b, D_.h) });
         }
         try {
           // the objects standing on the shelf cast real shadows too: each one's silhouette, where it stands
@@ -1975,9 +2031,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       let turnTo = null;
       if (window.Books3D && window.Books3D.ready() && !window.Books3D.failed) {
         try {
-          const D_ = dims(b, heroBase), fk = FONTS[b.spineFont] ? b.spineFont : FONTS[state.settings.spineFont] ? state.settings.spineFont : "classic";
-          const o = { h: D_.h, w: D_.w, d: D_.d, color: b.spineColor, spineUrl: spineUrl(b), coverUrl: b.coverUrl || null, ink: spineInk(b.spineColor),
-            font: FONTS[fk], title: b.title, author: b.author, hard: b.binding !== "paper", glossy: b.finish === "glossy" };
+          const o = book3dOpts(b, heroBase);
           const sig = JSON.stringify(o);
           if (!heroB3 || heroB3.dead || heroSig !== sig) { if (heroB3) heroB3.dispose(); heroB3 = window.Books3D.hero(heroBox, o, 0.16); heroSig = sig; }
           else heroBox.append(heroB3.canvas); // the page was redrawn (a rating, a note): the same book stays, no flicker
@@ -2100,7 +2154,19 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       const sDel = look.querySelector("#s-del");
       if (sDel) sDel.onclick = () => stage({ spineArt: null });
       const preview = look.querySelector(".lookPreview");
-      const drawPreview = () => preview.replaceChildren(bookEl(view(), innerWidth < 560 ? 330 : 380, 1));
+      // v428 (osamu): the spine preview is the 3D book too, turned so its spine faces you, drawn with the design being made
+      let pv3 = null;
+      const drawPreview = () => {
+        const base = innerWidth < 560 ? 330 : 380;
+        if (can3d()) {
+          try {
+            const next = window.Books3D.hero(preview, book3dOpts(view(), base), 0.78, true);
+            [...preview.children].forEach((n) => { if (n !== next.canvas) n.remove(); });
+            if (pv3) pv3.dispose(); pv3 = next; preview.classList.add("is3d"); window.Books3D.sweep(); return;
+          } catch (e) { console.warn("3D spine preview failed", e); }
+        }
+        preview.replaceChildren(bookEl(view(), base, 1));
+      };
       drawPreview();
       /** Change the spine design; the first change copies the automatic layout so nothing jumps. */
       const setDesign = (fn, redraw) => {
@@ -2350,28 +2416,35 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       const lookWrap = looks.querySelector(".looks");
       // which look is on (older saves didn't record it, so match by room and colours)
       const current = s.lookKey || (Object.entries(D.LOOKS).find(([, L]) => L.set.backdrop === s.backdrop && L.set.theme === s.theme) || [""])[0];
-      const mark = (btn, on) => { btn.setAttribute("aria-pressed", on); if (on) btn.append(h(`<span class="lookNow">✓ Current</span>`)); };
+      const mark = (btn, on, k) => {
+        btn.setAttribute("aria-pressed", on);
+        if (on) btn.append(h(`<span class="lookNow">✓ Current</span>`));
+        // v428 (osamu): the app opens on Minimal, so the look used last time is marked to find it again at a glance
+        else if (k && k === s.lastLook) btn.append(h(`<span class="lookNow lookLast">↺ Last used</span>`));
+      };
       const applyLook = (key, set_) => {
-        const patch = { ...JSON.parse(JSON.stringify(set_)), shelfDecor: clearShelfSwitches(), lookKey: key };
+        const patch = { ...JSON.parse(JSON.stringify(set_)), shelfDecor: clearShelfSwitches(), lookKey: key, ...(key !== "minimal" ? { lastLook: key } : {}) };
         if (key === current) { const m = key === "minimal" && sheet.querySelector("#minimalOpts"); if (m) m.scrollIntoView({ behavior: "smooth", block: "start" }); else closeSheet(); return; }
         if (key === "minimal") { lookVeil(() => set(patch), () => { const m = sheet.querySelector("#minimalOpts"); if (m) m.scrollIntoView({ behavior: "smooth", block: "start" }); }); return; }
         closeSheet(); lookVeil(() => set(patch));
       };
       for (const [k, L] of Object.entries(D.LOOKS)) {
         const btn = h(`<button class="lookBtn"></button>`); btn.append(lookTile(L.label, { ...DEFAULT_SETTINGS, ...L.set }));
-        mark(btn, current === k);
+        mark(btn, current === k, k);
         btn.onclick = () => applyLook(k, L.set);
+        btn.addEventListener("pointerdown", () => warmLook(k, true), { passive: true });
         lookWrap.append(btn);
       }
       (s.looks || []).forEach((L) => {
         const btn = h(`<div class="lookBtn mine"><button class="lookApply"></button><button class="lookDel" aria-label="Delete ${esc(L.name)}">✕</button></div>`);
         btn.firstElementChild.append(lookTile(L.name, { ...DEFAULT_SETTINGS, ...L.set }));
-        mark(btn, current === "mine:" + L.id);
+        mark(btn, current === "mine:" + L.id, "mine:" + L.id);
         btn.firstElementChild.onclick = () => applyLook("mine:" + L.id, L.set);
         btn.lastElementChild.onclick = () => set({ looks: s.looks.filter((x) => x !== L) });
         lookWrap.append(btn);
       });
       body.append(looks);
+      warmLooks(current, s.lastLook); // the other looks' pictures load quietly while you browse, so a switch is quick
 
       // v424 (osamu): books are always 3D now; the Flat / 3D switch is gone
 

@@ -105,7 +105,7 @@
     }
     const sg = new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); sg.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2)); sg.setIndex(idx); sg.computeVertexNormals();
     // v424: a painted spine still loading (or one that failed) showed as a black spine; the title spine stands in until it is ready
-    const spinePlain = titleTex(o), spineUt = o.spineUrl ? urlTex(o.spineUrl, o.onTex) : null;
+    const spinePlain = o.design ? designTex(o) : titleTex(o), spineUt = o.spineUrl ? urlTex(o.spineUrl, o.onTex) : null;
     const spineMat = new THREE.MeshStandardMaterial({ map: spineUt && spineUt.userData.ok ? spineUt : spinePlain, roughness: o.glossy ? 0.4 : 0.8, color: "#ffffff" });
     spineMat.userData = { plain: spinePlain, ct: spineUt };
     mats.push(spineMat); g.userData.spine = spineMat;
@@ -140,6 +140,52 @@
     if (o.author) { g.font = `500 ${Math.max(10, fs * 0.55)}px ${fam}`; g.globalAlpha = 0.85; g.fillText(o.author.toUpperCase(), W / 2, H * 0.9); }
     const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4;
     return tx;
+  }
+  // v428 (osamu): the spine as designed on the book page (Spine → Design it myself, or the automatic layout): each line of text
+  // with its own font, size, spacing, place and colour, drawn the way the flat spine drew it. Redrawn once its fonts have loaded
+  function designTex(o) {
+    const H = 1024, W = Math.max(48, Math.round((H * o.d) / o.h) * 2);
+    const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    const kx = W / o.d, ky = H / o.h; // canvas px per css px across and along the spine
+    const noise = [];
+    for (let i = 0; i < (W * H) / 60; i++) noise.push([Math.random() * W, Math.random() * H, 1 + Math.random() * 2, Math.random() * 0.07]);
+    const paint = () => {
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.fillStyle = o.color || "#555"; g.fillRect(0, 0, W, H);
+      for (const [x, y, hh, a] of noise) { g.fillStyle = `rgba(0,0,0,${a})`; g.fillRect(x, y, 1, hh); }
+      const dir = o.design.dir;
+      for (const p of o.design.parts) {
+        g.setTransform(kx, 0, 0, ky, 0, 0);
+        g.font = `${p.weight} ${p.size}px ${p.family}`;
+        try { g.letterSpacing = (p.spacing * p.size).toFixed(2) + "px"; } catch (e) { /* older browsers: no spacing */ }
+        g.fillStyle = p.color; g.textAlign = "center"; g.textBaseline = "middle";
+        const cx = o.d * (0.5 + p.shift / 100), cy = o.h * (p.pos / 100), lh = p.size * 1.1;
+        if (dir === "across") {
+          // wrapped to 88% of the spine's width, centred, like the flat spine
+          const maxW = o.d * 0.88, lines = [];
+          for (const para of p.text.split("\n")) {
+            let cur = "";
+            for (const word of para.split(" ")) { const tryL = cur ? cur + " " + word : word; if (cur && g.measureText(tryL).width > maxW) { lines.push(cur); cur = word; } else cur = tryL; }
+            lines.push(cur);
+          }
+          lines.forEach((l, i) => g.fillText(l, cx, cy + (i - (lines.length - 1) / 2) * lh));
+        } else {
+          // written down the spine (or up it), lines stacked right to left as in vertical writing
+          g.translate(cx, cy); g.rotate(dir === "up" ? -Math.PI / 2 : Math.PI / 2);
+          const lines = p.text.split("\n");
+          lines.forEach((l, i) => g.fillText(l, 0, (i - (lines.length - 1) / 2) * lh));
+        }
+      }
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      t.needsUpdate = true;
+    };
+    paint();
+    if (document.fonts && document.fonts.load) {
+      Promise.all(o.design.parts.map((p) => document.fonts.load(`${p.weight} ${Math.round(p.size)}px ${p.family}`).catch(() => {})))
+        .then(() => { paint(); o.onTex && o.onTex(); });
+    }
+    return t;
   }
   function titleTex(o) {
     const H = 512, W = Math.max(24, Math.round((H * o.d) / o.h) * 2);
@@ -613,7 +659,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
         const seen = new Set();
         for (const it of items) {
           seen.add(it.id);
-          const sig = [it.h, it.w, it.d, it.hard, it.glossy, it.color, it.spineUrl, it.coverUrl, it.title, it.ink].join("|");
+          const sig = [it.h, it.w, it.d, it.hard, it.glossy, it.color, it.spineUrl, it.coverUrl, it.title, it.ink, it.design ? JSON.stringify(it.design) : ""].join("|");
           let rec = books.get(it.id);
           if (!rec || rec.sig !== sig) {
             if (rec) { scene.remove(rec.outer); disposeBook(rec.node); }
@@ -816,9 +862,10 @@ vec2 gLayer(vec3 p, float d, float sz) {
 
   // ---------- v427: the book on its own page (osamu: the info page still showed the old flat book) ----------
   // the same 3D book as on the shelf, front cover towards you, turned a little so the spine shows on the left
-  function hero(box, o, turn0) {
+  function hero(box, o, turn0, spineView) {
     const renderer = shared();
-    const pad = Math.round(o.h * 0.06), cssW = Math.round(o.w + o.d * 0.6 + pad * 2), cssH = Math.round(o.h + pad * 2);
+    // spineView: only the spine faces you (the spine designer's narrow preview), so the picture is only as wide as the spine
+    const pad = Math.round(o.h * 0.06), cssW = spineView ? Math.round(o.d * 1.35 + pad) : Math.round(o.w + o.d * 0.6 + pad * 2), cssH = Math.round(o.h + pad * 2);
     const pr = Math.min(3, window.devicePixelRatio || 1);
     const cv = document.createElement("canvas"); cv.className = "b3dHero"; cv.setAttribute("aria-hidden", "true");
     cv.width = Math.round(cssW * pr); cv.height = Math.round(cssH * pr);
@@ -876,7 +923,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
       return create(stage, opts);
     },
     // shelves that were not taken back are dropped a little later, so phones don't run out of memory
-    hero(box, o, turn) { return hero(box, o, turn); },
+    hero(box, o, turn, spineView) { return hero(box, o, turn, spineView); },
     sweep() { clearTimeout(sweepT); sweepT = setTimeout(() => { for (const s of [...live]) if (!s.canvas.isConnected) s.dispose(); }, 1200); },
   };
 })();

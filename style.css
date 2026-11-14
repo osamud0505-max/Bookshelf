@@ -2756,3 +2756,5 @@ html[data-bdk="closet"] .track::before { display: none; }
 .lookVeil.on { opacity: 1; }
 .lookVeil.off { opacity: 0; pointer-events: none; transition: opacity .5s ease; }
 @media (prefers-reduced-motion: reduce) { .lookVeil, .lookVeil.off { transition-duration: .01s; } }
+/* v428: the look used last time (the app always opens on Minimal) */
+.lookNow.lookLast { background: rgba(255,255,255,.88); color: #18151c; }
