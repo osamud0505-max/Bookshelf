@@ -139,11 +139,44 @@
           Object.values(sd).forEach((z) => { const c = z && z.lightsBy && z.lightsBy.cottage; if (c && Array.isArray(c.styles)) c.styles = c.styles.filter((k) => k !== "cottageLotus"); if (c && c.style === "cottageLotus") c.style = c.styles && c.styles[0] || "none"; });
           state.settings.cotLampsOff = true;
         }
+        // v427 (osamu): the app always opens on the Minimal look; any other look is picked from Customize each time
+        const st_ = state.settings, onOther = st_.lookKey ? st_.lookKey !== "minimal" : !!(st_.backdrop && st_.backdrop !== "none");
+        if (onOther && D && D.LOOKS && D.LOOKS.minimal) {
+          const sd = Object.fromEntries(Object.entries(st_.shelfDecor || {}).map(([k, v]) => { const { lightsOn, ...rest } = v || {}; return [k, rest]; }));
+          state.settings = { ...st_, ...JSON.parse(JSON.stringify(D.LOOKS.minimal.set)), shelfDecor: sd, lookKey: "minimal" };
+        }
         return;
       }
     } catch (e) { console.warn("Could not read saved shelf", e); }
     state.books = SEED.map((b, i) => newBook({ ...b, id: i + 1 }));
     save();
+  }
+
+  // v427 (osamu: picking a theme must open smoothly, no glitches): the page dips softly to dark, the new look is built behind
+  // the veil, and the veil lifts only once its pictures are loaded and the shelves have drawn, so nothing pops in piece by piece
+  function lookVeil(apply, after) {
+    const v = document.createElement("div"); v.className = "lookVeil"; document.body.append(v);
+    requestAnimationFrame(() => requestAnimationFrame(() => v.classList.add("on")));
+    setTimeout(async () => {
+      try { apply(); } catch (e) { console.warn("look change failed", e); }
+      try { await lookPictures(1600); } catch {}
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 120))));
+      v.classList.remove("on"); v.classList.add("off"); setTimeout(() => v.remove(), 520);
+      if (after) after();
+    }, 220);
+  }
+  // every picture the page now uses: <img>s and CSS backgrounds (walls, painted shelves and trims, lights), loaded and decoded
+  function lookPictures(cap) {
+    const urls = new Set(), imgs = [];
+    const grab = (bg) => { if (bg && bg !== "none") for (const m of bg.matchAll(/url\(["']?([^"')]+)["']?\)/g)) if (!m[1].startsWith("data:")) urls.add(m[1]); };
+    for (const el of [document.documentElement, document.body, ...document.querySelectorAll("#backdrop, #backdrop *, .shelf, .shelf *")]) {
+      if (el.tagName === "IMG") { if (!el.complete) imgs.push(el); continue; }
+      if (el.closest && el.closest(".slot")) continue; // the flat books are only the touch layer now
+      grab(getComputedStyle(el).backgroundImage); grab(getComputedStyle(el, "::before").backgroundImage); grab(getComputedStyle(el, "::after").backgroundImage);
+    }
+    const jobs = [...urls].map((u) => { const im = new Image(); im.src = u; return im.decode().catch(() => {}); });
+    imgs.forEach((im) => jobs.push(new Promise((r) => { im.addEventListener("load", r, { once: true }); im.addEventListener("error", r, { once: true }); })));
+    return Promise.race([Promise.all(jobs), new Promise((r) => setTimeout(r, cap))]);
   }
   // ---------------------------------------------------------------- undo / redo
   // Every save remembers how things were just before, so any change (a rating, a spine colour, a deleted
@@ -1346,7 +1379,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         const top = o.el.getBoundingClientRect().top;
         ghost.classList.add("settle");
         ghost.style.transform = `translate3d(${sr.left + o.x}px,${top}px,0)`;
-        setTimeout(() => { o.el.classList.remove("placeholder"); ghost.remove(); o.el.classList.add("landed"); setTimeout(() => o.el.classList.remove("landed"), 360); }, 300);
+        setTimeout(() => { o.el.classList.remove("placeholder"); ghost.remove(); layout(); /* v427: the 3D shadow comes back once it lands (it stayed hidden until a reload) */ o.el.classList.add("landed"); setTimeout(() => o.el.classList.remove("landed"), 360); }, 300);
       }
       setTimeout(() => root.classList.remove("arranging"), 320);
     }
@@ -1928,6 +1961,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     };
     sheetGuard = () => { if (!dirty()) return true; showBar(true); bar.scrollIntoView({ block: "nearest" }); return false; };
 
+    let heroB3 = null, heroSig = "";
     const draw = () => {
       const b = view(); if (!b) return closeSheet(true);
       const scroll = sheet.scrollTop;
@@ -1936,12 +1970,30 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       const hero = h(`<header class="hero" style="--spine:${b.spineColor}">${b.coverUrl ? `<img class="backdrop" alt="" referrerpolicy="no-referrer" src="${esc(b.coverUrl)}">` : ""}<div class="heroBook"></div><div class="heading">
         <h2 class="bookTitle">${esc(b.title)}</h2><p class="bookAuthor">${esc(b.author)}</p>
         <p class="facts">${[b.year, b.pageCount ? b.pageCount + " pages" : ""].filter(Boolean).join(" · ")}</p><div class="rate"></div></div></header>`);
-      const heroBook = bookEl(b, innerWidth < 560 ? 180 : 220, 0.16);
-      hero.querySelector(".heroBook").append(heroBook);
-      hero.querySelector(".heroBook").onpointermove = (e) => {
+      // v427 (osamu): the book here is the same 3D book as on the shelf; the old flat book shows only if 3D can't run at all
+      const heroBox = hero.querySelector(".heroBook"), heroBase = innerWidth < 560 ? 180 : 220;
+      let turnTo = null;
+      if (window.Books3D && window.Books3D.ready() && !window.Books3D.failed) {
+        try {
+          const D_ = dims(b, heroBase), fk = FONTS[b.spineFont] ? b.spineFont : FONTS[state.settings.spineFont] ? state.settings.spineFont : "classic";
+          const o = { h: D_.h, w: D_.w, d: D_.d, color: b.spineColor, spineUrl: spineUrl(b), coverUrl: b.coverUrl || null, ink: spineInk(b.spineColor),
+            font: FONTS[fk], title: b.title, author: b.author, hard: b.binding !== "paper", glossy: b.finish === "glossy" };
+          const sig = JSON.stringify(o);
+          if (!heroB3 || heroB3.dead || heroSig !== sig) { if (heroB3) heroB3.dispose(); heroB3 = window.Books3D.hero(heroBox, o, 0.16); heroSig = sig; }
+          else heroBox.append(heroB3.canvas); // the page was redrawn (a rating, a note): the same book stays, no flicker
+          heroBox.classList.add("is3d"); window.Books3D.sweep(); // books from pages already closed are let go
+          const hb = heroB3; turnTo = (v) => hb.setTurn(v);
+        } catch (e) { console.warn("3D book page failed", e); turnTo = null; }
+      }
+      if (!turnTo) {
+        const heroBook = bookEl(b, heroBase, 0.16);
+        heroBox.append(heroBook);
+        turnTo = (v) => heroBook.style.setProperty("--turn", v);
+      }
+      heroBox.onpointermove = (e) => {
         if (e.pointerType !== "mouse") return;
         const r = e.currentTarget.getBoundingClientRect();
-        heroBook.style.setProperty("--turn", Math.max(0, Math.min(0.4, ((e.clientX - r.left) / r.width) * 0.4)));
+        turnTo(Math.max(0, Math.min(0.4, ((e.clientX - r.left) / r.width) * 0.4)));
       };
       hero.querySelector(".rate").append(starsEl(b.rating, (rating) => stage({ rating }), 28));
       body.append(hero);
@@ -2301,8 +2353,9 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       const mark = (btn, on) => { btn.setAttribute("aria-pressed", on); if (on) btn.append(h(`<span class="lookNow">✓ Current</span>`)); };
       const applyLook = (key, set_) => {
         const patch = { ...JSON.parse(JSON.stringify(set_)), shelfDecor: clearShelfSwitches(), lookKey: key };
-        if (key === "minimal") { set(patch); requestAnimationFrame(() => { const m = sheet.querySelector("#minimalOpts"); if (m) m.scrollIntoView({ behavior: "smooth", block: "start" }); }); return; }
-        closeSheet(); setTimeout(() => set(patch), 30);
+        if (key === current) { const m = key === "minimal" && sheet.querySelector("#minimalOpts"); if (m) m.scrollIntoView({ behavior: "smooth", block: "start" }); else closeSheet(); return; }
+        if (key === "minimal") { lookVeil(() => set(patch), () => { const m = sheet.querySelector("#minimalOpts"); if (m) m.scrollIntoView({ behavior: "smooth", block: "start" }); }); return; }
+        closeSheet(); lookVeil(() => set(patch));
       };
       for (const [k, L] of Object.entries(D.LOOKS)) {
         const btn = h(`<button class="lookBtn"></button>`); btn.append(lookTile(L.label, { ...DEFAULT_SETTINGS, ...L.set }));

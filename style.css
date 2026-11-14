@@ -2750,3 +2750,9 @@ html[data-bdk="closet"] .plank::before { display: block; content: ""; position: 
 html[data-bdk="closet"] .track::before { display: none; }
 /* v405: the rod windows over the hook tips fade in over a pixel or two at their sides, so no edge shows */
 .lights.closetRod .rodPatch { -webkit-mask-image: linear-gradient(90deg, transparent, #000 2px, #000 calc(100% - 2px), transparent); mask-image: linear-gradient(90deg, transparent, #000 2px, #000 calc(100% - 2px), transparent); }
+
+/* v427: the soft dip while a new look is put together (app.js lookVeil) */
+.lookVeil { position: fixed; inset: 0; z-index: 39; background: #0c0b0e; opacity: 0; pointer-events: auto; transition: opacity .2s ease; }
+.lookVeil.on { opacity: 1; }
+.lookVeil.off { opacity: 0; pointer-events: none; transition: opacity .5s ease; }
+@media (prefers-reduced-motion: reduce) { .lookVeil, .lookVeil.off { transition-duration: .01s; } }
