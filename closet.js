@@ -508,7 +508,7 @@
     o.draw = () => hb.replace("<image ", '<image class="shTint" ') + hb.replace("<image ", '<image class="shBlack" ').replace("herbalist4-cosy", "herbalist4k-cosy");
   }
   D.ORNAMENTS.vanityMirror = baked("Vanity mirror", "mirror", 1083, 1675, 1695, 0.85);   // osamu: "a bit smaller"
-  D.ORNAMENTS.pencilCup = painted("Pencil cup & lipstick", "pencilcup-small", 558, 503, 0.55, [[0.43, 0.3], [0.84, 0.16]]);
+  // v430 (osamu): the pencil cup & lipstick is gone from the app
   // v326: osamu preferred the original paintings, so the Gemini 3D-look pictures (giftboxes3, bags3) are off again
   D.ORNAMENTS.giftBoxes = painted("Gift boxes", "giftboxes2", 1067, 700, 1.3, [[0.5, 0.49]]);
   D.ORNAMENTS.shoppingBags = painted("Shopping bags", "bags2", 1198, 700, 1.3, [[0.5, 0.49]]);
@@ -785,7 +785,8 @@
   }
 
   // each closet shelf gets two of these, taking turns down the room
-  D.ORNAMENTS.pencilCup.cycle = ["pencilCup", "lipstickLamp", "shoppingBags", "handbag", "giftBoxes"];
-  D.LOOKS.closet = { label: "Princess closet", set: { theme: "closet", accent: "#f2c76b", shelfMat: "pinkLacquer", backdrop: "closet", lights: { style: "closetRod", colour: "warm", on: false }, headFont: "playfair", ornament: { kind: "pencilCup", pos: "end" } } };
+  // the empty first place is where the pencil cup stood (v430, osamu removed it), so every other object keeps its shelf
+  D.ORNAMENTS.lipstickLamp.cycle = [null, "lipstickLamp", "shoppingBags", "handbag", "giftBoxes"];
+  D.LOOKS.closet = { label: "Princess closet", set: { theme: "closet", accent: "#f2c76b", shelfMat: "pinkLacquer", backdrop: "closet", lights: { style: "closetRod", colour: "warm", on: false }, headFont: "playfair", ornament: { kind: "lipstickLamp", pos: "end" } } };
   if (D.READER_PAGES) D.READER_PAGES.closet = { bg: "#fbeef4", fg: "#3b1830" };
 })();

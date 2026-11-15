@@ -139,6 +139,9 @@
           Object.values(sd).forEach((z) => { const c = z && z.lightsBy && z.lightsBy.cottage; if (c && Array.isArray(c.styles)) c.styles = c.styles.filter((k) => k !== "cottageLotus"); if (c && c.style === "cottageLotus") c.style = c.styles && c.styles[0] || "none"; });
           state.settings.cotLampsOff = true;
         }
+        // v430: the pencil cup was removed; a saved closet that named it as its room object uses the lamp (which carries the set)
+        { const fix = (st) => { if (st && st.ornament && st.ornament.kind === "pencilCup") st.ornament = { ...st.ornament, kind: "lipstickLamp" }; };
+          fix(state.settings); (state.settings.looks || []).forEach((L) => fix(L && L.set)); }
         // v427 (osamu): the app always opens on the Minimal look; any other look is picked from Customize each time
         const st_ = state.settings, onOther = st_.lookKey ? st_.lookKey !== "minimal" : !!(st_.backdrop && st_.backdrop !== "none");
         if (onOther && D && D.LOOKS && D.LOOKS.minimal) {
@@ -844,7 +847,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     const od = D.ORNAMENTS[k];
     if (!od) return null;
     // a room with a set of objects (the closet) puts two of them on each shelf, taking turns down the room
-    if (od.cycle) return od.cycle[(idx * 2 + (kind === "auto2" ? 1 : 0)) % od.cycle.length];
+    if (od.cycle) return od.cycle[(idx * 2 + (kind === "auto2" ? 1 : 0)) % od.cycle.length] || null;
     if (kind === "auto2") return null;
     return od.alt && idx % 2 ? od.alt : k;
   }
