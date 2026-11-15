@@ -1300,7 +1300,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       return i < 0 ? books.length : i + 1;
     }
     function buildOrns() {
-      orns.forEach((o) => { o.el.remove(); if (o.sh) o.sh.remove(); });
+      orns.forEach((o) => { o.el.remove(); if (o.sh) o.sh.remove(); if (o.wg) o.wg.remove(); });
       orns = [];
       if (!books.length) return;
       items.forEach((it) => { const o = makeOrn(it); if (o) orns.push(o); });
@@ -1325,11 +1325,20 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           toggleFlame(el, !it.on);
           saveItems();
           if (b3d) requestAnimationFrame(() => b3d && layout()); // the 3D lamp light follows the switch (it fades itself)
+          if (b3d) setTimeout(() => b3d && layout(), 260); // v434: a switch that lags its tap (the pink lamp's pull chain) is caught too
         };
         armDrag(o);
         (hang ? hangLayer : stage).append(el);
         // its wall shadow: the same object, unlit, turned into a soft dark silhouette behind it
         if (!hang) { const sh = D.ornamentEl(kind, H, false); if (sh) { sh.classList.add("wsO"); sh.removeAttribute("id"); wsIn.append(sh); o.sh = sh; } }
+        // v434: a lamp or candle lights the wall behind it too (a soft wash in its colour, behind the books), following its switch
+        if (!hang && D.ORNAMENTS[kind].light) {
+          const L = D.ORNAMENTS[kind].light, od = D.ORNAMENTS[kind], ux = L.pts.reduce((a, p) => a + p[0], 0) / L.pts.length, uy = L.pts.reduce((a, p) => a + p[1], 0) / L.pts.length;
+          const wg = h(`<div class="o2Wg${L.flick ? " flick" : ""}" style="width:${el.style.width};height:${el.style.height};--c:${L.color};--lx:${(ux / od.vw * 100).toFixed(1)}%;--ly:${(uy / 2).toFixed(1)}%;--r:${Math.round(parseFloat(el.style.height) * (L.wash || 1.5))}px"></div>`);
+          wsIn.append(wg); o.wg = wg;
+          const sync = () => wg.classList.toggle("on", el.classList.contains("lit"));
+          sync(); new MutationObserver(sync).observe(el, { attributes: true, attributeFilter: ["class"] });
+        }
         return o;
     }
     // keep the stored order the same as the order on the shelf
@@ -1417,7 +1426,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       ghost.classList.remove("up", "binning");
       if (remove) {
         ghost.classList.add("vanish");
-        orns = orns.filter((x) => x !== o); o.el.remove(); if (o.sh) o.sh.remove(); sortOrns();
+        orns = orns.filter((x) => x !== o); o.el.remove(); if (o.sh) o.sh.remove(); if (o.wg) o.wg.remove(); sortOrns();
         setTimeout(() => ghost.remove(), 320);
         if (navigator.vibrate) navigator.vibrate(8);
       } else {
@@ -1426,7 +1435,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           if (!orns.includes(o)) return;
           o.el.style.pointerEvents = "none";
           const an = o.el.animate([{ opacity: 1, scale: 1 }, { opacity: 0, scale: 0.6 }], { duration: 260, easing: "ease-in" });
-          an.onfinish = () => { orns = orns.filter((x) => x !== o); o.el.remove(); if (o.sh) o.sh.remove(); sortOrns(); saveItems(); layout(); };
+          an.onfinish = () => { orns = orns.filter((x) => x !== o); o.el.remove(); if (o.sh) o.sh.remove(); if (o.wg) o.wg.remove(); sortOrns(); saveItems(); layout(); };
           if (navigator.vibrate) navigator.vibrate(8);
         });
       }
@@ -1543,6 +1552,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         if (cx == null) x += o.w;
         o.el.style.transform = `translate3d(${left.toFixed(1)}px,${(-lift).toFixed(1)}px,0)`; o.lift = lift; o.left = left;
         if (o.sh) { const so = shOff(); o.sh.style.transform = `translate3d(${(left + so.x).toFixed(1)}px,${(so.y - lift).toFixed(1)}px,0)`; }
+        if (o.wg) o.wg.style.transform = `translate3d(${left.toFixed(1)}px,${(-lift).toFixed(1)}px,0)`;
         o.el.classList.toggle("onPile", cx != null);
         // a flame leans away from the way it is being pushed, then settles
         if (o.x !== null && Math.abs(left - o.x) > 0.3 && !root.classList.contains("arranging")) {
@@ -1695,7 +1705,8 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
               o.box = { H, dx: r.left - sr.left - o.left, db: sr.bottom - r.bottom - (o.lift || 0), w: r.width, h: r.height };
             }
             objs.push({ id: o.it.id, img, x: o.left + o.box.dx, y: o.box.db + (o.lift || 0), w: o.box.w, h: o.box.h, visible: !o.el.classList.contains("placeholder"),
-              kind, hasLamp: kind === "lipstickLamp", lamp: kind === "lipstickLamp" && o.el.classList.contains("lit"), lampS: o.lampS || 1 });
+              kind, hasLamp: kind === "lipstickLamp", lamp: kind === "lipstickLamp" && o.el.classList.contains("lit"), lampS: o.lampS || 1,
+              light: D.ORNAMENTS[kind] && D.ORNAMENTS[kind].light ? { ...D.ORNAMENTS[kind].light, vw: D.ORNAMENTS[kind].vw, on: o.el.classList.contains("lit") } : null });
           }
           const fl = b3d.sync(items, { stageH: stage.clientHeight, viewW, H, topD, objs });
           // the painted shelf floor is stretched to the 3D floor's depth, so the real shadows land on it in the right place

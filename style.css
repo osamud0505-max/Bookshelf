@@ -2807,3 +2807,12 @@ html[data-bdk="closet"] .track::before { display: none; }
 @media (prefers-reduced-motion: reduce) { .ornament .o2Gl, .ornament.lit .o2Spirit, .ornament .o2Mote { animation: none !important; } }
 /* v433: the new objects have their own footprint shadow, so no extra blob under them */
 .ornament.o2::after { display: none; }
+/* v434: in 3D the lamps and candles light the real shelf (books3d), so the flat screen glow and pool go */
+.shelf.is3d .ornament.o2 .ornGlow, .shelf.is3d .ornament.o2 .ornPool { display: none !important; }
+/* v434: the wall behind a lit lamp or candle catches its light: a soft wash in its colour, behind the books, fading out to nothing */
+.o2Wg { position: absolute; left: 0; bottom: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
+.o2Wg::before { content: ""; position: absolute; left: var(--lx); top: var(--ly); width: calc(var(--r) * 2); height: calc(var(--r) * 1.7); transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 34%, transparent), color-mix(in srgb, var(--c) 14%, transparent) 45%, transparent); mix-blend-mode: screen; }
+.o2Wg.on { opacity: 1; }
+.o2Wg.flick.on { animation: o2WgFlick 3.1s ease-in-out infinite alternate; }
+@keyframes o2WgFlick { 0% { opacity: .82; } 30% { opacity: 1; } 55% { opacity: .88; } 80% { opacity: .97; } 100% { opacity: .9; } }

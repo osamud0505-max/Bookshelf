@@ -25,7 +25,7 @@
     glint(44.4, 36.8, 1.7, -0.4, 4.6) + glint(5.8, 32.6, 1.2, -2.6, 5.8) + glint(94.2, 34.8, 1.2, -3.9, 6.4) + glint(30.4, 182.4, 1.3, -1.8, 5.4) + glint(67.6, 183, 1.3, -4.4, 6.1));
 
   // ---- candles: the picture, its warm lit twin, and a live flame on every wick (tap = strike a match / blow it out)
-  const candle = (label, name, vw, scale, flames) => ({ ...base, label, scale, vw, o2c: true, img: P(name),
+  const candle = (label, name, vw, scale, flames) => ({ ...base, label, scale, vw, o2c: true, img: P(name), flames,
     draw: () => pic(name, vw) + pic(name + "-lit", vw, "litOnly o2Wax") + flames.map(([x, y, s]) => flame(x, y, s)).join("") });
   D.ORNAMENTS.o2MeltedTrio = candle("Melted pillar candles", "o2-melted-trio", 157.19, 0.68, [[47.3, 59, 0.85], [77.2, 4, 0.95], [108.9, 31, 0.85]]);
   D.ORNAMENTS.o2MeltedBlock = candle("Candles on a block", "o2-melted-block", 228.75, 0.62, [[73.3, 23, 0.8], [94.4, 4.5, 0.9], [125.6, 35, 0.8]]);
@@ -101,6 +101,19 @@
         setTimeout(() => { el.classList.remove("o2Run"); el.style.setProperty("--hgd", "0s"); void el.offsetWidth; el.classList.add("o2Run"); }, 600);
         setTimeout(() => el.classList.remove("o2Turn"), 1250);
       } };
+  }
+
+  // v434: where each light comes from (picture units) and how it lights the 3D shelf: colour, strength, flicker
+  const LIGHT = {
+    o2TulipLamp: { pts: [[37, 62]], color: "#ffb36e", power: 17000, reach: 1.9, pool: 0.55, poolW: 1.8 },
+    o2DomeLamp: { pts: [[46, 45]], color: "#f2b8ff", power: 15000, reach: 1.9, pool: 0.5, poolW: 1.8 },
+    o2PinkLamp: { pts: [[65, 40]], color: "#ffaac2", power: 16000, reach: 1.9, pool: 0.55, poolW: 2 },
+    o2GhostJar: { pts: [[54, 125]], color: "#a9d9ff", power: 3500, reach: 1.1, pool: 0.3, poolW: 1 },
+  };
+  for (const [k, o] of Object.entries(D.ORNAMENTS)) {
+    if (!o.o2) continue;
+    if (LIGHT[k]) o.light = LIGHT[k];
+    else if (o.flames) o.light = { pts: o.flames.map(([x, y]) => [x, y - 8]), color: "#ffa04d", power: 5200 + 1600 * o.flames.length, reach: 1.5, pool: 0.4, poolW: 1.2, flick: true };
   }
 
   // v433 (osamu: "they still look like they're floating"): a dark footprint hugging each base (n18/foot.py, the closet
