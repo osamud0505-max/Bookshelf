@@ -2805,3 +2805,5 @@ html[data-bdk="closet"] .track::before { display: none; }
 .ornament.o2Turn > svg { animation: o2Turn 1.2s cubic-bezier(.45,.05,.4,1); transform-origin: 50% 52%; }
 @keyframes o2Turn { 0% { transform: none; } 18% { transform: translateY(-10%) rotate(0); } 82% { transform: translateY(-10%) rotate(360deg); } 100% { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .ornament .o2Gl, .ornament.lit .o2Spirit, .ornament .o2Mote { animation: none !important; } }
+/* v433: the new objects have their own footprint shadow, so no extra blob under them */
+.ornament.o2::after { display: none; }

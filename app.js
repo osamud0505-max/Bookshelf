@@ -796,7 +796,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     masks.set(id, { img: null });
     const el = D.ornamentEl(k, H, false);
     if (!el) return null;
-    el.querySelectorAll(".ornGlow, .ornPool, .ornFlame, .litOnly, .ember, .smoke, .bakedSh").forEach((n) => n.remove());
+    el.querySelectorAll(".ornGlow, .ornPool, .ornFlame, .litOnly, .ember, .smoke, .bakedSh, .o2Foot").forEach((n) => n.remove());
     let url = svgUrlOf(el); if (!url) return null;
     let txt = decodeURIComponent(url.slice(url.indexOf(",") + 1));
     const refs = [...new Set([...txt.matchAll(/href="([^"#][^"]*)"/g)].map((x) => x[1]).filter((u) => !u.startsWith("data:")))];

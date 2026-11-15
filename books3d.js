@@ -585,7 +585,6 @@ vec2 gLayer(vec3 p, float d, float sz) {
     // edge of the shelf). It is drawn from each strip's own footing: dark under and right round the bases, soft at the sides and
     // front, and running straight back to the wall line, where the floor ends, so it stops exactly at the back edge
     const SOFT_FOOT = new Set(["giftBoxes", "shoppingBags", "lipstickLamp"]), OWN_FOOT = new Set(["lipstickLamp"]);
-    const CONTACT = (k) => typeof k === "string" && k.startsWith("o2");
     function floorShadow(rec, ob, zs, H, zw) {
       const front = -1 + H * 0.06, ext = H * 0.14, m = ob.w * 0.08, x0 = ob.x - m, x1 = ob.x + ob.w + m, back = zw;
       const key = [x0, x1, back, ...zs.map((z) => (z == null ? "n" : z.toFixed(1)))].join();
@@ -738,8 +737,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
                 P.array.set([X(xa), yb, z, X(xb), yb, z, X(xa), yt, z, X(xb), yt, z], k * 12); zs.push(onPile ? null : z);
               }
               P.needsUpdate = true; rec.mesh.geometry.computeBoundingSphere();
-              // v432 (osamu: the new objects looked like they were floating): they also get the soft footprint under their bases
-              if ((SOFT_FOOT.has(ob.kind) || CONTACT(ob.kind)) && !OWN_FOOT.has(ob.kind)) floorShadow(rec, ob, zs, H, zw);
+              if (SOFT_FOOT.has(ob.kind) && !OWN_FOOT.has(ob.kind)) floorShadow(rec, ob, zs, H, zw);
             }
             // v322: osamu went back to a picture for the gift boxes (a Gemini render that looks 3D), so the hand-built model is off;
             // the picture casts its shadow through the hidden strips like the bags. buildGiftBoxes stays in case it comes back

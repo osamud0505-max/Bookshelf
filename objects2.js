@@ -103,6 +103,16 @@
       } };
   }
 
+  // v433 (osamu: "they still look like they're floating"): a dark footprint hugging each base (n18/foot.py, the closet
+  // objects' shadowgen style), drawn under the picture; it stays in 3D and is left out of the 3D silhouette
+  const FOOT = {"o2-tulip-lamp":[-14.06,102.19,204.69],"o2-dome-lamp":[-14.06,120.31,204.69],"o2-pink-lamp":[-15.0,161.25,205.0],"o2-spider-bottle":[-17.81,144.06,205.94],"o2-witch-hat":[-23.12,229.06,207.5],"o2-ghost-jar":[-19.69,163.75,206.56],"o2-potions":[-17.81,266.25,205.94],"o2-medical":[-27.5,278.75,209.17],"o2-garlic-stake":[-45.71,399.05,214.29],"o2-grimoire":[-17.19,208.44,205.62],"o2-suitcase":[-22.19,271.56,207.19],"o2-skull-hourglass":[-19.38,128.12,206.25],"o2-goblet":[-23.12,151.25,207.5],"o2-melted-trio":[-20.31,197.81,206.56],"o2-melted-block":[-22.19,273.12,207.19],"o2-skull-candle":[-23.12,206.56,207.5],"o2-candelabra":[-15.0,122.81,205.0],"o2-ghost-candle":[-26.56,208.75,208.44]};
+  for (const o of Object.values(D.ORNAMENTS)) {
+    if (!o.o2) continue;
+    const n = o.img.slice(4, -5), f = FOOT[n]; if (!f) continue;
+    const d0 = o.draw;
+    o.draw = (g) => `<image class="o2Foot" href="obj/${n}-foot.png" x="${f[0]}" y="0" width="${f[1]}" height="${f[2]}" preserveAspectRatio="none"/>` + d0(g);
+  }
+
   // every new object: in 3D it stands on the books' foot line, like the other painted objects
   const mk = D.ornamentEl;
   D.ornamentEl = function (kind, H, lit, thumb) {
