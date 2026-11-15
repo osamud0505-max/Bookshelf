@@ -1355,7 +1355,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
           const r = el.getBoundingClientRect();
           // a copy follows the finger above everything; the real one keeps its gap in the row
           const ghost = el.cloneNode(true);
-          ghost.classList.add("ornGhost"); ghost.onclick = null;
+          ghost.classList.add("ornGhost"); ghost.onclick = null; ghost.style.scale = ghost.style.translate = ""; // the copy follows the finger at full size
           ghost.style.transform = `translate3d(${r.left}px,${r.top}px,0)`;
           document.body.append(ghost);
           try {
@@ -1435,7 +1435,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
         const top = o.el.getBoundingClientRect().top;
         ghost.classList.add("settle");
         ghost.style.transform = `translate3d(${sr.left + o.x}px,${top}px,0)`;
-        setTimeout(() => { o.el.classList.remove("placeholder"); ghost.remove(); layout(); /* v427: the 3D shadow comes back once it lands (it stayed hidden until a reload) */ o.el.classList.add("landed"); setTimeout(() => o.el.classList.remove("landed"), 360); }, 300);
+        setTimeout(() => { o.el.classList.remove("placeholder"); ghost.remove(); o.box = null; layout(); /* v427: the 3D shadow comes back once it lands (it stayed hidden until a reload) */ o.el.classList.add("landed"); setTimeout(() => o.el.classList.remove("landed"), 360); }, 300);
       }
       setTimeout(() => root.classList.remove("arranging"), 320);
     }
@@ -1692,10 +1692,21 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
               o.box = { H, dx: r.left - sr.left - o.left, db: sr.bottom - r.bottom - (o.lift || 0), w: r.width, h: r.height };
             }
             objs.push({ id: o.it.id, img, x: o.left + o.box.dx, y: o.box.db + (o.lift || 0), w: o.box.w, h: o.box.h, visible: !o.el.classList.contains("placeholder"),
-              kind, hasLamp: kind === "lipstickLamp", lamp: kind === "lipstickLamp" && o.el.classList.contains("lit") });
+              kind, hasLamp: kind === "lipstickLamp", lamp: kind === "lipstickLamp" && o.el.classList.contains("lit"), lampS: o.lampS || 1 });
           }
           const fl = b3d.sync(items, { stageH: stage.clientHeight, viewW, H, topD, objs });
           // the painted shelf floor is stretched to the 3D floor's depth, so the real shadows land on it in the right place
+          // v429 (osamu): the lipstick lamp stands a little further back: drawn smaller and higher, as perspective from the eye would
+          if (fl && fl.lampBack) {
+            const { s: ls, cx: lcx, eyeY: ley } = fl.lampBack;
+            for (const o of orns) {
+              if (o.hang || o.el.dataset.kind !== "lipstickLamp" || Math.abs((o.lampS || 1) - ls) < 0.0005) continue;
+              const ox = o.el.offsetLeft;
+              o.el.style.transformOrigin = "0 100%"; o.el.style.scale = ls.toFixed(4);
+              o.el.style.translate = `${((lcx - ox) * (1 - ls)).toFixed(2)}px ${(-ley * (1 - ls)).toFixed(2)}px`;
+              o.lampS = ls; o.box = null; requestAnimationFrame(() => layout()); // measure it again where it now stands
+            }
+          }
           if (fl) {
             const cur = root.style.getPropertyValue("--top-d"), want = fl.depth.toFixed(1) + "px";
             if (cur !== want) { root.style.setProperty("--top-d", want); root.style.setProperty("--b3off", fl.below.toFixed(1) + "px"); topD = fl.depth; }

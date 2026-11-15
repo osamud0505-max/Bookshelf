@@ -233,7 +233,7 @@
   // case stays behind it, so only its back rim and inside show through the cut, and the bullet rises in front of them. Its rim
   // sits LIP_DY lower than the model's to meet the painting
   const LIP_HYBRID = false, LIP_DY = 0, LIP_RIM_S = 149.7; // LIP_RIM_S: the painted rim's height in picture units
-  const LIP_VW = 95.3, LIP_CX = 36.6, LIP_BASE_R = 25.3, LIP_REST = 52; // v406: osamu's slim chrome Barbie case
+  const LIP_VW = 95.3, LIP_CX = 36.6, LIP_BASE_R = 25.3, LIP_REST = 52, LIP_BACK = 0.9; // LIP_BACK: how far behind the books' fronts, in base radii // v406: osamu's slim chrome Barbie case
   let lipShared = null;
   function lipParts() {
     if (lipShared) return lipShared;
@@ -655,7 +655,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
         const yTop = stageH + top, yBot = -bottom; // world y of the canvas's top and bottom edges at z = 0
         camera.projectionMatrix.makePerspective((0 - cx) * k, (viewW - cx) * k, (yTop - eyeY) * k, (yBot - eyeY) * k, n, f);
         camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
-        let maxW = 40;
+        let maxW = 40, lampBack = null;
         const seen = new Set();
         for (const it of items) {
           seen.add(it.id);
@@ -694,7 +694,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
             live.add(ob.id);
             let rec = objs.get(ob.id);
             if (!rec || rec.img !== ob.img) {
-              if (rec) { scene.remove(rec.mesh); if (rec.fs) scene.remove(rec.fs); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
+              if (rec) { scene.remove(rec.mesh); if (rec.fs) scene.remove(rec.fs); if (rec.lip) { scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.lip.contact) scene.remove(...rec.lip.contact); } if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
               const c2 = document.createElement("canvas"); c2.width = Math.max(2, Math.round(ob.w * 2)); c2.height = Math.max(2, Math.round(ob.h * 2)); c2.getContext("2d").drawImage(ob.img, 0, 0, c2.width, c2.height);
               const tex = new THREE.CanvasTexture(c2);
               // three's shadow pass takes the cut-out's picture and alpha test from the object's own material
@@ -751,10 +751,28 @@ vec2 gLayer(vec3 p, float d, float sz) {
             }
             if (ob.hasLamp) {
               if (!rec.lip) { rec.lip = buildLipstick(); scene.add(rec.lip.group); }
-              const L = rec.lip, k = ob.w / LIP_VW, on = !!ob.lamp && ob.visible !== false, now = performance.now();
+              // v429 (osamu: "move it a bit back"): the lamp stands further back than the books' fronts. The painting is drawn
+              // smaller and higher as perspective would (app.js applies lampBack), and the hidden 3D lamp that casts its shadow and
+              // carries its light stands at that same depth, under the painting
+              const L = rec.lip, sA = ob.lampS || 1, k = ob.w / (LIP_VW * sA), on = !!ob.lamp && ob.visible !== false, now = performance.now();
+              const z0 = -LIP_BASE_R * k - 1, z1 = z0 - LIP_BASE_R * k * LIP_BACK;
+              lampBack = { s: (Dc - z0) / (Dc - z1), cx, eyeY };
+              const zc = sA < 0.9999 ? z1 : z0, sxs = ob.x + LIP_CX * k * sA;
+              const lxw = cx + (sxs - cx) / sA, lyw = eyeY + (ob.y - eyeY) / sA;
               if (LIP_3D) rec.mesh.visible = false; // the model casts its own shadow
               L.group.visible = ob.visible !== false;
-              L.group.scale.setScalar(k); L.group.position.set(ob.x + LIP_CX * k, ob.y, -LIP_BASE_R * k - 1);
+              L.group.scale.setScalar(k); L.group.position.set(lxw, lyw, zc);
+              // v429 (osamu: more realistic shadows): a soft dark contact right round the base, where it meets the shelf, as the
+              // books have; the real cast shadow from the room light runs back from it
+              if (!L.contact) {
+                L.contact = [new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.34), transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false })),
+                  new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ color: tint, map: softTex(0.5), transparent: true, opacity: 0.28, depthWrite: false, toneMapped: false }))];
+                L.contact.forEach((m) => { m.rotation.x = -Math.PI / 2; m.renderOrder = 1; scene.add(m); });
+              }
+              { const Rb = LIP_BASE_R * k, [c1, c2] = L.contact;
+                c1.scale.set(Rb * 2.45, Rb * 2.3, 1); c1.position.set(lxw + Rb * 0.08, 0.32, zc + Rb * 0.12);
+                c2.scale.set(Rb * 3.6, Rb * 3.1, 1); c2.position.set(lxw + Rb * 0.45, 0.31, zc - Rb * 0.25); // the soft spread leans away from the light
+                c1.visible = c2.visible = L.group.visible; }
               if (LIP_HYBRID && !LIP_3D) {
                 // the 3D rim and bullet must land exactly on the painted case: the painting is flat on the screen, the model stands a
                 // little back, so place and size it so its rim's centre projects onto the painted rim's centre
@@ -762,7 +780,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
                 L.group.scale.setScalar(k2); L.group.position.set(cx + (sx - cx) / mg, eyeY + (sy - eyeY) / mg - 154 * k2, zc);
               }
               if (!L.pool.parent) scene.add(L.pool, L.cable);
-              const lx = ob.x + LIP_CX * k, lz = -LIP_BASE_R * k - 1, Rb = LIP_BASE_R * k;
+              const lx = lxw, lz = zc, Rb = LIP_BASE_R * k;
               L.lightMax = 26000 * (H / 100) ** 2; L.light.distance = H * 1.8;
               L.pool.scale.set(H * 2.2, (F - zw) * 1.3, 1); L.pool.position.set(lx, 0.4, (F + zw) / 2);
               // v311: the lamp's cable (osamu): out of the back of the base, along the shelf floor to the back, and down behind it
@@ -784,7 +802,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
               applyLip(rec, now); if (L.rise.tr || L.glow.tr || L.glow.v > 0.01) lampTick();
             }
           }
-          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.fs) scene.remove(rec.fs); if (rec.lip) scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
+          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.fs) scene.remove(rec.fs); if (rec.lip) { scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.lip.contact) scene.remove(...rec.lip.contact); } if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
         { const x0 = -400, x1 = viewW + 400, yt = stageH + top + 400, P = roomGeo.attributes.position;
@@ -817,7 +835,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
         inst.render();
         // where an object's shadow lands on the wall, flat on the screen: the same light, from the shelf front to the wall
         const L = new THREE.Vector3(-1.6, 3.6, 4.1), g = -zw, sc2 = Dc / (Dc + g);
-        return { below, depth, shX: ((-L.x / L.z) * g) * sc2, shY: ((L.y / L.z) * g) * sc2 };
+        return { below, depth, shX: ((-L.x / L.z) * g) * sc2, shY: ((L.y / L.z) * g) * sc2, lampBack };
       },
       render() {
         if (dead || !frameDirty || !W || !onScreen) return;
