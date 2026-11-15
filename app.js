@@ -1799,7 +1799,8 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       setDecorItems(key, items);
       // books ease aside to make room while it drops straight into its place
       const o = books.length ? makeOrn(items[items.length - 1]) : null;
-      if (o) { orns.push(o); sortOrns(); o.el.classList.add("appear"); setTimeout(() => o.el.classList.remove("appear"), 600); }
+      // v432 (osamu: new objects floated): the 3D footing was measured mid-drop and kept; measure it again once it has landed
+      if (o) { orns.push(o); sortOrns(); o.el.classList.add("appear"); setTimeout(() => { o.el.classList.remove("appear"); o.box = null; layout(); }, 600); }
       root.classList.add("arranging");
       layout();
       setTimeout(() => { if (!drag) root.classList.remove("arranging"); }, 340);
