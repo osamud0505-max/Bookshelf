@@ -2758,3 +2758,61 @@ html[data-bdk="closet"] .track::before { display: none; }
 @media (prefers-reduced-motion: reduce) { .lookVeil, .lookVeil.off { transition-duration: .01s; } }
 /* v428: the look used last time (the app always opens on Minimal) */
 .lookNow.lookLast { background: rgba(255,255,255,.88); color: #18151c; }
+
+/* v431: osamu's eighteen new painted objects (objects2.js) */
+.shelf.is3d .ornament.o2 { bottom: 0; }
+.ornament.o2 .ornGlow { top: var(--fy, 45%); }
+.ornament[data-kind="o2Hourglass"] .ornGlow, .ornament[data-kind="o2Hourglass"] .ornPool { display: none; }
+/* candles: the warm lit picture breathes with the flames */
+.ornament.o2c .o2Wax { transition: opacity .5s; }
+.ornament.o2c.lit .o2Wax { animation: o2Wax 2.3s ease-in-out infinite alternate; }
+@keyframes o2Wax { 0% { opacity: .82; } 35% { opacity: 1; } 60% { opacity: .88; } 100% { opacity: .97; } }
+/* lamps: the shade warms up like a bulb, the glow is steady (no candle flicker) */
+.ornament.o2l .litOnly { transition: opacity .7s cubic-bezier(.3,.1,.3,1); }
+.ornament.o2l.lit .ornGlow { animation: none; opacity: .9; width: 520px; height: 320px; }
+.ornament.o2l .o2Chain { transform-box: fill-box; transform-origin: 50% 0; }
+.ornament.o2Tug .o2Chain { animation: chainPull .8s cubic-bezier(.3,.6,.4,1); }
+/* glints on gems and crystals: dark most of the time, a quick sparkle now and then */
+.ornament .o2Gl { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; animation: o2Glint var(--t, 4s) ease-in-out var(--d, 0s) infinite; }
+.ornament .o2GlLit { animation-play-state: paused; visibility: hidden; }
+.ornament.lit .o2GlLit { animation-play-state: running; visibility: visible; }
+@keyframes o2Glint { 0%, 84%, 100% { opacity: 0; transform: scale(.2) rotate(0deg); } 90% { opacity: .95; transform: scale(1) rotate(20deg); } 95% { opacity: .4; transform: scale(.6) rotate(35deg); } }
+/* the grimoire's googly eyes: a damped wobble round the eye */
+.ornament .o2Pupil { transform-box: view-box; }
+.ornament.o2Wob .o2Pupil { animation: o2Wob 1.7s cubic-bezier(.25,.6,.35,1); }
+@keyframes o2Wob { 0% { transform: rotate(0); } 14% { transform: rotate(calc(var(--dir) * 170deg)); } 32% { transform: rotate(calc(var(--dir) * -95deg)); } 50% { transform: rotate(calc(var(--dir) * 55deg)); } 68% { transform: rotate(calc(var(--dir) * -26deg)); } 84% { transform: rotate(calc(var(--dir) * 10deg)); } 100% { transform: rotate(0); } }
+/* the spirit in the jar: awake it floats and glows; asleep it sinks a little and dims */
+.ornament[data-kind="o2GhostJar"] .o2Spirit { transform-box: view-box; transition: transform 1.4s ease-in-out, opacity 1.4s ease; transform: translateY(5px); opacity: .62; }
+.ornament[data-kind="o2GhostJar"].lit .o2Spirit { opacity: 1; animation: o2Float 4.6s ease-in-out infinite alternate; }
+@keyframes o2Float { 0% { transform: translateY(1.5px); } 50% { transform: translateY(-3px) rotate(-1.2deg); } 100% { transform: translateY(-1px) rotate(1deg); } }
+.ornament[data-kind="o2GhostJar"] .o2Halo { opacity: .25; transition: opacity 1.4s; }
+.ornament[data-kind="o2GhostJar"].lit .o2Halo { animation: shroomPulse 3.1s ease-in-out infinite alternate; }
+.ornament[data-kind="o2GhostJar"] .o2Mote { opacity: 0; transform-box: view-box; }
+.ornament[data-kind="o2GhostJar"].lit .o2Mote { animation: o2Mote var(--t) linear var(--d) infinite; }
+@keyframes o2Mote { 0% { opacity: 0; transform: translateY(6px); } 25% { opacity: .9; } 75% { opacity: .5; } 100% { opacity: 0; transform: translateY(-14px); } }
+/* the skull hourglass: a minute of sand; a tap turns the whole glass over */
+.ornament[data-kind="o2Hourglass"] .o2SandT, .ornament[data-kind="o2Hourglass"] .o2SandB { transform-box: view-box; }
+.ornament[data-kind="o2Hourglass"] .o2SandT { transform: translateY(99px); }
+.ornament[data-kind="o2Hourglass"] .o2SandB { transform: translateY(139px); }
+.ornament[data-kind="o2Hourglass"] .o2Stream { opacity: 0; }
+.ornament.o2Run .o2SandT { animation: o2SandT 60s cubic-bezier(.45,0,.9,.7) var(--hgd, 0s) both; }
+.ornament.o2Run .o2SandB { animation: o2SandB 60s cubic-bezier(.1,.3,.55,1) var(--hgd, 0s) both; }
+.ornament.o2Run .o2Stream { animation: o2Stream 60s linear var(--hgd, 0s) both, o2Fall .5s linear infinite; }
+@keyframes o2SandT { from { transform: translateY(64px); } to { transform: translateY(99px); } }
+@keyframes o2SandB { from { transform: translateY(162px); } to { transform: translateY(139px); } }
+@keyframes o2Stream { 0%, 99.5% { opacity: .95; } 100% { opacity: 0; } }
+@keyframes o2Fall { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -3.4; } }
+.ornament.o2Turn > svg { animation: o2Turn 1.2s cubic-bezier(.45,.05,.4,1); transform-origin: 50% 52%; }
+@keyframes o2Turn { 0% { transform: none; } 18% { transform: translateY(-10%) rotate(0); } 82% { transform: translateY(-10%) rotate(360deg); } 100% { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ornament .o2Gl, .ornament.lit .o2Spirit, .ornament .o2Mote { animation: none !important; } }
+/* v433: the new objects have their own footprint shadow, so no extra blob under them */
+.ornament.o2::after { display: none; }
+/* v434: in 3D the lamps and candles light the real shelf (books3d), so the flat screen glow and pool go */
+.shelf.is3d .ornament.o2 .ornGlow, .shelf.is3d .ornament.o2 .ornPool { display: none !important; }
+/* v434: the wall behind a lit lamp or candle catches its light: a soft wash in its colour, behind the books, fading out to nothing */
+.o2Wg { position: absolute; left: 0; bottom: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
+.o2Wg::before { content: ""; position: absolute; left: var(--lx); top: var(--ly); width: calc(var(--r) * 2); height: calc(var(--r) * 1.7); transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 34%, transparent), color-mix(in srgb, var(--c) 14%, transparent) 45%, transparent); mix-blend-mode: screen; }
+.o2Wg.on { opacity: 1; }
+.o2Wg.flick.on { animation: o2WgFlick 3.1s ease-in-out infinite alternate; }
+@keyframes o2WgFlick { 0% { opacity: .82; } 30% { opacity: 1; } 55% { opacity: .88; } 80% { opacity: .97; } 100% { opacity: .9; } }

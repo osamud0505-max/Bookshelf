@@ -569,12 +569,19 @@ vec2 gLayer(vec3 p, float d, float sz) {
       L.light.visible = g > 0.01; L.light.intensity = L.lightMax * g;
       L.pool.visible = g > 0.01; L.pool.material.opacity = 0.9 * g;
     }
+    function applyLt(R, now) {
+      tween(R.g, now);
+      // a candle's light breathes and wavers a little, never pulses evenly
+      const t = now / 1000 + R.seed, f = R.flick ? 0.9 + 0.06 * Math.sin(t * 7.3) + 0.04 * Math.sin(t * 13.1 + 1.7) + 0.03 * Math.sin(t * 2.1) : 1;
+      R.light.intensity = R.max * R.g.v * f; R.pool.material.opacity = R.poolMax * R.g.v * f;
+    }
     let lampRaf = 0, lampLast = 0;
     function lampTick() {
       if (lampRaf || dead) return;
       lampRaf = requestAnimationFrame((ts) => {
         lampRaf = 0; let moving = false, twinkling = false; const now = performance.now();
         for (const rec of objs.values()) if (rec.lip) { applyLip(rec, now); if (rec.lip.rise.tr || rec.lip.glow.tr) moving = true; if (rec.lip.glow.v > 0.01) twinkling = true; }
+        for (const rec of objs.values()) if (rec.lt) { applyLt(rec.lt, now); if (rec.lt.g.tr) moving = true; if (rec.lt.flick && rec.lt.g.v > 0.01) twinkling = true; }
         // the twinkle alone runs at about 30 frames a second and reuses the shadows already drawn
         if (moving || ts - lampLast > 32) { lampLast = ts; frameDirty = true; skipShadows = !moving; inst.render(); skipShadows = false; }
         if ((moving || twinkling) && onScreen) lampTick();
@@ -585,6 +592,8 @@ vec2 gLayer(vec3 p, float d, float sz) {
     // edge of the shelf). It is drawn from each strip's own footing: dark under and right round the bases, soft at the sides and
     // front, and running straight back to the wall line, where the floor ends, so it stops exactly at the back edge
     const SOFT_FOOT = new Set(["giftBoxes", "shoppingBags", "lipstickLamp"]), OWN_FOOT = new Set(["lipstickLamp"]);
+    // v434 (osamu: "some shadows don't end at the back of the shelf"): the new objects' shadows lie on the floor the same way
+    const softFoot = (k) => SOFT_FOOT.has(k) || (typeof k === "string" && k.startsWith("o2"));
     function floorShadow(rec, ob, zs, H, zw) {
       const front = -1 + H * 0.06, ext = H * 0.14, m = ob.w * 0.08, x0 = ob.x - m, x1 = ob.x + ob.w + m, back = zw;
       const key = [x0, x1, back, ...zs.map((z) => (z == null ? "n" : z.toFixed(1)))].join();
@@ -694,7 +703,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
             live.add(ob.id);
             let rec = objs.get(ob.id);
             if (!rec || rec.img !== ob.img) {
-              if (rec) { scene.remove(rec.mesh); if (rec.fs) scene.remove(rec.fs); if (rec.lip) { scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.lip.contact) scene.remove(...rec.lip.contact); } if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
+              if (rec) { scene.remove(rec.mesh); if (rec.fs) scene.remove(rec.fs); if (rec.lt) { scene.remove(rec.lt.light, rec.lt.pool); rec.lt.pool.material.dispose(); } if (rec.lip) { scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.lip.contact) scene.remove(...rec.lip.contact); } if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); }
               const c2 = document.createElement("canvas"); c2.width = Math.max(2, Math.round(ob.w * 2)); c2.height = Math.max(2, Math.round(ob.h * 2)); c2.getContext("2d").drawImage(ob.img, 0, 0, c2.width, c2.height);
               const tex = new THREE.CanvasTexture(c2);
               // three's shadow pass takes the cut-out's picture and alpha test from the object's own material
@@ -726,7 +735,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
             rec.mesh.visible = ob.visible !== false;
             // v322: the gift box picture keeps only its own soft footprint shadow (drawn with the picture); the light's long cast
             // shadow fell to the right as a hard block cut off at the wall (osamu: "the shadows are not right at all")
-            rec.mesh.castShadow = !SOFT_FOOT.has(ob.kind);
+            rec.mesh.castShadow = !softFoot(ob.kind);
             { // place each strip: its foot on the floor where the floor shows at that height on screen, scaled for being further back
               const P = rec.mesh.geometry.attributes.position, onPile = ob.y > 1, zs = [];
               for (let k = 0; k < rec.NC; k++) {
@@ -737,7 +746,29 @@ vec2 gLayer(vec3 p, float d, float sz) {
                 P.array.set([X(xa), yb, z, X(xb), yb, z, X(xa), yt, z, X(xb), yt, z], k * 12); zs.push(onPile ? null : z);
               }
               P.needsUpdate = true; rec.mesh.geometry.computeBoundingSphere();
-              if (SOFT_FOOT.has(ob.kind) && !OWN_FOOT.has(ob.kind)) floorShadow(rec, ob, zs, H, zw);
+              if (softFoot(ob.kind) && !OWN_FOOT.has(ob.kind)) floorShadow(rec, ob, zs, H, zw);
+            }
+            // v434 (osamu: the lights didn't look natural): a lamp or candle lights the real 3D shelf. One warm point light where its
+            // shade or flames are, just in front of the books so it falls on their spines and the wall, and a soft pool of its colour
+            // on the floor under it; candles flicker. It replaces the flat screen glow (hidden in 3D)
+            if (ob.light) {
+              const LT = ob.light, now = performance.now();
+              if (!rec.lt) {
+                const light = new THREE.PointLight(LT.color, 0, 0, 2);
+                const pool = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ color: LT.color, map: poolTex(), transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
+                pool.rotation.x = -Math.PI / 2; pool.renderOrder = 2; scene.add(light, pool);
+                rec.lt = { light, pool, g: { v: LT.on ? 1 : 0, tr: null }, on: LT.on, seed: Math.random() * 100 };
+              }
+              const R = rec.lt, pts = LT.pts, sc = (Dc - 2) / Dc;
+              const ux = pts.reduce((a, p) => a + p[0], 0) / pts.length, uy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+              const x = ob.x + (ux / LT.vw) * ob.w, y = ob.y + ((200 - uy) / 200) * ob.h;
+              R.light.position.set(cx + (x - cx) * sc, y * sc, 2);
+              R.max = LT.power * (H / 100) ** 2; R.light.distance = H * (LT.reach || 1.7); R.flick = !!LT.flick; R.poolMax = LT.pool == null ? 0.5 : LT.pool;
+              R.pool.scale.set(H * (LT.poolW || 1.6), (F - zw) * 1.2, 1); R.pool.position.set(cx + (x - cx) * sc, 0.4, (F + zw) / 2);
+              R.light.visible = R.pool.visible = ob.visible !== false;
+              const on = !!LT.on && ob.visible !== false;
+              if (on !== R.on) { R.on = on; R.g.tr = { from: R.g.v, to: on ? 1 : 0, t0: now + (on && !R.flick ? 120 : 0), dur: on ? (R.flick ? 450 : 750) : 450, fn: EASE }; }
+              applyLt(R, now); if (R.g.tr || (R.flick && R.g.v > 0.01)) lampTick();
             }
             // v322: osamu went back to a picture for the gift boxes (a Gemini render that looks 3D), so the hand-built model is off;
             // the picture casts its shadow through the hidden strips like the bags. buildGiftBoxes stays in case it comes back
@@ -802,7 +833,7 @@ vec2 gLayer(vec3 p, float d, float sz) {
               applyLip(rec, now); if (L.rise.tr || L.glow.tr || L.glow.v > 0.01) lampTick();
             }
           }
-          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.fs) scene.remove(rec.fs); if (rec.lip) { scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.lip.contact) scene.remove(...rec.lip.contact); } if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
+          for (const [id, rec] of objs) if (!live.has(id)) { scene.remove(rec.mesh); if (rec.fs) scene.remove(rec.fs); if (rec.lt) { scene.remove(rec.lt.light, rec.lt.pool); rec.lt.pool.material.dispose(); } if (rec.lip) { scene.remove(rec.lip.group, rec.lip.pool, rec.lip.cable); if (rec.lip.contact) scene.remove(...rec.lip.contact); } if (rec.gift) scene.remove(rec.gift.group); rec.tex.dispose(); rec.depth.dispose(); rec.mesh.geometry.dispose(); objs.delete(id); } }
         for (const [id, rec] of books) if (!seen.has(id)) { scene.remove(rec.outer); disposeBook(rec.node); if (rec.soft) rec.soft.forEach((m) => scene.remove(m)); books.delete(id); }
         // shadow catchers: the shelf floor and the wall just behind the deepest book
         { const x0 = -400, x1 = viewW + 400, yt = stageH + top + 400, P = roomGeo.attributes.position;
