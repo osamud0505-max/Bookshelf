@@ -12,3 +12,11 @@
   for (const k of OLD) delete D.ORNAMENTS[k];
   for (const L of Object.values(D.LOOKS)) if (L.set && L.set.ornament && !D.ORNAMENTS[L.set.ornament.kind]) L.set.ornament = { kind: "none", pos: "end" };
 })();
+
+/* v436 (osamu, 2026-11-19): the old code-drawn hanging lights from before each look got its own painted lights are gone
+   (fireflies stay). They leave the ✦ menu, and a shelf that had one shows nothing in its place. A look that redrew its
+   lights still swaps an old save's style for the new one first (app.js shelfLights runs LIGHT_SWAP before this filter). */
+(() => {
+  const D = window.Decor; if (!D) return;
+  for (const k of ["fairy", "globe", "stars", "candles", "lanterns", "chinese", "wisteria", "loftCages"]) delete D.LIGHT_STYLES[k];
+})();
