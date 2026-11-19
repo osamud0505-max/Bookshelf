@@ -2572,6 +2572,25 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
   lastSnap = snapOf();
   render();
 
+  // v437 (osamu: opening or refreshing looked glitchy while things drew in): the page starts under a black cover and fades in
+  // once it is ready: the 3D books on screen drawn, the walls, trims and lights' pictures and the fonts loaded. Never longer than 6 s
+  (async () => {
+    const veil = document.getElementById("bootVeil"); if (!veil) return;
+    const t0 = performance.now(), wait = (ms) => new Promise((r) => setTimeout(r, ms)), frames = (n) => new Promise((r) => { const f = () => (--n <= 0 ? r() : requestAnimationFrame(f)); requestAnimationFrame(f); });
+    try {
+      const shown = () => [...document.querySelectorAll(".shelf")].filter((s) => { const r = s.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; });
+      // the 3D books: each shelf on screen has its 3D view (or 3D gave up and the flat books show)
+      while (performance.now() - t0 < 4500) {
+        const sh = shown();
+        if (!sh.length || sh.every((s) => s.classList.contains("is3d") || (window.Books3D && window.Books3D.failed))) break;
+        await wait(80);
+      }
+      await Promise.race([Promise.all([lookPictures(2500), document.fonts ? document.fonts.ready : null]), wait(Math.max(300, 5200 - (performance.now() - t0)))]);
+      await frames(3); await wait(250); // the 3D shelves draw their first frames, shadows and painted spines
+    } catch (e) { /* show the page anyway */ }
+    veil.style.opacity = "0"; setTimeout(() => veil.remove(), 1000);
+  })();
+
   // Fill in summaries for seeded/older books that don't have one yet,
   // and give older books a spine colour taken from their cover's edge.
   (async () => {
