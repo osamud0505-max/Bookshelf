@@ -2463,7 +2463,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       // the bookmark that marks your page in the reader
       const bmg = h(`<div class="group"><h3 class="label">Bookmark</h3><p class="hint">What marks your page in the reader. Each look picks one to match; choose another any time.</p><div class="bmPick"></div></div>`);
       for (const k of Object.keys(D.BOOKMARKS)) {
-        const btn = h(`<button class="bmBtn" aria-pressed="${(s.bookmark || "ribbon") === k}"><span class="bmArt">${D.bookmarkSvg(k, 22)}</span><span class="name">${esc(D.BOOKMARKS[k].label)}</span></button>`);
+        const btn = h(`<button class="bmBtn" aria-pressed="${D.bookmarkKind ? D.bookmarkKind(s.bookmark) === k : (s.bookmark || "ribbon") === k}"><span class="bmArt">${D.bookmarkSvg(k, 22)}</span><span class="name">${esc(D.BOOKMARKS[k].label)}</span></button>`);
         btn.onclick = () => set({ bookmark: k });
         bmg.lastElementChild.append(btn);
       }

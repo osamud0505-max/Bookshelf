@@ -630,7 +630,7 @@
    *  out from under the top edge of the page, or draws it back up behind it. */
   function syncBookmark(animate) {
     const on = pageMarks().length > 0;
-    const kind = (window.Shelf.settings() || {}).bookmark || "ribbon";
+    const raw = (window.Shelf.settings() || {}).bookmark || "ribbon", kind = window.Decor && window.Decor.bookmarkKind ? window.Decor.bookmarkKind(raw) : raw;
     if (ribbon.dataset.kind !== kind && window.Decor) { ribbon.dataset.kind = kind; ribbon.innerHTML = window.Decor.bookmarkSvg(kind, 28); }
     clearTimeout(ribbonT); ribbon.classList.remove("in", "out");
     if (animate && on) { ribbon.hidden = false; void ribbon.offsetWidth; ribbon.classList.add("in"); }
