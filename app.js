@@ -12,6 +12,7 @@
     blush: { label: "Blush", t: ["#f7eeee", "#2a1e20", "#efe2e3", "#fcf6f6", "#ead9db", "#85696d", "#e2cfd1", "#e7d4d6", "#d9c2c5", "light"] },
   };
   const D = window.Decor;
+  const NO_OBJECTS = true; // v435 (osamu, 2026-11-19): no shelf objects at all, only books (lights and shelf trims stay)
   Object.assign(THEMES, D.PALETTES);
   const ACCENTS = ["#f2c76b", "#ef7b6c", "#e889b5", "#a98bf0", "#6fb6f2", "#6fd3b0", "#c7e05d", "#f4f1ea"];
   const SHELVES = [
@@ -1302,7 +1303,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     function buildOrns() {
       orns.forEach((o) => { o.el.remove(); if (o.sh) o.sh.remove(); if (o.wg) o.wg.remove(); });
       orns = [];
-      if (!books.length) return;
+      if (!books.length || NO_OBJECTS) return; // v435: objects are gone from the app (saved ones stay in the backup, unshown)
       items.forEach((it) => { const o = makeOrn(it); if (o) orns.push(o); });
       sortOrns();
     }
@@ -1805,6 +1806,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
     root._dispose = () => ro.disconnect();
     // the ✦ menu adds a decoration next to the book in front
     root._addDecor = (kind) => {
+      if (NO_OBJECTS) return;
       const fb = books[front >= 0 ? front : scrollMemory.get(key) || 0];
       items.push({ id: "d" + Date.now().toString(36), kind, after: fb ? fb.id : "end", on: true });
       setDecorItems(key, items);
@@ -1851,14 +1853,14 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       if (opts.more) { const m = h(`<button class="linkBtn">Only this shelf</button>`); m.onclick = opts.more; sec.firstElementChild.append(m); }
       const sIdx = shelfN;
       {
-        const btn = h(`<button class="decorBtn" aria-label="Decor on this shelf" aria-expanded="false">✦</button>`);
+        const btn = h(`<button class="decorBtn" aria-label="Lights on this shelf" aria-expanded="false">✦</button>`);
         btn.onclick = (e) => {
           e.stopPropagation();
           // a second tap on the same ✦ closes its menu (check before removing it, or it no longer has a neighbour)
           const was = document.querySelector(".decorMenu"), mine = !!was && was.previousElementSibling === btn;
           document.querySelectorAll(".decorMenu").forEach((m) => m.remove());
           if (mine) { btn.setAttribute("aria-expanded", "false"); return; }
-          const menu = h(`<div class="decorMenu" role="dialog" aria-label="Decor on this shelf"></div>`);
+          const menu = h(`<div class="decorMenu" role="dialog" aria-label="Lights on this shelf"></div>`);
           const draw = () => {
             const dz = shelfDecor(key), its = decorItems(key);
             menu.replaceChildren();
@@ -1876,41 +1878,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
               cc.querySelectorAll("button").forEach((b) => (b.onclick = () => { setShelfLights(key, { colour: b.dataset.v }); keepOpen(); render(); }));
               menu.append(cc);
             }
-            menu.append(h(`<span class="subLabel">On this shelf</span>`));
-            const cur = h(`<div class="decorNow"></div>`);
-            if (!its.length) cur.append(h(`<span class="hint small">Nothing yet. Pick something below.</span>`));
-            its.forEach((it) => {
-              const kind = resolveKind(it.kind, sIdx);
-              if (!kind) return;
-              const chip = h(`<span class="decorChip"><span class="ornArt"></span><button aria-label="Remove ${esc(D.ORNAMENTS[kind].label)}">×</button></span>`);
-              chip.firstElementChild.append(ornArt(kind, 44));
-              chip.querySelector("button").onclick = () => {
-                setDecorItems(key, its.filter((x) => x !== it));
-                keepOpen(); render();
-              };
-              cur.append(chip);
-            });
-            menu.append(cur);
-            menu.append(h(`<span class="subLabel">Add to this shelf</span>`));
-            const grid = h(`<div class="ornGrid"></div>`);
-            Object.entries(D.ORNAMENTS).forEach(([k, o]) => {
-              if (!o.draw) return;
-              const t = h(`<button class="ornTile" aria-label="Add ${esc(o.label)}"><span class="ornArt"></span><span class="name">${esc(o.label)}</span></button>`);
-              t.firstElementChild.append(ornArt(k, 50));
-              t.onclick = () => {
-                const sh = main.querySelector(`.shelf[data-key="${CSS.escape(key)}"]`);
-                // the menu gets out of the way and the new object drops onto the shelf
-                menu.remove(); btn.setAttribute("aria-expanded", "false");
-                if (sh && sh._addDecor) {
-                  const r = sh.getBoundingClientRect();
-                  if (r.top < 60 || r.bottom > innerHeight - 40) sh.scrollIntoView({ block: "center", behavior: "smooth" });
-                  sh._addDecor(k);
-                } else setDecorItems(key, [...its, { id: "d" + Date.now().toString(36), kind: k, after: "end", on: true }]);
-              };
-              grid.append(t);
-            });
-            menu.append(grid);
-            menu.append(h(`<p class="hint small">Hold a decoration on the shelf to move it between any books. Drag it to the bin to take it off.</p>`));
+            // v435 (osamu, 2026-11-19: "books are enough"): no objects on shelves any more, so the menu holds only the lights
           };
           draw();
           menu.onclick = (ev) => ev.stopPropagation();
@@ -2438,7 +2406,7 @@ Background: flat pure green #00FF00 everywhere around the spine, evenly lit, no 
       };
 
       // ready-made looks and your own
-      const looks = h(`<div class="group"><h3 class="label">Looks</h3><p class="hint">Each look is a whole room: walls, shelf, colours and lettering. Pick lights and objects for each shelf with the ✦ button next to its name.</p><div class="looks"></div></div>`);
+      const looks = h(`<div class="group"><h3 class="label">Looks</h3><p class="hint">Each look is a whole room: walls, shelf, colours and lettering. Pick lights for each shelf with the ✦ button next to its name.</p><div class="looks"></div></div>`);
       const lookWrap = looks.querySelector(".looks");
       // which look is on (older saves didn't record it, so match by room and colours)
       const current = s.lookKey || (Object.entries(D.LOOKS).find(([, L]) => L.set.backdrop === s.backdrop && L.set.theme === s.theme) || [""])[0];
