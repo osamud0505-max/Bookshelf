@@ -20,3 +20,20 @@
   const D = window.Decor; if (!D) return;
   for (const k of ["fairy", "globe", "stars", "candles", "lanterns", "chinese", "wisteria", "loftCages"]) delete D.LIGHT_STYLES[k];
 })();
+
+/* v438: the reader's bookmarks are osamu's Gemini paintings, one per look (obj/bm-<look>.webp, keyed, top edge = the
+   picture's top so it tucks under the page). They replace every old drawn bookmark; a save that still names an old one
+   gets the current look's painting. Each fits the old 28 x 84 box (height-limited, centred), so nothing grew. */
+(() => {
+  const D = window.Decor; if (!D || !D.BOOKMARKS) return;
+  const P = { minimal: ["Charcoal ribbon", 62], cabin: ["Leather & plaid", 57], library: ["Wax seal", 64], loft: ["Steel strip", 33], starry: ["Starry velvet", 49], cottage: ["Lace & rose", 61], candle: ["Gilded filigree", 51], vampire: ["Velvet & lace", 54], victorian: ["Gold acanthus", 52], castle: ["Old key", 53], bordello: ["Gothic arch", 47], forest: ["Pressed fern", 75], academia: ["Damask velvet", 57], teahouse: ["Lacquer & tassel", 69], witch: ["Raven feather", 48], closet: ["Pink hearts", 46] };
+  for (const k of Object.keys(D.BOOKMARKS)) delete D.BOOKMARKS[k];
+  for (const [k, [label, w]] of Object.entries(P)) {
+    const bw = Math.min(28, (w / 270) * 84), bh = (bw / w) * 270;
+    D.BOOKMARKS["pic_" + k] = { label, img: `obj/bm-${k}.webp?v=1`, draw: () => `<image href="obj/bm-${k}.webp?v=1" x="${(28 - bw) / 2}" y="-3" width="${bw}" height="${bh}"/>` };
+    if (D.LOOKS[k]) D.LOOKS[k].set.bookmark = "pic_" + k;
+  }
+  const lookBm = () => { const lk = window.Shelf && window.Shelf.lookKey ? window.Shelf.lookKey() : ""; return D.BOOKMARKS["pic_" + lk] ? "pic_" + lk : "pic_minimal"; };
+  D.bookmarkKind = (kind) => (D.BOOKMARKS[kind] ? kind : lookBm());
+  D.bookmarkSvg = (kind, w = 28) => `<svg viewBox="0 -3 28 87" width="${w}" height="${(w * 87) / 28}" aria-hidden="true" overflow="visible">${D.BOOKMARKS[D.bookmarkKind(kind)].draw()}</svg>`;
+})();
